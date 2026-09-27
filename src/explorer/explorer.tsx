@@ -19,7 +19,7 @@ import type { ExplorerMenuAction, ExplorerMenuTargetKind } from './explorer-menu
 import { Button } from '@/ui/button'
 import { Kbd } from '@/ui/kbd'
 import { ScrollArea } from '@/ui/scroll-area'
-import { OPENS_A_TAB_PROPS, SidebarRow, SidebarRowIcon, SidebarRowName } from '@/shell/sidebar-row'
+import { ONE_OPEN_PER_DOUBLE_CLICK_PROPS, SidebarRow, SidebarRowIcon, SidebarRowName } from '@/shell/sidebar-row'
 
 const NO_FOLDER_SELECTION: SidebarSelection = { kind: 'filter', filter: 'all' }
 
@@ -332,11 +332,12 @@ function ExplorerRow(props: RowProps) {
   const editing = actions.editing?.path === node.path ? actions.editing : null
   const { dragProps, dropProps, isDropTarget } = useRowDragAndDrop(node, isFolder, actions)
 
-  // A Document and an Image file both open a real Tab;
-  // clicking a folder only selects it. Right-click does neither.
+  // A Document and an Image file both open a real Tab; a folder opens or
+  // shuts, as its caret does. Right-click does neither.
   const select = () => {
     actions.select(node.path)
-    if (!isFolder) onOpenFile(node.path)
+    if (isFolder) onToggle(relative)
+    else onOpenFile(node.path)
   }
 
   const children = isFolder && isExpanded && (
@@ -382,7 +383,7 @@ function ExplorerRow(props: RowProps) {
             style={{ paddingLeft: explorerRowIndent(depth) }}
             data-drop-target={isDropTarget || undefined}
             data-testid={`explorer-row:${node.path}`} tabIndex={0} title={node.path}
-            {...(!isFolder && OPENS_A_TAB_PROPS)}
+            {...ONE_OPEN_PER_DOUBLE_CLICK_PROPS}
             {...dragProps} {...dropProps}
             onClick={select} onKeyDown={(event) => {
               if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); select() }

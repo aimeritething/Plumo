@@ -1,8 +1,8 @@
 import { expect, test, type Page } from '@playwright/test'
 import { MOCK_FOLDER, openFolderThroughDialog, watchForErrors } from './harness'
 
-// A double-click in the Explorer is one open: the first click opens the Tab,
-// and the sidebar drops the second click of the pair, wherever it lands.
+// A double-click in the Explorer is one open: the first click opens the Tab or
+// the folder, and the sidebar drops the second click of the pair, wherever it lands.
 
 const READING_LIST = `${MOCK_FOLDER}/Reading list.md`
 const WELCOME = `${MOCK_FOLDER}/Welcome.md`
@@ -59,4 +59,14 @@ test('a quick second click on a folder\'s arrow still folds it back', async ({ p
   await page.getByTestId('explorer').getByRole('button', { name: 'Expand Projects' }).dblclick()
 
   await expect(explorerRow(page, `${MOCK_FOLDER}/Projects/Plumo.md`)).toHaveCount(0)
+})
+
+test('double-clicking a folder\'s name opens it once, and it stays open', async ({ page }) => {
+  await page.goto('/')
+  await openFolderThroughDialog(page, MOCK_FOLDER)
+
+  await page.getByTestId('explorer').getByText('Projects', { exact: true }).dblclick()
+
+  await expect(explorerRow(page, `${MOCK_FOLDER}/Projects/Plumo.md`)).toBeVisible()
+  await expect(explorerRow(page, `${MOCK_FOLDER}/Projects`).locator('..')).toHaveAttribute('aria-expanded', 'true')
 })

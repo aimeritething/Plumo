@@ -15,7 +15,7 @@ interface ExplorerDisclosureProps {
   onToggle: () => void
 }
 
-/** A folder row's caret: expands or collapses the folder without selecting it. */
+/** A folder row's caret: expands or collapses the folder without selecting it (a click on the rest of the row does both). */
 export function ExplorerDisclosure({ name, expanded, onToggle }: ExplorerDisclosureProps) {
   return (
     <button

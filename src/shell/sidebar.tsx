@@ -52,21 +52,24 @@ export function Sidebar({ width, onWidthChange, onToggle, children }: SidebarPro
 }
 
 /**
- * A double-click that opens a Tab is one open. By the second click the
- * sidebar may have moved under the pointer (a new Document's row appearing,
- * its folder opening), so that click could land on another row, or make a
- * second Document from the Explorer's "+". It is dropped, wherever it lands.
- * A second click after anything else (a folder's arrow) goes through.
+ * A double-click that opens a Tab or a folder is one open. By the second
+ * click the sidebar may have moved under the pointer (a new Document's row
+ * appearing, its folder opening), so that click could land on another row,
+ * make a second Document from the Explorer's "+", or shut the folder it just
+ * opened. It is dropped, wherever it lands. A second click after anything
+ * else (a folder's caret) goes through.
  */
 function useOneOpenPerDoubleClick() {
-  const openedTab = useRef(false)
+  const opened = useRef(false)
 
   return useCallback((event: MouseEvent<HTMLElement>) => {
     if (event.detail <= 1) {
-      openedTab.current = event.target instanceof Element && event.target.closest('[data-opens-tab]') !== null
+      // The nearest button or marked control decides, so a caret inside a marked row is not one.
+      const control = event.target instanceof Element ? event.target.closest('button, [data-one-open]') : null
+      opened.current = control?.hasAttribute('data-one-open') ?? false
       return
     }
-    if (openedTab.current) event.stopPropagation()
+    if (opened.current) event.stopPropagation()
   }, [])
 }
 

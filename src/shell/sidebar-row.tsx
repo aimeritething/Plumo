@@ -62,9 +62,11 @@ export function SidebarRowName({ className, ...props }: ComponentProps<'span'>) 
 }
 
 /**
- * On a control whose click opens a Tab. The sidebar drops the second click of
- * a double-click that starts on one, so a double-click is one open: one Tab,
- * or one new Document from the Explorer's "+", however the sidebar has
+ * On a control whose click opens something: a Tab, or an Explorer folder. The
+ * sidebar drops the second click of a double-click that starts on one, so a
+ * double-click is one open: one Tab, one new Document from the Explorer's "+",
+ * or one folder opened (not opened and shut again), however the sidebar has
  * shifted under the pointer in between (a folder opening to show the new row).
+ * A plain button inside one, a folder's caret, keeps its second click.
  */
-export const OPENS_A_TAB_PROPS = { 'data-opens-tab': '' } as const
+export const ONE_OPEN_PER_DOUBLE_CLICK_PROPS = { 'data-one-open': '' } as const

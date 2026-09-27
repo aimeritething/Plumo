@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { Sidebar } from './sidebar'
-import { OPENS_A_TAB_PROPS } from './sidebar-row'
+import { ONE_OPEN_PER_DOUBLE_CLICK_PROPS } from './sidebar-row'
 import { TooltipProvider } from '@/ui/tooltip'
 
 function renderSidebar(width: number, onWidthChange = vi.fn(), onToggle = vi.fn()) {
@@ -55,14 +55,14 @@ describe('Sidebar', () => {
     expect(onWidthChange).toHaveBeenCalledWith(244)
   })
 
-  describe('a double-click that opens a Tab', () => {
+  describe('a double-click that opens a Tab or a folder', () => {
     function renderRows() {
       const onOpen = vi.fn()
       const onOther = vi.fn()
       render(
         <TooltipProvider>
           <Sidebar width={260} onWidthChange={vi.fn()} onToggle={vi.fn()}>
-            <button type="button" onClick={onOpen} {...OPENS_A_TAB_PROPS}>opens a Tab</button>
+            <button type="button" onClick={onOpen} {...ONE_OPEN_PER_DOUBLE_CLICK_PROPS}>opens a Tab</button>
             <button type="button" onClick={onOther}>other</button>
           </Sidebar>
         </TooltipProvider>,
@@ -101,6 +101,29 @@ describe('Sidebar', () => {
 
       expect(onOther).toHaveBeenCalledTimes(1)
       expect(onOpen).toHaveBeenCalledTimes(2)
+    })
+
+    it('lets a second click through on a plain button inside a marked row, as a folder\'s caret', () => {
+      const onRow = vi.fn()
+      const onCaret = vi.fn()
+      render(
+        <TooltipProvider>
+          <Sidebar width={260} onWidthChange={vi.fn()} onToggle={vi.fn()}>
+            <div onClick={onRow} {...ONE_OPEN_PER_DOUBLE_CLICK_PROPS}>
+              <button type="button" onClick={(event) => { event.stopPropagation(); onCaret() }}>caret</button>
+              <span>folder</span>
+            </div>
+          </Sidebar>
+        </TooltipProvider>,
+      )
+
+      fireEvent.click(screen.getByText('caret'), { detail: 1 })
+      fireEvent.click(screen.getByText('caret'), { detail: 2 })
+      fireEvent.click(screen.getByText('folder'), { detail: 1 })
+      fireEvent.click(screen.getByText('folder'), { detail: 2 })
+
+      expect(onCaret).toHaveBeenCalledTimes(2)
+      expect(onRow).toHaveBeenCalledTimes(1)
     })
   })
 })

@@ -431,6 +431,18 @@ describe('the header', () => {
     fireEvent.keyDown(row, { key: 'ArrowLeft' })
     expect(isExpanded('Projects')).toBe(false)
   })
+
+  it('opens and shuts a folder from a click on its name, and selects it', () => {
+    const actions = stubActions()
+    const { onOpenFile } = renderExplorer(actions)
+
+    fireEvent.click(screen.getByText('Projects'))
+    expect(isExpanded('Projects')).toBe(true)
+    expect(actions.select).toHaveBeenLastCalledWith(`${FOLDER}/Projects`)
+    fireEvent.click(screen.getByText('Projects'))
+    expect(isExpanded('Projects')).toBe(false)
+    expect(onOpenFile).not.toHaveBeenCalled()
+  })
 })
 
 describe('the header actions', () => {
@@ -453,6 +465,22 @@ describe('the header actions', () => {
 
     const menu = await screen.findByTestId('explorer-header-menu')
     expect(menuLabels(menu)).toEqual(['New Folder', 'Collapse All', 'Reveal in Finder', 'Close Folder'])
+  })
+
+  it('Collapse All shuts the folders and leaves the top level listed', async () => {
+    renderExplorer(stubActions())
+    fireEvent.click(screen.getByLabelText('Expand Projects'))
+    expect(isExpanded('Projects')).toBe(true)
+
+    fireEvent.pointerDown(
+      screen.getByTestId('explorer-more-actions'),
+      { button: 0, ctrlKey: false, pointerType: 'mouse' },
+    )
+    fireEvent.click(within(await screen.findByTestId('explorer-header-menu')).getByRole('menuitem', { name: 'Collapse All' }))
+
+    await waitFor(() => expect(isExpanded('Projects')).toBe(false))
+    expect(within(screen.getByRole('tree')).getAllByRole('treeitem').map((item) => item.getAttribute('aria-label')))
+      .toEqual(['Projects', 'Welcome.md'])
   })
 })
 
