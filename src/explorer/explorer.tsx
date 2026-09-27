@@ -46,6 +46,8 @@ interface ExplorerProps {
   onToggleCollapsed?: () => void
   /** A row entering rename opens a folded tree, so the name being typed is seen. */
   onExpand?: () => void
+  /** A Document just created was named from the keyboard: the editor takes focus, as ⌘N promised (AIM-457). */
+  onFocusEditor?: () => void
 }
 
 /** What the Explorer's context menu needs of the Pinned list. */
@@ -128,6 +130,33 @@ function useRememberedScroll(treeRef: RefObject<HTMLDivElement | null>, view: Ex
       viewport.removeEventListener('scroll', remember)
     }
   }, [shown, treeRef, view])
+}
+
+/**
+ * A rename ended from the keyboard leaves its input, and focus, behind. The
+ * row it leaves takes focus: the same row on Escape, or the row under the new
+ * name once the listing has it, which is the selected row either way. A
+ * Document just created goes to the editor instead, and a blur goes nowhere:
+ * focus went where the click went.
+ */
+function useRowFocusAfterRename(treeRef: RefObject<HTMLDivElement | null>, actions: ExplorerActions, tree: ExplorerNode, onFocusEditor: (() => void) | undefined) {
+  const pendingRef = useRef(false)
+  const { selected, editing } = actions
+
+  const onRenameKeyboardEnd = useCallback((created: boolean) => {
+    if (created) onFocusEditor?.()
+    else pendingRef.current = true
+  }, [onFocusEditor])
+
+  useEffect(() => {
+    if (!pendingRef.current || editing) return
+    const row = treeRef.current?.querySelector<HTMLElement>('[role="treeitem"][aria-selected="true"] > [tabindex]')
+    if (!row) return
+    pendingRef.current = false
+    row.focus({ preventScroll: true })
+  }, [editing, selected, tree, treeRef])
+
+  return onRenameKeyboardEnd
 }
 
 interface RowIntoViewOptions {
@@ -214,6 +243,7 @@ function ExplorerBody(props: LoadedProps) {
   }, [cancelRename, collapsed, editing, onToggleCollapsed])
 
   useRememberedScroll(treeRef, memory.view, !collapsed)
+  const onRenameKeyboardEnd = useRowFocusAfterRename(treeRef, actions, tree, props.onFocusEditor)
   useRowBroughtIntoView({
     treeRef, folder, tree, expanded, expandFolder, collapsed,
     selected: actions.selected,
@@ -237,7 +267,7 @@ function ExplorerBody(props: LoadedProps) {
       {!collapsed && (
         <ScrollArea ref={treeRef} id={treeId} className="min-h-0" role="tree" aria-label={tree.name}>
           {tree.children.map((child) => (
-            <ExplorerRow key={child.path} {...props} node={child} depth={0} expanded={expanded} onToggle={toggleFolder} />
+            <ExplorerRow key={child.path} {...props} node={child} depth={0} expanded={expanded} onToggle={toggleFolder} onRenameKeyboardEnd={onRenameKeyboardEnd} />
           ))}
           {/* The empty-Folder line: no `.md` anywhere in the Folder. It goes with the first ⌘N. */}
           {!holdsDocument(tree) && (
@@ -285,6 +315,7 @@ interface RowProps extends LoadedProps {
   depth: number
   expanded: Record<string, boolean>
   onToggle: (path: string) => void
+  onRenameKeyboardEnd: (created: boolean) => void
 }
 
 function useRowMenuAction(node: ExplorerNode, actions: ExplorerActions, pins: ExplorerPins | undefined) {
@@ -321,7 +352,7 @@ function useRowDragAndDrop(node: ExplorerNode, isFolder: boolean, actions: Explo
 }
 
 function ExplorerRow(props: RowProps) {
-  const { node, folder, depth, expanded, onToggle, onOpenFile, actions, pins } = props
+  const { node, folder, depth, expanded, onToggle, onOpenFile, actions, pins, onRenameKeyboardEnd } = props
   const isFolder = node.kind === 'folder'
   const relative = node.path.slice(folder.length + 1)
   const isExpanded = expanded[relative] ?? false
@@ -357,6 +388,7 @@ function ExplorerRow(props: RowProps) {
           error={actions.error}
           onSubmit={actions.commitRename}
           onCancel={actions.cancelRename}
+          onKeyboardEnd={() => onRenameKeyboardEnd(editing.created)}
         />
         {children}
       </div>

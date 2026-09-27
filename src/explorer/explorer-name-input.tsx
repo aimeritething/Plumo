@@ -24,15 +24,18 @@ interface ExplorerNameInputProps {
   error: string | null
   onSubmit: (stem: string) => Promise<boolean>
   onCancel: () => void
+  /** Enter or Escape ended the rename: the row, or the editor, is to take focus. */
+  onKeyboardEnd?: () => void
 }
 
 export function ExplorerNameInput(props: ExplorerNameInputProps) {
-  const { stem, extension, kind, depth, error, onSubmit, onCancel } = props
+  const { stem, extension, kind, depth, error, onSubmit, onCancel, onKeyboardEnd } = props
   const Icon = EXPLORER_ROW_ICONS[kind]
   const { handleKeyDown, inputRef, setValue, submitValue, value } = useSidebarInlineRenameInput({
     initialValue: stem,
     onCancel,
     onSubmit,
+    onKeyboardEnd,
   })
 
   // The row's indent and the message's are runtime numbers, so they stay inline.

@@ -50,6 +50,7 @@ interface HarnessProps {
   collapsed?: boolean
   onToggleCollapsed?: () => void
   onExpand?: () => void
+  onFocusEditor?: () => void
 }
 
 /** The Explorer under what App gives it: its memory, held above the sidebar. */
@@ -72,7 +73,7 @@ function ExplorerHarness({ actions, onOpenFile = vi.fn(), folder = FOLDER, tree 
   )
 }
 
-function renderExplorer(actions: ExplorerActions, onOpenFile = vi.fn(), pins?: ExplorerPins, fold: Pick<HarnessProps, 'collapsed' | 'onToggleCollapsed' | 'onExpand'> = {}) {
+function renderExplorer(actions: ExplorerActions, onOpenFile = vi.fn(), pins?: ExplorerPins, fold: Pick<HarnessProps, 'collapsed' | 'onToggleCollapsed' | 'onExpand' | 'onFocusEditor'> = {}) {
   const view = render(<ExplorerHarness actions={actions} onOpenFile={onOpenFile} pins={pins} {...fold} />)
   const rerender = (props: Partial<HarnessProps>) => view.rerender(<ExplorerHarness actions={actions} onOpenFile={onOpenFile} pins={pins} {...props} />)
   return { onOpenFile, rerender }
@@ -265,6 +266,7 @@ describe('the inline rename input', () => {
     kind: 'note' as const,
     stem: 'Welcome',
     extension: '.md',
+    created: false,
   }
 
   it('offers the stem selected, with the extension as static text beside it', () => {
@@ -323,6 +325,71 @@ describe('the inline rename input', () => {
 
     expect(actions.cancelRename).toHaveBeenCalled()
     expect(actions.commitRename).not.toHaveBeenCalled()
+  })
+
+  describe('where focus goes when the rename ends from the keyboard (AIM-457)', () => {
+    const renamed = { ...editing, path: `${FOLDER}/Readme.md` }
+    const row = (path: string) => screen.getByTestId(`explorer-row:${path}`)
+
+    it('Escape hands focus back to the row', async () => {
+      const actions = stubActions({ editing, selected: editing.path })
+      const { rerender } = renderExplorer(actions)
+
+      fireEvent.keyDown(screen.getByTestId('explorer-rename-input'), { key: 'Escape' })
+      rerender({ actions: { ...actions, editing: null } })
+
+      await waitFor(() => expect(row(editing.path)).toHaveFocus())
+    })
+
+    it('Enter hands focus to the row under its new name, once the listing has it', async () => {
+      const actions = stubActions({ editing, selected: editing.path })
+      const { rerender } = renderExplorer(actions)
+
+      const input = screen.getByTestId('explorer-rename-input')
+      fireEvent.change(input, { target: { value: 'Readme' } })
+      fireEvent.keyDown(input, { key: 'Enter' })
+      await waitFor(() => expect(actions.commitRename).toHaveBeenCalledWith('Readme'))
+      // The rename is through and the row is selected under its new name; the listing is a refresh behind.
+      rerender({ actions: { ...actions, editing: null, selected: renamed.path } })
+      expect(screen.queryByTestId(`explorer-row:${renamed.path}`)).toBeNull()
+      rerender({ actions: { ...actions, editing: null, selected: renamed.path }, tree: buildExplorerTree(FOLDER, [listed('Readme.md', 'note'), listed('Projects', 'folder')]) })
+
+      await waitFor(() => expect(row(renamed.path)).toHaveFocus())
+    })
+
+    it('a refused name keeps the input, and the focus, where they are', async () => {
+      const actions = stubActions({ editing, selected: editing.path, commitRename: vi.fn(async () => false) })
+      renderExplorer(actions)
+
+      const input = screen.getByTestId('explorer-rename-input')
+      fireEvent.keyDown(input, { key: 'Enter' })
+      await waitFor(() => expect(actions.commitRename).toHaveBeenCalled())
+
+      expect(input).toHaveFocus()
+    })
+
+    it('a Document just created and named from the keyboard hands focus to the editor, as ⌘N promised', async () => {
+      const onFocusEditor = vi.fn()
+      const actions = stubActions({ editing: { ...editing, created: true }, selected: editing.path })
+      renderExplorer(actions, undefined, undefined, { onFocusEditor })
+
+      const input = screen.getByTestId('explorer-rename-input')
+      fireEvent.change(input, { target: { value: 'Readme' } })
+      fireEvent.keyDown(input, { key: 'Enter' })
+
+      await waitFor(() => expect(onFocusEditor).toHaveBeenCalledTimes(1))
+    })
+
+    it('a blur is not the keyboard: focus stays where the click put it', async () => {
+      const onFocusEditor = vi.fn()
+      const actions = stubActions({ editing: { ...editing, created: true }, selected: editing.path })
+      renderExplorer(actions, undefined, undefined, { onFocusEditor })
+
+      fireEvent.blur(screen.getByTestId('explorer-rename-input'))
+      await waitFor(() => expect(actions.commitRename).toHaveBeenCalled())
+
+      expect(onFocusEditor).not.toHaveBeenCalled()
+    })
   })
 
   it('commits on blur', async () => {
@@ -393,13 +460,13 @@ describe('the header', () => {
     const { rerender } = renderExplorer(stubActions({ selected: `${FOLDER}/Welcome.md` }), vi.fn(), undefined, { collapsed: true, onExpand })
     expect(onExpand).not.toHaveBeenCalled()
 
-    const editing = { path: `${FOLDER}/Untitled.md`, kind: 'note' as const, stem: 'Untitled', extension: '.md' }
+    const editing = { path: `${FOLDER}/Untitled.md`, kind: 'note' as const, stem: 'Untitled', extension: '.md' , created: false }
     rerender({ actions: stubActions({ editing }), collapsed: true, onExpand })
     expect(onExpand).toHaveBeenCalled()
   })
 
   it('gives up an open rename when the tree folds, so the fold holds', () => {
-    const editing = { path: `${FOLDER}/Welcome.md`, kind: 'note' as const, stem: 'Welcome', extension: '.md' }
+    const editing = { path: `${FOLDER}/Welcome.md`, kind: 'note' as const, stem: 'Welcome', extension: '.md' , created: false }
     const actions = stubActions({ editing, error: 'A Document named Reading list.md already exists' })
     const onToggleCollapsed = vi.fn()
     renderExplorer(actions, vi.fn(), undefined, { onToggleCollapsed })
@@ -411,7 +478,7 @@ describe('the header', () => {
   })
 
   it('leaves the rename alone when the tree only opens', () => {
-    const editing = { path: `${FOLDER}/Welcome.md`, kind: 'note' as const, stem: 'Welcome', extension: '.md' }
+    const editing = { path: `${FOLDER}/Welcome.md`, kind: 'note' as const, stem: 'Welcome', extension: '.md' , created: false }
     const actions = stubActions({ editing })
     const onToggleCollapsed = vi.fn()
     renderExplorer(actions, vi.fn(), undefined, { collapsed: true, onToggleCollapsed })
@@ -714,7 +781,7 @@ describe('bringing a row into view', () => {
     const view = render(<ExplorerHarness actions={stubActions({ selected })} />)
     scrollIntoView.mockClear()
 
-    const editing = { path: `${FOLDER}/Projects/Plumo.md`, kind: 'note' as const, stem: 'Plumo', extension: '.md' }
+    const editing = { path: `${FOLDER}/Projects/Plumo.md`, kind: 'note' as const, stem: 'Plumo', extension: '.md' , created: false }
     view.rerender(<ExplorerHarness actions={stubActions({ selected, editing })} />)
     expect(scrollIntoView).toHaveBeenCalledTimes(1)
 

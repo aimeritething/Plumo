@@ -2,7 +2,6 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import { renderHook } from '@testing-library/react'
 import { requestEditorFocus, useEditorFocus } from './use-editor-focus'
 import type { FocusableEditor } from './editor-focus-utils'
-import { resumeEditorFocus, suspendEditorFocus } from './editor-focus-ownership'
 import { trackEvent } from '@/lib/telemetry'
 
 vi.mock('@/lib/telemetry', () => ({
@@ -39,7 +38,6 @@ function expectSelectionRange(
 
 describe('useEditorFocus', () => {
   afterEach(() => {
-    resumeEditorFocus()
     vi.restoreAllMocks()
     document.body.innerHTML = ''
   })
@@ -158,17 +156,6 @@ describe('useEditorFocus', () => {
     vi.useRealTimers()
   })
 
-  it('resumes editor focus ownership for an explicit new-note target', () => {
-    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => { cb(0); return 0 })
-    const { editor } = setup(true)
-    suspendEditorFocus(document.body)
-
-    window.dispatchEvent(new CustomEvent('plumo:focus-editor', { detail: { path: '/vault/new-note.md' } }))
-    window.dispatchEvent(new CustomEvent('plumo:editor-tab-swapped', { detail: { path: '/vault/new-note.md' } }))
-
-    expect(editor.focus).toHaveBeenCalledTimes(1)
-  })
-
   it('moves focus from the control that explicitly created the note', () => {
     vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => { cb(0); return 0 })
     const { editor } = setup(true)
@@ -180,26 +167,6 @@ describe('useEditorFocus', () => {
     window.dispatchEvent(new CustomEvent('plumo:editor-tab-swapped', { detail: { path: '/vault/new-note.md' } }))
 
     expect(editor.focus).toHaveBeenCalledTimes(1)
-  })
-
-  it('reclaims focus ownership when the launching surface suspends it during the tab swap', () => {
-    vi.useFakeTimers()
-    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => { cb(0); return 0 })
-    const { editor } = setup(true)
-
-    window.dispatchEvent(new CustomEvent('plumo:focus-editor', { detail: { path: '/vault/new-note.md' } }))
-    suspendEditorFocus(document.body)
-    window.dispatchEvent(new CustomEvent('plumo:editor-tab-swapped', { detail: { path: '/vault/new-note.md' } }))
-
-    expect(editor.focus).toHaveBeenCalledTimes(1)
-
-    suspendEditorFocus(document.body)
-    document.body.tabIndex = -1
-    document.body.focus()
-    vi.advanceTimersByTime(200)
-
-    expect(editor.focus).toHaveBeenCalledTimes(2)
-    vi.useRealTimers()
   })
 
   it('carries a pending focus request across an editor remount', () => {

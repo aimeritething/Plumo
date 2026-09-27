@@ -2,6 +2,7 @@ import { Command as CommandIcon, FileText, Image as ImageIcon, type Icon } from 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent, type ReactNode } from 'react'
 import { cn } from '@/lib/cn'
 import { isImeKeyEvent } from '@/lib/ime-key-event'
+import { useDialogReturnFocus } from '@/lib/use-dialog-return-focus'
 import { Dialog, DialogContent, DialogTitle } from '@/ui/dialog'
 import { ScrollArea } from '@/ui/scroll-area'
 import {
@@ -25,10 +26,7 @@ export interface CommandMenuProps {
   onOpenFile: (path: string, options: { raw: boolean }) => void
 }
 
-interface CommandMenuPanelProps extends Omit<CommandMenuProps, 'open' | 'onClose'> {
-  /** Called before a row's command or file is handed on, so the dialog knows not to hand focus back. */
-  onBeforePick: () => void
-}
+type CommandMenuPanelProps = Omit<CommandMenuProps, 'open' | 'onClose'>
 
 const ROW_ICONS: Record<CommandMenuEntryKind, Icon> = {
   command: CommandIcon,
@@ -132,7 +130,7 @@ function CommandMenuRow({ match, index, active, onHover, onPick }: CommandMenuRo
  * query and the selection start fresh every time; a mode switch while open
  * keeps the query.
  */
-function CommandMenuPanel({ mode, entries, onRunCommand, onOpenFile, onBeforePick }: CommandMenuPanelProps) {
+function CommandMenuPanel({ mode, entries, onRunCommand, onOpenFile }: CommandMenuPanelProps) {
   const [query, setQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
   const listRef = useRef<HTMLUListElement | null>(null)
@@ -147,7 +145,6 @@ function CommandMenuPanel({ mode, entries, onRunCommand, onOpenFile, onBeforePic
 
   const pick = (entry: CommandMenuEntry, raw: boolean) => {
     if (entry.kind === 'command' && !isEnabled(entry)) return
-    onBeforePick()
     if (entry.kind === 'command') onRunCommand(entry.id)
     else onOpenFile(entry.id, { raw: raw && entry.kind === 'document' })
   }
@@ -223,13 +220,10 @@ function CommandMenuPanel({ mode, entries, onRunCommand, onOpenFile, onBeforePic
  * the matcher are Plumo's own. New Plumo code on the shared command manifest.
  */
 export function CommandMenu({ open, mode, entries, onClose, onRunCommand, onOpenFile }: CommandMenuProps) {
-  // Esc and a click outside hand focus back to where it was (the editor); a
-  // picked row does not, so whatever the row ran (a find bar, a rename field)
-  // keeps the focus it took.
-  const pickedRef = useRef(false)
-  const markPicked = () => {
-    pickedRef.current = true
-  }
+  // Esc, a click outside and a row that ran something which takes no focus
+  // hand focus back to where it was; a row that ran a find bar, a rename or
+  // opened a Document leaves the focus that took (AIM-457).
+  const returnFocus = useDialogReturnFocus()
   return (
     <Dialog open={open} onOpenChange={(next) => { if (!next) onClose() }}>
       <DialogContent
@@ -241,12 +235,9 @@ export function CommandMenu({ open, mode, entries, onClose, onRunCommand, onOpen
         aria-describedby={undefined}
         // Esc cancelling a candidate does not close the palette.
         onEscapeKeyDown={(event) => { if (isImeKeyEvent(event)) event.preventDefault() }}
-        onCloseAutoFocus={(event) => {
-          if (pickedRef.current) event.preventDefault()
-          pickedRef.current = false
-        }}
+        {...returnFocus}
       >
-        <CommandMenuPanel mode={mode} entries={entries} onRunCommand={onRunCommand} onOpenFile={onOpenFile} onBeforePick={markPicked} />
+        <CommandMenuPanel mode={mode} entries={entries} onRunCommand={onRunCommand} onOpenFile={onOpenFile} />
       </DialogContent>
     </Dialog>
   )

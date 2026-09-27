@@ -1,9 +1,11 @@
 import { trySelectFirstHeading } from './editor-title-selection'
 import type { TitleHeadingTextBlock } from './editor-title-heading-text'
-import { canEditorClaimFocus } from './editor-focus-ownership'
 
 const ROOT_EDITABLE_SELECTOR = '.ProseMirror[contenteditable="true"]'
+// Raw mode: CodeMirror's content, with BlockNote's view not mounted at all.
+const RAW_EDITABLE_SELECTOR = '.cm-editor .cm-content[contenteditable="true"]'
 const FALLBACK_EDITABLE_SELECTOR = '.bn-editor [contenteditable="true"]'
+const EDITABLE_SELECTORS = [ROOT_EDITABLE_SELECTOR, RAW_EDITABLE_SELECTOR, FALLBACK_EDITABLE_SELECTOR]
 const MAX_FOCUS_ATTEMPTS = 12
 const MAX_TITLE_SELECTION_ATTEMPTS = 12
 
@@ -62,16 +64,10 @@ function focusEditableCandidate(editable: HTMLElement): boolean {
 }
 
 function focusEditableNode(): boolean {
-  const rootEditable = document.querySelector<HTMLElement>(ROOT_EDITABLE_SELECTOR)
-  if (rootEditable && focusEditableCandidate(rootEditable)) {
-    return true
+  for (const selector of EDITABLE_SELECTORS) {
+    const editable = document.querySelector<HTMLElement>(selector)
+    if (editable && focusEditableCandidate(editable)) return true
   }
-
-  const fallbackEditable = document.querySelector<HTMLElement>(FALLBACK_EDITABLE_SELECTOR)
-  if (fallbackEditable && focusEditableCandidate(fallbackEditable)) {
-    return true
-  }
-
   return false
 }
 
@@ -107,8 +103,8 @@ export function focusEditorWithRetries(
   t0: number | undefined,
   attempt = 0,
 ): void {
-  if (!canEditorClaimFocus()) return
-  editor.focus()
+  // BlockNote's own focus is for its mounted view; in Raw mode there is none, and CodeMirror's content is found below.
+  if (!document.querySelector(RAW_EDITABLE_SELECTOR)) editor.focus()
   const hasFocus = ensureEditableFocus()
   if (!hasFocus && attempt < MAX_FOCUS_ATTEMPTS) {
     requestAnimationFrame(() => focusEditorWithRetries(editor, selectTitle, t0, attempt + 1))

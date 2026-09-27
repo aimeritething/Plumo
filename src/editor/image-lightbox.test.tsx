@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { ImageLightbox } from './image-lightbox'
 
@@ -39,5 +39,21 @@ describe('ImageLightbox', () => {
     fireEvent.keyDown(screen.getByTestId('image-lightbox'), { key: 'Escape' })
 
     expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('closing hands focus back to the editor the picture was double-clicked in (AIM-457)', async () => {
+    const editable = document.createElement('div')
+    editable.setAttribute('contenteditable', 'true')
+    editable.tabIndex = -1
+    document.body.appendChild(editable)
+    editable.focus()
+    const image = { src: 'https://example.com/photo.png', alt: 'A lake' }
+    const { rerender } = render(<ImageLightbox image={image} onClose={() => {}} />)
+    expect(editable).not.toHaveFocus()
+
+    fireEvent.keyDown(screen.getByTestId('image-lightbox'), { key: 'Escape' })
+    rerender(<ImageLightbox image={null} onClose={() => {}} />)
+
+    await waitFor(() => expect(editable).toHaveFocus())
   })
 })

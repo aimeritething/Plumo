@@ -10,7 +10,6 @@ import { useExplorerActions } from '@/explorer/use-explorer-actions'
 import { useExplorerMemory } from '@/explorer/use-explorer-memory'
 import { useDocumentWatcher } from '@/folder/use-document-watcher'
 import { buildExplorerTree, documentRoot } from '@/folder/explorer'
-import { activeTabPaths } from '@/tabs/image-file'
 import { findByNotePath } from '@/lib/note-path-identity'
 import { isWithinPrefix } from '@/folder/folder-action-utils'
 import { Sidebar } from '@/shell/sidebar'
@@ -36,6 +35,8 @@ import { closeAppWindow, exitApp } from '@/platform/app-window'
 import { pickNoteToOpen } from '@/tabs/note-open-dialog'
 import { openNotesSettled } from '@/tabs/note-open-request'
 import { requestPlainTextPaste } from '@/editor/plain-text-paste'
+import { requestEditorFocus } from '@/editor/use-editor-focus'
+import { activeTabPaths, isImageFilePath } from '@/tabs/image-file'
 
 const noop = () => {}
 
@@ -253,6 +254,16 @@ export default function App() {
   const openExplorerFile = useCallback((path: string) => {
     void openNotesSettled({ openNote, paths: [path], settleActiveNote: settleAndRecord })
   }, [openNote, settleAndRecord])
+  // A Document opened by hand gets the keyboard: the editor takes focus once
+  // its Tab is showing, so typing goes on without a click (AIM-457). An Image
+  // file's Tab has nothing to type in.
+  const focusEditorFor = useCallback((path: string) => {
+    if (!isImageFilePath(path)) requestEditorFocus({ path })
+  }, [])
+  const openFileAndFocus = useCallback((path: string) => {
+    openExplorerFile(path)
+    focusEditorFor(path)
+  }, [focusEditorFor, openExplorerFile])
 
   // A rename or move made in Plumo carries the Tabs and the pins along. A
   // change made in Finder is the watcher's, and moves Tabs only: the listing
@@ -276,6 +287,7 @@ export default function App() {
     activeTabPath,
     refresh: folderState.refresh,
     openNote: openExplorerFile,
+    focusEditor: focusEditorFor,
     settleActiveDocument: settleAndRecord,
     retargetTabs: retargetTabsAndPins,
     settleTabsUnder,
@@ -288,8 +300,16 @@ export default function App() {
   const { select: selectExplorerRow } = explorerActions
   const openPinnedFile = useCallback((path: string) => {
     selectExplorerRow(path)
-    openExplorerFile(path)
-  }, [openExplorerFile, selectExplorerRow])
+    openFileAndFocus(path)
+  }, [openFileAndFocus, selectExplorerRow])
+  // ⌘N and the tab bar's "+": with the sidebar collapsed there is no row to
+  // name the Document in, so it keeps its Untitled name and the editor takes
+  // focus (AIM-463). A Document named there hands focus to the editor too.
+  const { createDocument } = explorerActions
+  const createDocumentFromShell = useCallback(() => {
+    createDocument({ rename: !sidebar.collapsed })
+  }, [createDocument, sidebar.collapsed])
+  const focusActiveEditor = useCallback(() => requestEditorFocus({}), [])
   const onTogglePinnedSection = useCallback(() => toggleSidebarSection('pinned'), [toggleSidebarSection])
   const onToggleExplorerSection = useCallback(() => toggleSidebarSection('explorer'), [toggleSidebarSection])
   const onOpenExplorerSection = useCallback(() => openSidebarSection('explorer'), [openSidebarSection])
@@ -439,14 +459,14 @@ export default function App() {
     ...tabFileCommands,
     ...tabCommands.handlers,
     ...appearance.handlers,
-    onCreateNote: explorerActions.createDocument,
+    onCreateNote: createDocumentFromShell,
     onQuickOpen: hasFolder ? openQuickOpen : undefined,
     onCommandPalette: openCommandMenu,
     onPastePlainText,
     onZoomIn: noop,
     onZoomOut: noop,
     onZoomReset: noop,
-  }), [activeDocumentPath, appearance.handlers, canPinActiveTab, explorerActions.createDocument, hasFolder, hasTab, onCloseFolder, onCopyPath, onFindInNote, onOpenFolder, onOpenNote, onPastePlainText, onSave, onToggleRawEditor, openCommandMenu, openQuickOpen, quit, tabCommands, tabFileCommands, toggleSidebar])
+  }), [activeDocumentPath, appearance.handlers, canPinActiveTab, createDocumentFromShell, hasFolder, hasTab, onCloseFolder, onCopyPath, onFindInNote, onOpenFolder, onOpenNote, onPastePlainText, onSave, onToggleRawEditor, openCommandMenu, openQuickOpen, quit, tabCommands, tabFileCommands, toggleSidebar])
   useAppKeyboard(handlers)
   useMenuEvents(handlers)
 
@@ -469,7 +489,8 @@ export default function App() {
       paths: [path],
       settleActiveNote: settleAndRecord,
     })
-  }, [closeCommandMenu, openNote, settleAndRecord])
+    focusEditorFor(path)
+  }, [closeCommandMenu, focusEditorFor, openNote, settleAndRecord])
   // A `.md` dropped on the window opens like File → Open Document…; an image
   // dropped over a Document is the editor's, and nothing else is picked up.
   useDocumentDrop({ openNote: openLoneNote, settleActiveNote: settleAndRecord })
@@ -499,8 +520,9 @@ export default function App() {
           folder={folder}
           tree={explorerTree}
           activeTabPath={activeTabPath}
-          onOpenFile={openExplorerFile}
+          onOpenFile={openFileAndFocus}
           actions={explorerActions}
+          onFocusEditor={focusActiveEditor}
           memory={explorerMemory}
           onCloseFolder={onCloseFolder}
           onOpenFolder={onOpenFolder}
@@ -528,7 +550,7 @@ export default function App() {
         onSetTabMode={setTabMode}
         onActivateTab={tabCommands.activateTabSettled}
         onCloseTab={tabCommands.closeTabSettled}
-        onNewDocument={hasFolder ? explorerActions.createDocument : undefined}
+        onNewDocument={hasFolder ? createDocumentFromShell : undefined}
         tabCommands={tabFileCommands}
         writeFailure={writeFailures.failureFor(activeTabPath)}
         onRetryWrite={retry}

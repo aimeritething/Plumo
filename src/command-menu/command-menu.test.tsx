@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { CommandMenu, type CommandMenuProps } from './command-menu'
 import type { CommandMenuEntry } from './command-menu-matcher'
@@ -154,6 +154,60 @@ describe('CommandMenu', () => {
     const { props } = renderMenu()
     fireEvent.keyDown(input(), { key: 'Escape' })
     expect(props.onClose).toHaveBeenCalled()
+  })
+
+  describe('where focus goes when the palette closes (AIM-457)', () => {
+    /** The editor, standing in for whatever had focus when ⌘K was pressed. */
+    function focusedBefore() {
+      const editable = document.createElement('div')
+      editable.setAttribute('contenteditable', 'true')
+      editable.tabIndex = -1
+      document.body.appendChild(editable)
+      editable.focus()
+      expect(editable).toHaveFocus()
+      return editable
+    }
+
+    it('esc hands focus back to where it was, not to the body', async () => {
+      const editable = focusedBefore()
+      const { props, rerender } = renderMenu()
+      expect(input()).toHaveFocus()
+
+      fireEvent.keyDown(input(), { key: 'Escape' })
+      rerender(<CommandMenu {...props} open={false} />)
+
+      await waitFor(() => expect(editable).toHaveFocus())
+    })
+
+    it('a row that ran something which took no focus hands it back too', async () => {
+      const editable = focusedBefore()
+      const { props, rerender } = renderMenu()
+
+      fireEvent.change(input(), { target: { value: 'sidebar' } })
+      fireEvent.keyDown(input(), { key: 'Enter' })
+      expect(props.onRunCommand).toHaveBeenCalledWith('view-toggle-sidebar')
+      rerender(<CommandMenu {...props} open={false} />)
+
+      await waitFor(() => expect(editable).toHaveFocus())
+    })
+
+    it('leaves the focus a row took for itself', async () => {
+      focusedBefore()
+      const findBar = document.createElement('input')
+      document.body.appendChild(findBar)
+      const { props, rerender } = renderMenu()
+
+      fireEvent.change(input(), { target: { value: 'sidebar' } })
+      fireEvent.keyDown(input(), { key: 'Enter' })
+      // App closes the palette and runs the command in one batch; the find
+      // bar's input takes focus in the render that follows, before the palette
+      // has finished going.
+      rerender(<CommandMenu {...props} open={false} />)
+      findBar.focus()
+
+      await new Promise((resolve) => setTimeout(resolve, 10))
+      expect(findBar).toHaveFocus()
+    })
   })
 
   it('is marked as the palette, which the plain-text paste helper keeps out of', () => {

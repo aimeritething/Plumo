@@ -1,6 +1,5 @@
 import { useEffect } from 'react'
 import { focusEditorWithRetries, type FocusableEditor } from './editor-focus-utils'
-import { resumeEditorFocus } from './editor-focus-ownership'
 
 const TAB_SWAP_EVENT_NAME = 'plumo:editor-tab-swapped'
 const FOCUS_EVENT_NAME = 'plumo:focus-editor'
@@ -98,7 +97,6 @@ function scheduleFocusStabilityChecks(options: FocusStabilityOptions): void {
         return
       }
       if (!focusReturnedToDocumentChrome()) return
-      resumeEditorFocus()
       focusEditorWithRetries(context.editor, context.selectTitle, context.t0)
       if (editorHasFocus()) clearPendingFocusRequest(targetPath)
     }, delay)
@@ -121,7 +119,6 @@ function handleTargetFocusRequest(options: TargetFocusOptions): void {
       clearPendingFocusRequest(targetPath)
       return
     }
-    resumeEditorFocus()
     scheduleEditorFocus(context, () => clearPendingFocusRequest(targetPath))
     scheduleFocusStabilityChecks({ context, targetPath, pendingCleanups })
   }
@@ -156,10 +153,14 @@ function registerPendingTabFocus(
 }
 
 /**
- * Focus editor when a new note is created (signaled via custom event).
- * Uses adaptive timing: fast rAF path when editor is already mounted,
- * short timeout when waiting for first mount.
- * When selectTitle is true, also selects all text in the first H1 block.
+ * The editor takes focus when `requestEditorFocus` asks: a Document opened
+ * from a row or a palette pick, a new Document named or created with the
+ * sidebar collapsed, a rename ended from the keyboard. With a `path`, the
+ * focus waits for that Document's Tab to be showing (the tab-swap event, or a
+ * short fallback) and is checked on for a few seconds after, since a late
+ * render can put focus back on the document chrome. Timing is adaptive: a
+ * frame when the editor is mounted, a short wait for its first mount. When
+ * selectTitle is true, the first H1's text is selected as well.
  */
 export function useEditorFocus(
   editor: FocusableEditor,

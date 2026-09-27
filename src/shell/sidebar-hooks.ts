@@ -26,6 +26,12 @@ interface SidebarInlineRenameInputOptions {
   initialValue: string
   onCancel: () => void
   onSubmit: (value: string) => Promise<boolean> | boolean | undefined
+  /**
+   * The rename ended from the keyboard (Enter took the name, or Escape gave it
+   * up), so focus needs a place to go: the input is about to unmount. A blur
+   * ends a rename too, but focus went where the click went.
+   */
+  onKeyboardEnd?: () => void
   selectTextOnFocus?: boolean
 }
 
@@ -94,6 +100,7 @@ export function useSidebarInlineRenameInput({
   initialValue,
   onCancel,
   onSubmit,
+  onKeyboardEnd,
   selectTextOnFocus = true,
 }: SidebarInlineRenameInputOptions) {
   const [value, setValue] = useState(initialValue)
@@ -123,14 +130,15 @@ export function useSidebarInlineRenameInput({
     if (event.key === 'Enter') {
       event.preventDefault()
       event.stopPropagation()
-      void submitValue()
+      void Promise.resolve(submitValue()).then((accepted) => { if (accepted) onKeyboardEnd?.() })
     }
     if (event.key === 'Escape') {
       event.preventDefault()
       event.stopPropagation()
       onCancel()
+      onKeyboardEnd?.()
     }
-  }, [onCancel, submitValue])
+  }, [onCancel, onKeyboardEnd, submitValue])
 
   return {
     handleKeyDown,

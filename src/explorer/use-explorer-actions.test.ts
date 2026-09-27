@@ -48,6 +48,7 @@ const FILES = [
 function setup(files: ListedFile[] = FILES, initialActiveTabPath: string | null = null) {
   const refresh = vi.fn(async () => {})
   const openNote = vi.fn()
+  const focusEditor = vi.fn()
   const retargetTabs = vi.fn()
   const settleActiveDocument = vi.fn(async () => {})
   const settleTabsUnder = vi.fn(async () => {})
@@ -73,6 +74,7 @@ function setup(files: ListedFile[] = FILES, initialActiveTabPath: string | null 
       activeTabPath,
       refresh,
       openNote,
+      focusEditor,
       settleActiveDocument,
       retargetTabs: retarget,
       settleTabsUnder,
@@ -80,7 +82,7 @@ function setup(files: ListedFile[] = FILES, initialActiveTabPath: string | null 
       showToast,
     })
   })
-  return { ...hook, refresh, openNote, retargetTabs, settleActiveDocument, settleTabsUnder, dropTabsUnder, showToast, order }
+  return { ...hook, refresh, openNote, focusEditor, retargetTabs, settleActiveDocument, settleTabsUnder, dropTabsUnder, showToast, order }
 }
 
 beforeEach(() => {
@@ -93,7 +95,7 @@ beforeEach(() => {
 
 describe('creating a Document', () => {
   it('lands it inside the selected folder, opens its Tab and starts the rename', async () => {
-    const { result, openNote } = setup()
+    const { result, openNote, focusEditor } = setup()
 
     act(() => { result.current.select(`${FOLDER}/Projects`) })
     act(() => { result.current.createDocument() })
@@ -106,8 +108,21 @@ describe('creating a Document', () => {
       kind: 'note',
       stem: 'Untitled',
       extension: '.md',
+      created: true,
     })
     expect(result.current.selected).toBe(`${FOLDER}/Projects/Untitled.md`)
+    // The rename input takes focus; the editor's turn comes when the name is in.
+    expect(focusEditor).not.toHaveBeenCalled()
+  })
+
+  it('with the sidebar collapsed keeps the Untitled name, opens its Tab and hands the editor focus (AIM-463)', async () => {
+    const { result, openNote, focusEditor } = setup()
+
+    act(() => { result.current.createDocument({ rename: false }) })
+
+    await waitFor(() => expect(openNote).toHaveBeenCalledWith(`${FOLDER}/Untitled.md`))
+    expect(focusEditor).toHaveBeenCalledWith(`${FOLDER}/Untitled.md`)
+    expect(result.current.editing).toBeNull()
   })
 
   it('lands it in the parent of a selected Document', async () => {
@@ -174,6 +189,7 @@ describe('creating a folder', () => {
       kind: 'folder',
       stem: 'New Folder',
       extension: '',
+      created: false,
     })
   })
 
@@ -196,6 +212,7 @@ describe('renaming', () => {
     const { result, retargetTabs, refresh, settleActiveDocument } = setup()
 
     act(() => { result.current.startRename(`${FOLDER}/Projects/Plumo.md`, 'note') })
+    expect(result.current.editing?.created).toBe(false)
     await act(async () => { await result.current.commitRename('Plumo v2') })
 
     expect(renameFile).toHaveBeenCalledWith({

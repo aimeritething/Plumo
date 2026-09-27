@@ -47,6 +47,17 @@ export interface ExplorerEditing {
   stem: string
   /** Dim static text beside the input, never editable. */
   extension: string
+  /** The row is a Document just created: naming it from the keyboard hands focus to the editor, not back to the row. */
+  created: boolean
+}
+
+export interface CreateDocumentOptions {
+  /**
+   * Whether the new row enters rename, the default. With the sidebar
+   * collapsed there is no row to name it in, so the Document keeps its
+   * Untitled name and the editor takes focus instead (AIM-463).
+   */
+  rename?: boolean
 }
 
 export interface ExplorerActions {
@@ -55,10 +66,10 @@ export interface ExplorerActions {
   editing: ExplorerEditing | null
   error: string | null
   /** ⌘N and the header "+": a Document where the selection points. */
-  createDocument: () => void
+  createDocument: (options?: CreateDocumentOptions) => void
   /** The header "…" and a folder's menu: a folder where the selection points. */
   createFolder: () => void
-  createDocumentIn: (folderPath: string) => void
+  createDocumentIn: (folderPath: string, options?: CreateDocumentOptions) => void
   createFolderIn: (folderPath: string) => void
   startRename: (path: string, kind: ExplorerRowKind) => void
   commitRename: (stem: string) => Promise<boolean>
@@ -78,6 +89,8 @@ interface Options {
   activeTabPath: string | null
   refresh: () => Promise<void>
   openNote: (path: string) => void
+  /** The editor takes focus once the Document's Tab is showing: a Document created with no row to name it in. */
+  focusEditor: (path: string) => void
   /**
    * Write the active Document's pending edits before a rename moves it, so the
    * save buffer is not left holding bytes for a path that no longer exists. A
@@ -169,28 +182,32 @@ function destinationLabel(folder: string, destination: string): string {
 
 export function useExplorerActions(options: Options): ExplorerActions {
   const {
-    folder, tree, activeTabPath, refresh, openNote, settleActiveDocument, retargetTabs,
+    folder, tree, activeTabPath, refresh, openNote, focusEditor, settleActiveDocument, retargetTabs,
     settleTabsUnder, dropTabsUnder, showToast,
   } = options
   const { selected, setSelected, selectThroughRename } = useSelectionFollowingActiveTab(activeTabPath, folder)
   const [editing, setEditing] = useState<ExplorerEditing | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const startRename = useCallback((path: string, kind: ExplorerRowKind) => {
+  const startRenameOf = useCallback((path: string, kind: ExplorerRowKind, created: boolean) => {
     const { stem, extension } = kind === 'folder'
       ? { stem: notePathFilename(path), extension: '' }
       : lockedExtension(notePathFilename(path))
     setSelected(path)
     setError(null)
-    setEditing({ path, kind, stem, extension })
+    setEditing({ path, kind, stem, extension, created })
   }, [setSelected])
+
+  const startRename = useCallback((path: string, kind: ExplorerRowKind) => {
+    startRenameOf(path, kind, false)
+  }, [startRenameOf])
 
   const cancelRename = useCallback(() => {
     setEditing(null)
     setError(null)
   }, [])
 
-  const createDocumentIn = useCallback((folderPath: string) => {
+  const createDocumentIn = useCallback((folderPath: string, { rename = true }: CreateDocumentOptions = {}) => {
     void (async () => {
       if (!folder || !tree) return
       const name = await createWithFreeName(
@@ -203,9 +220,10 @@ export function useExplorerActions(options: Options): ExplorerActions {
       const path = `${folderPath}/${name}`
       await refresh()
       openNote(path)
-      startRename(path, 'note')
+      if (rename) startRenameOf(path, 'note', true)
+      else focusEditor(path)
     })().catch((cause: unknown) => console.warn('Could not create a Document:', cause))
-  }, [folder, openNote, refresh, startRename, tree])
+  }, [focusEditor, folder, openNote, refresh, startRenameOf, tree])
 
   const createFolderIn = useCallback((folderPath: string) => {
     void (async () => {
@@ -225,8 +243,8 @@ export function useExplorerActions(options: Options): ExplorerActions {
   // One placement rule for ⌘N, the header "+" and the context menu: a folder
   // (or the Folder itself) takes it inside, a file row takes it into its parent, and
   // nothing selected means the Folder root.
-  const createDocument = useCallback(() => {
-    if (tree) createDocumentIn(creationParentPath(tree, selected))
+  const createDocument = useCallback((options?: CreateDocumentOptions) => {
+    if (tree) createDocumentIn(creationParentPath(tree, selected), options)
   }, [createDocumentIn, selected, tree])
 
   const createFolder = useCallback(() => {

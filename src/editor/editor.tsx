@@ -2,7 +2,6 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState, type MutableRe
 import { useCreateBlockNote } from '@blocknote/react'
 import { useEditorTabSwap } from '@/kernel/resolve/use-editor-tab-swap'
 import { useEditorFocus } from './use-editor-focus'
-import { useEditorFocusScope } from './editor-focus-ownership'
 import { RUNTIME_STYLE_NONCE } from '@/platform/runtime-style-nonce'
 import type { EditorMode, Tab } from '@/types'
 import type { ThemeMode } from '@/shell/theme-mode'
@@ -11,7 +10,6 @@ import { documentFrontmatter } from '@/kernel/markdown/frontmatter-status'
 import { activeTabPaths, imageFetchVersion, imageMetadataLabel, type ImageNaturalSize } from '@/tabs/image-file'
 import { noteRootForPath } from '@/folder/note-entry'
 import { notePathFilename } from '@/lib/note-path-identity'
-import { dispatchEditorFindAvailability } from '@/kernel/blocknote/editor-find-events'
 import { installRichEditorMarkdownSerializer } from '@/kernel/markdown/rich-editor-markdown'
 import type { WriteFailure } from './use-write-failures'
 import { useRegisterEditorContentFlushes } from './editor-content-flush-registration'
@@ -343,23 +341,10 @@ function EditorFindScope({
   className?: string
   style?: React.CSSProperties
 }) {
-  const scopeRef = useRef<HTMLDivElement | null>(null)
-  useEditorFocusScope(scopeRef)
-  const syncAvailability = useCallback(() => {
-    const activeElement = document.activeElement
-    const enabled = activeElement instanceof Node && scopeRef.current?.contains(activeElement) === true
-    dispatchEditorFindAvailability(enabled)
-  }, [])
-
-  useEffect(() => () => dispatchEditorFindAvailability(false), [])
-
   return (
     <div
-      ref={scopeRef}
       className={className}
       data-editor-find-scope="true"
-      onFocusCapture={() => dispatchEditorFindAvailability(true)}
-      onBlurCapture={() => requestAnimationFrame(syncAvailability)}
       style={style}
     >
       {children}
