@@ -1,0 +1,50 @@
+diff --git a/dist/blocknote-shadcn.js b/dist/blocknote-shadcn.js
+index 2e1ac4e99e225231dd22d7790aad3531acb1b71e..be73387cbafa17b490b9101295c78baa9cdd6a60 100644
+--- a/dist/blocknote-shadcn.js
++++ b/dist/blocknote-shadcn.js
+@@ -926,8 +926,8 @@ const nt = (e) => {
+   return /* @__PURE__ */ v(
+     b.Button.Button,
+     {
+-      variant: "ghost",
+-      className: d(n, "text-gray-400"),
++      variant: "icon",
++      className: n,
+       ref: t,
+       "aria-label": l,
+       onClick: s,
+@@ -1053,8 +1053,8 @@ const nt = (e) => {
+   return /* @__PURE__ */ v(
+     b.Button.Button,
+     {
+-      variant: "ghost",
+-      className: d(n, "text-gray-400"),
++      variant: "icon",
++      className: n,
+       ref: t,
+       "aria-label": l,
+       onClick: s,
+@@ -1229,10 +1229,10 @@ const nt = (e) => {
+   return /* @__PURE__ */ o(
+     c.Button.Button,
+     {
+-      variant: "ghost",
++      variant: "icon",
+       className: d(
+         n,
+-        "h-full w-full p-0 text-gray-400",
++        "h-full w-full p-0",
+         n != null && n.includes("extend-button-add-remove-columns") ? "ml-1" : "mt-1",
+         n != null && n.includes("extend-button-editing") ? "bg-accent text-accent-foreground" : ""
+       ),
+@@ -1259,8 +1259,8 @@ const nt = (e) => {
+   return /* @__PURE__ */ o(
+     g.Button.Button,
+     {
+-      variant: "ghost",
+-      className: d(n, "h-fit w-fit p-0 text-gray-400"),
++      variant: "icon",
++      className: d(n, "h-fit w-fit p-0"),
+       ref: t,
+       "aria-label": u,
+       draggable: r,

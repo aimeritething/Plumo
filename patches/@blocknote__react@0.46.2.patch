@@ -1,8 +1,16 @@
 diff --git a/dist/blocknote-react.js b/dist/blocknote-react.js
-index d4d36cd..c493121 100644
+index d4d36cd4dbb5370c3b7431ffeb577e4870b39825..00a1bee5b7e03b21d3c0a3ad57dbe15f9f85c241 100644
 --- a/dist/blocknote-react.js
 +++ b/dist/blocknote-react.js
-@@ -154,8 +154,26 @@ const co = (e) => {
+@@ -1,6 +1,7 @@
+ var ln = Object.defineProperty;
+ var cn = (e, t, n) => t in e ? ln(e, t, { enumerable: !0, configurable: !0, writable: !0, value: n }) : e[t] = n;
+ var ee = (e, t, n) => cn(e, typeof t != "symbol" ? t + "" : t, n);
++import { TextIndent as PhTextIndent, TextOutdent as PhTextOutdent, LinkSimple as PhLinkSimple, TextT as PhTextT, ArrowsInLineHorizontal as PhArrowsInLineHorizontal, ArrowsInLineVertical as PhArrowsInLineVertical, Textbox as PhTextbox, Swap as PhSwap, PencilSimpleLine as PhPencilSimpleLine, Trash as PhTrash, Eye as PhEye, LinkBreak as PhLinkBreak, Plus as PhPlus, DotsSixVertical as PhDotsSixVertical, CaretDown as PhCaretDown, File as PhFile, SpeakerHigh as PhSpeakerHigh, Video as PhVideo } from "@phosphor-icons/react";
+ import Z, { createContext as Ae, useContext as we, useState as V, useCallback as H, useEffect as y, useRef as F, useMemo as S, useLayoutEffect as an, useDebugValue as sn, Suspense as dn, lazy as vt, useSyncExternalStore as De, forwardRef as un, useImperativeHandle as mn, useReducer as fn } from "react";
+ import { jsxs as x, jsx as l, Fragment as P } from "react/jsx-runtime";
+ import { CommentsExtension as U } from "@blocknote/core/comments";
+@@ -154,8 +155,26 @@ const co = (e) => {
  };
  function so(e) {
    let t = new DOMRect();
@@ -31,7 +39,7 @@ index d4d36cd..c493121 100644
  }
  const z = (e) => {
    var h, b, p;
-@@ -193,6 +211,7 @@ const z = (e) => {
+@@ -193,6 +212,7 @@ const z = (e) => {
      ...e.elementProps,
      style: {
        display: "flex",
@@ -39,7 +47,7 @@ index d4d36cd..c493121 100644
        ...(h = e.elementProps) == null ? void 0 : h.style,
        zIndex: `calc(var(--bn-ui-base-z-index) + ${((p = (b = e.elementProps) == null ? void 0 : b.style) == null ? void 0 : p.zIndex) || 0})`,
        ...n,
-@@ -216,9 +235,7 @@ const z = (e) => {
+@@ -216,9 +236,7 @@ const z = (e) => {
        const s = Ue(t, c.doc);
        if (!s)
          return;
@@ -50,7 +58,123 @@ index d4d36cd..c493121 100644
        if (a instanceof Element)
          return {
            element: a
-@@ -2499,7 +2516,14 @@ function Kr(e) {
+@@ -756,7 +774,7 @@ function Lo(e) {
+   return k({ attr: { viewBox: "0 0 24 24", fill: "currentColor" }, child: [{ tag: "path", attr: { d: "M23 12L15.9289 19.0711L14.5147 17.6569L20.1716 12L14.5147 6.34317L15.9289 4.92896L23 12ZM3.82843 12L9.48528 17.6569L8.07107 19.0711L1 12L8.07107 4.92896L9.48528 6.34317L3.82843 12Z" }, child: [] }] })(e);
+ }
+ function je(e) {
+-  return k({ attr: { viewBox: "0 0 24 24", fill: "currentColor" }, child: [{ tag: "path", attr: { d: "M3 8L9.00319 2H19.9978C20.5513 2 21 2.45531 21 2.9918V21.0082C21 21.556 20.5551 22 20.0066 22H3.9934C3.44476 22 3 21.5501 3 20.9932V8ZM10 4V9H5V20H19V4H10Z" }, child: [] }] })(e);
++  return l(PhFile, e);
+ }
+ function Eo(e) {
+   return k({ attr: { viewBox: "0 0 24 24", fill: "currentColor" }, child: [{ tag: "path", attr: { d: "M3 4H21V6H3V4ZM5 19H19V21H5V19ZM3 14H21V16H3V14ZM5 9H19V11H5V9Z" }, child: [] }] })(e);
+@@ -777,7 +795,7 @@ function No(e) {
+   return k({ attr: { viewBox: "0 0 24 24", fill: "currentColor" }, child: [{ tag: "path", attr: { d: "M3.41436 5.99995L5.70726 3.70706L4.29304 2.29285L0.585938 5.99995L4.29304 9.70706L5.70726 8.29285L3.41436 5.99995ZM9.58594 5.99995L7.29304 3.70706L8.70726 2.29285L12.4144 5.99995L8.70726 9.70706L7.29304 8.29285L9.58594 5.99995ZM14.0002 2.99995H21.0002C21.5524 2.99995 22.0002 3.44767 22.0002 3.99995V20C22.0002 20.5522 21.5524 21 21.0002 21H3.00015C2.44787 21 2.00015 20.5522 2.00015 20V12H4.00015V19H20.0002V4.99995H14.0002V2.99995Z" }, child: [] }] })(e);
+ }
+ function st(e) {
+-  return k({ attr: { viewBox: "0 0 24 24", fill: "currentColor" }, child: [{ tag: "path", attr: { d: "M5.55397 22H3.3999L10.9999 3H12.9999L20.5999 22H18.4458L16.0458 16H7.95397L5.55397 22ZM8.75397 14H15.2458L11.9999 5.88517L8.75397 14Z" }, child: [] }] })(e);
++  return l(PhPencilSimpleLine, e);
+ }
+ function pe(e) {
+   return k({ attr: { viewBox: "0 0 24 24", fill: "currentColor" }, child: [{ tag: "path", attr: { d: "M13 20H11V13H4V20H2V4H4V11H11V4H13V20ZM21.0005 8V20H19.0005L19 10.204L17 10.74V8.67L19.5005 8H21.0005Z" }, child: [] }] })(e);
+@@ -798,22 +816,22 @@ function At(e) {
+   return k({ attr: { viewBox: "0 0 24 24", fill: "currentColor" }, child: [{ tag: "path", attr: { d: "M21.097 8L18.499 12.5C20.7091 12.5 22.5 14.2909 22.5 16.5C22.5 18.7091 20.7091 20.5 18.5 20.5C16.2909 20.5 14.5 18.7091 14.5 16.5C14.5 15.7636 14.699 15.0737 15.0461 14.4811L18.788 8H21.097ZM4 4V11H11V4H13V20H11V13H4V20H2V4H4ZM18.5 14.5C17.3954 14.5 16.5 15.3954 16.5 16.5C16.5 17.6046 17.3954 18.5 18.5 18.5C19.6046 18.5 20.5 17.6046 20.5 16.5C20.5 15.3954 19.6046 14.5 18.5 14.5Z" }, child: [] }] })(e);
+ }
+ function Ao(e) {
+-  return k({ attr: { viewBox: "0 0 24 24", fill: "currentColor" }, child: [{ tag: "path", attr: { d: "M3 4H21V6H3V4ZM3 19H21V21H3V19ZM11 14H21V16H11V14ZM11 9H21V11H11V9ZM3 12.5L7 9V16L3 12.5Z" }, child: [] }] })(e);
++  return l(PhTextOutdent, e);
+ }
+ function Do(e) {
+-  return k({ attr: { viewBox: "0 0 24 24", fill: "currentColor" }, child: [{ tag: "path", attr: { d: "M3 4H21V6H3V4ZM3 19H21V21H3V19ZM11 14H21V16H11V14ZM11 9H21V11H11V9ZM7 12.5L3 16V9L7 12.5Z" }, child: [] }] })(e);
++  return l(PhTextIndent, e);
+ }
+ function dt(e) {
+-  return k({ attr: { viewBox: "0 0 24 24", fill: "currentColor" }, child: [{ tag: "path", attr: { d: "M8 5H11V19H8V21H16V19H13V5H16V3H8V5ZM2 7C1.44772 7 1 7.44772 1 8V16C1 16.5523 1.44772 17 2 17H8V15H3V9H8V7H2ZM16 9H21V15H16V17H22C22.5523 17 23 16.5523 23 16V8C23 7.44772 22.5523 7 22 7H16V9Z" }, child: [] }] })(e);
++  return l(PhTextbox, e);
+ }
+ function Zo(e) {
+   return k({ attr: { viewBox: "0 0 24 24", fill: "currentColor" }, child: [{ tag: "path", attr: { d: "M15 20H7V18H9.92661L12.0425 6H9V4H17V6H14.0734L11.9575 18H15V20Z" }, child: [] }] })(e);
+ }
+ function Fo(e) {
+-  return k({ attr: { viewBox: "0 0 24 24", fill: "currentColor" }, child: [{ tag: "path", attr: { d: "M17 17H22V19H19V22H17V17ZM7 7H2V5H5V2H7V7ZM18.364 15.5355L16.9497 14.1213L18.364 12.7071C20.3166 10.7545 20.3166 7.58866 18.364 5.63604C16.4113 3.68342 13.2455 3.68342 11.2929 5.63604L9.87868 7.05025L8.46447 5.63604L9.87868 4.22183C12.6123 1.48816 17.0445 1.48816 19.7782 4.22183C22.5118 6.9555 22.5118 11.3877 19.7782 14.1213L18.364 15.5355ZM15.5355 18.364L14.1213 19.7782C11.3877 22.5118 6.9555 22.5118 4.22183 19.7782C1.48816 17.0445 1.48816 12.6123 4.22183 9.87868L5.63604 8.46447L7.05025 9.87868L5.63604 11.2929C3.68342 13.2455 3.68342 16.4113 5.63604 18.364C7.58866 20.3166 10.7545 20.3166 12.7071 18.364L14.1213 16.9497L15.5355 18.364ZM14.8284 7.75736L16.2426 9.17157L9.17157 16.2426L7.75736 14.8284L14.8284 7.75736Z" }, child: [] }] })(e);
++  return l(PhLinkBreak, e);
+ }
+ function Dt(e) {
+-  return k({ attr: { viewBox: "0 0 24 24", fill: "currentColor" }, child: [{ tag: "path", attr: { d: "M18.3638 15.5355L16.9496 14.1213L18.3638 12.7071C20.3164 10.7545 20.3164 7.58866 18.3638 5.63604C16.4112 3.68341 13.2453 3.68341 11.2927 5.63604L9.87849 7.05025L8.46428 5.63604L9.87849 4.22182C12.6122 1.48815 17.0443 1.48815 19.778 4.22182C22.5117 6.95549 22.5117 11.3876 19.778 14.1213L18.3638 15.5355ZM15.5353 18.364L14.1211 19.7782C11.3875 22.5118 6.95531 22.5118 4.22164 19.7782C1.48797 17.0445 1.48797 12.6123 4.22164 9.87868L5.63585 8.46446L7.05007 9.87868L5.63585 11.2929C3.68323 13.2455 3.68323 16.4113 5.63585 18.364C7.58847 20.3166 10.7543 20.3166 12.7069 18.364L14.1211 16.9497L15.5353 18.364ZM14.8282 7.75736L16.2425 9.17157L9.17139 16.2426L7.75717 14.8284L14.8282 7.75736Z" }, child: [] }] })(e);
++  return l(PhLinkSimple, e);
+ }
+ function Zt(e) {
+   return k({ attr: { viewBox: "0 0 24 24", fill: "currentColor" }, child: [{ tag: "path", attr: { d: "M8.00008 6V9H5.00008V6H8.00008ZM3.00008 4V11H10.0001V4H3.00008ZM13.0001 4H21.0001V6H13.0001V4ZM13.0001 11H21.0001V13H13.0001V11ZM13.0001 18H21.0001V20H13.0001V18ZM10.7072 16.2071L9.29297 14.7929L6.00008 18.0858L4.20718 16.2929L2.79297 17.7071L6.00008 20.9142L10.7072 16.2071Z" }, child: [] }] })(e);
+@@ -825,10 +843,10 @@ function Ut(e) {
+   return k({ attr: { viewBox: "0 0 24 24", fill: "currentColor" }, child: [{ tag: "path", attr: { d: "M8 4H21V6H8V4ZM4.5 6.5C3.67157 6.5 3 5.82843 3 5C3 4.17157 3.67157 3.5 4.5 3.5C5.32843 3.5 6 4.17157 6 5C6 5.82843 5.32843 6.5 4.5 6.5ZM4.5 13.5C3.67157 13.5 3 12.8284 3 12C3 11.1716 3.67157 10.5 4.5 10.5C5.32843 10.5 6 11.1716 6 12C6 12.8284 5.32843 13.5 4.5 13.5ZM4.5 20.4C3.67157 20.4 3 19.7284 3 18.9C3 18.0716 3.67157 17.4 4.5 17.4C5.32843 17.4 6 18.0716 6 18.9C6 19.7284 5.32843 20.4 4.5 20.4ZM8 11H21V13H8V11ZM8 18H21V20H8V18Z" }, child: [] }] })(e);
+ }
+ function Uo(e) {
+-  return k({ attr: { viewBox: "0 0 24 24", fill: "currentColor" }, child: [{ tag: "path", attr: { d: "M20 3C20.5523 3 21 3.44772 21 4V20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V4C3 3.44772 3.44772 3 4 3H20ZM11 5H5V10.999H7V9L10 12L7 15V13H5V19H11V17H13V19H19V13H17V15L14 12L17 9V10.999H19V5H13V7H11V5ZM13 13V15H11V13H13ZM13 9V11H11V9H13Z" }, child: [] }] })(e);
++  return l(PhArrowsInLineHorizontal, e);
+ }
+ function Go(e) {
+-  return k({ attr: { viewBox: "0 0 24 24", fill: "currentColor" }, child: [{ tag: "path", attr: { d: "M21 20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V4C3 3.44772 3.44772 3 4 3H20C20.5523 3 21 3.44772 21 4V20ZM19 11V5H13.001V7H15L12 10L9 7H11V5H5V11H7V13H5V19H11V17H9L12 14L15 17H13.001V19H19V13H17V11H19ZM11 13H9V11H11V13ZM15 13H13V11H15V13Z" }, child: [] }] })(e);
++  return l(PhArrowsInLineVertical, e);
+ }
+ function Gt(e) {
+   return k({ attr: { viewBox: "0 0 24 24", fill: "currentColor" }, child: [{ tag: "path", attr: { d: "M21 4H3V6H21V4ZM21 11H8V13H21V11ZM21 18H8V20H21V18ZM5 11H3V20H5V11Z" }, child: [] }] })(e);
+@@ -840,7 +858,7 @@ function jo(e) {
+   return k({ attr: { viewBox: "0 0 24 24", fill: "currentColor" }, child: [{ tag: "path", attr: { d: "M13 10V14H19V10H13ZM11 10H5V14H11V10ZM13 19H19V16H13V19ZM11 19V16H5V19H11ZM13 5V8H19V5H13ZM11 5H5V8H11V5ZM4 3H20C20.5523 3 21 3.44772 21 4V20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V4C3 3.44772 3.44772 3 4 3Z" }, child: [] }] })(e);
+ }
+ function $e(e) {
+-  return k({ attr: { viewBox: "0 0 24 24", fill: "currentColor" }, child: [{ tag: "path", attr: { d: "M13 6V21H11V6H5V4H19V6H13Z" }, child: [] }] })(e);
++  return l(PhTextT, e);
+ }
+ function $o(e) {
+   return k({ attr: { viewBox: "0 0 24 24", fill: "currentColor" }, child: [{ tag: "path", attr: { d: "M8 3V12C8 14.2091 9.79086 16 12 16C14.2091 16 16 14.2091 16 12V3H18V12C18 15.3137 15.3137 18 12 18C8.68629 18 6 15.3137 6 12V3H8ZM4 20H20V22H4V20Z" }, child: [] }] })(e);
+@@ -852,28 +870,28 @@ function zt(e) {
+   return k({ attr: { viewBox: "0 0 24 24", fill: "currentColor" }, child: [{ tag: "path", attr: { d: "M5 11.1005L7 9.1005L12.5 14.6005L16 11.1005L19 14.1005V5H5V11.1005ZM4 3H20C20.5523 3 21 3.44772 21 4V20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V4C3 3.44772 3.44772 3 4 3ZM15.5 10C14.6716 10 14 9.32843 14 8.5C14 7.67157 14.6716 7 15.5 7C16.3284 7 17 7.67157 17 8.5C17 9.32843 16.3284 10 15.5 10Z" }, child: [] }] })(e);
+ }
+ function qo(e) {
+-  return k({ attr: { viewBox: "0 0 24 24", fill: "currentColor" }, child: [{ tag: "path", attr: { d: "M21 15V18H24V20H21V23H19V20H16V18H19V15H21ZM21.0082 3C21.556 3 22 3.44495 22 3.9934L22.0007 13.3417C21.3749 13.1204 20.7015 13 20 13V5H4L4.001 19L13.2929 9.70715C13.6528 9.34604 14.22 9.31823 14.6123 9.62322L14.7065 9.70772L18.2521 13.2586C15.791 14.0069 14 16.2943 14 19C14 19.7015 14.1204 20.3749 14.3417 21.0007L2.9918 21C2.44405 21 2 20.5551 2 20.0066V3.9934C2 3.44476 2.45531 3 2.9918 3H21.0082ZM8 7C9.10457 7 10 7.89543 10 9C10 10.1046 9.10457 11 8 11C6.89543 11 6 10.1046 6 9C6 7.89543 6.89543 7 8 7Z" }, child: [] }] })(e);
++  return l(PhEye, e);
+ }
+ function Ko(e) {
+-  return k({ attr: { viewBox: "0 0 24 24", fill: "currentColor" }, child: [{ tag: "path", attr: { d: "M20 3C20.5523 3 21 3.44772 21 4V5.757L19 7.757V5H5V13.1L9 9.1005L13.328 13.429L12.0012 14.7562L11.995 18.995L16.2414 19.0012L17.571 17.671L18.8995 19H19V16.242L21 14.242V20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V4C3 3.44772 3.44772 3 4 3H20ZM21.7782 7.80761L23.1924 9.22183L15.4142 17L13.9979 16.9979L14 15.5858L21.7782 7.80761ZM15.5 7C16.3284 7 17 7.67157 17 8.5C17 9.32843 16.3284 10 15.5 10C14.6716 10 14 9.32843 14 8.5C14 7.67157 14.6716 7 15.5 7Z" }, child: [] }] })(e);
++  return l(PhSwap, e);
+ }
+ function jt(e) {
+   return k({ attr: { viewBox: "0 0 24 24", fill: "currentColor" }, child: [{ tag: "path", attr: { d: "M22 18V20H2V18H22ZM2 3.5L10 8.5L2 13.5V3.5ZM22 11V13H12V11H22ZM22 4V6H12V4H22Z" }, child: [] }] })(e);
+ }
+ function Xo(e) {
+-  return k({ attr: { viewBox: "0 0 24 24", fill: "currentColor" }, child: [{ tag: "path", attr: { d: "M3 3.9934C3 3.44476 3.44495 3 3.9934 3H20.0066C20.5552 3 21 3.44495 21 3.9934V20.0066C21 20.5552 20.5551 21 20.0066 21H3.9934C3.44476 21 3 20.5551 3 20.0066V3.9934ZM10.6219 8.41459C10.5562 8.37078 10.479 8.34741 10.4 8.34741C10.1791 8.34741 10 8.52649 10 8.74741V15.2526C10 15.3316 10.0234 15.4088 10.0672 15.4745C10.1897 15.6583 10.4381 15.708 10.6219 15.5854L15.5008 12.3328C15.5447 12.3035 15.5824 12.2658 15.6117 12.2219C15.7343 12.0381 15.6846 11.7897 15.5008 11.6672L10.6219 8.41459Z" }, child: [] }] })(e);
++  return l(PhVideo, e);
+ }
+ function $t(e) {
+-  return k({ attr: { viewBox: "0 0 24 24", fill: "currentColor" }, child: [{ tag: "path", attr: { d: "M2 16.0001H5.88889L11.1834 20.3319C11.2727 20.405 11.3846 20.4449 11.5 20.4449C11.7761 20.4449 12 20.2211 12 19.9449V4.05519C12 3.93977 11.9601 3.8279 11.887 3.73857C11.7121 3.52485 11.3971 3.49335 11.1834 3.66821L5.88889 8.00007H2C1.44772 8.00007 1 8.44778 1 9.00007V15.0001C1 15.5524 1.44772 16.0001 2 16.0001ZM23 12C23 15.292 21.5539 18.2463 19.2622 20.2622L17.8445 18.8444C19.7758 17.1937 21 14.7398 21 12C21 9.26016 19.7758 6.80629 17.8445 5.15557L19.2622 3.73779C21.5539 5.75368 23 8.70795 23 12ZM18 12C18 10.0883 17.106 8.38548 15.7133 7.28673L14.2842 8.71584C15.3213 9.43855 16 10.64 16 12C16 13.36 15.3213 14.5614 14.2842 15.2841L15.7133 16.7132C17.106 15.6145 18 13.9116 18 12Z" }, child: [] }] })(e);
++  return l(PhSpeakerHigh, e);
+ }
+ function Yo(e) {
+-  return k({ attr: { viewBox: "0 0 24 24", fill: "currentColor" }, child: [{ tag: "path", attr: { d: "M11 11V5H13V11H19V13H13V19H11V13H5V11H11Z" }, child: [] }] })(e);
++  return l(PhPlus, e);
+ }
+ function Jo(e) {
+   return k({ attr: { viewBox: "0 0 24 24", fill: "currentColor" }, child: [{ tag: "path", attr: { d: "M9.9997 15.1709L19.1921 5.97852L20.6063 7.39273L9.9997 17.9993L3.63574 11.6354L5.04996 10.2212L9.9997 15.1709Z" }, child: [] }] })(e);
+ }
+ function Qo(e) {
+-  return k({ attr: { viewBox: "0 0 24 24", fill: "currentColor" }, child: [{ tag: "path", attr: { d: "M17 6H22V8H20V21C20 21.5523 19.5523 22 19 22H5C4.44772 22 4 21.5523 4 21V8H2V6H7V3C7 2.44772 7.44772 2 8 2H16C16.5523 2 17 2.44772 17 3V6ZM18 8H6V20H18V8ZM9 4V6H15V4H9Z" }, child: [] }] })(e);
++  return l(PhTrash, e);
+ }
+ function er(e) {
+   return k({ attr: { viewBox: "0 0 24 24", fill: "currentColor" }, child: [{ tag: "path", attr: { d: "M17 6H22V8H20V21C20 21.5523 19.5523 22 19 22H5C4.44772 22 4 21.5523 4 21V8H2V6H7V3C7 2.44772 7.44772 2 8 2H16C16.5523 2 17 2.44772 17 3V6ZM9 11V17H11V11H9ZM13 11V17H15V11H13ZM9 4V6H15V4H9Z" }, child: [] }] })(e);
+@@ -2177,10 +2195,10 @@ const Pr = () => {
+   );
+ };
+ function Kt(e) {
+-  return k({ attr: { viewBox: "0 0 24 24" }, child: [{ tag: "path", attr: { fill: "none", d: "M0 0h24v24H0V0z" }, child: [] }, { tag: "path", attr: { d: "M11 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm-2-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" }, child: [] }] })(e);
++  return l(PhDotsSixVertical, e);
+ }
+ function Nr(e) {
+-  return k({ attr: { viewBox: "0 0 24 24" }, child: [{ tag: "path", attr: { fill: "none", d: "M0 0h24v24H0z" }, child: [] }, { tag: "path", attr: { d: "m7 10 5 5 5-5z" }, child: [] }] })(e);
++  return l(PhCaretDown, e);
+ }
+ const Ar = (e) => {
+   const t = w(), n = v(), o = B(W, {
+@@ -2499,7 +2517,14 @@ function Kr(e) {
      columns: d
    } = e, m = H(
      (C) => {
@@ -66,7 +190,7 @@ index d4d36cd..c493121 100644
      },
      [u, a, s]
    ), { items: g, usedQuery: f, loadingState: h } = Yt(
-@@ -2734,7 +2758,14 @@ function ti(e) {
+@@ -2734,7 +2759,14 @@ function ti(e) {
      onItemClick: u
    } = e, d = H(
      (p) => {
@@ -82,7 +206,16 @@ index d4d36cd..c493121 100644
      },
      [u, a, s]
    ), { items: m, usedQuery: g, loadingState: f } = Yt(
-@@ -3306,14 +3337,15 @@ const ii = (e, t = 0.3) => {
+@@ -2975,7 +3007,7 @@ const ii = (e, t = 0.3) => {
+       className: D(
+         "bn-extend-button",
+         e.orientation === "addOrRemoveColumns" ? "bn-extend-button-add-remove-columns" : "bn-extend-button-add-remove-rows",
+-        c !== null ? "bn-extend-button-editing" : ""
++        c !== void 0 ? "bn-extend-button-editing" : ""
+       ),
+       onClick: u,
+       onMouseDown: a,
+@@ -3306,14 +3338,15 @@ const ii = (e, t = 0.3) => {
      );
      if (!m)
        return {};
@@ -101,7 +234,7 @@ index d4d36cd..c493121 100644
      return p instanceof Element ? (d.cellReference = { element: p }, d.rowReference = {
        element: f,
        getBoundingClientRect: () => {
-@@ -3796,7 +3828,7 @@ function Ee(e) {
+@@ -3796,7 +3829,7 @@ function Ee(e) {
          ...Object.fromEntries(
            Object.entries(e.blockProps).filter(([n, o]) => {
              const r = e.propSchema[n];
@@ -110,7 +243,7 @@ index d4d36cd..c493121 100644
            }).map(([n, o]) => [xt(n), o])
          ),
          "data-file-block": e.isFileBlock === !0 || void 0,
-@@ -4371,7 +4403,7 @@ const zi = (e) => {
+@@ -4371,7 +4404,7 @@ const zi = (e) => {
      const a = Ue(t, c.prosemirrorState.doc);
      if (!a)
        return;

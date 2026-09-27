@@ -11,16 +11,21 @@ overrides:
   '@tiptap/extension-link': 3.19.0
   prosemirror-tables: 1.8.5
 
+packageExtensionsChecksum: sha256-LvxFlEGo3NiXHFW2TWbp6DyyhAu9YgavmbljHFiJz98=
+
 patchedDependencies:
   '@blocknote/code-block@0.46.2':
     hash: c006cad64c22a2efc10299d85bf72407150fd29a1f16d497b8db0faa071535f8
     path: patches/@blocknote__code-block@0.46.2.patch
   '@blocknote/core@0.46.2':
-    hash: d24fe18bd639fb58abe02f855920adc289dc2422c9c86a62c39de7052c53dc0b
+    hash: 75936782cb149b4eea908c96496b777dafcb7942b876970704e7fd872c6e687d
     path: patches/@blocknote__core@0.46.2.patch
   '@blocknote/react@0.46.2':
-    hash: f3a5bff32e95067617de2d67c644e6f882e43bbd771cb9f88952a49a16d086de
+    hash: 1fd91be1b200529fa1468b9407d4e6678801634ac9ab66cee8b5ae913ef7c36f
     path: patches/@blocknote__react@0.46.2.patch
+  '@blocknote/shadcn@0.46.2':
+    hash: 9684a1fd9a604d04dd670664d29e9e45e09d1d46b326bc223459827721660437
+    path: patches/@blocknote__shadcn@0.46.2.patch
   '@tiptap/extension-code@3.19.0':
     hash: 915b1a348f6e75430f4759ce6f1f62837baaeebec3c110b7929e8fde97088d8b
     path: patches/@tiptap__extension-code@3.19.0.patch
@@ -37,16 +42,16 @@ importers:
     dependencies:
       '@blocknote/code-block':
         specifier: 0.46.2
-        version: 0.46.2(patch_hash=c006cad64c22a2efc10299d85bf72407150fd29a1f16d497b8db0faa071535f8)(@blocknote/core@0.46.2(patch_hash=d24fe18bd639fb58abe02f855920adc289dc2422c9c86a62c39de7052c53dc0b)(@types/hast@3.0.5))
+        version: 0.46.2(patch_hash=c006cad64c22a2efc10299d85bf72407150fd29a1f16d497b8db0faa071535f8)(@blocknote/core@0.46.2(patch_hash=75936782cb149b4eea908c96496b777dafcb7942b876970704e7fd872c6e687d)(@types/hast@3.0.5))
       '@blocknote/core':
         specifier: 0.46.2
-        version: 0.46.2(patch_hash=d24fe18bd639fb58abe02f855920adc289dc2422c9c86a62c39de7052c53dc0b)(@types/hast@3.0.5)
+        version: 0.46.2(patch_hash=75936782cb149b4eea908c96496b777dafcb7942b876970704e7fd872c6e687d)(@types/hast@3.0.5)
       '@blocknote/react':
         specifier: 0.46.2
-        version: 0.46.2(patch_hash=f3a5bff32e95067617de2d67c644e6f882e43bbd771cb9f88952a49a16d086de)(@floating-ui/dom@1.8.0)(@types/hast@3.0.5)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+        version: 0.46.2(patch_hash=1fd91be1b200529fa1468b9407d4e6678801634ac9ab66cee8b5ae913ef7c36f)(@floating-ui/dom@1.8.0)(@phosphor-icons/react@2.1.10(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@types/hast@3.0.5)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@blocknote/shadcn':
         specifier: 0.46.2
-        version: 0.46.2(@floating-ui/dom@1.8.0)(@types/hast@3.0.5)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(postcss@8.5.28)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(tailwindcss@4.3.3)
+        version: 0.46.2(patch_hash=9684a1fd9a604d04dd670664d29e9e45e09d1d46b326bc223459827721660437)(@floating-ui/dom@1.8.0)(@phosphor-icons/react@2.1.10(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@types/hast@3.0.5)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(postcss@8.5.28)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(tailwindcss@4.3.3)
       '@codemirror/commands':
         specifier: ^6.10.2
         version: 6.11.0
@@ -339,6 +344,7 @@ packages:
   '@blocknote/react@0.46.2':
     resolution: {integrity: sha512-2cl7MkOSa6Wxun5LFTT0BCeYq3Qw9DCw6VZ9qdtflrnsefds0cDx/SHMVEQygYwF5MhlDmSbIt61hkQ4j2QWSw==}
     peerDependencies:
+      '@phosphor-icons/react': ^2.1.10
       react: ^18.0 || ^19.0 || >= 19.0.0-rc
       react-dom: ^18.0 || ^19.0 || >= 19.0.0-rc
 
@@ -4242,9 +4248,9 @@ snapshots:
       '@babel/helper-string-parser': 7.29.7
       '@babel/helper-validator-identifier': 7.29.7
 
-  '@blocknote/code-block@0.46.2(patch_hash=c006cad64c22a2efc10299d85bf72407150fd29a1f16d497b8db0faa071535f8)(@blocknote/core@0.46.2(patch_hash=d24fe18bd639fb58abe02f855920adc289dc2422c9c86a62c39de7052c53dc0b)(@types/hast@3.0.5))':
+  '@blocknote/code-block@0.46.2(patch_hash=c006cad64c22a2efc10299d85bf72407150fd29a1f16d497b8db0faa071535f8)(@blocknote/core@0.46.2(patch_hash=75936782cb149b4eea908c96496b777dafcb7942b876970704e7fd872c6e687d)(@types/hast@3.0.5))':
     dependencies:
-      '@blocknote/core': 0.46.2(patch_hash=d24fe18bd639fb58abe02f855920adc289dc2422c9c86a62c39de7052c53dc0b)(@types/hast@3.0.5)
+      '@blocknote/core': 0.46.2(patch_hash=75936782cb149b4eea908c96496b777dafcb7942b876970704e7fd872c6e687d)(@types/hast@3.0.5)
       '@shikijs/core': 3.23.0
       '@shikijs/engine-javascript': 3.23.0
       '@shikijs/langs': 3.23.0
@@ -4252,7 +4258,7 @@ snapshots:
       '@shikijs/themes': 3.23.0
       '@shikijs/types': 3.23.0
 
-  '@blocknote/core@0.46.2(patch_hash=d24fe18bd639fb58abe02f855920adc289dc2422c9c86a62c39de7052c53dc0b)(@types/hast@3.0.5)':
+  '@blocknote/core@0.46.2(patch_hash=75936782cb149b4eea908c96496b777dafcb7942b876970704e7fd872c6e687d)(@types/hast@3.0.5)':
     dependencies:
       '@emoji-mart/data': 1.2.1
       '@handlewithcare/prosemirror-inputrules': 0.1.4(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)
@@ -4302,12 +4308,13 @@ snapshots:
       - sugar-high
       - supports-color
 
-  '@blocknote/react@0.46.2(patch_hash=f3a5bff32e95067617de2d67c644e6f882e43bbd771cb9f88952a49a16d086de)(@floating-ui/dom@1.8.0)(@types/hast@3.0.5)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
+  '@blocknote/react@0.46.2(patch_hash=1fd91be1b200529fa1468b9407d4e6678801634ac9ab66cee8b5ae913ef7c36f)(@floating-ui/dom@1.8.0)(@phosphor-icons/react@2.1.10(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@types/hast@3.0.5)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
     dependencies:
-      '@blocknote/core': 0.46.2(patch_hash=d24fe18bd639fb58abe02f855920adc289dc2422c9c86a62c39de7052c53dc0b)(@types/hast@3.0.5)
+      '@blocknote/core': 0.46.2(patch_hash=75936782cb149b4eea908c96496b777dafcb7942b876970704e7fd872c6e687d)(@types/hast@3.0.5)
       '@emoji-mart/data': 1.2.1
       '@floating-ui/react': 0.27.20(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@floating-ui/utils': 0.2.10
+      '@phosphor-icons/react': 2.1.10(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@tanstack/react-store': 0.7.7(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@tiptap/core': 3.31.3(@tiptap/pm@3.22.5)
       '@tiptap/pm': 3.22.5
@@ -4332,10 +4339,10 @@ snapshots:
       - sugar-high
       - supports-color
 
-  '@blocknote/shadcn@0.46.2(@floating-ui/dom@1.8.0)(@types/hast@3.0.5)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(postcss@8.5.28)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(tailwindcss@4.3.3)':
+  '@blocknote/shadcn@0.46.2(patch_hash=9684a1fd9a604d04dd670664d29e9e45e09d1d46b326bc223459827721660437)(@floating-ui/dom@1.8.0)(@phosphor-icons/react@2.1.10(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@types/hast@3.0.5)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(postcss@8.5.28)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(tailwindcss@4.3.3)':
     dependencies:
-      '@blocknote/core': 0.46.2(patch_hash=d24fe18bd639fb58abe02f855920adc289dc2422c9c86a62c39de7052c53dc0b)(@types/hast@3.0.5)
-      '@blocknote/react': 0.46.2(patch_hash=f3a5bff32e95067617de2d67c644e6f882e43bbd771cb9f88952a49a16d086de)(@floating-ui/dom@1.8.0)(@types/hast@3.0.5)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      '@blocknote/core': 0.46.2(patch_hash=75936782cb149b4eea908c96496b777dafcb7942b876970704e7fd872c6e687d)(@types/hast@3.0.5)
+      '@blocknote/react': 0.46.2(patch_hash=1fd91be1b200529fa1468b9407d4e6678801634ac9ab66cee8b5ae913ef7c36f)(@floating-ui/dom@1.8.0)(@phosphor-icons/react@2.1.10(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@types/hast@3.0.5)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@radix-ui/react-avatar': 1.2.6(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@radix-ui/react-dropdown-menu': 2.1.24(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@radix-ui/react-label': 2.1.15(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -4357,6 +4364,7 @@ snapshots:
     transitivePeerDependencies:
       - '@floating-ui/dom'
       - '@hocuspocus/provider'
+      - '@phosphor-icons/react'
       - '@types/hast'
       - '@types/react'
       - '@types/react-dom'
