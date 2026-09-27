@@ -1,4 +1,4 @@
-import { filterSuggestionItems } from '@blocknote/core/extensions'
+import { filterSuggestionItems, insertOrUpdateBlockForSlashMenu } from '@blocknote/core/extensions'
 import {
   getDefaultReactSlashMenuItems,
   type DefaultReactSuggestionItem,
@@ -48,10 +48,10 @@ export type SlashMenuItem = DefaultReactSuggestionItem & {
   submenuItems?: SlashMenuItem[]
 }
 type SlashInsertEditor = {
-  getTextCursorPosition: () => { block: unknown }
   insertInlineContent: (content: string, options: { updateSelection: true }) => void
-  replaceBlocks: (blocksToReplace: unknown[], blocksToInsert: Array<Record<string, unknown>>) => void
 }
+type SlashBlockEditor = Parameters<typeof insertOrUpdateBlockForSlashMenu>[0]
+type SlashBlock = Parameters<typeof insertOrUpdateBlockForSlashMenu>[1]
 type BlockSlashMenuItemConfig = {
   aliases: string[]
   eventName?: string
@@ -186,6 +186,19 @@ export function createDateTimeSlashMenuItems(
   } as SlashMenuItem))
 }
 
+/**
+ * Puts a block where the slash menu was opened, the way BlockNote's own rows
+ * do: an empty block becomes the new block, and a block that has text keeps
+ * it and gets the new block below. Replacing the block outright would take
+ * its text with it, and Autosave would write that loss to disk (AIM-502).
+ */
+function insertSlashMenuBlock(
+  editor: Parameters<typeof getDefaultReactSlashMenuItems>[0],
+  block: { type: string; props: Record<string, unknown> },
+): void {
+  insertOrUpdateBlockForSlashMenu(editor as unknown as SlashBlockEditor, block as SlashBlock)
+}
+
 function createBoardId(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
     return crypto.randomUUID()
@@ -268,7 +281,6 @@ export function createCalloutSlashMenuItem(
     calloutTypeTitles: DEFAULT_CALLOUT_TYPE_TITLES,
   },
 ): SlashMenuItem {
-  const blockEditor = editor as unknown as SlashInsertEditor
   const submenuItems = OBSIDIAN_CALLOUT_DEFINITIONS.map(({ aliases, type }) => ({
     // The type's own name first: it is what `> [!tip]` says, whatever the title is translated to.
     aliases: [type, ...aliases],
@@ -280,11 +292,10 @@ export function createCalloutSlashMenuItem(
     }),
     key: `callout_${type}`,
     onItemClick: () => {
-      const block = blockEditor.getTextCursorPosition().block
-      blockEditor.replaceBlocks([block], [{
+      insertSlashMenuBlock(editor, {
         type: CALLOUT_BLOCK_TYPE,
         props: { calloutType: type, title: '' },
-      }])
+      })
       trackEvent('editor_callout_slash_command_used', { type })
     },
     title: labels.calloutTypeTitles[type],
@@ -334,19 +345,13 @@ function createBlockSlashMenuItem(
   editor: Parameters<typeof getDefaultReactSlashMenuItems>[0],
   config: BlockSlashMenuItemConfig,
 ): SlashMenuItem {
-  const blockEditor = editor as unknown as SlashInsertEditor
-
   return {
     key: config.key,
     title: config.title,
     aliases: config.aliases,
     group: 'Media',
     onItemClick: () => {
-      const block = blockEditor.getTextCursorPosition().block
-      blockEditor.replaceBlocks([block], [{
-        type: config.type,
-        props: config.props,
-      }])
+      insertSlashMenuBlock(editor, { type: config.type, props: config.props })
       if (config.eventName) trackEvent(config.eventName)
     },
   } as SlashMenuItem

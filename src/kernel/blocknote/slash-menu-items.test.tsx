@@ -1,8 +1,12 @@
+import { BlockNoteEditor } from '@blocknote/core'
 import { Children, isValidElement, type ReactElement } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/lib/telemetry', () => ({
   trackEvent: vi.fn(),
+}))
+vi.mock('@tauri-apps/api/core', () => ({
+  convertFileSrc: (path: string) => `asset://localhost/${encodeURIComponent(path)}`,
 }))
 
 import {
@@ -27,23 +31,33 @@ import { mermaidFenceSource } from '@/kernel/markdown/mermaid-markdown'
 import { CALLOUT_BLOCK_TYPE } from '@/kernel/markdown/callout-markdown'
 import type { ObsidianCalloutType } from './callout-catalog'
 import { calloutIconForType } from './callout-icons'
+import { schema } from './editor-schema'
 
 function createSlashCommandEditorFixture() {
-  const block = { id: 'active-block' }
   const editor = {
-    getTextCursorPosition: () => ({ block }),
     insertInlineContent: () => {},
     replaceBlocks: () => {},
-    updateBlock: () => {},
   }
 
   return {
-    block,
     editor: editor as never,
     insertInlineContent: vi.spyOn(editor, 'insertInlineContent'),
     replaceBlocks: vi.spyOn(editor, 'replaceBlocks'),
-    updateBlock: vi.spyOn(editor, 'updateBlock'),
   }
+}
+
+/** A Document of one paragraph, the cursor at its end: where the slash menu has just closed. */
+function createEditorAtEndOf(text: string) {
+  const editor = BlockNoteEditor.create({
+    initialContent: [{ type: 'paragraph', content: text }],
+    schema,
+  })
+  editor.setTextCursorPosition(editor.document[0], 'end')
+  return editor
+}
+
+function blockTypes(editor: ReturnType<typeof createEditorAtEndOf>): string[] {
+  return editor.document.map((block) => block.type)
 }
 
 describe('slash menu items', () => {
@@ -208,7 +222,7 @@ describe('slash menu items', () => {
   })
 
   it('creates an empty HTML block slash command for immediate source editing', () => {
-    const { block, editor, replaceBlocks, updateBlock } = createSlashCommandEditorFixture()
+    const editor = createEditorAtEndOf('')
 
     const sandboxItem = createSandboxBlockSlashMenuItem(editor, {
       sandboxBlockTitle: 'HTML block',
@@ -222,19 +236,18 @@ describe('slash menu items', () => {
 
     sandboxItem?.onItemClick()
 
-    expect(replaceBlocks).toHaveBeenCalledWith([block], [{
+    expect(editor.document[0]).toEqual(expect.objectContaining({
       type: HTML_BLOCK_TYPE,
-      props: {
+      props: expect.objectContaining({
         height: HTML_BLOCK_DEFAULT_HEIGHT,
         html: HTML_SLASH_COMMAND_SOURCE,
-      },
-    }])
-    expect(updateBlock).not.toHaveBeenCalled()
+      }),
+    }))
     expect(trackEvent).toHaveBeenCalledWith('editor_html_block_slash_command_used')
   })
 
   it('creates a math slash command with a default display equation', () => {
-    const { block, editor, replaceBlocks, updateBlock } = createSlashCommandEditorFixture()
+    const editor = createEditorAtEndOf('')
 
     const mathItem = createMathSlashMenuItem(editor)
 
@@ -246,16 +259,39 @@ describe('slash menu items', () => {
 
     mathItem?.onItemClick()
 
-    expect(replaceBlocks).toHaveBeenCalledWith([block], [{
+    expect(editor.document[0]).toEqual(expect.objectContaining({
       type: MATH_BLOCK_TYPE,
-      props: { latex: MATH_SLASH_COMMAND_LATEX },
-    }])
-    expect(updateBlock).not.toHaveBeenCalled()
+      props: expect.objectContaining({ latex: MATH_SLASH_COMMAND_LATEX }),
+    }))
     expect(trackEvent).toHaveBeenCalledWith('editor_math_slash_command_used')
   })
 
+  describe('where the block goes', () => {
+    type Editor = ReturnType<typeof createEditorAtEndOf>
+    const rows: Array<[string, string, (editor: Editor) => SlashMenuItem]> = [
+      ['html', HTML_BLOCK_TYPE, (editor) => createSandboxBlockSlashMenuItem(editor)],
+      ['math', MATH_BLOCK_TYPE, (editor) => createMathSlashMenuItem(editor)],
+      ['callout', CALLOUT_BLOCK_TYPE, (editor) => calloutStyleItemsForQuery(createCalloutSlashMenuItem(editor), 'tip')[0]],
+    ]
+
+    it.each(rows)('%s replaces an empty paragraph, the one the slash was typed in', (_key, type, item) => {
+      const editor = createEditorAtEndOf('')
+      item(editor).onItemClick()
+      expect(blockTypes(editor)[0]).toBe(type)
+    })
+
+    it.each(rows)('%s keeps the text of a paragraph that has some and goes below it (AIM-502)', (_key, type, item) => {
+      const editor = createEditorAtEndOf('This Folder lives in memory.')
+      item(editor).onItemClick()
+      expect(blockTypes(editor).slice(0, 2)).toEqual(['paragraph', type])
+      expect(editor.document[0].content).toEqual([
+        { styles: {}, text: 'This Folder lives in memory.', type: 'text' },
+      ])
+    })
+  })
+
   it('creates a callout parent command with every default style in its submenu', () => {
-    const { block, editor, replaceBlocks } = createSlashCommandEditorFixture()
+    const editor = createEditorAtEndOf('')
     const calloutTypeTitles = Object.fromEntries([
       'note',
       'abstract',
@@ -287,17 +323,17 @@ describe('slash menu items', () => {
 
     calloutItem.submenuItems?.find(item => item.key === 'callout_tip')?.onItemClick()
 
-    expect(replaceBlocks).toHaveBeenCalledWith([block], [{
+    expect(editor.document[0]).toEqual(expect.objectContaining({
       type: CALLOUT_BLOCK_TYPE,
-      props: { calloutType: 'tip', title: '' },
-    }])
+      props: expect.objectContaining({ calloutType: 'tip', title: '' }),
+    }))
     expect(trackEvent).toHaveBeenCalledWith('editor_callout_slash_command_used', {
       type: 'tip',
     })
   })
 
   describe('callout styles in the top-level search', () => {
-    const { editor, replaceBlocks } = createSlashCommandEditorFixture()
+    const editor = createEditorAtEndOf('')
     const keysFor = (query: string) => calloutStyleItemsForQuery(createCalloutSlashMenuItem(editor), query).map(item => item.key)
 
     it('finds a style by its name, by the start of it, and by an alias', () => {
@@ -332,10 +368,10 @@ describe('slash menu items', () => {
     it('inserts the style it names', () => {
       const [item] = calloutStyleItemsForQuery(createCalloutSlashMenuItem(editor), 'tip')
       item.onItemClick()
-      expect(replaceBlocks).toHaveBeenCalledWith(expect.anything(), [{
+      expect(editor.document[0]).toEqual(expect.objectContaining({
         type: CALLOUT_BLOCK_TYPE,
-        props: { calloutType: 'tip', title: '' },
-      }])
+        props: expect.objectContaining({ calloutType: 'tip' }),
+      }))
     })
   })
 
