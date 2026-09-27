@@ -34,6 +34,7 @@ export interface AppCommandHandlers {
   onQuickOpen?: () => void
   onSave: () => void
   onCloseTab?: () => void
+  /** Undo and Redo on the active Document's surface; disabled with no Document, like Save, by handing no handler. */
   onUndo?: () => void
   onRedo?: () => void
   onPastePlainText: () => void
@@ -52,9 +53,6 @@ export interface AppCommandHandlers {
   onAppearanceSystem?: () => void
   onAppearanceDark?: () => void
   onAppearanceLight?: () => void
-  onZoomIn: () => void
-  onZoomOut: () => void
-  onZoomReset: () => void
   onPreviousTab?: () => void
   onNextTab?: () => void
   onJumpToTab1?: () => void
@@ -92,9 +90,6 @@ type SimpleHandlerKey = keyof Pick<
   | 'onAppearanceSystem'
   | 'onAppearanceDark'
   | 'onAppearanceLight'
-  | 'onZoomIn'
-  | 'onZoomOut'
-  | 'onZoomReset'
   | 'onPreviousTab'
   | 'onNextTab'
   | 'onJumpToTab1'
@@ -133,9 +128,6 @@ const SIMPLE_HANDLER_EXECUTORS: readonly [SimpleHandlerKey, SimpleHandlerExecuto
   ['onAppearanceSystem', (handlers) => handlers.onAppearanceSystem?.()],
   ['onAppearanceDark', (handlers) => handlers.onAppearanceDark?.()],
   ['onAppearanceLight', (handlers) => handlers.onAppearanceLight?.()],
-  ['onZoomIn', (handlers) => handlers.onZoomIn()],
-  ['onZoomOut', (handlers) => handlers.onZoomOut()],
-  ['onZoomReset', (handlers) => handlers.onZoomReset()],
   ['onPreviousTab', (handlers) => handlers.onPreviousTab?.()],
   ['onNextTab', (handlers) => handlers.onNextTab?.()],
   ['onJumpToTab1', (handlers) => handlers.onJumpToTab1?.()],

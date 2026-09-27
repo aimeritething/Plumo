@@ -36,6 +36,7 @@ import { pickNoteToOpen } from '@/tabs/note-open-dialog'
 import { openNotesSettled } from '@/tabs/note-open-request'
 import { requestPlainTextPaste } from '@/editor/plain-text-paste'
 import { requestEditorFocus } from '@/editor/use-editor-focus'
+import { nativeTextFieldHasFocus, type EditorHistory } from '@/editor/editor-history'
 import { activeTabPaths, isImageFilePath } from '@/tabs/image-file'
 
 const noop = () => {}
@@ -122,6 +123,8 @@ export default function App() {
   const rawToggleRef = useRef<(() => void) | null>(null)
   // Find in the current Document lives there too, on whichever surface is showing.
   const findRef = useRef<(() => void) | null>(null)
+  // Undo and Redo the same way: BlockNote's history in Rich mode, CodeMirror's in Raw.
+  const historyRef = useRef<EditorHistory | null>(null)
   /** Push whichever surface is showing the Document's fresh keystrokes into the save buffer. */
   const flushEditorBuffers = useCallback((path: string) => {
     flushPendingEditorContentRef.current?.(path)
@@ -394,6 +397,15 @@ export default function App() {
   const onToggleRawEditor = useCallback(() => rawToggleRef.current?.(), [])
   // Find (⌘F, Edit menu) follows the same rule: no Document, no handler.
   const onFindInNote = useCallback(() => findRef.current?.(), [])
+  // Undo and Redo (Edit menu, the Command Menu) too. ⌘Z never comes this way
+  // from a text field, the field keeps it; a menu click while a rename field
+  // or a find bar holds the caret leaves the Document's history alone (AIM-468).
+  const onUndo = useCallback(() => {
+    if (!nativeTextFieldHasFocus()) historyRef.current?.undo()
+  }, [])
+  const onRedo = useCallback(() => {
+    if (!nativeTextFieldHasFocus()) historyRef.current?.redo()
+  }, [])
   // Copy path (⌘⇧,, Edit menu, the tab bar's link button) works on any Tab,
   // an Image Tab included, so it goes with no Tab rather than no Document.
   const onCopyPath = useCallback(() => {
@@ -441,7 +453,7 @@ export default function App() {
   const hasTab = activeTabPath !== null
 
   // ⌘[ toggles the sidebar in both states; in Raw mode it shadows CodeMirror's
-  // indent-less (⌘] stays the editor's). Zoom is not wired in v0.1.
+  // indent-less (⌘] stays the editor's).
   const handlers = useMemo<MenuEventHandlers>(() => ({
     activeDocumentPath,
     hasFolder,
@@ -455,6 +467,8 @@ export default function App() {
     onToggleSidebar: toggleSidebar,
     onToggleRawEditor: activeDocumentPath ? onToggleRawEditor : undefined,
     onFindInNote: activeDocumentPath ? onFindInNote : undefined,
+    onUndo: activeDocumentPath ? onUndo : undefined,
+    onRedo: activeDocumentPath ? onRedo : undefined,
     onCopyPath: hasTab ? onCopyPath : undefined,
     ...tabFileCommands,
     ...tabCommands.handlers,
@@ -463,10 +477,7 @@ export default function App() {
     onQuickOpen: hasFolder ? openQuickOpen : undefined,
     onCommandPalette: openCommandMenu,
     onPastePlainText,
-    onZoomIn: noop,
-    onZoomOut: noop,
-    onZoomReset: noop,
-  }), [activeDocumentPath, appearance.handlers, canPinActiveTab, createDocumentFromShell, hasFolder, hasTab, onCloseFolder, onCopyPath, onFindInNote, onOpenFolder, onOpenNote, onPastePlainText, onSave, onToggleRawEditor, openCommandMenu, openQuickOpen, quit, tabCommands, tabFileCommands, toggleSidebar])
+  }), [activeDocumentPath, appearance.handlers, canPinActiveTab, createDocumentFromShell, hasFolder, hasTab, onCloseFolder, onCopyPath, onFindInNote, onOpenFolder, onOpenNote, onPastePlainText, onRedo, onSave, onToggleRawEditor, onUndo, openCommandMenu, openQuickOpen, quit, tabCommands, tabFileCommands, toggleSidebar])
   useAppKeyboard(handlers)
   useMenuEvents(handlers)
 
@@ -547,6 +558,7 @@ export default function App() {
         flushPendingRawContentRef={flushPendingRawContentRef}
         rawToggleRef={rawToggleRef}
         findRef={findRef}
+        historyRef={historyRef}
         onSetTabMode={setTabMode}
         onActivateTab={tabCommands.activateTabSettled}
         onCloseTab={tabCommands.closeTabSettled}

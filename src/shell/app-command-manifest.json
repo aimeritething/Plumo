@@ -241,40 +241,6 @@
       "route": { "kind": "handler", "handler": "onAppearanceLight" },
       "menuOwned": true
     },
-    "viewZoomIn": {
-      "id": "view-zoom-in",
-      "route": { "kind": "handler", "handler": "onZoomIn" },
-      "menuOwned": true,
-      "shortcut": {
-        "combo": "command-or-ctrl",
-        "key": "=",
-        "aliases": ["+"],
-        "display": "⌘=",
-        "accelerator": "CmdOrCtrl+="
-      }
-    },
-    "viewZoomOut": {
-      "id": "view-zoom-out",
-      "route": { "kind": "handler", "handler": "onZoomOut" },
-      "menuOwned": true,
-      "shortcut": {
-        "combo": "command-or-ctrl",
-        "key": "-",
-        "display": "⌘-",
-        "accelerator": "CmdOrCtrl+-"
-      }
-    },
-    "viewZoomReset": {
-      "id": "view-zoom-reset",
-      "route": { "kind": "handler", "handler": "onZoomReset" },
-      "menuOwned": true,
-      "shortcut": {
-        "combo": "command-or-ctrl",
-        "key": "0",
-        "display": "⌘0",
-        "accelerator": "CmdOrCtrl+0"
-      }
-    },
     "windowPreviousTab": {
       "id": "window-previous-tab",
       "route": { "kind": "handler", "handler": "onPreviousTab" },
@@ -458,11 +424,7 @@
             { "kind": "command", "command": "viewAppearanceDark", "label": "Dark" },
             { "kind": "command", "command": "viewAppearanceLight", "label": "Light" }
           ]
-        },
-        { "kind": "separator" },
-        { "kind": "command", "command": "viewZoomIn", "label": "Zoom In" },
-        { "kind": "command", "command": "viewZoomOut", "label": "Zoom Out" },
-        { "kind": "command", "command": "viewZoomReset", "label": "Actual Size" }
+        }
       ]
     },
     {
@@ -480,7 +442,9 @@
     "noteDependent": [
       { "command": "fileSave" },
       { "command": "editToggleRawEditor" },
-      { "command": "editFindInNote" }
+      { "command": "editFindInNote" },
+      { "command": "editUndo" },
+      { "command": "editRedo" }
     ],
     "tabDependent": [
       { "command": "fileCloseTab" },

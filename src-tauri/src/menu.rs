@@ -603,7 +603,13 @@ mod tests {
 
         assert_eq!(
             menu_state_group_ids(NOTE_DEPENDENT_GROUP),
-            ["file-save", "edit-toggle-raw-editor", "edit-find-in-note"]
+            [
+                "file-save",
+                "edit-toggle-raw-editor",
+                "edit-find-in-note",
+                "edit-undo",
+                "edit-redo"
+            ]
         );
         assert_eq!(
             menu_state_group_ids(TAB_DEPENDENT_GROUP),

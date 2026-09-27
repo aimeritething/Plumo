@@ -2,6 +2,8 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState, type MutableRe
 import { useCreateBlockNote } from '@blocknote/react'
 import { useEditorTabSwap } from '@/kernel/resolve/use-editor-tab-swap'
 import { useEditorFocus } from './use-editor-focus'
+import { useRegisteredRef } from './use-registered-ref'
+import type { EditorHistory } from './editor-history'
 import { RUNTIME_STYLE_NONCE } from '@/platform/runtime-style-nonce'
 import type { EditorMode, Tab } from '@/types'
 import type { ThemeMode } from '@/shell/theme-mode'
@@ -103,6 +105,8 @@ export interface EditorProps {
   rawToggleRef?: MutableRefObject<(() => void) | null>
   /** Find in the current Document (⌘F, Edit menu): the editor registers the request here and opens the bar of whichever surface is showing. */
   findRef?: MutableRefObject<(() => void) | null>
+  /** Undo and Redo (⌘Z, ⌘⇧Z, the Edit menu, the Command Menu), on whichever surface is showing. */
+  historyRef?: MutableRefObject<EditorHistory | null>
   /** Puts a Document Tab in Rich or Raw mode; the Tab rules decide whether it takes. */
   onSetTabMode: (path: string, mode: EditorMode) => void
   /** The tab bar's clicks. */
@@ -180,16 +184,6 @@ function useRichEditor(options: { activeTabPath: string | null; vaultPath?: stri
 }
 
 /** Registers a callback into an optional ref for as long as it is current. */
-function useRegisteredRef<T>(ref: MutableRefObject<T | null> | undefined, value: T) {
-  useEffect(() => {
-    if (!ref) return
-    ref.current = value
-    return () => {
-      if (ref.current === value) ref.current = null
-    }
-  }, [ref, value])
-}
-
 /**
  * Rich/Raw switching: the kernel's hook
  * serializes the rich editor into the raw buffer on the way in, maps the
@@ -277,6 +271,9 @@ function useEditorRuntime(props: EditorProps) {
   useEditorFocus(editor, editorMountedRef)
   useRegisteredRef(props.rawToggleRef, raw.toggleRaw)
   const { request: findRequest, requestFind } = useFindRequests(activeTabPath, raw.rawMode, props.findRef)
+  // Rich mode's history is BlockNote's; Raw mode's is CodeMirror's, registered by the raw view while it is mounted.
+  const richHistory = useMemo<EditorHistory>(() => ({ undo: () => { editor.undo() }, redo: () => { editor.redo() } }), [editor])
+  useRegisteredRef(rawMode ? undefined : props.historyRef, richHistory)
 
   useRegisterEditorContentFlushes({
     activeTab,
@@ -459,6 +456,7 @@ export const Editor = memo(function Editor(props: EditorProps) {
                 onSave={RAW_SAVE_HANDLED_BY_APP}
                 latestContentRef={raw.rawLatestContentRef}
                 findRequest={findRequest}
+                historyRef={props.historyRef}
               />
             </EditorFindScope>
           ) : (

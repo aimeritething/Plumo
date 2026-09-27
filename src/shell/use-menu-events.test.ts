@@ -35,9 +35,6 @@ function makeHandlers(overrides: Partial<MenuEventHandlers> = {}): MenuEventHand
     onSave: vi.fn(),
     onPastePlainText: vi.fn(),
     onCommandPalette: vi.fn(),
-    onZoomIn: vi.fn(),
-    onZoomOut: vi.fn(),
-    onZoomReset: vi.fn(),
     ...overrides,
   }
 }

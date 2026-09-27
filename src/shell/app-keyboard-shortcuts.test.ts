@@ -10,9 +10,6 @@ function actions(overrides: Partial<KeyboardActions> = {}): KeyboardActions {
     onPastePlainText: vi.fn(),
     onCommandPalette: vi.fn(),
     onFindInNote: vi.fn(),
-    onZoomIn: vi.fn(),
-    onZoomOut: vi.fn(),
-    onZoomReset: vi.fn(),
     ...overrides,
   }
 }
@@ -178,6 +175,14 @@ describe('handleAppKeyboardEvent', () => {
 
       expect(handlers.onNextTab).toHaveBeenCalledTimes(2)
       expect(handlers.onPreviousTab).toHaveBeenCalledTimes(1)
+    })
+
+    it('leaves ⌘=, ⌘- and ⌘0 alone: Zoom is not a command in v0.1, so the keys are not swallowed (AIM-468)', () => {
+      for (const key of ['=', '-', '0']) {
+        const event = press(key)
+        handleAppKeyboardEvent(actions(), event)
+        expect(event.defaultPrevented, key).toBe(false)
+      }
     })
 
     it('leaves ⌘Z to a focused text field, repeats included', () => {

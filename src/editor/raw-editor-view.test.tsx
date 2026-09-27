@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, act } from '@testing-library/react'
+import type { EditorHistory } from './editor-history'
 import { language, syntaxTree } from '@codemirror/language'
 import type { EditorView } from '@codemirror/view'
 import { RawEditorView } from './raw-editor-view'
@@ -19,6 +20,25 @@ describe('RawEditorView', () => {
   it('renders CodeMirror container', () => {
     render(<RawEditorView {...defaultProps} />)
     expect(screen.getByTestId('raw-editor-codemirror')).toBeInTheDocument()
+  })
+
+  it('registers Undo and Redo on CodeMirror\'s history while it is mounted (AIM-468)', () => {
+    const historyRef = { current: null as EditorHistory | null }
+    const { unmount } = render(<RawEditorView {...defaultProps} historyRef={historyRef} />)
+    const host = screen.getByTestId('raw-editor-codemirror') as CodeMirrorHost
+    const view = host.__cmView!
+    const before = view.state.doc.toString()
+
+    act(() => { view.dispatch({ changes: { from: 0, insert: 'typed ' } }) })
+    expect(view.state.doc.toString()).toBe(`typed ${before}`)
+
+    act(() => { historyRef.current!.undo() })
+    expect(view.state.doc.toString()).toBe(before)
+    act(() => { historyRef.current!.redo() })
+    expect(view.state.doc.toString()).toBe(`typed ${before}`)
+
+    unmount()
+    expect(historyRef.current).toBeNull()
   })
 
   it('renders CodeMirror editor with line numbers', () => {

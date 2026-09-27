@@ -1,8 +1,11 @@
-import { useRef, useState, useCallback, useEffect } from 'react'
+import { useRef, useState, useCallback, useEffect, useMemo } from 'react'
+import { redo, undo } from '@codemirror/commands'
 import type { EditorView } from '@codemirror/view'
 import { useCodeMirror } from '@/kernel/raw/use-code-mirror'
 import type { AppLocale } from '@/lib/i18n'
 import { RawEditorFindBar, type RawEditorFindRequest } from './raw-editor-find-bar'
+import type { EditorHistory } from './editor-history'
+import { useRegisteredRef } from './use-registered-ref'
 import {
   activatePlainTextPasteTarget,
   registerPlainTextPasteTarget,
@@ -20,6 +23,8 @@ export interface RawEditorViewProps {
   latestContentRef?: React.MutableRefObject<string | null>
   locale?: AppLocale
   findRequest?: RawEditorFindRequest | null
+  /** Undo and Redo from the shell, on CodeMirror's history, for as long as Raw mode is showing. */
+  historyRef?: React.MutableRefObject<EditorHistory | null>
 }
 
 const DEBOUNCE_MS = 500
@@ -259,7 +264,7 @@ function RawEditorSurface(options: RawEditorSurfaceProps) {
 }
 
 export function RawEditorView(options: RawEditorViewProps) {
-  const { content, findRequest, latestContentRef, locale = 'en', onContentChange, onSave, path } = options
+  const { content, findRequest, historyRef, latestContentRef, locale = 'en', onContentChange, onSave, path } = options
   const rootRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [rawDoc, setRawDoc] = useState(content)
@@ -303,6 +308,11 @@ export function RawEditorView(options: RawEditorViewProps) {
     viewRef,
   })
   useRawEditorDomEvents(rootRef, activatePlainTextPaste)
+  const history = useMemo<EditorHistory>(() => ({
+    undo: () => { if (viewRef.current) undo(viewRef.current) },
+    redo: () => { if (viewRef.current) redo(viewRef.current) },
+  }), [viewRef])
+  useRegisteredRef(historyRef, history)
 
   useRawEditorContentSync({ content, findRequest, path, setFindOpen, setRawDoc, setReplaceOpen })
   return (

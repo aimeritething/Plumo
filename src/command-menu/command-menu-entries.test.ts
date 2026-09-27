@@ -15,7 +15,6 @@ describe('commandMenuCommandEntries', () => {
       'Pin/Unpin', 'Reveal in Finder', 'Open in Default App', 'Close Tab',
       'Undo', 'Redo', 'Paste without Formatting', 'Find', 'Copy Path',
       'Toggle Sidebar', 'Toggle Rich/Raw', 'Appearance: System', 'Appearance: Dark', 'Appearance: Light',
-      'Zoom In', 'Zoom Out', 'Actual Size',
       'Previous Tab', 'Next Tab',
       // The platform label: `Quit Plumo` on macOS, `Quit` elsewhere (jsdom is elsewhere).
       expect.stringMatching(/^Quit/),
@@ -38,10 +37,10 @@ describe('commandMenuCommandEntries', () => {
 
   it('greys the state groups: no Document, no Tab, no Folder', () => {
     const entries = byId(NOTHING)
-    for (const id of ['file-save', 'edit-toggle-raw-editor', 'edit-find-in-note', 'file-close-tab', 'edit-copy-path', 'file-toggle-pin', 'file-reveal-in-finder', 'file-open-in-default-app', 'file-new-note', 'file-quick-open', 'file-close-vault']) {
+    for (const id of ['file-save', 'edit-toggle-raw-editor', 'edit-find-in-note', 'edit-undo', 'edit-redo', 'file-close-tab', 'edit-copy-path', 'file-toggle-pin', 'file-reveal-in-finder', 'file-open-in-default-app', 'file-new-note', 'file-quick-open', 'file-close-vault']) {
       expect(entries.get(id)?.enabled, id).toBe(false)
     }
-    for (const id of ['file-open-vault', 'file-open-note', 'view-toggle-sidebar', 'app-quit', 'edit-undo']) {
+    for (const id of ['file-open-vault', 'file-open-note', 'view-toggle-sidebar', 'app-quit']) {
       expect(entries.get(id)?.enabled, id).toBe(true)
     }
   })
@@ -55,6 +54,11 @@ describe('commandMenuCommandEntries', () => {
     expect(entries.get('edit-copy-path')).toMatchObject({ enabled: true, detail: 'Edit', shortcut: expect.stringMatching(/,$/) })
     expect(entries.get('file-save')?.enabled).toBe(false)
     expect(entries.get('edit-find-in-note')?.enabled).toBe(false)
+    expect(entries.get('edit-undo')?.enabled).toBe(false)
+  })
+
+  it('lists no Zoom rows: v0.1 has no zoom, and a row that does nothing is a lie (AIM-468)', () => {
+    expect([...byId(EVERYTHING).keys()].filter((id) => id.startsWith('view-zoom'))).toEqual([])
   })
 })
 
