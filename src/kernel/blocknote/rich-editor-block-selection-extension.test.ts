@@ -286,6 +286,47 @@ describe('rich editor block selection extension', () => {
     expect(selectedBlockIds(editor)).toEqual(['three'])
   })
 
+  describe('an input method\'s keystrokes (AIM-456)', () => {
+    const imeInits: Array<[string, KeyboardEventInit]> = [
+      ['while composing', { isComposing: true }],
+      ['ending a composition (keyCode 229, isComposing already false)', { keyCode: 229 }],
+    ]
+
+    /** This extension's handler alone: what the other Kernel plugins make of the key is theirs. */
+    function dispatchBlockSelectionKey(editor: MountedEditor['editor'], key: string, init: KeyboardEventInit) {
+      const view = editor._tiptapEditor.view
+      const event = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key, ...init })
+      const handler = richEditorBlockSelectionPluginKey.get(view.state)?.props.handleKeyDown
+      const handled = handler?.call(undefined, view, event)
+      return { event, handled: handled === true }
+    }
+
+    it.each(imeInits)('Escape %s cancels the candidate and selects no block', (_name, init) => {
+      const editor = mountEditor()
+      editor.setTextCursorPosition('two', 'end')
+
+      const result = dispatchBlockSelectionKey(editor, 'Escape', init)
+
+      expect(result.handled).toBe(false)
+      expect(result.event.defaultPrevented).toBe(false)
+      expect(selectedBlockIds(editor)).toEqual([])
+    })
+
+    it.each(imeInits)('a key %s is left to the input method even with a block selected', (_name, init) => {
+      const editor = mountEditor()
+      selectBlock(editor, 'two')
+      const before = documentSnapshot(editor)
+
+      for (const key of ['x', 'Escape', 'ArrowDown', 'Backspace', 'Enter']) {
+        const result = dispatchBlockSelectionKey(editor, key, init)
+        expect(result.handled, key).toBe(false)
+        expect(result.event.defaultPrevented, key).toBe(false)
+      }
+      expect(selectedBlockIds(editor)).toEqual(['two'])
+      expect(documentSnapshot(editor)).toBe(before)
+    })
+  })
+
   it('ignores printable text while block selection is active', () => {
     const editor = mountEditor()
     editor.setTextCursorPosition('two', 'end')

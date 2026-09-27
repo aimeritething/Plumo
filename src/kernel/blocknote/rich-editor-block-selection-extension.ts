@@ -3,6 +3,7 @@ import type { Node as ProsemirrorNode } from '@tiptap/pm/model'
 import { Plugin, PluginKey, Selection, type EditorState, type Transaction } from '@tiptap/pm/state'
 import { Decoration, DecorationSet, type EditorView } from '@tiptap/pm/view'
 import { editorBlockElement, type RichEditor } from './block-note-dom'
+import { isComposingKeyboardEvent } from './rich-editor-keyboard'
 import {
   type CollapsibleBlock,
   isCollapsibleSectionBlockForEditor,
@@ -217,7 +218,6 @@ function handlePasteSelection(
 
 function isPlainEscape(event: KeyboardEvent): boolean {
   return event.key === 'Escape'
-    && !event.isComposing
     && !event.altKey
     && !event.ctrlKey
     && !event.metaKey
@@ -226,7 +226,6 @@ function isPlainEscape(event: KeyboardEvent): boolean {
 
 function isPlainEnter(event: KeyboardEvent): boolean {
   return event.key === 'Enter'
-    && !event.isComposing
     && !event.altKey
     && !event.ctrlKey
     && !event.metaKey
@@ -235,7 +234,6 @@ function isPlainEnter(event: KeyboardEvent): boolean {
 
 function isToggleCollapsedBlockKey(event: KeyboardEvent): boolean {
   return event.key === 'Enter'
-    && !event.isComposing
     && !event.altKey
     && (event.ctrlKey || event.metaKey)
     && !event.shiftKey
@@ -243,7 +241,6 @@ function isToggleCollapsedBlockKey(event: KeyboardEvent): boolean {
 
 function isBlockNavigationArrow(event: KeyboardEvent): event is KeyboardEvent & { key: 'ArrowDown' | 'ArrowUp' } {
   return (event.key === 'ArrowDown' || event.key === 'ArrowUp')
-    && !event.isComposing
     && !event.altKey
     && !event.ctrlKey
     && !event.metaKey
@@ -251,7 +248,6 @@ function isBlockNavigationArrow(event: KeyboardEvent): event is KeyboardEvent & 
 
 function isBlockMoveArrow(event: KeyboardEvent): event is KeyboardEvent & { key: 'ArrowDown' | 'ArrowUp' } {
   return (event.key === 'ArrowDown' || event.key === 'ArrowUp')
-    && !event.isComposing
     && !event.altKey
     && (event.ctrlKey || event.metaKey)
     && event.shiftKey
@@ -259,7 +255,6 @@ function isBlockMoveArrow(event: KeyboardEvent): event is KeyboardEvent & { key:
 
 function isDeleteKey(event: KeyboardEvent): boolean {
   return (event.key === 'Delete' || event.key === 'Backspace')
-    && !event.isComposing
     && !event.altKey
     && !event.ctrlKey
     && !event.metaKey
@@ -268,7 +263,6 @@ function isDeleteKey(event: KeyboardEvent): boolean {
 
 function isPrintableTextKey(event: KeyboardEvent): boolean {
   return event.key.length === 1
-    && !event.isComposing
     && !event.altKey
     && !event.ctrlKey
     && !event.metaKey
@@ -620,6 +614,11 @@ export const createRichEditorBlockSelectionExtension = createExtension(({ editor
             },
           },
           handleKeyDown: (view, event) => {
+            // An input method's keystroke is never a block command: not while
+            // composing, and not the one that ends a composition, which on
+            // WebKit arrives after compositionend with isComposing already
+            // false and only keyCode 229 to show for it (AIM-456).
+            if (isComposingKeyboardEvent(event, view)) return false
             const selection = readBlockSelection(view.state)
             return selection
               ? handleActiveBlockSelectionKey(blockSelectionEditor, view, event, selection)
