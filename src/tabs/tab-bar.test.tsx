@@ -1,9 +1,13 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, render as renderBare, screen, within } from '@testing-library/react'
+import type { ReactElement } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import type { Tab } from '@/types'
 import { noteEntryForPath } from '@/folder/note-entry'
 import { TabBar } from './tab-bar'
 import { TooltipProvider } from '@/ui/tooltip'
+
+// Every render sits in the one tooltip provider main.tsx gives the app.
+const render = (ui: ReactElement) => renderBare(ui, { wrapper: TooltipProvider })
 
 const tab = (path: string): Tab => ({ entry: noteEntryForPath(path, ''), content: '' })
 const tabs = [tab('/n/a.md'), tab('/n/b.md'), tab('/n/c.md')]
@@ -39,7 +43,7 @@ describe('TabBar', () => {
   it('ends the Tabs with a "+" that runs New Document, and leaves it out with no handler', () => {
     const onNewDocument = vi.fn()
     const { rerender } = render(
-      <TooltipProvider><TabBar tabs={tabs} activeTabPath="/n/a.md" onActivate={vi.fn()} onClose={vi.fn()} onNewDocument={onNewDocument} /></TooltipProvider>,
+      <TabBar tabs={tabs} activeTabPath="/n/a.md" onActivate={vi.fn()} onClose={vi.fn()} onNewDocument={onNewDocument} />,
     )
 
     const plus = screen.getByRole('button', { name: 'New Document' })
@@ -47,15 +51,13 @@ describe('TabBar', () => {
     fireEvent.click(plus)
     expect(onNewDocument).toHaveBeenCalledTimes(1)
 
-    rerender(<TooltipProvider><TabBar tabs={tabs} activeTabPath="/n/a.md" onActivate={vi.fn()} onClose={vi.fn()} /></TooltipProvider>)
+    rerender(<TabBar tabs={tabs} activeTabPath="/n/a.md" onActivate={vi.fn()} onClose={vi.fn()} />)
     expect(screen.queryByRole('button', { name: 'New Document' })).toBeNull()
   })
 
   it('puts the active Tab controls at the row end, after the "+"', () => {
     render(
-      <TooltipProvider>
-        <TabBar tabs={tabs} activeTabPath="/n/a.md" onActivate={vi.fn()} onClose={vi.fn()} onNewDocument={vi.fn()} actions={<button type="button">Copy path</button>} />
-      </TooltipProvider>,
+      <TabBar tabs={tabs} activeTabPath="/n/a.md" onActivate={vi.fn()} onClose={vi.fn()} onNewDocument={vi.fn()} actions={<button type="button">Copy path</button>} />,
     )
 
     const slot = screen.getByTestId('tab-bar-actions')
@@ -85,9 +87,7 @@ describe('TabBar', () => {
   it('with the sidebar collapsed, seats the traffic lights and the sidebar icon before the first tab', () => {
     const onShowSidebar = vi.fn()
     render(
-      <TooltipProvider>
-        <TabBar tabs={tabs} activeTabPath="/n/a.md" onActivate={vi.fn()} onClose={vi.fn()} sidebarCollapsed onShowSidebar={onShowSidebar} />
-      </TooltipProvider>,
+      <TabBar tabs={tabs} activeTabPath="/n/a.md" onActivate={vi.fn()} onClose={vi.fn()} sidebarCollapsed onShowSidebar={onShowSidebar} />,
     )
 
     const bar = screen.getByTestId('tab-bar')

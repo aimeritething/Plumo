@@ -75,7 +75,7 @@ describe('Tooltip recovery', () => {
     expect(consoleError).toHaveBeenCalled()
   })
 
-  it('draws the shortcut as a kbd chip after the label', async () => {
+  it('draws the shortcut after the label, one kbd chip per key', async () => {
     render(
       <TooltipProvider>
         <Tooltip open>
@@ -87,6 +87,6 @@ describe('Tooltip recovery', () => {
 
     const tip = await screen.findByRole('tooltip')
     expect(tip).toHaveTextContent('Hide sidebar ⌘[')
-    expect(tip.querySelector('kbd')).toHaveTextContent('⌘[')
+    expect(Array.from(tip.querySelectorAll('kbd'), (chip) => chip.textContent)).toEqual(['⌘', '['])
   })
 })

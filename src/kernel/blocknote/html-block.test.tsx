@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react'
+import { TooltipProvider } from '@/ui/tooltip'
 import { describe, expect, it, vi } from 'vitest'
 import { APP_COMMAND_EVENT_NAME, APP_COMMAND_IDS } from '@/shell/app-command-dispatcher'
 import { HTML_BLOCK_DEFAULT_HEIGHT, HTML_BLOCK_TYPE, type HtmlBlockScripts } from '@/kernel/markdown/html-block-markdown'
@@ -27,7 +28,7 @@ function renderHtmlBlock(initialProps: HtmlBlockTestProps) {
     }),
   }
 
-  render(<HtmlBlock block={liveBlock} editor={editor} />)
+  render(<HtmlBlock block={liveBlock} editor={editor} />, { wrapper: TooltipProvider })
   return { editor, liveBlock }
 }
 

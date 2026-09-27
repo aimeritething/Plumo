@@ -1,6 +1,7 @@
 import type { ComponentProps } from 'react'
 import { DotsThree, Plus } from '@phosphor-icons/react'
 import { Button } from '@/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
 import { ONE_OPEN_PER_DOUBLE_CLICK_PROPS } from '@/shell/sidebar-row'
 import {
   DropdownMenu,
@@ -25,9 +26,20 @@ interface ExplorerHeaderActionsProps {
   onCloseFolder: () => void
 }
 
-/** An 18px icon button on the label row; the open menu keeps it in its hover colours. */
-function HeaderAction(props: ComponentProps<'button'>) {
-  return <Button variant="icon" size="icon-2xs" {...props} />
+/**
+ * An 18px icon button on the label row with its tooltip; the open menu keeps
+ * it in its hover colours. As a menu trigger's Slot child it hands the
+ * trigger's props on to the button, so the menu's data-state is the one kept.
+ */
+function HeaderAction({ label, ...props }: ComponentProps<'button'> & { label: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button variant="icon" size="icon-2xs" aria-label={label} {...props} />
+      </TooltipTrigger>
+      <TooltipContent side="bottom">{label}</TooltipContent>
+    </Tooltip>
+  )
 }
 
 export function ExplorerHeaderActions(props: ExplorerHeaderActionsProps) {
@@ -35,12 +47,12 @@ export function ExplorerHeaderActions(props: ExplorerHeaderActionsProps) {
 
   return (
     <div className="flex flex-none items-center gap-0.5 opacity-0 transition-opacity duration-150 ease-out group-hover/explorer:opacity-100 focus-within:opacity-100 has-data-[state=open]:opacity-100">
-      <HeaderAction data-testid="explorer-new-document" title="New Document" aria-label="New Document" onClick={onNewDocument} {...ONE_OPEN_PER_DOUBLE_CLICK_PROPS}>
+      <HeaderAction data-testid="explorer-new-document" label="New Document" onClick={onNewDocument} {...ONE_OPEN_PER_DOUBLE_CLICK_PROPS}>
         <Plus aria-hidden="true" />
       </HeaderAction>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <HeaderAction data-testid="explorer-more-actions" title="More actions" aria-label="More actions">
+          <HeaderAction data-testid="explorer-more-actions" label="More actions">
             <DotsThree aria-hidden="true" />
           </HeaderAction>
         </DropdownMenuTrigger>

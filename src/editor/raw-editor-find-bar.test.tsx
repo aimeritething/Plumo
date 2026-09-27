@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { TooltipProvider } from '@/ui/tooltip'
 import { describe, expect, it, vi } from 'vitest'
 import type { EditorView } from '@codemirror/view'
 import { RawEditorFindBar } from './raw-editor-find-bar'
@@ -21,7 +22,7 @@ function renderFindBar(overrides: Partial<React.ComponentProps<typeof RawEditorF
     ...overrides,
   }
 
-  const rendered = render(<RawEditorFindBar {...props} />)
+  const rendered = render(<RawEditorFindBar {...props} />, { wrapper: TooltipProvider })
   return {
     props,
     rerender: (nextOverrides: Partial<React.ComponentProps<typeof RawEditorFindBar>>) => {

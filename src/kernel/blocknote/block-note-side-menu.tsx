@@ -22,6 +22,7 @@ import {
 } from '@blocknote/react'
 import { translate, type AppLocale } from '@/lib/i18n'
 import { Button } from '@/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
 import { richEditorBlockTypeName } from './rich-editor-block-types'
 import {
   useCallback,
@@ -216,14 +217,26 @@ function AddBlockButton() {
   if (!block) return null
 
   return (
-    <Button
-      aria-label={dict.side_menu.add_block_label}
-      onClick={onButtonClick}
-      size="icon-xs"
-      variant="icon-quiet"
-    >
-      <Plus data-test="dragHandleAdd" />
-    </Button>
+    <SideMenuTooltip label={dict.side_menu.add_block_label}>
+      <Button
+        aria-label={dict.side_menu.add_block_label}
+        onClick={onButtonClick}
+        size="icon-xs"
+        variant="icon-quiet"
+      >
+        <Plus data-test="dragHandleAdd" />
+      </Button>
+    </SideMenuTooltip>
+  )
+}
+
+/** A side menu button's tooltip, in the margin left of it, where the menu already is. */
+function SideMenuTooltip({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent side="left">{label}</TooltipContent>
+    </Tooltip>
   )
 }
 
@@ -265,14 +278,16 @@ function HeadingCollapseButton({ locale }: { locale: AppLocale }) {
   if (!isCollapsible) return null
 
   return (
-    <Button
-      aria-label={label}
-      onClick={onButtonClick}
-      size="icon-xs"
-      variant="icon-quiet"
-    >
-      <Icon onClick={onButtonClick} data-test="headingCollapseToggle" />
-    </Button>
+    <SideMenuTooltip label={label}>
+      <Button
+        aria-label={label}
+        onClick={onButtonClick}
+        size="icon-xs"
+        variant="icon-quiet"
+      >
+        <Icon onClick={onButtonClick} data-test="headingCollapseToggle" />
+      </Button>
+    </SideMenuTooltip>
   )
 }
 
@@ -311,16 +326,18 @@ function DragHandleButton({
           onPointerDown={onPointerDown}
           onClickCapture={onClickCapture}
         >
-          <Button
-            aria-label={dict.side_menu.drag_handle_label}
-            draggable={false}
-            onDragEnd={sideMenu.blockDragEnd}
-            onDragStart={(event) => event.preventDefault()}
-            size="icon-xs"
-            variant="icon-quiet"
-          >
-            <GripVertical data-test="dragHandle" />
-          </Button>
+          <SideMenuTooltip label={dict.side_menu.drag_handle_label}>
+            <Button
+              aria-label={dict.side_menu.drag_handle_label}
+              draggable={false}
+              onDragEnd={sideMenu.blockDragEnd}
+              onDragStart={(event) => event.preventDefault()}
+              size="icon-xs"
+              variant="icon-quiet"
+            >
+              <GripVertical data-test="dragHandle" />
+            </Button>
+          </SideMenuTooltip>
         </span>
       </Components.Generic.Menu.Trigger>
       {dragHandleMenu

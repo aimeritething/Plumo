@@ -692,7 +692,6 @@ export function TldrawWhiteboard({
               aria-label={fullscreenLabel}
               aria-pressed={fullscreen}
               data-testid="tldraw-whiteboard-fullscreen-toggle"
-              title={fullscreenLabel}
               onClick={toggleFullscreen}
             >
               {fullscreen ? <ArrowsIn aria-hidden="true" /> : <ArrowsOut aria-hidden="true" />}

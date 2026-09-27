@@ -96,7 +96,7 @@ describe('DocumentTabActions', () => {
 
       const tip = await screen.findByRole('tooltip')
       expect(tip).toHaveTextContent('Raw ⌘\\')
-      expect(tip.querySelector('kbd')).toHaveTextContent('⌘\\')
+      expect(Array.from(tip.querySelectorAll('kbd'), (chip) => chip.textContent)).toEqual(['⌘', '\\'])
     })
 
     it('disables the Rich segment with the reason as its tooltip while the Frontmatter is invalid', async () => {

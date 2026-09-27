@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from '@testing-library/react'
+import { TooltipProvider } from '@/ui/tooltip'
 import type {
   PropsWithChildren,
   ReactNode,
@@ -248,7 +249,7 @@ vi.mock('@blocknote/react', () => ({
 export function renderSideMenuWithBlock(block: MockBlock | undefined, options: RenderSideMenuOptions = {}) {
   sideMenuBlock = block
   const locale = options.locale ?? 'en'
-  render(<SideMenu locale={locale} />)
+  render(<SideMenu locale={locale} />, { wrapper: TooltipProvider })
 }
 
 export function renderSideMenuAndCollapseControllerWithBlock(block: MockBlock | undefined, options: RenderSideMenuOptions = {}) {
@@ -259,6 +260,7 @@ export function renderSideMenuAndCollapseControllerWithBlock(block: MockBlock | 
       <CollapsedHeadingsController />
       <SideMenu locale={locale} />
     </>,
+    { wrapper: TooltipProvider },
   )
 }
 

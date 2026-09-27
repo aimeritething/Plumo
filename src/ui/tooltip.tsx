@@ -7,8 +7,11 @@ import { Tooltip as TooltipPrimitive } from "radix-ui"
 import { Kbd } from "./kbd"
 import { markRecoveredTooltipError } from "./tooltip-recovery"
 
+// 400ms before a tooltip shows, so a pointer passing over a row of icons does
+// not flash one per icon; a hover that pauses is asking. Radix's skip delay
+// (300ms) keeps the move to a neighbouring icon instant.
 function TooltipProvider({
-  delayDuration = 0,
+  delayDuration = 400,
   ...props
 }: ComponentProps<typeof TooltipPrimitive.Provider>) {
   return (
@@ -59,7 +62,7 @@ function TooltipContent({
   children,
   ...props
 }: ComponentProps<typeof TooltipPrimitive.Content> & {
-  /** Drawn as a `Kbd` chip after the label. */
+  /** Drawn after the label as one `Kbd` chip per key: `⌘⇧,` is three. */
   shortcut?: string
 }) {
   return (
@@ -70,13 +73,24 @@ function TooltipContent({
           sideOffset={sideOffset}
           className={cn(
             "z-popover flex w-fit items-center gap-2 origin-(--radix-tooltip-content-transform-origin) rounded-lg border-hairline border-border-popover bg-surface-popover px-2 py-[5px] text-2xs font-medium text-balance text-text-primary shadow-menu",
+            // Only a tooltip that waited animates in, 100ms from its trigger; one
+            // reached from a neighbour within the skip delay (`instant-open`) is
+            // instant, and none animates out.
+            "data-[state=delayed-open]:animate-in data-[state=delayed-open]:fade-in-0 data-[state=delayed-open]:zoom-in-95 duration-100",
             className
           )}
           {...props}
         >
           {children}
           {/* The space keeps the text reading `label shortcut`; flex never draws it. */}
-          {shortcut && <> <Kbd>{shortcut}</Kbd></>}
+          {shortcut && (
+            <>
+              {" "}
+              <span className="flex gap-1">
+                {Array.from(shortcut).map((key, index) => <Kbd key={index}>{key}</Kbd>)}
+              </span>
+            </>
+          )}
         </TooltipPrimitive.Content>
       </TooltipPrimitive.Portal>
     </TooltipBoundary>

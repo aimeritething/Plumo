@@ -1,10 +1,15 @@
 import { Schema } from '@tiptap/pm/model'
 import { EditorState, type Transaction } from '@tiptap/pm/state'
 import type { EditorView } from '@tiptap/pm/view'
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render as renderBare, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { RichEditorFindBar, type RichFindEditor } from './rich-editor-find-bar'
 import { createRichEditorFindPlugin, richFindDecorations } from '@/kernel/blocknote/rich-editor-find'
+import type { ReactElement } from 'react'
+import { TooltipProvider } from '@/ui/tooltip'
+
+// Every render sits in the one tooltip provider main.tsx gives the app.
+const render = (ui: ReactElement) => renderBare(ui, { wrapper: TooltipProvider })
 
 const schema = new Schema({
   nodes: {

@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
+import { TooltipProvider } from '@/ui/tooltip'
 import { BlockNoteEditor } from '@blocknote/core'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { schema } from './editor-schema'
@@ -147,7 +148,7 @@ describe('Markdown highlight color controls', () => {
     const marked = textRange(editor, 'marked')
     selectText(editor, marked.from, marked.to)
 
-    render(<ToolbarHighlightColorControl editor={editor} locale="en" />)
+    render(<ToolbarHighlightColorControl editor={editor} locale="en" />, { wrapper: TooltipProvider })
 
     const caret = screen.getByRole('button', { name: 'Choose highlight color' })
     fireEvent.pointerDown(caret)

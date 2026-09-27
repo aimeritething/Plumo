@@ -7,6 +7,7 @@ import {
 } from './markdown-highlight-control-state'
 import type { HighlightEditor } from './markdown-highlight-model'
 import { Button } from '@/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
 
 export function HighlightBoundaryColorControl({ editor }: { editor: HighlightEditor }) {
   const locale = useDocumentLocale()
@@ -20,26 +21,31 @@ export function HighlightBoundaryColorControl({ editor }: { editor: HighlightEdi
       className="fixed z-sticky -translate-y-1/2"
       style={{ left: state.left, top: state.top }}
     >
-      <MarkdownHighlightColorMenu
-        currentColor={state.color}
-        editor={editor}
-        locale={locale}
-        readRange={() => state}
-        source="cursor"
-        trigger={(
-          <Button
-            aria-label={label}
-            className="bg-surface-popover text-text-primary border-hairline border-border-popover shadow-menu"
-            data-test="highlightBoundaryColorMenu"
-            onMouseDown={event => event.preventDefault()}
-            size="icon-xs"
-            title={label}
-            variant="ghost"
-          >
-            <Highlighter aria-hidden="true" />
-          </Button>
-        )}
-      />
+      {/* The tooltip trigger is the menu trigger's child, so the menu's open / closed data-state is the one the button keeps. */}
+      <Tooltip>
+        <MarkdownHighlightColorMenu
+          currentColor={state.color}
+          editor={editor}
+          locale={locale}
+          readRange={() => state}
+          source="cursor"
+          trigger={(
+            <TooltipTrigger asChild>
+              <Button
+                aria-label={label}
+                className="bg-surface-popover text-text-primary border-hairline border-border-popover shadow-menu"
+                data-test="highlightBoundaryColorMenu"
+                onMouseDown={event => event.preventDefault()}
+                size="icon-xs"
+                variant="ghost"
+              >
+                <Highlighter aria-hidden="true" />
+              </Button>
+            </TooltipTrigger>
+          )}
+        />
+        <TooltipContent>{label}</TooltipContent>
+      </Tooltip>
     </div>
   )
 }

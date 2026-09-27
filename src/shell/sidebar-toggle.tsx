@@ -26,7 +26,7 @@ export function SidebarToggle({ collapsed, onToggle }: SidebarToggleProps) {
           <SidebarSimple aria-hidden="true" />
         </Button>
       </TooltipTrigger>
-      <TooltipContent side="bottom" align="start" shortcut={SHORTCUT}>
+      <TooltipContent side="bottom" shortcut={SHORTCUT}>
         {label}
       </TooltipContent>
     </Tooltip>

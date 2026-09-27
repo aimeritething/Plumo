@@ -7,6 +7,7 @@ import { X as XIcon } from "@phosphor-icons/react"
 import { Dialog as DialogPrimitive } from "radix-ui"
 
 import { Button } from "./button"
+import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip"
 
 function Dialog({
   ...props
@@ -90,12 +91,16 @@ function DialogContent({
       >
         {children}
         {showCloseButton && (
-          <DialogPrimitive.Close data-slot="dialog-close" asChild>
-            <Button variant="icon" size="icon-xs" className="absolute top-3 right-3">
-              <XIcon />
-              <span className="sr-only">Close</span>
-            </Button>
-          </DialogPrimitive.Close>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DialogPrimitive.Close data-slot="dialog-close" asChild>
+                <Button variant="icon" size="icon-xs" className="absolute top-3 right-3" aria-label="Close">
+                  <XIcon />
+                </Button>
+              </DialogPrimitive.Close>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Close</TooltipContent>
+          </Tooltip>
         )}
       </DialogPrimitive.Content>
     </DialogPortal>

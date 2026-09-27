@@ -19,7 +19,7 @@ describe('SidebarToggle', () => {
     fireEvent.focus(button)
     const tip = await screen.findByRole('tooltip')
     expect(tip).toHaveTextContent('Hide sidebar ⌘[')
-    expect(tip.querySelector('kbd')).toHaveTextContent('⌘[')
+    expect(Array.from(tip.querySelectorAll('kbd'), (chip) => chip.textContent)).toEqual(['⌘', '['])
   })
 
   it('shows the sidebar again once collapsed', async () => {

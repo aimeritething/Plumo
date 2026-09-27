@@ -12,7 +12,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import type { KeyboardEvent, PointerEvent as ReactPointerEvent, RefObject, SyntheticEvent } from 'react'
+import type { KeyboardEvent, PointerEvent as ReactPointerEvent, ReactNode, RefObject, SyntheticEvent } from 'react'
 import { APP_COMMAND_EVENT_NAME, APP_COMMAND_IDS } from '@/shell/app-command-dispatcher'
 import { translate } from '@/lib/i18n'
 import { trackEvent } from '@/lib/telemetry'
@@ -29,6 +29,7 @@ import { htmlBlockPreview } from './html-block-sandbox'
 import { dispatchRichEditorExternalChange } from './editor-external-change-events'
 import { readFencedPreElement } from './fenced-pre-element'
 import { Button } from '@/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
 import { FloatingIconGroup } from './floating-icon-group'
 
 export const HTML_BLOCK_CONFIG = {
@@ -277,6 +278,16 @@ interface HtmlBlockToolbarProps {
   resetHeight: (event: SyntheticEvent) => void
 }
 
+/** A block control's tooltip: below the toolbar's buttons, left of the resize handle in the bottom corner. */
+function HtmlBlockTooltip({ label, side = 'bottom', children }: { label: string; side?: 'bottom' | 'left'; children: ReactNode }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent side={side}>{label}</TooltipContent>
+    </Tooltip>
+  )
+}
+
 function HtmlBlockToolbar({ copySource, resetHeight }: HtmlBlockToolbarProps) {
   return (
     <FloatingIconGroup
@@ -284,21 +295,24 @@ function HtmlBlockToolbar({ copySource, resetHeight }: HtmlBlockToolbarProps) {
       aria-label={t('editor.htmlBlock.toolbar')}
       role="toolbar"
     >
-      <Button aria-label={t('editor.htmlBlock.copySource')} onClick={copySource}
-        onMouseDown={stopHtmlBlockEvent} size="icon-xs" title={t('editor.htmlBlock.copySource')} type="button"
-        variant="icon">
-        <Copy aria-hidden="true" />
-      </Button>
-      <Button aria-label={t('editor.htmlBlock.openRawEditor')}
-        onClick={openRawEditorForHtmlSource} onMouseDown={stopHtmlBlockEvent} size="icon-xs"
-        title={t('editor.htmlBlock.openRawEditor')} type="button" variant="icon">
-        <Code aria-hidden="true" />
-      </Button>
-      <Button aria-label={t('editor.htmlBlock.resetHeight')} onClick={resetHeight}
-        onMouseDown={stopHtmlBlockEvent} size="icon-xs" title={t('editor.htmlBlock.resetHeight')} type="button"
-        variant="icon">
-        <ArrowsClockwise aria-hidden="true" />
-      </Button>
+      <HtmlBlockTooltip label={t('editor.htmlBlock.copySource')}>
+        <Button aria-label={t('editor.htmlBlock.copySource')} onClick={copySource}
+          onMouseDown={stopHtmlBlockEvent} size="icon-xs" type="button" variant="icon">
+          <Copy aria-hidden="true" />
+        </Button>
+      </HtmlBlockTooltip>
+      <HtmlBlockTooltip label={t('editor.htmlBlock.openRawEditor')}>
+        <Button aria-label={t('editor.htmlBlock.openRawEditor')}
+          onClick={openRawEditorForHtmlSource} onMouseDown={stopHtmlBlockEvent} size="icon-xs" type="button" variant="icon">
+          <Code aria-hidden="true" />
+        </Button>
+      </HtmlBlockTooltip>
+      <HtmlBlockTooltip label={t('editor.htmlBlock.resetHeight')}>
+        <Button aria-label={t('editor.htmlBlock.resetHeight')} onClick={resetHeight}
+          onMouseDown={stopHtmlBlockEvent} size="icon-xs" type="button" variant="icon">
+          <ArrowsClockwise aria-hidden="true" />
+        </Button>
+      </HtmlBlockTooltip>
     </FloatingIconGroup>
   )
 }
@@ -334,11 +348,13 @@ function HtmlBlockResizeHandle({ onKeyDown, onPointerDown }: {
 }) {
   return (
     <FloatingIconGroup className="absolute right-1.5 bottom-1.5 z-raised opacity-0 group-focus-within:opacity-100 group-hover:opacity-100">
-      <Button aria-label={t('editor.htmlBlock.resizeHeight')} className="cursor-ns-resize"
-        onKeyDown={onKeyDown} onMouseDown={stopHtmlBlockEvent} onPointerDown={onPointerDown}
-        size="icon-xs" title={t('editor.htmlBlock.resizeHeight')} type="button" variant="icon">
-        <ArrowsOutLineVertical aria-hidden="true" />
-      </Button>
+      <HtmlBlockTooltip label={t('editor.htmlBlock.resizeHeight')} side="left">
+        <Button aria-label={t('editor.htmlBlock.resizeHeight')} className="cursor-ns-resize"
+          onKeyDown={onKeyDown} onMouseDown={stopHtmlBlockEvent} onPointerDown={onPointerDown}
+          size="icon-xs" type="button" variant="icon">
+          <ArrowsOutLineVertical aria-hidden="true" />
+        </Button>
+      </HtmlBlockTooltip>
     </FloatingIconGroup>
   )
 }

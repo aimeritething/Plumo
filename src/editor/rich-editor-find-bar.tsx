@@ -1,9 +1,10 @@
 import { CaretDown as ChevronDown, CaretUp as ChevronUp, X } from '@phosphor-icons/react'
 import type { EditorView } from '@tiptap/pm/view'
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Toggle } from '@/ui/toggle'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
 import { translate, type AppLocale } from '@/lib/i18n'
 import { isImeKeyEvent } from '@/lib/ime-key-event'
 import { clampEditorFindIndex, nextEditorFindIndex, type EditorFindOptions } from '@/kernel/blocknote/editor-find'
@@ -170,21 +171,41 @@ export function RichEditorFindBar({ editor, path, request, locale = 'en' }: Rich
       <span className="min-w-[4.75rem] text-right text-xs text-text-secondary" aria-live="polite" data-testid="rich-editor-find-count">
         {statusText(locale, result, currentIndex)}
       </span>
-      <Button type="button" variant="icon" size="icon-xs" aria-label={translate(locale, 'editor.find.previousMatch')} title={translate(locale, 'editor.find.previousMatch')} disabled={matchCount === 0} onClick={movePrevious}>
-        <ChevronUp />
-      </Button>
-      <Button type="button" variant="icon" size="icon-xs" aria-label={translate(locale, 'editor.find.nextMatch')} title={translate(locale, 'editor.find.nextMatch')} disabled={matchCount === 0} onClick={moveNext}>
-        <ChevronDown />
-      </Button>
-      <Toggle pressed={regex} onPressedChange={(pressed) => { setRegex(pressed); searchAgain() }} aria-label={translate(locale, 'editor.find.regex')} title={translate(locale, 'editor.find.regex')}>
-        .*
-      </Toggle>
-      <Toggle pressed={caseSensitive} onPressedChange={(pressed) => { setCaseSensitive(pressed); searchAgain() }} aria-label={translate(locale, 'editor.find.matchCase')} title={translate(locale, 'editor.find.matchCase')}>
-        Aa
-      </Toggle>
-      <Button type="button" variant="icon" size="icon-xs" aria-label={translate(locale, 'editor.find.close')} title={translate(locale, 'editor.find.close')} onClick={close}>
-        <X />
-      </Button>
+      <FindTooltip label={translate(locale, 'editor.find.previousMatch')}>
+        <Button type="button" variant="icon" size="icon-xs" aria-label={translate(locale, 'editor.find.previousMatch')} disabled={matchCount === 0} onClick={movePrevious}>
+          <ChevronUp />
+        </Button>
+      </FindTooltip>
+      <FindTooltip label={translate(locale, 'editor.find.nextMatch')}>
+        <Button type="button" variant="icon" size="icon-xs" aria-label={translate(locale, 'editor.find.nextMatch')} disabled={matchCount === 0} onClick={moveNext}>
+          <ChevronDown />
+        </Button>
+      </FindTooltip>
+      <FindTooltip label={translate(locale, 'editor.find.regex')}>
+        <Toggle pressed={regex} data-state={regex ? 'on' : 'off'} onPressedChange={(pressed) => { setRegex(pressed); searchAgain() }} aria-label={translate(locale, 'editor.find.regex')}>
+          .*
+        </Toggle>
+      </FindTooltip>
+      <FindTooltip label={translate(locale, 'editor.find.matchCase')}>
+        <Toggle pressed={caseSensitive} data-state={caseSensitive ? 'on' : 'off'} onPressedChange={(pressed) => { setCaseSensitive(pressed); searchAgain() }} aria-label={translate(locale, 'editor.find.matchCase')}>
+          Aa
+        </Toggle>
+      </FindTooltip>
+      <FindTooltip label={translate(locale, 'editor.find.close')}>
+        <Button type="button" variant="icon" size="icon-xs" aria-label={translate(locale, 'editor.find.close')} onClick={close}>
+          <X />
+        </Button>
+      </FindTooltip>
     </div>
+  )
+}
+
+/** An icon control's tooltip, below it. A `Toggle` inside restates its `data-state`: the trigger writes its own over it. */
+function FindTooltip({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent side="bottom">{label}</TooltipContent>
+    </Tooltip>
   )
 }

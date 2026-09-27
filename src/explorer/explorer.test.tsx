@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { TooltipProvider } from '@/ui/tooltip'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { Explorer, type ExplorerPins } from './explorer'
 import { useExplorerMemory } from './use-explorer-memory'
@@ -74,7 +75,7 @@ function ExplorerHarness({ actions, onOpenFile = vi.fn(), folder = FOLDER, tree 
 }
 
 function renderExplorer(actions: ExplorerActions, onOpenFile = vi.fn(), pins?: ExplorerPins, fold: Pick<HarnessProps, 'collapsed' | 'onToggleCollapsed' | 'onExpand' | 'onFocusEditor'> = {}) {
-  const view = render(<ExplorerHarness actions={actions} onOpenFile={onOpenFile} pins={pins} {...fold} />)
+  const view = render(<ExplorerHarness actions={actions} onOpenFile={onOpenFile} pins={pins} {...fold} />, { wrapper: TooltipProvider })
   const rerender = (props: Partial<HarnessProps>) => view.rerender(<ExplorerHarness actions={actions} onOpenFile={onOpenFile} pins={pins} {...props} />)
   return { onOpenFile, rerender }
 }
@@ -89,7 +90,7 @@ describe('the empty states', () => {
           memory={memory} onCloseFolder={vi.fn()} onOpenFolder={onOpenFolder} error={error} />
       )
     }
-    render(<NoFolderHarness />)
+    render(<NoFolderHarness />, { wrapper: TooltipProvider })
     return { onOpenFolder }
   }
 
@@ -727,7 +728,7 @@ describe('bringing a row into view', () => {
   beforeEach(() => scrollIntoView.mockClear())
 
   it('opens the folders above a newly selected Document and scrolls to its row, once', () => {
-    const view = render(<ExplorerHarness actions={stubActions()} />)
+    const view = render(<ExplorerHarness actions={stubActions()} />, { wrapper: TooltipProvider })
     scrollIntoView.mockClear()
 
     view.rerender(<ExplorerHarness actions={stubActions({ selected: `${FOLDER}/Projects/Plumo.md` })} />)
@@ -778,7 +779,7 @@ describe('bringing a row into view', () => {
 
   it('scrolls to the row that enters rename, and not back to the selected row when the rename ends', () => {
     const selected = `${FOLDER}/Welcome.md`
-    const view = render(<ExplorerHarness actions={stubActions({ selected })} />)
+    const view = render(<ExplorerHarness actions={stubActions({ selected })} />, { wrapper: TooltipProvider })
     scrollIntoView.mockClear()
 
     const editing = { path: `${FOLDER}/Projects/Plumo.md`, kind: 'note' as const, stem: 'Plumo', extension: '.md' , created: false }

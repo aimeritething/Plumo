@@ -1,4 +1,4 @@
-import { useRef, type ReactNode } from 'react'
+import { useRef, type ComponentProps, type ReactNode } from 'react'
 import { Code, DotsThree, LinkSimple, TextAa, type Icon } from '@phosphor-icons/react'
 import { APP_COMMAND_DEFINITIONS, APP_COMMAND_IDS, type AppCommandId } from '@/shell/app-command-catalog'
 import type { EditorMode } from '@/types'
@@ -163,10 +163,13 @@ function DocumentMenu({ menu }: { menu: DocumentMenuActions }) {
   const onFind = menu.onFind
   return (
     <DropdownMenu>
+      {/* The tooltip trigger sits inside the menu trigger, so the menu's open / closed data-state is the one the button keeps. */}
       <DropdownMenuTrigger asChild>
-        <Button variant="icon" size="icon-xs" aria-label="More" data-testid="tab-more">
-          <DotsThree aria-hidden="true" />
-        </Button>
+        <TabActionTooltip label="More">
+          <Button variant="icon" size="icon-xs" aria-label="More" data-testid="tab-more">
+            <DotsThree aria-hidden="true" />
+          </Button>
+        </TabActionTooltip>
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
@@ -205,11 +208,12 @@ function MenuItem({ label, shortcut, onSelect }: { label: string; shortcut?: str
   )
 }
 
-function TabActionTooltip({ label, shortcut, children }: { label: string; shortcut?: string; children: ReactNode }) {
+function TabActionTooltip({ label, shortcut, children, ...triggerProps }: { label: string; shortcut?: string; children: ReactNode } & ComponentProps<'button'>) {
   return (
     <Tooltip>
-      <TooltipTrigger asChild>{children}</TooltipTrigger>
-      <TooltipContent side="bottom" align="end" shortcut={shortcut}>{label}</TooltipContent>
+      {/* Props a menu trigger hands down (as its Slot child) go on to the button. */}
+      <TooltipTrigger asChild {...triggerProps}>{children}</TooltipTrigger>
+      <TooltipContent side="bottom" shortcut={shortcut}>{label}</TooltipContent>
     </Tooltip>
   )
 }
