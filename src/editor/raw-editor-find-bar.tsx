@@ -296,7 +296,7 @@ function FindNavigationControls({
     <>
       <Button
         type="button"
-        variant="ghost"
+        variant="icon"
         size="icon-xs"
         aria-label={translate(locale, 'editor.find.previousMatch')}
         title={translate(locale, 'editor.find.previousMatch')}
@@ -307,7 +307,7 @@ function FindNavigationControls({
       </Button>
       <Button
         type="button"
-        variant="ghost"
+        variant="icon"
         size="icon-xs"
         aria-label={translate(locale, 'editor.find.nextMatch')}
         title={translate(locale, 'editor.find.nextMatch')}
@@ -348,7 +348,7 @@ function FindModeControls({
       </Toggle>
       <Button
         type="button"
-        variant="ghost"
+        variant="icon"
         size="icon-xs"
         aria-label={translate(locale, 'editor.find.close')}
         title={translate(locale, 'editor.find.close')}
@@ -366,7 +366,7 @@ function FindControls(options: FindControlsProps) {
     <div className="flex min-w-0 items-center gap-1.5">
       <Button
         type="button"
-        variant="ghost"
+        variant="icon"
         size="icon-xs"
         aria-label={
           replaceOpen ? translate(locale, 'editor.find.hideReplace') : translate(locale, 'editor.find.showReplace')

@@ -23,6 +23,7 @@ import {
   retainWhiteboardPlatformPermissionGuard,
 } from './whiteboard-platform-permission-rejection'
 import { Button } from '@/ui/button'
+import { FloatingIconGroup } from './floating-icon-group'
 import { Dialog } from '@/ui/dialog'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
 import { installTldrawTextMeasurementGuard } from './tldraw-text-measurement-guard'
@@ -681,24 +682,25 @@ export function TldrawWhiteboard({
           <span>{translate(locale, 'editor.whiteboard.permissionDeniedBody')}</span>
         </div>
       ) : null}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon-xs"
-            aria-label={fullscreenLabel}
-            aria-pressed={fullscreen}
-            className="absolute top-2 right-2 z-sticky bg-surface-app shadow-card group-data-fullscreen:top-3 group-data-fullscreen:right-3"
-            data-testid="tldraw-whiteboard-fullscreen-toggle"
-            title={fullscreenLabel}
-            onClick={toggleFullscreen}
-          >
-            {fullscreen ? <ArrowsIn aria-hidden="true" /> : <ArrowsOut aria-hidden="true" />}
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="left">{fullscreenLabel}</TooltipContent>
-      </Tooltip>
+      <FloatingIconGroup className="absolute top-2 right-2 z-sticky group-data-fullscreen:top-3 group-data-fullscreen:right-3">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="icon"
+              size="icon-xs"
+              aria-label={fullscreenLabel}
+              aria-pressed={fullscreen}
+              data-testid="tldraw-whiteboard-fullscreen-toggle"
+              title={fullscreenLabel}
+              onClick={toggleFullscreen}
+            >
+              {fullscreen ? <ArrowsIn aria-hidden="true" /> : <ArrowsOut aria-hidden="true" />}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="left">{fullscreenLabel}</TooltipContent>
+        </Tooltip>
+      </FloatingIconGroup>
       <button
         type="button"
         aria-label="Resize whiteboard width"

@@ -44,13 +44,16 @@ export function SidebarRow({ className, ...props }: ComponentProps<'div'>) {
   )
 }
 
-/** The row's 14px icon: one step quieter than the name until the row is hovered or selected. */
+/** A row's icon colours: tertiary, a step quieter than the name, until the row is hovered or selected. */
+export const SIDEBAR_ROW_ICON_COLORS = 'text-text-tertiary group-hover:text-text-primary group-data-[state=open]:text-text-primary group-aria-selected:text-text-primary'
+
+/** The row's 14px icon. */
 export function SidebarRowIcon({ icon: Icon, className, ...props }: { icon: ComponentType<IconProps> } & IconProps) {
   return (
     <Icon
       size={14}
       aria-hidden="true"
-      className={cn('flex-none text-text-secondary group-hover:text-text-primary group-data-[state=open]:text-text-primary group-aria-selected:text-text-primary', className)}
+      className={cn('flex-none', SIDEBAR_ROW_ICON_COLORS, className)}
       {...props}
     />
   )

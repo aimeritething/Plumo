@@ -10,9 +10,10 @@ export type CodeBlockCopyTarget = {
 function codeBlockCopyTarget(codeBlock: HTMLElement, container: HTMLElement): CodeBlockCopyTarget {
   const codeBlockRect = codeBlock.getBoundingClientRect()
   const containerRect = container.getBoundingClientRect()
+  // The 28px card (a 24px button and its 2px padding) sits 6px in from the block's top right.
   return {
     codeBlock,
-    left: codeBlockRect.right - containerRect.left + container.scrollLeft - 30,
+    left: codeBlockRect.right - containerRect.left + container.scrollLeft - 34,
     top: codeBlockRect.top - containerRect.top + container.scrollTop + 6,
   }
 }

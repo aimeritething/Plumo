@@ -1,5 +1,6 @@
 import { createReactBlockSpec, type ReactCustomBlockRenderProps } from '@blocknote/react'
 import { cva } from 'class-variance-authority'
+import type { IconProps } from '@phosphor-icons/react'
 import { createElement } from 'react'
 import { useAppLocale } from '@/lib/use-app-preferences'
 import { translate } from '@/lib/i18n'
@@ -51,11 +52,13 @@ function CalloutHeading({
   calloutType: string
   heading: string
 }) {
+  // A callout's filled glyph is its own design, so it keeps out of the app's icon outline.
   const icon = createElement(calloutIconForType(calloutType), {
     'aria-hidden': true,
     className: 'size-3.5',
     weight: 'fill',
-  })
+    'data-icon-stroke': undefined,
+  } as IconProps)
   return <>{icon}<span>{heading}</span></>
 }
 

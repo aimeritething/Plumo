@@ -1,6 +1,7 @@
 import type { MouseEvent } from 'react'
 import { X } from '@phosphor-icons/react'
 import { cn } from '@/lib/cn'
+import { Button } from '@/ui/button'
 
 interface CloseAffordanceProps {
   /** The name of the thing that closes, for the accessible label. */
@@ -22,19 +23,16 @@ export function CloseAffordance({ name, onClose, className }: CloseAffordancePro
   }
 
   return (
-    <button
-      type="button"
-      className={cn(
-        'size-4.5 flex-none cursor-default items-center justify-center rounded-sm border-0 bg-transparent p-0 text-text-secondary hover:bg-control-tertiary-hover hover:text-text-heading',
-        'hidden group-hover:flex',
-        className,
-      )}
+    <Button
+      variant="icon"
+      size="icon-2xs"
+      className={cn('hidden group-hover:flex', className)}
       aria-label={`Close ${name}`}
       data-testid="tab-close"
       tabIndex={-1}
       onClick={close}
     >
-      <X size={12} weight="bold" aria-hidden="true" />
-    </button>
+      <X aria-hidden="true" />
+    </Button>
   )
 }

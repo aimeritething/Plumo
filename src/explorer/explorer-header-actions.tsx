@@ -1,6 +1,6 @@
 import type { ComponentProps } from 'react'
 import { DotsThree, Plus } from '@phosphor-icons/react'
-import { cn } from '@/lib/cn'
+import { Button } from '@/ui/button'
 import { ONE_OPEN_PER_DOUBLE_CLICK_PROPS } from '@/shell/sidebar-row'
 import {
   DropdownMenu,
@@ -26,18 +26,8 @@ interface ExplorerHeaderActionsProps {
 }
 
 /** An 18px icon button on the label row; the open menu keeps it in its hover colours. */
-function HeaderAction({ className, ...props }: ComponentProps<'button'>) {
-  return (
-    <button
-      type="button"
-      className={cn(
-        'flex size-4.5 flex-none items-center justify-center rounded-sm text-text-secondary transition-colors duration-150 ease-out',
-        'hover:bg-control-tertiary-hover hover:text-text-primary data-[state=open]:bg-control-tertiary-hover data-[state=open]:text-text-primary focus-visible:focus-ring',
-        className,
-      )}
-      {...props}
-    />
-  )
+function HeaderAction(props: ComponentProps<'button'>) {
+  return <Button variant="icon" size="icon-2xs" {...props} />
 }
 
 export function ExplorerHeaderActions(props: ExplorerHeaderActionsProps) {
@@ -46,12 +36,12 @@ export function ExplorerHeaderActions(props: ExplorerHeaderActionsProps) {
   return (
     <div className="flex flex-none items-center gap-0.5 opacity-0 transition-opacity duration-150 ease-out group-hover/explorer:opacity-100 focus-within:opacity-100 has-data-[state=open]:opacity-100">
       <HeaderAction data-testid="explorer-new-document" title="New Document" aria-label="New Document" onClick={onNewDocument} {...ONE_OPEN_PER_DOUBLE_CLICK_PROPS}>
-        <Plus size={12} aria-hidden="true" />
+        <Plus aria-hidden="true" />
       </HeaderAction>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <HeaderAction data-testid="explorer-more-actions" title="More actions" aria-label="More actions">
-            <DotsThree size={14} aria-hidden="true" />
+            <DotsThree aria-hidden="true" />
           </HeaderAction>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" data-testid="explorer-header-menu">

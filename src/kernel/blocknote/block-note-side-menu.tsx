@@ -186,10 +186,6 @@ function useRequiredComponentsContext() {
   return components
 }
 
-// The side menu's buttons: 24px, the icon 20px, in the muted colour.
-const SIDE_MENU_BUTTON_CLASS = 'text-text-muted'
-const SIDE_MENU_ICON_CLASS = 'size-5'
-
 function AddBlockButton() {
   const dict = useDictionary()
   const suggestionMenu = useExtension(SuggestionMenu)
@@ -222,12 +218,11 @@ function AddBlockButton() {
   return (
     <Button
       aria-label={dict.side_menu.add_block_label}
-      className={SIDE_MENU_BUTTON_CLASS}
       onClick={onButtonClick}
       size="icon-xs"
-      variant="ghost"
+      variant="icon-quiet"
     >
-      <Plus className={SIDE_MENU_ICON_CLASS} data-test="dragHandleAdd" />
+      <Plus data-test="dragHandleAdd" />
     </Button>
   )
 }
@@ -272,12 +267,11 @@ function HeadingCollapseButton({ locale }: { locale: AppLocale }) {
   return (
     <Button
       aria-label={label}
-      className={SIDE_MENU_BUTTON_CLASS}
       onClick={onButtonClick}
       size="icon-xs"
-      variant="ghost"
+      variant="icon-quiet"
     >
-      <Icon className={SIDE_MENU_ICON_CLASS} onClick={onButtonClick} data-test="headingCollapseToggle" />
+      <Icon onClick={onButtonClick} data-test="headingCollapseToggle" />
     </Button>
   )
 }
@@ -319,14 +313,13 @@ function DragHandleButton({
         >
           <Button
             aria-label={dict.side_menu.drag_handle_label}
-            className={SIDE_MENU_BUTTON_CLASS}
             draggable={false}
             onDragEnd={sideMenu.blockDragEnd}
             onDragStart={(event) => event.preventDefault()}
             size="icon-xs"
-            variant="ghost"
+            variant="icon-quiet"
           >
-            <GripVertical className={SIDE_MENU_ICON_CLASS} data-test="dragHandle" />
+            <GripVertical data-test="dragHandle" />
           </Button>
         </span>
       </Components.Generic.Menu.Trigger>

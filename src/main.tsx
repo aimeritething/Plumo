@@ -1,4 +1,5 @@
 import { StrictMode } from 'react'
+import { IconContext, type IconProps } from '@phosphor-icons/react'
 import { createRoot } from 'react-dom/client'
 import { TooltipProvider } from '@/ui/tooltip'
 import { AppPreferencesProvider } from '@/lib/use-app-preferences'
@@ -37,6 +38,10 @@ if (import.meta.env.DEV && !isTauri()) {
   installMockVault()
 }
 
+// Every Phosphor icon carries the mark `index.css` outlines to Plumo's 1.25px
+// line; an icon that should stay as drawn passes `data-icon-stroke: undefined`.
+const ICON_DEFAULTS = { 'data-icon-stroke': '' } as IconProps
+
 function getRequiredRootElement(): HTMLElement {
   const root = document.getElementById('root')
   if (!root) throw new Error('Plumo root element is missing')
@@ -45,10 +50,12 @@ function getRequiredRootElement(): HTMLElement {
 
 createRoot(getRequiredRootElement()).render(
   <StrictMode>
-    <AppPreferencesProvider>
-      <TooltipProvider>
-        <App />
-      </TooltipProvider>
-    </AppPreferencesProvider>
+    <IconContext.Provider value={ICON_DEFAULTS}>
+      <AppPreferencesProvider>
+        <TooltipProvider>
+          <App />
+        </TooltipProvider>
+      </AppPreferencesProvider>
+    </IconContext.Provider>
   </StrictMode>,
 )

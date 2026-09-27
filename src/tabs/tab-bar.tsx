@@ -6,6 +6,7 @@ import { tabParentHints } from './tab-labels'
 import { CloseAffordance } from './close-affordance'
 import { CollapsedChrome } from '@/shell/sidebar-toggle'
 import { APP_COMMAND_DEFINITIONS, APP_COMMAND_IDS } from '@/shell/app-command-catalog'
+import { Button } from '@/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
 
 const NEW_DOCUMENT_SHORTCUT = APP_COMMAND_DEFINITIONS[APP_COMMAND_IDS.fileNewNote].shortcut?.display
@@ -66,20 +67,21 @@ export const TabBar = memo(function TabBar({ tabs, activeTabPath, onActivate, on
   )
 })
 
-/** "+": a 26px ghost square, 2px further from the last Tab than the Tabs are from each other. */
+/** "+": a 24px icon button, 2px further from the last Tab than the Tabs are from each other. */
 function NewDocumentButton({ onNewDocument }: { onNewDocument: () => void }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <button
-          type="button"
-          className="ml-0.5 grid size-6.5 flex-none cursor-default place-items-center rounded-md text-text-secondary hover:bg-control-tertiary-hover hover:text-text-heading focus-visible:focus-ring"
+        <Button
+          variant="icon"
+          size="icon-xs"
+          className="ml-0.5"
           aria-label="New Document"
           data-testid="tab-bar-new-document"
           onClick={onNewDocument}
         >
-          <Plus size={14} aria-hidden="true" />
-        </button>
+          <Plus aria-hidden="true" />
+        </Button>
       </TooltipTrigger>
       <TooltipContent side="bottom" shortcut={NEW_DOCUMENT_SHORTCUT}>New Document</TooltipContent>
     </Tooltip>

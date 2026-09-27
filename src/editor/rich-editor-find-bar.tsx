@@ -170,10 +170,10 @@ export function RichEditorFindBar({ editor, path, request, locale = 'en' }: Rich
       <span className="min-w-[4.75rem] text-right text-xs text-text-secondary" aria-live="polite" data-testid="rich-editor-find-count">
         {statusText(locale, result, currentIndex)}
       </span>
-      <Button type="button" variant="ghost" size="icon-xs" aria-label={translate(locale, 'editor.find.previousMatch')} title={translate(locale, 'editor.find.previousMatch')} disabled={matchCount === 0} onClick={movePrevious}>
+      <Button type="button" variant="icon" size="icon-xs" aria-label={translate(locale, 'editor.find.previousMatch')} title={translate(locale, 'editor.find.previousMatch')} disabled={matchCount === 0} onClick={movePrevious}>
         <ChevronUp />
       </Button>
-      <Button type="button" variant="ghost" size="icon-xs" aria-label={translate(locale, 'editor.find.nextMatch')} title={translate(locale, 'editor.find.nextMatch')} disabled={matchCount === 0} onClick={moveNext}>
+      <Button type="button" variant="icon" size="icon-xs" aria-label={translate(locale, 'editor.find.nextMatch')} title={translate(locale, 'editor.find.nextMatch')} disabled={matchCount === 0} onClick={moveNext}>
         <ChevronDown />
       </Button>
       <Toggle pressed={regex} onPressedChange={(pressed) => { setRegex(pressed); searchAgain() }} aria-label={translate(locale, 'editor.find.regex')} title={translate(locale, 'editor.find.regex')}>
@@ -182,7 +182,7 @@ export function RichEditorFindBar({ editor, path, request, locale = 'en' }: Rich
       <Toggle pressed={caseSensitive} onPressedChange={(pressed) => { setCaseSensitive(pressed); searchAgain() }} aria-label={translate(locale, 'editor.find.matchCase')} title={translate(locale, 'editor.find.matchCase')}>
         Aa
       </Toggle>
-      <Button type="button" variant="ghost" size="icon-xs" aria-label={translate(locale, 'editor.find.close')} title={translate(locale, 'editor.find.close')} onClick={close}>
+      <Button type="button" variant="icon" size="icon-xs" aria-label={translate(locale, 'editor.find.close')} title={translate(locale, 'editor.find.close')} onClick={close}>
         <X />
       </Button>
     </div>

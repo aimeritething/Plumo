@@ -12,7 +12,7 @@ interface SidebarToggleProps {
 /**
  * The sidebar's one affordance, in one place in both states: right of the
  * traffic lights, on the sidebar's top row while it is shown and on the tab
- * bar while it is collapsed. A 24px ghost icon button; both rows it sits on
+ * bar while it is collapsed. A 24px icon button; both rows it sits on
  * drag the window, the button does not. Its tooltip carries the shortcut as a
  * chip, `Show sidebar ⌘[`, because the collapsed window has nothing else to
  * say how to get the sidebar back.
@@ -22,8 +22,8 @@ export function SidebarToggle({ collapsed, onToggle }: SidebarToggleProps) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button variant="ghost" size="icon-xs" className="text-text-secondary" aria-label={label} data-testid="sidebar-toggle" onClick={onToggle}>
-          <SidebarSimple size={16} aria-hidden="true" />
+        <Button variant="icon" size="icon-xs" aria-label={label} data-testid="sidebar-toggle" onClick={onToggle}>
+          <SidebarSimple aria-hidden="true" />
         </Button>
       </TooltipTrigger>
       <TooltipContent side="bottom" align="start" shortcut={SHORTCUT}>

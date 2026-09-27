@@ -1,4 +1,6 @@
 import { CaretDown, CaretRight } from '@phosphor-icons/react'
+import { cn } from '@/lib/cn'
+import { SIDEBAR_ROW_ICON_COLORS } from '@/shell/sidebar-row'
 
 /** The 12px column before an Explorer row's icon: a folder's caret, a file's empty slot. */
 
@@ -20,7 +22,7 @@ export function ExplorerDisclosure({ name, expanded, onToggle }: ExplorerDisclos
   return (
     <button
       type="button"
-      className={DISCLOSURE}
+      className={cn(DISCLOSURE, SIDEBAR_ROW_ICON_COLORS)}
       tabIndex={-1}
       aria-label={`${expanded ? 'Collapse' : 'Expand'} ${name}`}
       onClick={(event) => { event.stopPropagation(); onToggle() }}

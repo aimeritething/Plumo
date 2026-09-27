@@ -3,6 +3,7 @@ import { ArrowsOut as Maximize2, PencilSimpleLine } from '@phosphor-icons/react'
 import { useEffect, useId, useMemo, useState, type SyntheticEvent } from 'react'
 import { MERMAID_BLOCK_TYPE, mermaidFenceSource } from '@/kernel/markdown/mermaid-markdown'
 import { Button } from '@/ui/button'
+import { FloatingIconGroup } from './floating-icon-group'
 import {
   Dialog,
   DialogContent,
@@ -62,9 +63,9 @@ const MERMAID_RENDER_HOST_STYLE = [
 ].join(';')
 const OPEN_RAW_EDITOR_LABEL = translate('en', 'editor.toolbar.rawOpen')
 
-// The two floating buttons show under the pointer or keyboard focus, and
+// The floating buttons' card shows under the pointer or keyboard focus, and
 // always on a device with no pointer to hover with.
-const FLOATING_BUTTON_CLASS = 'absolute top-2 z-raised bg-surface-card opacity-0 shadow-menu group-focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100'
+const FLOATING_GROUP_CLASS = 'absolute top-2 right-2 z-raised opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100'
 // The rendered SVG at its own size, centred; the box scrolls when it is wider.
 const SVG_CLASS = '[&_svg]:block [&_svg]:h-auto [&_svg]:max-w-none [&_svg]:min-w-min'
 
@@ -212,14 +213,12 @@ function MermaidRawEditorButton() {
   return (
     <Button
       aria-label={OPEN_RAW_EDITOR_LABEL}
-      className={`${FLOATING_BUTTON_CLASS} right-11`}
-      contentEditable={false}
       onClick={openRawEditorForMermaidSource}
       onMouseDown={stopMermaidViewportEvent}
-      size="icon-sm"
+      size="icon-xs"
       title={OPEN_RAW_EDITOR_LABEL}
       type="button"
-      variant="outline"
+      variant="icon"
     >
       <PencilSimpleLine aria-hidden="true" />
     </Button>
@@ -232,11 +231,10 @@ function MermaidLightbox({ svg }: { svg: string }) {
       <DialogTrigger asChild>
         <Button
           aria-label="Open Mermaid diagram"
-          className={`${FLOATING_BUTTON_CLASS} right-2`}
-          size="icon-sm"
+          size="icon-xs"
           title="Open diagram"
           type="button"
-          variant="outline"
+          variant="icon"
         >
           <Maximize2 aria-hidden="true" />
         </Button>
@@ -298,7 +296,9 @@ export function MermaidDiagram({ diagram, source }: MermaidDiagramProps) {
         className={`${FIGURE_CLASS} rounded-lg border-hairline border-chroma-red bg-chroma-red/8 p-3`}
         data-testid="mermaid-diagram-error"
       >
-        <MermaidRawEditorButton />
+        <FloatingIconGroup className={FLOATING_GROUP_CLASS} contentEditable={false}>
+          <MermaidRawEditorButton />
+        </FloatingIconGroup>
         <figcaption className="mb-2 text-xs leading-normal font-semibold text-chroma-red">Mermaid diagram unavailable</figcaption>
         <MermaidSourceFallback source={source} />
       </figure>
@@ -307,8 +307,10 @@ export function MermaidDiagram({ diagram, source }: MermaidDiagramProps) {
 
   return (
     <figure className={FIGURE_CLASS} data-testid="mermaid-diagram">
-      <MermaidRawEditorButton />
-      <MermaidLightbox svg={currentState.svg} />
+      <FloatingIconGroup className={FLOATING_GROUP_CLASS} contentEditable={false}>
+        <MermaidRawEditorButton />
+        <MermaidLightbox svg={currentState.svg} />
+      </FloatingIconGroup>
       <MermaidSvgViewport
         ariaLabel="Mermaid diagram"
         className={`${SVG_CLASS} max-w-full overflow-auto rounded-lg border-hairline border-border-default bg-surface-card p-3.5 focus-visible:focus-ring [&_svg]:mx-auto`}

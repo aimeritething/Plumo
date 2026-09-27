@@ -10,6 +10,7 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from '@/ui/dropdown-menu'
+import { Button } from '@/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
 
 /** A shortcut as the manifest writes it (`⌘\\`): Plumo v0.1 is a macOS app, like the sidebar toggle's `⌘[`. */
@@ -21,9 +22,6 @@ const CLOSE_TAB_SHORTCUT = shortcutOf(APP_COMMAND_IDS.fileCloseTab)
 const MODE_LABELS: Record<EditorMode, string> = { rich: 'Rich', raw: 'Raw' }
 const MODE_ICONS: Record<EditorMode, Icon> = { rich: TextAa, raw: Code }
 const MODES: readonly EditorMode[] = ['rich', 'raw']
-
-/** The round 26px icon button the tab bar's controls share. */
-const ROUND_BUTTON_CLASS = 'grid size-6.5 flex-none cursor-default place-items-center rounded-full text-text-secondary hover:bg-control-tertiary-hover hover:text-text-heading focus-visible:focus-ring data-[state=open]:bg-control-tertiary-hover data-[state=open]:text-text-heading'
 
 /** A Document Tab's mode, as the tab bar shows and switches it. */
 export interface TabMode {
@@ -91,7 +89,7 @@ export function ImageTabActions({ metadata, onOpenExternal, onCopyPath }: ImageT
       )}
       <button
         type="button"
-        className="flex h-6.5 flex-none cursor-default items-center rounded-full px-2.5 text-sm font-medium whitespace-nowrap text-text-primary inset-ring inset-ring-border-default hover:bg-control-secondary-hover focus-visible:focus-ring"
+        className="flex h-6.5 flex-none items-center rounded-full px-2.5 text-sm font-medium whitespace-nowrap text-text-primary inset-ring inset-ring-border-default hover:bg-control-secondary-hover focus-visible:focus-ring"
         data-testid="image-open-external"
         onClick={onOpenExternal}
       >
@@ -106,9 +104,9 @@ export function ImageTabActions({ metadata, onOpenExternal, onCopyPath }: ImageT
 function CopyPathButton({ onCopyPath }: { onCopyPath: () => void }) {
   return (
     <TabActionTooltip label="Copy path" shortcut={COPY_PATH_SHORTCUT}>
-      <button type="button" className={ROUND_BUTTON_CLASS} aria-label="Copy path" data-testid="tab-copy-path" onClick={onCopyPath}>
-        <LinkSimple size={16} aria-hidden="true" />
-      </button>
+      <Button variant="icon" size="icon-xs" aria-label="Copy path" data-testid="tab-copy-path" onClick={onCopyPath}>
+        <LinkSimple aria-hidden="true" />
+      </Button>
     </TabActionTooltip>
   )
 }
@@ -134,7 +132,7 @@ function ModeControl({ mode }: { mode: TabMode }) {
             <button
               type="button"
               role="radio"
-              className="grid h-5.5 w-7 cursor-default place-items-center rounded-full text-text-secondary hover:text-text-heading focus-visible:focus-ring aria-checked:bg-surface-popover aria-checked:text-text-heading aria-checked:shadow-raised aria-disabled:text-text-muted"
+              className="grid h-5.5 w-7 place-items-center rounded-full text-text-tertiary transition-colors duration-150 ease-out hover:text-text-secondary focus-visible:focus-ring aria-checked:bg-surface-popover aria-checked:text-text-heading aria-checked:shadow-raised aria-disabled:text-text-muted"
               aria-label={MODE_LABELS[segment]}
               aria-checked={active}
               aria-disabled={disabledReason !== null || undefined}
@@ -144,7 +142,7 @@ function ModeControl({ mode }: { mode: TabMode }) {
                 mode.onChange(segment)
               }}
             >
-              <SegmentIcon size={15} aria-hidden="true" />
+              <SegmentIcon size={16} aria-hidden="true" />
             </button>
           </TabActionTooltip>
         )
@@ -166,9 +164,9 @@ function DocumentMenu({ menu }: { menu: DocumentMenuActions }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button type="button" className={ROUND_BUTTON_CLASS} aria-label="More" data-testid="tab-more">
-          <DotsThree size={16} weight="bold" aria-hidden="true" />
-        </button>
+        <Button variant="icon" size="icon-xs" aria-label="More" data-testid="tab-more">
+          <DotsThree aria-hidden="true" />
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"

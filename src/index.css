@@ -599,6 +599,13 @@
   ) {
     cursor: pointer;
   }
+  /* Phosphor's regular icons outlined by 4 of their 256 units: a 1.25px line at
+     16px, between regular's 1px and bold's 1.5px. `main.tsx` marks every icon. */
+  [data-icon-stroke] path {
+    stroke: currentColor;
+    stroke-width: 4;
+    stroke-linejoin: round;
+  }
   /* Reduced motion, once for the whole app: components never write `motion-reduce:`. */
   @media (prefers-reduced-motion: reduce) {
     *,

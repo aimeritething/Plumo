@@ -29,6 +29,7 @@ import { htmlBlockPreview } from './html-block-sandbox'
 import { dispatchRichEditorExternalChange } from './editor-external-change-events'
 import { readFencedPreElement } from './fenced-pre-element'
 import { Button } from '@/ui/button'
+import { FloatingIconGroup } from './floating-icon-group'
 
 export const HTML_BLOCK_CONFIG = {
   type: BLOCK_TYPE,
@@ -271,10 +272,6 @@ function useHtmlBlockSourceCopy(currentMarkup: string) {
   }
 }
 
-// The floating buttons sit on a slightly translucent popover ground so the
-// preview shows through at the edges.
-const TOOLBAR_BUTTON_CLASS = 'bg-surface-popover/92 shadow-card'
-
 interface HtmlBlockToolbarProps {
   copySource: (event: SyntheticEvent) => void
   resetHeight: (event: SyntheticEvent) => void
@@ -282,27 +279,27 @@ interface HtmlBlockToolbarProps {
 
 function HtmlBlockToolbar({ copySource, resetHeight }: HtmlBlockToolbarProps) {
   return (
-    <div
-      className="absolute top-2 right-2 z-raised flex items-center gap-1 opacity-0 transition-opacity duration-150 ease-out group-focus-within:opacity-100 group-hover:opacity-100"
+    <FloatingIconGroup
+      className="absolute top-2 right-2 z-raised opacity-0 transition-opacity duration-150 ease-out group-focus-within:opacity-100 group-hover:opacity-100"
       aria-label={t('editor.htmlBlock.toolbar')}
       role="toolbar"
     >
-      <Button aria-label={t('editor.htmlBlock.copySource')} className={TOOLBAR_BUTTON_CLASS} onClick={copySource}
+      <Button aria-label={t('editor.htmlBlock.copySource')} onClick={copySource}
         onMouseDown={stopHtmlBlockEvent} size="icon-xs" title={t('editor.htmlBlock.copySource')} type="button"
-        variant="outline">
+        variant="icon">
         <Copy aria-hidden="true" />
       </Button>
-      <Button aria-label={t('editor.htmlBlock.openRawEditor')} className={TOOLBAR_BUTTON_CLASS}
+      <Button aria-label={t('editor.htmlBlock.openRawEditor')}
         onClick={openRawEditorForHtmlSource} onMouseDown={stopHtmlBlockEvent} size="icon-xs"
-        title={t('editor.htmlBlock.openRawEditor')} type="button" variant="outline">
+        title={t('editor.htmlBlock.openRawEditor')} type="button" variant="icon">
         <Code aria-hidden="true" />
       </Button>
-      <Button aria-label={t('editor.htmlBlock.resetHeight')} className={TOOLBAR_BUTTON_CLASS} onClick={resetHeight}
+      <Button aria-label={t('editor.htmlBlock.resetHeight')} onClick={resetHeight}
         onMouseDown={stopHtmlBlockEvent} size="icon-xs" title={t('editor.htmlBlock.resetHeight')} type="button"
-        variant="outline">
+        variant="icon">
         <ArrowsClockwise aria-hidden="true" />
       </Button>
-    </div>
+    </FloatingIconGroup>
   )
 }
 
@@ -336,12 +333,13 @@ function HtmlBlockResizeHandle({ onKeyDown, onPointerDown }: {
   onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) => void
 }) {
   return (
-    <Button aria-label={t('editor.htmlBlock.resizeHeight')}
-      className="absolute right-1.5 bottom-1.5 z-raised cursor-ns-resize opacity-0 group-focus-within:opacity-100 group-hover:opacity-100"
-      onKeyDown={onKeyDown} onMouseDown={stopHtmlBlockEvent} onPointerDown={onPointerDown}
-      size="icon-xs" title={t('editor.htmlBlock.resizeHeight')} type="button" variant="ghost">
-      <ArrowsOutLineVertical aria-hidden="true" />
-    </Button>
+    <FloatingIconGroup className="absolute right-1.5 bottom-1.5 z-raised opacity-0 group-focus-within:opacity-100 group-hover:opacity-100">
+      <Button aria-label={t('editor.htmlBlock.resizeHeight')} className="cursor-ns-resize"
+        onKeyDown={onKeyDown} onMouseDown={stopHtmlBlockEvent} onPointerDown={onPointerDown}
+        size="icon-xs" title={t('editor.htmlBlock.resizeHeight')} type="button" variant="icon">
+        <ArrowsOutLineVertical aria-hidden="true" />
+      </Button>
+    </FloatingIconGroup>
   )
 }
 
