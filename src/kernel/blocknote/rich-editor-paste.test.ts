@@ -179,6 +179,91 @@ describe('handleRichEditorPaste', () => {
     expect(context.editor.pasteText).not.toHaveBeenCalled()
   })
 
+  describe('what counts as a copied code snippet (AIM-467)', () => {
+    it('a snippet wrapped the way a browser wraps a copy is still one code block', () => {
+      const context = pasteContext({
+        'text/html': `${htmlTag('meta charset="utf-8"')}${htmlTag('div')}${htmlCodeBlock('x = 1')}${htmlTag('/div')}`,
+        'text/plain': 'x = 1',
+      })
+
+      expect(handleRichEditorPaste(context)).toBe(true)
+
+      expect(context.editor.pasteMarkdown).toHaveBeenCalledWith('```\nx = 1\n```')
+      expect(context.defaultPasteHandler).not.toHaveBeenCalled()
+    })
+
+    it('prose beside the snippet is a page fragment, pasted as one by the Kernel', () => {
+      const context = pasteContext({
+        'text/html': `${htmlTag('p')}Run it like so:${htmlTag('/p')}${htmlCodeBlock('x = 1')}`,
+        'text/plain': 'Run it like so:\nx = 1',
+      })
+
+      expect(handleRichEditorPaste(context)).toBe(true)
+
+      expect(context.defaultPasteHandler).toHaveBeenCalledWith()
+      expect(context.editor.pasteMarkdown).not.toHaveBeenCalled()
+      expect(context.editor.pasteText).not.toHaveBeenCalled()
+    })
+
+    it('two snippets are a fragment too', () => {
+      const context = pasteContext({
+        'text/html': `${htmlCodeBlock('x = 1')}${htmlCodeBlock('y = 2')}`,
+        'text/plain': 'x = 1\ny = 2',
+      })
+
+      expect(handleRichEditorPaste(context)).toBe(true)
+
+      expect(context.defaultPasteHandler).toHaveBeenCalledWith()
+      expect(context.editor.pasteMarkdown).not.toHaveBeenCalled()
+    })
+
+    it('a snippet whose text is a fence makes one block, with the fence\'s language', () => {
+      const cursorBlock = { id: 'empty-paragraph', type: 'paragraph', content: [] }
+      const context = pasteContext({
+        'text/html': htmlCodeBlock('```ts\nconst answer = 42\n```'),
+        'text/plain': '```ts\nconst answer = 42\n```',
+      })
+      context.editor = {
+        getTextCursorPosition: vi.fn(() => ({ block: cursorBlock })),
+        insertBlocks: vi.fn(),
+        pasteMarkdown: vi.fn(),
+        pasteText: vi.fn(() => true),
+        replaceBlocks: vi.fn(),
+      }
+
+      expect(handleRichEditorPaste(context)).toBe(true)
+
+      expect(context.editor.replaceBlocks).toHaveBeenCalledTimes(1)
+      expect(context.editor.replaceBlocks).toHaveBeenCalledWith([cursorBlock], [expect.objectContaining({
+        content: [{ styles: {}, text: 'const answer = 42', type: 'text' }],
+        props: { language: 'typescript' },
+        type: 'codeBlock',
+      })])
+      expect(context.editor.insertBlocks).not.toHaveBeenCalled()
+    })
+
+    it('inside a code block the clipboard goes to the Kernel, which pastes its text at the caret', () => {
+      const context = pasteContext({
+        'text/html': htmlCodeBlock('x = 1'),
+        'text/plain': fencedCppSource,
+      })
+      context.editor = {
+        getTextCursorPosition: vi.fn(() => ({ block: { id: 'code', type: 'codeBlock', content: [] } })),
+        insertBlocks: vi.fn(),
+        pasteMarkdown: vi.fn(),
+        pasteText: vi.fn(() => true),
+        replaceBlocks: vi.fn(),
+      }
+
+      expect(handleRichEditorPaste(context)).toBe(true)
+
+      expect(context.defaultPasteHandler).toHaveBeenCalledWith()
+      expect(context.editor.insertBlocks).not.toHaveBeenCalled()
+      expect(context.editor.replaceBlocks).not.toHaveBeenCalled()
+      expect(context.editor.pasteMarkdown).not.toHaveBeenCalled()
+    })
+  })
+
   it('does not parse untrusted HTML code without a plain-text clipboard source', () => {
     const context = pasteContext({
       'text/html': htmlCodeBlock('&lt;script&gt;window.compromised = true&lt;/script&gt;'),

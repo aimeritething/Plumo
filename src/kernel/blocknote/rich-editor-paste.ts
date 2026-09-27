@@ -38,16 +38,6 @@ type ClipboardMarkup = {
   value: string
 }
 
-type MarkupTagSearch = {
-  fromIndex?: number
-  normalizedMarkup: string
-  tagName: string
-}
-
-type MarkupTagBoundary = {
-  character: string
-}
-
 type RichPasteEditor = {
   createLink?: (url: string) => void
   document?: PasteBlock[]
@@ -123,48 +113,45 @@ function clipboardWebMarkup(clipboardData: DataTransfer): ClipboardMarkup {
   return { value: clipboardData.getData(WEB_MARKUP_MIME_TYPE) }
 }
 
-function isMarkupTagBoundary({ character }: MarkupTagBoundary): boolean {
-  return character === '' || character === '>' || character === '/' || character.charCodeAt(0) <= 32
-}
+/** Wrappers a clipboard puts around what was copied; nothing of their own to paste. */
+const MARKUP_WRAPPER_TAGS = new Set(['DIV', 'SPAN', 'ARTICLE', 'SECTION', 'MAIN', 'FIGURE'])
 
-function markupTagStartIndex({
-  fromIndex = 0,
-  normalizedMarkup,
-  tagName,
-}: MarkupTagSearch): number {
-  const needle = `<${tagName}`
-  let searchIndex = fromIndex
-
-  while (searchIndex < normalizedMarkup.length) {
-    const tagIndex = normalizedMarkup.indexOf(needle, searchIndex)
-    if (tagIndex === -1) return -1
-
-    const boundary = normalizedMarkup.charAt(tagIndex + needle.length)
-    if (isMarkupTagBoundary({ character: boundary })) return tagIndex
-
-    searchIndex = tagIndex + needle.length
+/** The one element among a node's children, or null when there is prose or a second element beside it. `<meta>` and comments do not count. */
+function soleChildElement(parent: ParentNode): Element | null {
+  let found: Element | null = null
+  for (const node of parent.childNodes) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      if (node.textContent?.trim()) return null
+      continue
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) continue
+    const element = node as Element
+    if (element.tagName === 'META') continue
+    if (found) return null
+    found = element
   }
-
-  return -1
+  return found
 }
 
-function hasPreCodeMarkup(markup: ClipboardMarkup): boolean {
-  const normalizedMarkup = markup.value.toLowerCase()
-  const preStart = markupTagStartIndex({ normalizedMarkup, tagName: 'pre' })
-  if (preStart === -1) return false
-
-  const preEnd = markupTagStartIndex({ fromIndex: preStart + 4, normalizedMarkup, tagName: '/pre' })
-  const codeStart = markupTagStartIndex({ fromIndex: preStart + 4, normalizedMarkup, tagName: 'code' })
-  if (codeStart === -1) return false
-
-  return preEnd === -1 || codeStart < preEnd
+/**
+ * Whether the markup amounts to one `<pre>` holding a `<code>`, wrappers
+ * aside: a code snippet copied on its own. Prose beside the snippet, or a
+ * second block, means the clipboard is a page fragment and is pasted as one,
+ * by the Kernel's HTML path (AIM-467). The document is parsed inert: nothing
+ * in it runs or loads.
+ */
+function isSoleCodeBlockMarkup(markup: ClipboardMarkup): boolean {
+  if (!markup.value) return false
+  let element = soleChildElement(new DOMParser().parseFromString(markup.value, 'text/html').body)
+  while (element && MARKUP_WRAPPER_TAGS.has(element.tagName)) element = soleChildElement(element)
+  return element?.tagName === 'PRE' && element.querySelector('code') !== null
 }
 
 function shouldPasteHTMLCodeBlocksFromHTML(clipboardData: DataTransfer | null): boolean {
   if (!clipboardData) return false
   if (hasExplicitMarkdownPayload(clipboardData)) return false
 
-  return hasPreCodeMarkup(clipboardWebMarkup(clipboardData))
+  return isSoleCodeBlockMarkup(clipboardWebMarkup(clipboardData))
 }
 
 function normalizedCodeBlockLanguageToken(language: string): string {
@@ -270,6 +257,11 @@ function blockText(block: PasteBlock): string {
 
 function isEmptyParagraph(block: PasteBlock): boolean {
   return block.type === 'paragraph' && blockText(block).trim() === ''
+}
+
+/** The caret sits in a code block, which holds plain text only. */
+function cursorInCodeBlock(editor: RichPasteEditor): boolean {
+  return editor.getTextCursorPosition?.().block?.type === 'codeBlock'
 }
 
 function blockWithId(block: PasteBlock | null | undefined): PasteBlockWithId | null {
@@ -384,9 +376,16 @@ export function handleRichEditorPaste({
   editor,
   event,
 }: RichEditorPasteContext): boolean | undefined {
+  // Inside a code block every branch below would make a block of its own
+  // under the caret; the Kernel's handler pastes the clipboard's text where
+  // the caret is, which is the only paste a code block takes (AIM-467).
+  if (cursorInCodeBlock(editor)) return defaultPasteHandler()
   if (linkSelectedTextFromPaste(event.clipboardData, editor)) return true
 
-  const codeBlocks = [...htmlCodeBlocks(event.clipboardData), ...markdownCodeBlocks(event.clipboardData)]
+  // One code block from one source: a fence in the text says its language,
+  // so it is read before the HTML that may carry the same snippet.
+  const fencedBlocks = markdownCodeBlocks(event.clipboardData)
+  const codeBlocks = fencedBlocks.length > 0 ? fencedBlocks : htmlCodeBlocks(event.clipboardData)
   if (insertCodeBlocks(editor, codeBlocks)) return true
 
   const codeBlockMarkdown = codeBlocksAsMarkdown(codeBlocks)
