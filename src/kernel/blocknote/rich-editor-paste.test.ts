@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
 import { BlockNoteEditor } from '@blocknote/core'
 import {
+  createRichEditorPasteHandler,
   handleRichEditorPaste,
+  pasteTakesClipboardFiles,
   type RichEditorPasteContext,
 } from './rich-editor-paste'
 import { schema } from './editor-schema'
@@ -301,4 +303,53 @@ describe('handleRichEditorPaste', () => {
     expect(context.editor.pasteMarkdown).not.toHaveBeenCalled()
     expect(context.editor.pasteText).not.toHaveBeenCalled()
   })
+})
+
+describe('pasteTakesClipboardFiles', () => {
+  const image = new File(['png'], 'shot.png', { type: 'image/png' })
+
+  function clipboardWith(types: string[]): DataTransfer {
+    const files = types.includes('Files') ? [image] : []
+    return {
+      files,
+      items: files.map((file) => ({ kind: 'file', type: file.type, getAsFile: () => file })),
+      getData: (type: string) => (type === 'Files' || !types.includes(type) ? '' : type === 'text/plain' ? 'shot.png' : '<p>shot</p>'),
+      types,
+    } as unknown as DataTransfer
+  }
+
+  const shapes = [
+    { name: 'an image alone', types: ['Files'], takesFiles: true },
+    { name: 'an image with its name as text', types: ['text/plain', 'Files'], takesFiles: false },
+    { name: 'an image with a web page', types: ['text/html', 'Files'], takesFiles: false },
+    { name: 'text alone', types: ['text/plain'], takesFiles: false },
+    { name: 'nothing', types: [], takesFiles: false },
+  ]
+
+  it.each(shapes)('says whether a paste of $name becomes its files', ({ types, takesFiles }) => {
+    expect(pasteTakesClipboardFiles(clipboardWith(types))).toBe(takesFiles)
+  })
+
+  it.each(shapes.filter(({ types }) => types.includes('Files')))(
+    'agrees with what a Rich mode paste of $name does',
+    async ({ types, takesFiles }) => {
+      // ProseMirror's text paste builds one; jsdom has none.
+      vi.stubGlobal('ClipboardEvent', class extends Event { clipboardData = null })
+      const uploadFile = vi.fn(async () => 'asset://localhost/shot.png')
+      const editor = BlockNoteEditor.create({ schema, uploadFile, pasteHandler: createRichEditorPasteHandler() })
+      const host = document.createElement('div')
+      document.body.appendChild(host)
+      editor.mount(host)
+      const paste = new Event('paste', { bubbles: true, cancelable: true })
+      Object.assign(paste, { clipboardData: clipboardWith(types) })
+
+      editor.prosemirrorView.dom.dispatchEvent(paste)
+      await new Promise((resolve) => setTimeout(resolve, 0))
+
+      expect(uploadFile.mock.calls.length > 0).toBe(takesFiles)
+      editor.unmount()
+      host.remove()
+      vi.unstubAllGlobals()
+    },
+  )
 })

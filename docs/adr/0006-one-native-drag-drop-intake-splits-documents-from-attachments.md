@@ -1,7 +1,7 @@
 ---
 status: accepted
 date: 2026-09-11
-amended: 2026-09-28 (AIM-471: the drop point is read; AIM-515: the margins count as the editor)
+amended: 2026-09-28 (AIM-471: the drop point is read; AIM-515: the margins count as the editor; AIM-516: Raw mode takes a pasted image)
 ---
 
 # One native drag-drop intake splits Documents from Attachments
@@ -38,7 +38,7 @@ The hook's HTML5 branch follows the same rules with the event's own coordinates,
 ## Consequences
 
 - A Document's Attachments have to be viewable, which the asset protocol refuses until their directory is in its scope. `useNoteTabs` allows the boundary root through `sync_vault_asset_scope_for_window` before it reads a Document, so the content reaches the editor with its images resolvable rather than a paint later. Saving or copying an image already allows the root on the Rust side.
-- Clipboard paste needs none of this: WKWebView puts a pasted image in `clipboardData`, the kernel's paste handler falls through to BlockNote's file branch, and `uploadFile` writes the Attachment through `save_image`. That is Rich mode's alone: Raw mode's CodeMirror pastes only the clipboard's text, so an image pasted there does not become an Attachment.
+- Clipboard paste needs none of this: WKWebView puts a pasted image in `clipboardData`, the kernel's paste handler falls through to BlockNote's file branch, and `uploadFile` writes the Attachment through `save_image`. Raw mode takes the same clipboard the same way: `useRawImagePaste` saves each image through the same `uploadEditorImage`, with the same toasts, and puts its line at the caret as one undoable edit, never into the Frontmatter. Both modes take the clipboard's files only when BlockNote would (`pasteTakesClipboardFiles`): files are last in its order, so a clipboard that also carries text or a web page pastes that instead, in either mode.
 - Image files open as Tabs of their own. Such a Tab has no editor, so it mounts no image drop hook, and an image dropped over it is ignored by construction rather than by a check.
 - A drop that carries both a `.md` and an image does both, each through its own consumer, when it is released over the editor. Nothing requires one to win. A `.md` opens wherever it is released.
 - One slow copy holds back the rest of its drop; the images appear together once the last copy settles, rather than one by one in an order the user did not choose.

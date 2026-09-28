@@ -406,6 +406,27 @@ export function handleRichEditorPaste({
   return defaultPasteHandler()
 }
 
+/**
+ * The clipboard flavours BlockNote's default paste reads, in its order of
+ * preference (`acceptedMIMETypes` in @blocknote/core, which it does not
+ * export). The first one on the clipboard is what a paste becomes.
+ */
+const BLOCKNOTE_PASTE_FORMATS = ['vscode-editor-data', 'blocknote/html', 'text/markdown', WEB_MARKUP_MIME_TYPE, 'text/plain', 'Files']
+
+/**
+ * Whether a paste of this clipboard becomes its files, a pasted image an
+ * Attachment, rather than its text. Files come last in BlockNote's order, so
+ * only a clipboard with no text on it gives them: a screenshot does, while an
+ * image copied with its name or with a web page around it pastes that text.
+ * Raw mode asks the same, so a clipboard pastes alike in either mode.
+ */
+export function pasteTakesClipboardFiles(clipboardData: DataTransfer | null): boolean {
+  if (!clipboardData) return false
+
+  const types = Array.from(clipboardData.types)
+  return BLOCKNOTE_PASTE_FORMATS.find((format) => types.includes(format)) === 'Files'
+}
+
 export function createRichEditorPasteHandler(): (context: RichEditorPasteContext) => boolean | undefined {
   return context => handleRichEditorPaste(context)
 }

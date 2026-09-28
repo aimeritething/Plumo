@@ -4,9 +4,11 @@ import { EditorView } from '@codemirror/view'
 import { describe, expect, it, vi } from 'vitest'
 import {
   insertRawImages,
+  pasteRawImages,
   rawImageDropTargetAt,
   rawImageInsertion,
   rawImageMarkdown,
+  rawImagePasteInsertion,
   type RawImageDropTarget,
 } from './raw-image-insertion'
 
@@ -110,6 +112,75 @@ describe('rawImageDropTargetAt', () => {
     expect(rawImageDropTargetAt(view, { x: 5000, y: lineAt(3).bottom - 1 })).toEqual({ line: 3, placement: 'after' })
     expect(rawImageDropTargetAt(view, { x: -400, y: lineAt(4).bottom - 1 })).toEqual({ line: 4, placement: 'after' })
     expect(rawImageDropTargetAt(view, { x: 5000, y: lineAt(1).top + 1 })).toEqual({ line: 1, placement: 'before' })
+    view.destroy()
+  })
+})
+
+describe('rawImagePasteInsertion', () => {
+  const A = '![](attachments/a.png)'
+  const B = '![](attachments/b.png)'
+
+  /** `|` marks the caret; `[` and `]` a selection. */
+  function pasted(marked: string, images: string[]): { content: string; caret: number } {
+    const from = marked.search(/[|[]/u)
+    const plain = marked.replace(/[|[\]]/gu, '')
+    const to = marked.includes('[') ? marked.indexOf(']') - 1 : from
+    const change = rawImagePasteInsertion(Text.of(plain.split('\n')), { from, to }, images)
+    return { content: plain.slice(0, change.from) + change.insert + plain.slice(change.to), caret: change.caret }
+  }
+
+  it('puts the image on a line of its own after text the caret ends, set apart by a blank line', () => {
+    expect(pasted('# Plan\n\nFirst.|\n\nSecond.', [A]).content).toBe(`# Plan\n\nFirst.\n\n${A}\n\nSecond.`)
+    expect(pasted('# Plan\nFirst.|\nSecond.', [A]).content).toBe(`# Plan\nFirst.\n\n${A}\n\nSecond.`)
+  })
+
+  it('fills a blank line the caret is on, with a blank line kept on either side', () => {
+    expect(pasted('One\n|\nTwo', [A]).content).toBe(`One\n\n${A}\n\nTwo`)
+    expect(pasted('One\n\n|\n\nTwo', [A]).content).toBe(`One\n\n${A}\n\nTwo`)
+  })
+
+  it('splits the line at a caret inside it', () => {
+    expect(pasted('Before| after', [A]).content).toBe(`Before\n\n${A}\n\n after`)
+    expect(pasted('|Start', [A]).content).toBe(`${A}\n\nStart`)
+  })
+
+  it('replaces the selection, as a text paste would', () => {
+    expect(pasted('Keep [this and that] too.', [A]).content).toBe(`Keep \n\n${A}\n\n too.`)
+    expect(pasted('One\n[Two\nThree]\nFour', [A]).content).toBe(`One\n\n${A}\n\nFour`)
+  })
+
+  it('puts several images in the order given, and the caret after the last', () => {
+    const { content, caret } = pasted('Text|', [A, B])
+
+    expect(content).toBe(`Text\n\n${A}\n\n${B}`)
+    expect(caret).toBe(content.length)
+  })
+
+  it('keeps the newline a Document ends with, and adds none it did not have', () => {
+    expect(pasted('Text\n|', [A]).content).toBe(`Text\n\n${A}\n`)
+    expect(pasted('Text|', [A]).content).toBe(`Text\n\n${A}`)
+    expect(pasted('|', [A]).content).toBe(A)
+  })
+
+  it('never puts an image inside the Frontmatter, nor takes a selection there', () => {
+    expect(pasted('---\ntitle: |Plan\n---\n\n# Plan', [A]).content).toBe(`---\ntitle: Plan\n---\n\n${A}\n\n# Plan`)
+    expect(pasted('---\n[title: Plan]\n---\n# Plan', [A]).content).toBe(`---\ntitle: Plan\n---\n\n${A}\n\n# Plan`)
+    expect(pasted('---\ntitle: Plan\n---|', [A]).content).toBe(`---\ntitle: Plan\n---\n\n${A}`)
+  })
+})
+
+describe('pasteRawImages', () => {
+  it('inserts at the selection as one paste edit that a single undo takes back, with the caret after it', () => {
+    const view = new EditorView({
+      state: EditorState.create({ doc: 'One\n\nTwo', selection: { anchor: 3 }, extensions: [history()] }),
+    })
+
+    pasteRawImages(view, ['![](attachments/a.png)', '![](attachments/b.png)'])
+    expect(view.state.doc.toString()).toBe('One\n\n![](attachments/a.png)\n\n![](attachments/b.png)\n\nTwo')
+    expect(view.state.selection.main.head).toBe('One\n\n![](attachments/a.png)\n\n![](attachments/b.png)'.length)
+
+    undo(view)
+    expect(view.state.doc.toString()).toBe('One\n\nTwo')
     view.destroy()
   })
 })

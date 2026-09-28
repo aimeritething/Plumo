@@ -117,10 +117,11 @@ function hasImageFiles(dt: DataTransfer): boolean {
     const item = Reflect.get(dt.items, i) as DataTransferItem | undefined
     if (item?.kind === 'file' && IMAGE_MIME_TYPES.includes(item.type)) return true
   }
-  return Array.from(dt.files).some(isDroppedImageFile)
+  return Array.from(dt.files).some(isImageLikeFile)
 }
 
-function isDroppedImageFile(file: File): boolean {
+/** An Image file, or an image format the import says it cannot take (HEIC), by type or by name. */
+export function isImageLikeFile(file: File): boolean {
   return IMAGE_MIME_TYPES.includes(file.type.toLowerCase())
     || isImageFilePath(file.name)
     || isUnsupportedHeicFile(file)
@@ -461,7 +462,7 @@ export function useImageDrop<Target>({
     const handleDrop = (event: DragEvent) => {
       setIsDragOver(false)
       if (!event.dataTransfer) return
-      const files = Array.from(event.dataTransfer.files).filter(isDroppedImageFile)
+      const files = Array.from(event.dataTransfer.files).filter(isImageLikeFile)
       const currentDropTargetAt = dropTargetAtRef.current
       const currentOnImagesDropped = onImagesDroppedRef.current
       if (files.length === 0 || !currentDropTargetAt || !currentOnImagesDropped) return

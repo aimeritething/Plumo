@@ -22,6 +22,7 @@ import {
   rawImageMarkdown,
   type RawImageDropTarget,
 } from './raw-image-insertion'
+import { useRawImagePaste } from './raw-image-paste'
 import type { ClientPoint } from '@/platform/use-tauri-drag-drop-event'
 
 export interface RawEditorViewProps {
@@ -391,6 +392,14 @@ export function RawEditorView(options: RawEditorViewProps) {
   })
   useRawEditorDomEvents(rootRef, activatePlainTextPaste)
   const { isDragOver } = useRawEditorImageDrop({
+    attachmentVaultPath,
+    containerRef,
+    onImageImportError,
+    pathRef,
+    vaultPath,
+    viewRef,
+  })
+  useRawImagePaste({
     attachmentVaultPath,
     containerRef,
     onImageImportError,

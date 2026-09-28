@@ -72,6 +72,65 @@ export function rawImageInsertion(doc: Text, target: RawImageDropTarget, images:
   return { from: doc.line(line).from, insert: `${lead}${block}${trail}` }
 }
 
+/** A place in the Document, a caret where `from` and `to` meet. */
+export type RawImageRange = { from: number; to: number }
+type RawImageReplacement = RawImageRange & { insert: string; caret: number }
+
+// What goes between the image lines and the text left on the same line: a
+// blank line after text, one line break after spaces (a blank line already),
+// and nothing at the line's edge but what the line beyond needs.
+function separator(textBeside: string, lineBeyondIsBlank: boolean): string {
+  if (textBeside === '') return lineBeyondIsBlank ? '' : '\n'
+  return textBeside.trim() === '' ? '\n' : '\n\n'
+}
+
+/**
+ * The change that puts the image lines at a place in the Document, the way a
+ * paste at the caret goes in: whatever is selected is replaced, a line the
+ * caret is inside is split there, and the images stand on lines of their own
+ * as paragraphs of their own, set apart from the text around them by blank
+ * lines. A place inside the Frontmatter takes nothing from it: the images go
+ * on the first line after it, where a drop there would put them.
+ */
+export function rawImagePasteInsertion(doc: Text, range: RawImageRange, images: string[]): RawImageReplacement {
+  const block = images.join('\n\n')
+  if (range.from < splitFrontmatter(doc.toString())[0].length) {
+    const { from, insert } = rawImageInsertion(doc, { line: 1, placement: 'before' }, images)
+    return { from, to: from, insert, caret: from + insert.indexOf(block) + block.length }
+  }
+
+  const first = doc.lineAt(range.from)
+  const last = doc.lineAt(range.to)
+  const before = doc.sliceString(first.from, range.from)
+  const after = doc.sliceString(range.to, last.to)
+  const lead = separator(before, isBlankLine(doc, first.number - 1))
+  // An empty last line is the newline the Document ends with, which it keeps.
+  const endsDocument = before === '' && after === '' && last.number === doc.lines && doc.lines > 1
+  const trail = endsDocument ? '\n' : separator(after, isBlankLine(doc, last.number + 1))
+  return { ...range, insert: `${lead}${block}${trail}`, caret: range.from + lead.length + block.length }
+}
+
+/**
+ * Paste the images over the selection, or the range given, as one ordinary
+ * edit with the caret after the last: it goes on the undo history as one
+ * step, and Autosave writes it.
+ */
+export function pasteRawImages(
+  view: Pick<EditorView, 'dispatch' | 'state'>,
+  images: string[],
+  range: RawImageRange = view.state.selection.main,
+): void {
+  if (images.length === 0) return
+
+  const { caret, ...change } = rawImagePasteInsertion(view.state.doc, { from: range.from, to: range.to }, images)
+  view.dispatch({
+    changes: change,
+    selection: { anchor: caret },
+    scrollIntoView: true,
+    userEvent: 'input.paste',
+  })
+}
+
 /** Insert the images as one ordinary edit: it goes on the undo history, and Autosave writes it. */
 export function insertRawImages(
   view: Pick<EditorView, 'dispatch' | 'state'>,
