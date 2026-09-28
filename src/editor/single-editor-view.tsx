@@ -8,7 +8,13 @@ import { useImageLightbox } from './use-image-lightbox'
 import type { AppLocale } from '@/lib/i18n'
 import { observeNativeTextAssistanceDisabled } from '@/platform/native-text-assistance'
 import type { VaultEntry } from '@/types'
-import { insertImageBlockAfterCursor } from './editor-image-insertion'
+import {
+  imageDropTargetAt,
+  insertImageBlocksAtDropTarget,
+  type ImageDropTarget,
+} from './editor-image-insertion'
+import { ImageDropAffordance } from './image-drop-affordance'
+import type { ClientPoint } from '@/platform/use-tauri-drag-drop-event'
 import { useBlockNoteSideMenuHoverGuard } from '@/kernel/blocknote/block-note-side-menu-hover-guard'
 import { useEditorLinkActivation } from '@/kernel/blocknote/use-editor-link-activation'
 import { ImageLightbox } from './image-lightbox'
@@ -147,15 +153,17 @@ function handleToolbarMouseDownCapture(event: Pick<React.MouseEvent<HTMLElement>
   event.preventDefault()
 }
 
-/** Insert an image block after the current cursor position. */
-function useInsertImageCallback(editor: ReturnType<typeof useCreateBlockNote>) {
+/** Where a dropped image goes (the block under the pointer), and putting it there once it is an Attachment. */
+function useImageDropInsertion(editor: ReturnType<typeof useCreateBlockNote>) {
   const editorRef = useRef(editor)
   useEffect(() => {
     editorRef.current = editor
   }, [editor])
-  return useCallback((url: string) => {
-    insertImageBlockAfterCursor(editorRef.current, url)
+  const dropTargetAt = useCallback((point: ClientPoint) => imageDropTargetAt(editorRef.current, point), [])
+  const onImagesDropped = useCallback((urls: string[], target: ImageDropTarget) => {
+    insertImageBlocksAtDropTarget(editorRef.current, urls, target)
   }, [])
+  return { dropTargetAt, onImagesDropped }
 }
 
 function useRichEditorPlainTextPasteTarget(options: {
@@ -235,11 +243,12 @@ export function SingleEditorView(options: {
     containerRef,
     onChange,
   })
-  const onImageUrl = useInsertImageCallback(editor)
+  const { dropTargetAt, onImagesDropped } = useImageDropInsertion(editor)
   const { isDragOver } = useImageDrop({
     containerRef,
+    dropTargetAt,
     onImageImportError,
-    onImageUrl,
+    onImagesDropped,
     vaultPath: attachmentVaultPath ?? vaultPath,
   })
   const lightbox = useImageLightbox({ containerRef })
@@ -349,11 +358,7 @@ export function SingleEditorView(options: {
       onMouseMove={handleCodeBlockCopyMouseMove}
       onPasteCapture={handlePasteCapture}
     >
-      {isDragOver && (
-        <div className="pointer-events-none absolute inset-0 z-overlay flex items-center justify-center bg-state-drag-target">
-          <div className="rounded-lg bg-surface-popover px-5 py-2.5 text-sm font-medium text-accent-base shadow-menu">Drop image here</div>
-        </div>
-      )}
+      {isDragOver && <ImageDropAffordance />}
       <BlockNoteRenderRecoveryBoundary onRecover={(_, reason) => repairEditorDocumentForRenderRecovery(editor, reason)}>
         {(recoveryKey) => (
           <BlockNoteView

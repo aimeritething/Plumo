@@ -1,6 +1,6 @@
 import { renderHook, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { useTauriDragDropEvent } from './use-tauri-drag-drop-event'
+import { dragDropClientPoint, useTauriDragDropEvent } from './use-tauri-drag-drop-event'
 
 let tauriMode = true
 
@@ -18,8 +18,14 @@ const onDragDropEvent = vi.fn((handler: CapturedDragDropHandler) => {
   return Promise.resolve(unlisten)
 })
 
+let windowsMode = false
+
 vi.mock('./tauri', () => ({
   isTauri: () => tauriMode,
+}))
+
+vi.mock('./os', () => ({
+  isWindows: () => windowsMode,
 }))
 
 vi.mock('@tauri-apps/api/window', () => ({
@@ -78,5 +84,41 @@ describe('useTauriDragDropEvent', () => {
     emitNativeDragDropPayload(payload)
 
     expect(handler).toHaveBeenCalledWith({ payload })
+  })
+
+  it('does not forward an enter or over that says nowhere where the pointer is', async () => {
+    const handler = vi.fn()
+    renderHook(() => useTauriDragDropEvent(handler))
+
+    await waitForNativeDragDropListener()
+
+    emitNativeDragDropPayload({ type: 'enter', paths: ['/tmp/photo.png'] })
+    emitNativeDragDropPayload({ type: 'over' })
+    emitNativeDragDropPayload({ type: 'leave' })
+
+    expect(handler).toHaveBeenCalledOnce()
+    expect(handler).toHaveBeenCalledWith({ payload: { type: 'leave' } })
+  })
+})
+
+describe('dragDropClientPoint', () => {
+  const devicePixelRatio = window.devicePixelRatio
+
+  afterEach(() => {
+    windowsMode = false
+    Object.defineProperty(window, 'devicePixelRatio', { configurable: true, value: devicePixelRatio })
+  })
+
+  it('reads a macOS position as CSS pixels already, on a Retina screen too', () => {
+    Object.defineProperty(window, 'devicePixelRatio', { configurable: true, value: 2 })
+
+    expect(dragDropClientPoint({ x: 240, y: 320 })).toEqual({ x: 240, y: 320 })
+  })
+
+  it('scales a Windows position, which is in physical pixels, down to CSS pixels', () => {
+    windowsMode = true
+    Object.defineProperty(window, 'devicePixelRatio', { configurable: true, value: 2 })
+
+    expect(dragDropClientPoint({ x: 480, y: 640 })).toEqual({ x: 240, y: 320 })
   })
 })

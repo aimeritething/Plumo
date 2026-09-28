@@ -1,6 +1,7 @@
 ---
 status: accepted
 date: 2026-09-11
+amended: 2026-09-28 (AIM-471: the drop point is read)
 ---
 
 # One native drag-drop intake splits Documents from Attachments
@@ -14,19 +15,30 @@ The image drop hook carried over with the kernel listened to `tauri://drag-drop`
 `useTauriDragDropEvent` is the renderer's single native drag-drop intake. It subscribes through `getCurrentWindow().onDragDropEvent`, validates the tagged payload, and hands it to as many consumers as ask for it. Both consumers go through it and each ignores in silence what is not its own:
 
 - `useDocumentDrop`, mounted by the App, opens every dropped `.md`, activating the Tab of one already open. It shares the settle-then-open sequence (`openNotesSettled`) with File → Open Document…, so the two cannot drift.
-- `useImageDrop`, mounted with the editor, copies every dropped Image file into `attachments/` beside the Document and inserts an image block at the caret. The enter event raises the drop affordance, and only when the drag carries an Image file, so a `.md` passing over the Document does not offer to become a picture. The over event, which repeats for every pointer move and names no paths, leaves the affordance where it is.
+- `useImageDrop`, mounted with the editor, copies every dropped Image file into `attachments/` beside the Document and inserts it where it was released. Only the enter event names the paths, so it alone decides whether the drag carries an Image file, and a `.md` passing over the Document never offers to become a picture. The enter and over events both carry the pointer's position, and the drop affordance shows while that position is over the editor and hides as soon as it leaves.
 
 What counts as an Image file is the glossary's list, shared from `src/folder/file-preview.ts` and matched by the Rust copy command, so a drop and the Explorer agree on what a picture is.
 
 Nothing else is picked up, so nothing but Documents and `attachments/` is ever written into the Folder.
 
-Where the hook is mounted is the rule for what a drop may do, and no coordinate is read: the editor mounts with a Document's Tab and not with the empty editor, so an image dropped with no Tab open reaches no consumer and does nothing — no toast.
+Where the image goes is the drop point, not the caret. The user looks at where they release the file, and the caret may sit at the top of the Document or off screen, so an image put there lands out of sight. The drop's position is read and turned into a place in the Document:
 
-The hook's HTML5 branch stays as carried. Under Tauri no external drop reaches it; it is the path for `pnpm dev` in a plain browser, and for the editor's own internal drags.
+- **Only over the editor.** The drop is the window's event, so a release over the sidebar, the tab bar or anything laid over the editor reaches the hook too; unless the point is over the editor's own element, nothing is copied and nothing is inserted.
+- **At the nearest block boundary.** In Rich mode the images go before the block under the pointer when it is in that block's upper half and after it in the lower half, the rule the block drag handle's drop indicator already follows; below the last block they go after it.
+- **In the order dropped.** The copies run side by side and finish in any order, so nothing is inserted until every copy of the drop has settled; then the ones that landed go in consecutively in the order of `paths`, and each one that did not says so in a toast.
+
+The place is read the moment the drop lands, before any copy starts, so the layout it is read from is the one the user saw.
+
+Tauri types the position as physical pixels, but on macOS wry reads `NSDraggingInfo.draggingLocation`, which is in points from the webview's top-left: already the page's CSS pixels. Only Windows reports true pixels and is scaled down by `devicePixelRatio`.
+
+Where the hook is mounted is still the rule for which Documents a drop may reach: the editor mounts with a Document's Tab and not with the empty editor, so an image dropped with no Tab open reaches no consumer and does nothing — no toast.
+
+The hook's HTML5 branch follows the same rules with the event's own coordinates. Under Tauri no external drop reaches it; it is the path for `pnpm dev` in a plain browser, and for the editor's own internal drags.
 
 ## Consequences
 
 - A Document's Attachments have to be viewable, which the asset protocol refuses until their directory is in its scope. `useNoteTabs` allows the boundary root through `sync_vault_asset_scope_for_window` before it reads a Document, so the content reaches the editor with its images resolvable rather than a paint later. Saving or copying an image already allows the root on the Rust side.
 - Clipboard paste needs none of this: WKWebView puts a pasted image in `clipboardData`, the kernel's paste handler falls through to BlockNote's file branch, and `uploadFile` writes the Attachment through `save_image`.
 - Image files open as Tabs of their own. Such a Tab has no editor, so it mounts no image drop hook, and an image dropped over it is ignored by construction rather than by a check.
-- A drop that carries both a `.md` and an image does both, each through its own consumer. Nothing requires one to win.
+- A drop that carries both a `.md` and an image does both, each through its own consumer, when it is released over the editor. Nothing requires one to win. A `.md` opens wherever it is released.
+- One slow copy holds back the rest of its drop; the images appear together once the last copy settles, rather than one by one in an order the user did not choose.

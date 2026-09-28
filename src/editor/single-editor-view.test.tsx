@@ -137,9 +137,11 @@ describe('SingleEditorView', () => {
     expect(window.__plumoTest?.seedBlockNoteTable).toBeUndefined()
   })
 
-  it('shows the drag overlay and inserts dropped images after the active cursor block', () => {
+  it('shows the drag overlay and inserts dropped images, in order, beside the block they were dropped on', () => {
     state.imageDropState.isDragOver = true
     const editor = createEditor()
+    const headingBlock = editor.document[0]
+    editor.getBlock.mockImplementation((id: string) => (id === headingBlock.id ? headingBlock : null) as never)
 
     render(
       <SingleEditorView
@@ -152,13 +154,19 @@ describe('SingleEditorView', () => {
     expect(screen.getByText('Drop image here')).toBeInTheDocument()
 
     act(() => {
-      (state.capturedImageDropArgs?.onImageUrl as (url: string) => void)('https://example.com/image.png')
+      (state.capturedImageDropArgs?.onImagesDropped as (urls: string[], target: unknown) => void)(
+        ['https://example.com/one.png', 'https://example.com/two.png'],
+        { blockId: headingBlock.id, placement: 'before' },
+      )
     })
 
     expect(editor.insertBlocks).toHaveBeenCalledWith(
-      [{ type: 'image', props: { url: 'https://example.com/image.png' } }],
-      expect.objectContaining({ id: 'cursor-block' }),
-      'after',
+      [
+        { type: 'image', props: { url: 'https://example.com/one.png' } },
+        { type: 'image', props: { url: 'https://example.com/two.png' } },
+      ],
+      headingBlock,
+      'before',
     )
   })
 

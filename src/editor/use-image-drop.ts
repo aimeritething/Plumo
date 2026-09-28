@@ -3,13 +3,19 @@ import { invoke } from '@tauri-apps/api/core'
 import { isTauri } from '@/platform/tauri'
 import { isImageFilePath } from '@/tabs/image-file'
 import { attachmentAssetUrlFromPath } from '@/kernel/markdown/vault-attachments'
-import { useTauriDragDropEvent, type TauriDragDropEvent } from '@/platform/use-tauri-drag-drop-event'
+import {
+  dragDropClientPoint,
+  useTauriDragDropEvent,
+  type ClientPoint,
+  type TauriDragDropEvent,
+} from '@/platform/use-tauri-drag-drop-event'
 
 const IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif']
 const UNSUPPORTED_HEIC_EXTENSIONS = ['heic', 'heif']
 const UNSUPPORTED_HEIC_MIME_TYPES = ['image/heic', 'image/heif', 'image/heic-sequence', 'image/heif-sequence']
 
-type ImageUrlHandler = (url: string) => void
+/** Receives the asset URL of every image of one drop that became an Attachment, in the order they were dropped. */
+type ImagesDroppedHandler<Target> = (urls: string[], target: Target) => void
 type UnsupportedImageImportError = {
   fileName: string
   format: 'HEIC'
@@ -30,22 +36,27 @@ type CopyImageToVaultRequest = {
   sourcePath: string
   vaultPath: string
 }
-type DroppedImagesRequest = {
+type DroppedImagesRequest<Target> = {
   imagePaths: string[]
   onImageImportError: ImageImportErrorHandler | undefined
-  vaultPath: string | undefined
-  onImageUrl: ImageUrlHandler | undefined
+  onImagesDropped: ImagesDroppedHandler<Target>
+  target: Target
+  vaultPath: string
 }
-type HtmlDroppedImagesRequest = {
+type HtmlDroppedImagesRequest<Target> = {
   files: File[]
   onImageImportError: ImageImportErrorHandler | undefined
-  onImageUrl: ImageUrlHandler
+  onImagesDropped: ImagesDroppedHandler<Target>
+  target: Target
   vaultPath: string | undefined
 }
-type NativeDropEventRequest = {
+type NativeDropEventRequest<Target> = {
+  container: HTMLElement | null
+  dropTargetAt: ((point: ClientPoint) => Target | null) | undefined
   event: TauriDragDropEvent
+  imageDragRef: { current: boolean }
   onImageImportError: ImageImportErrorHandler | undefined
-  onImageUrl: ImageUrlHandler | undefined
+  onImagesDropped: ImagesDroppedHandler<Target> | undefined
   setIsDragOver: (isDragOver: boolean) => void
   vaultPath: string | undefined
 }
@@ -221,24 +232,46 @@ function reportDroppedImageCopyFailure(
   }
 }
 
-function insertHtmlDroppedImages({
+/**
+ * The copies run side by side and finish in any order; the images go in once
+ * every one has settled, in the order they were dropped, so three files land as
+ * three consecutive images rather than in whichever order the disk answered.
+ */
+function insertInDropOrder<Target>(
+  copies: Promise<string | null>[],
+  onImagesDropped: ImagesDroppedHandler<Target>,
+  target: Target,
+): void {
+  void Promise.all(copies).then((urls) => {
+    const landed = urls.filter((url): url is string => Boolean(url))
+    if (landed.length > 0) onImagesDropped(landed, target)
+  })
+}
+
+function insertHtmlDroppedImages<Target>({
   files,
   onImageImportError,
-  onImageUrl,
+  onImagesDropped,
+  target,
   vaultPath,
-}: HtmlDroppedImagesRequest): void {
-  for (const file of files) {
+}: HtmlDroppedImagesRequest<Target>): void {
+  const copies = files.flatMap((file) => {
     if (isUnsupportedHeicFile(file)) {
       onImageImportError?.(unsupportedHeicImportError(file.name))
-      continue
+      return []
     }
+    const reportFailure = reportDroppedImageCopyFailure(file.name, onImageImportError)
     // An unreadable file comes back as an empty result rather than a rejection.
-    void uploadImageFile(file, vaultPath).then((result) => {
+    return [uploadImageFile(file, vaultPath).then((result) => {
       const url = imageUrlFromUploadResult(result)
-      if (url) onImageUrl(url)
-      else onImageImportError?.(copyFailedImportError(file.name))
-    }, reportDroppedImageCopyFailure(file.name, onImageImportError))
-  }
+      if (!url) onImageImportError?.(copyFailedImportError(file.name))
+      return url || null
+    }, (error: unknown) => {
+      reportFailure(error)
+      return null
+    })]
+  })
+  insertInDropOrder(copies, onImagesDropped, target)
 }
 
 function reportUnsupportedDroppedImages(
@@ -251,70 +284,112 @@ function reportUnsupportedDroppedImages(
   onImageImportError?.(unsupportedHeicImportError(filenameFromPath(unsupportedPath)))
 }
 
-function insertDroppedImages({
+function insertDroppedImages<Target>({
   imagePaths,
   onImageImportError,
+  onImagesDropped,
+  target,
   vaultPath,
-  onImageUrl,
-}: DroppedImagesRequest): void {
-  if (imagePaths.length === 0) return
-  reportUnsupportedDroppedImages(imagePaths, onImageImportError)
-  if (!vaultPath || !onImageUrl) return
-
-  for (const sourcePath of imagePaths.filter(isImageFilePath)) {
-    void copyImageToVault({ sourcePath, vaultPath }).then(
-      onImageUrl,
-      reportDroppedImageCopyFailure(filenameFromPath(sourcePath), onImageImportError),
+}: DroppedImagesRequest<Target>): void {
+  const copies = imagePaths.filter(isImageFilePath).map((sourcePath) => {
+    const reportFailure = reportDroppedImageCopyFailure(filenameFromPath(sourcePath), onImageImportError)
+    return copyImageToVault({ sourcePath, vaultPath }).then(
+      (url): string | null => url,
+      (error: unknown) => {
+        reportFailure(error)
+        return null
+      },
     )
-  }
+  })
+  insertInDropOrder(copies, onImagesDropped, target)
 }
 
-function handleNativeDropEvent({
-  event,
-  onImageImportError,
-  onImageUrl,
-  setIsDragOver,
-  vaultPath,
-}: NativeDropEventRequest): void {
+/**
+ * Whether a point is over the editor itself: inside its box, and with nothing
+ * laid over it there (a dialog, the tab bar over a scrolled pane). The drop
+ * affordance is `pointer-events: none`, so it never hides the editor from this.
+ */
+function isPointOverElement(element: HTMLElement | null, point: ClientPoint): boolean {
+  if (!element) return false
+
+  const rect = element.getBoundingClientRect()
+  const inside = point.x >= rect.left && point.x <= rect.right && point.y >= rect.top && point.y <= rect.bottom
+  if (!inside) return false
+
+  const { ownerDocument } = element
+  if (typeof ownerDocument.elementFromPoint !== 'function') return true
+  const hit = ownerDocument.elementFromPoint(point.x, point.y)
+  return hit !== null && element.contains(hit)
+}
+
+function dropNativeImages<Target>(
+  request: NativeDropEventRequest<Target>,
+  paths: string[],
+  point: ClientPoint,
+): void {
+  const { container, dropTargetAt, onImageImportError, onImagesDropped, vaultPath } = request
+  const imagePaths = paths.filter((path) => isImageFilePath(path) || isUnsupportedHeicPath(path))
+  if (imagePaths.length === 0 || !dropTargetAt || !onImagesDropped) return
+  if (!isPointOverElement(container, point)) return
+
+  const target = dropTargetAt(point)
+  if (target === null) return
+  reportUnsupportedDroppedImages(imagePaths, onImageImportError)
+  if (vaultPath) insertDroppedImages({ imagePaths, onImageImportError, onImagesDropped, target, vaultPath })
+}
+
+function handleNativeDropEvent<Target>(request: NativeDropEventRequest<Target>): void {
+  const { container, event, imageDragRef, setIsDragOver } = request
   const { payload } = event
   // Native drag-drop is on, so the HTML5 `dragover` that used to raise the
   // affordance never fires for a file from Finder; the enter event does, and
   // it names the paths, so a `.md` being dragged past does not claim to be one.
-  // The over event repeats for every pointer move and names nothing, so it is
-  // left alone rather than taking the affordance back down each time.
-  if (payload.type === 'over') return
+  // The over event names nothing, so what enter found is kept for it; it only
+  // says where the pointer is, and the affordance shows while that is the editor.
   if (payload.type === 'enter') {
-    setIsDragOver(payload.paths.some(isImageFilePath))
+    imageDragRef.current = payload.paths.some(isImageFilePath)
+    setIsDragOver(imageDragRef.current && isPointOverElement(container, dragDropClientPoint(payload.position)))
     return
   }
-  if (payload.type === 'drop') {
-    setIsDragOver(false)
-    insertDroppedImages({
-      imagePaths: payload.paths,
-      onImageImportError,
-      vaultPath,
-      onImageUrl,
-    })
+  if (payload.type === 'over') {
+    if (imageDragRef.current) setIsDragOver(isPointOverElement(container, dragDropClientPoint(payload.position)))
     return
   }
+  imageDragRef.current = false
   setIsDragOver(false)
+  if (payload.type === 'drop') dropNativeImages(request, payload.paths, dragDropClientPoint(payload.position))
 }
 
-interface UseImageDropOptions {
+interface UseImageDropOptions<Target> {
+  /** The editor: a drop is taken only when it is released over this element. */
   containerRef: RefObject<HTMLDivElement | null>
+  /**
+   * Where images released at this point go, read the moment they are dropped,
+   * before any copy has started; null takes nothing from the drop.
+   */
+  dropTargetAt?: (point: ClientPoint) => Target | null
   /** Called when an image-like file is not supported, or could not be copied into `attachments/`. */
   onImageImportError?: ImageImportErrorHandler
-  /** Called with an asset URL for each image dropped via Tauri native drag-drop. */
-  onImageUrl?: (url: string) => void
+  /** Called once a drop's copies have settled, with the asset URL of each that landed, in the order they were dropped. */
+  onImagesDropped?: ImagesDroppedHandler<Target>
   vaultPath?: string
 }
 
-export function useImageDrop({ containerRef, onImageImportError, onImageUrl, vaultPath }: UseImageDropOptions) {
+export function useImageDrop<Target>({
+  containerRef,
+  dropTargetAt,
+  onImageImportError,
+  onImagesDropped,
+  vaultPath,
+}: UseImageDropOptions<Target>) {
   const [isDragOver, setIsDragOver] = useState(false)
+  const imageDragRef = useRef(false)
+  const dropTargetAtRef = useRef(dropTargetAt)
+  useEffect(() => { dropTargetAtRef.current = dropTargetAt }, [dropTargetAt])
   const onImageImportErrorRef = useRef(onImageImportError)
   useEffect(() => { onImageImportErrorRef.current = onImageImportError }, [onImageImportError])
-  const onImageUrlRef = useRef(onImageUrl)
-  useEffect(() => { onImageUrlRef.current = onImageUrl }, [onImageUrl])
+  const onImagesDroppedRef = useRef(onImagesDropped)
+  useEffect(() => { onImagesDroppedRef.current = onImagesDropped }, [onImagesDropped])
   const vaultPathRef = useRef(vaultPath)
   useEffect(() => { vaultPathRef.current = vaultPath }, [vaultPath])
 
@@ -342,15 +417,21 @@ export function useImageDrop({ containerRef, onImageImportError, onImageUrl, vau
       setIsDragOver(false)
       if (!event.dataTransfer) return
       const files = Array.from(event.dataTransfer.files).filter(isDroppedImageFile)
-      const currentOnImageUrl = onImageUrlRef.current
-      if (files.length === 0 || !currentOnImageUrl) return
+      const currentDropTargetAt = dropTargetAtRef.current
+      const currentOnImagesDropped = onImagesDroppedRef.current
+      if (files.length === 0 || !currentDropTargetAt || !currentOnImagesDropped) return
 
+      // Taken even when it finds no place, so the editor underneath never
+      // inserts the file its own way (CodeMirror would insert its bytes as text).
       event.preventDefault()
       event.stopImmediatePropagation()
+      const target = currentDropTargetAt({ x: event.clientX, y: event.clientY })
+      if (target === null) return
       insertHtmlDroppedImages({
         files,
         onImageImportError: onImageImportErrorRef.current,
-        onImageUrl: currentOnImageUrl,
+        onImagesDropped: currentOnImagesDropped,
+        target,
         vaultPath: vaultPathRef.current,
       })
     }
@@ -369,14 +450,17 @@ export function useImageDrop({ containerRef, onImageImportError, onImageUrl, vau
   /**
    * Native drag-drop is where an OS file drop actually lands: `dragDropEnabled`
    * is on, so WKWebView keeps such a drop away from the page and no HTML5 `drop`
-   * follows. The raw `tauri://drag-*` payloads carry only paths and a position,
-   * so the intake hook is the one that names the kind of drag.
+   * follows. The event is the window's, so its position is what says whether
+   * the release was over this editor, and where in it (ADR-0006).
    */
   useTauriDragDropEvent((event: TauriDragDropEvent) => {
     handleNativeDropEvent({
+      container: containerRef.current,
+      dropTargetAt: dropTargetAtRef.current,
       event,
+      imageDragRef,
       onImageImportError: onImageImportErrorRef.current,
-      onImageUrl: onImageUrlRef.current,
+      onImagesDropped: onImagesDroppedRef.current,
       setIsDragOver,
       vaultPath: vaultPathRef.current,
     })
