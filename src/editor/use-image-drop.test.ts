@@ -462,6 +462,47 @@ describe('useImageDrop — Tauri native drag-drop', () => {
     expect(onImageUrl).not.toHaveBeenCalled()
   })
 
+  it('says a native drop could not be copied into attachments/', async () => {
+    const onImageImportError = vi.fn()
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const { invoke } = await import('@tauri-apps/api/core')
+    vi.mocked(invoke).mockClear()
+    vi.mocked(invoke).mockRejectedValue('Read-only file system')
+    try {
+      renderImageDropTauri({ onImageImportError, onImageUrl: vi.fn(), vaultPath: '/vault' })
+      await waitForNativeDropListeners()
+
+      act(() => {
+        emitNativeDropEvent({ type: 'drop', paths: ['/tmp/photo.png'], position: { x: 100, y: 100 } } satisfies NativeDropPayload)
+      })
+
+      await waitFor(() => {
+        expect(onImageImportError).toHaveBeenCalledWith({ kind: 'copy-failed', fileName: 'photo.png' })
+      })
+    } finally {
+      warn.mockRestore()
+    }
+  })
+
+  it('says an HTML5 drop could not be copied into attachments/', async () => {
+    const onImageImportError = vi.fn()
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const { invoke } = await import('@tauri-apps/api/core')
+    vi.mocked(invoke).mockClear()
+    vi.mocked(invoke).mockRejectedValue('Read-only file system')
+    try {
+      renderImageDropTauri({ onImageImportError, onImageUrl: vi.fn(), vaultPath: '/vault' })
+
+      act(() => { container.dispatchEvent(createDragEvent('drop', [new File(['png-data'], 'photo.png', { type: 'image/png' })])) })
+
+      await waitFor(() => {
+        expect(onImageImportError).toHaveBeenCalledWith({ kind: 'copy-failed', fileName: 'photo.png' })
+      })
+    } finally {
+      warn.mockRestore()
+    }
+  })
+
   it('handles active-vault boundary failures from native image drops', async () => {
     const onImageUrl = vi.fn()
     const onUnhandledRejection = vi.fn()

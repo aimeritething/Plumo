@@ -28,6 +28,7 @@ import type { RawEditorFindRequest } from './raw-editor-find-types'
 import { RichEditorFindBar } from './rich-editor-find-bar'
 import { createRichEditorFindExtension } from '@/kernel/blocknote/rich-editor-find'
 import { EditorToaster } from './editor-toaster'
+import { showImageImportErrorToast } from './toasts'
 import { TabBar } from '@/tabs/tab-bar'
 import { RICH_EDITOR_BLOCKNOTE_OPTIONS } from '@/kernel/blocknote/rich-editor-block-note-options'
 import { createRichEditorBlockSelectionExtension } from '@/kernel/blocknote/rich-editor-block-selection-extension'
@@ -155,8 +156,13 @@ function useRichEditor(options: { activeTabPath: string | null; vaultPath?: stri
     schema,
     domAttributes: RICH_EDITOR_BIDI_DOM_ATTRIBUTES,
     // A pasted image lands in `attachments/` beside the Document; the block
-    // holds its asset URL, which Autosave writes back as a relative path.
-    uploadFile: (file: File) => uploadEditorImage(file, activeTabPathRef.current ? noteRootForPath(activeTabPathRef.current) : vaultPathRef.current),
+    // holds its asset URL, which Autosave writes back as a relative path. One
+    // that does not land says why in a toast.
+    uploadFile: (file: File) => uploadEditorImage(
+      file,
+      activeTabPathRef.current ? noteRootForPath(activeTabPathRef.current) : vaultPathRef.current,
+      showImageImportErrorToast,
+    ),
     pasteHandler: createRichEditorPasteHandler(),
     tabBehavior: 'prefer-indent',
     _tiptapOptions: { ...RICH_EDITOR_BLOCKNOTE_OPTIONS._tiptapOptions, injectNonce: RUNTIME_STYLE_NONCE },
@@ -476,6 +482,7 @@ export const Editor = memo(function Editor(props: EditorProps) {
                   editor={editor}
                   onNavigateWikilink={NO_WIKILINK_NAVIGATION}
                   onChange={handleEditorChange}
+                  onImageImportError={showImageImportErrorToast}
                   sourceEntry={activeTab.entry}
                   attachmentVaultPath={noteRootForPath(activeTab.entry.path)}
                   vaultPath={vaultPath}

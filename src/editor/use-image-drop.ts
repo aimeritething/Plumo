@@ -19,8 +19,12 @@ export type ImageImportError = UnsupportedImageImportError | {
   failedCount: number
   kind: 'remote-download'
   totalCount: number
+} | {
+  /** The file could not be read, or written into `attachments/` (a read-only directory, say). */
+  fileName: string
+  kind: 'copy-failed'
 }
-type ImageImportErrorHandler = (error: ImageImportError) => void
+export type ImageImportErrorHandler = (error: ImageImportError) => void
 export type UploadImageFileResult = string | { props: { name: string; url: string } }
 type CopyImageToVaultRequest = {
   sourcePath: string
@@ -115,6 +119,10 @@ function isUnsupportedHeicPath(path: string): boolean {
   return isUnsupportedHeicFilename(filenameFromPath(path))
 }
 
+export function imageUrlFromUploadResult(result: UploadImageFileResult): string {
+  return typeof result === 'string' ? result : result.props.url
+}
+
 export function emptyImageUploadResult(file: File): UploadImageFileResult {
   return { props: { name: file.name, url: '' } }
 }
@@ -199,8 +207,18 @@ function logDroppedImageCopyFailure(error: unknown): void {
   console.warn('[image-drop] Failed to copy dropped image into vault:', error)
 }
 
-function imageUrlFromUploadResult(result: UploadImageFileResult): string {
-  return typeof result === 'string' ? result : result.props.url
+export function copyFailedImportError(fileName: string): ImageImportError {
+  return { kind: 'copy-failed', fileName }
+}
+
+function reportDroppedImageCopyFailure(
+  fileName: string,
+  onImageImportError: ImageImportErrorHandler | undefined,
+): (error: unknown) => void {
+  return (error) => {
+    logDroppedImageCopyFailure(error)
+    onImageImportError?.(copyFailedImportError(fileName))
+  }
 }
 
 function insertHtmlDroppedImages({
@@ -214,10 +232,12 @@ function insertHtmlDroppedImages({
       onImageImportError?.(unsupportedHeicImportError(file.name))
       continue
     }
+    // An unreadable file comes back as an empty result rather than a rejection.
     void uploadImageFile(file, vaultPath).then((result) => {
       const url = imageUrlFromUploadResult(result)
       if (url) onImageUrl(url)
-    }, logDroppedImageCopyFailure)
+      else onImageImportError?.(copyFailedImportError(file.name))
+    }, reportDroppedImageCopyFailure(file.name, onImageImportError))
   }
 }
 
@@ -242,7 +262,10 @@ function insertDroppedImages({
   if (!vaultPath || !onImageUrl) return
 
   for (const sourcePath of imagePaths.filter(isImageFilePath)) {
-    void copyImageToVault({ sourcePath, vaultPath }).then(onImageUrl, logDroppedImageCopyFailure)
+    void copyImageToVault({ sourcePath, vaultPath }).then(
+      onImageUrl,
+      reportDroppedImageCopyFailure(filenameFromPath(sourcePath), onImageImportError),
+    )
   }
 }
 
@@ -279,7 +302,7 @@ function handleNativeDropEvent({
 
 interface UseImageDropOptions {
   containerRef: RefObject<HTMLDivElement | null>
-  /** Called when an image-like file is recognized but not supported. */
+  /** Called when an image-like file is not supported, or could not be copied into `attachments/`. */
   onImageImportError?: ImageImportErrorHandler
   /** Called with an asset URL for each image dropped via Tauri native drag-drop. */
   onImageUrl?: (url: string) => void

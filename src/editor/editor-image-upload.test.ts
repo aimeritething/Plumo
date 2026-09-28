@@ -33,27 +33,47 @@ describe('uploadEditorImage', () => {
     expect(result).toBe('asset://localhost/Users/plumo/Notes/attachments/1700-image.png')
   })
 
-  it('leaves an unsupported format empty rather than failing the paste', async () => {
+  it('leaves an unsupported format empty rather than failing the paste, and says why', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const onImageImportError = vi.fn()
     const file = new File(['heic-data'], 'iphone.HEIC', { type: 'image/heic' })
 
     try {
-      await expect(uploadEditorImage(file, '/Users/plumo/Notes')).resolves.toEqual({
+      await expect(uploadEditorImage(file, '/Users/plumo/Notes', onImageImportError)).resolves.toEqual({
         props: { name: 'iphone.HEIC', url: '' },
       })
       expect(runtime.invoke).not.toHaveBeenCalled()
       expect(warn).toHaveBeenCalled()
+      expect(onImageImportError).toHaveBeenCalledWith(expect.objectContaining({ kind: 'unsupported-heic', fileName: 'iphone.HEIC' }))
     } finally {
       warn.mockRestore()
     }
   })
 
-  it('lets a failure that is not an unsupported format surface', async () => {
+  it('lets a failure that is not an unsupported format surface, and says the copy failed', async () => {
     runtime.invoke.mockRejectedValue('Path must stay inside the active vault')
+    const onImageImportError = vi.fn()
     const file = new File(['data'], 'shot.png', { type: 'image/png' })
 
-    await expect(uploadEditorImage(file, '/Users/plumo/Notes')).rejects.toBe(
+    await expect(uploadEditorImage(file, '/Users/plumo/Notes', onImageImportError)).rejects.toBe(
       'Path must stay inside the active vault',
     )
+    expect(onImageImportError).toHaveBeenCalledWith({ kind: 'copy-failed', fileName: 'shot.png' })
+  })
+
+  it('says the copy failed when the file could not be read, leaving the block empty', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    runtime.invoke.mockRejectedValue(new Error('The file could not be read'))
+    const onImageImportError = vi.fn()
+    const file = new File(['data'], 'shot.png', { type: 'image/png' })
+
+    try {
+      await expect(uploadEditorImage(file, '/Users/plumo/Notes', onImageImportError)).resolves.toEqual({
+        props: { name: 'shot.png', url: '' },
+      })
+      expect(onImageImportError).toHaveBeenCalledWith({ kind: 'copy-failed', fileName: 'shot.png' })
+    } finally {
+      warn.mockRestore()
+    }
   })
 })

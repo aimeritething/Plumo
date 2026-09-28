@@ -20,7 +20,7 @@ What counts as an Image file is the glossary's list, shared from `src/folder/fil
 
 Nothing else is picked up, so nothing but Documents and `attachments/` is ever written into the Folder.
 
-Where the hook is mounted is the rule for what a drop may do, and no coordinate is read: the editor mounts with a Document's Tab and not with the empty editor, so an image dropped with no Tab open reaches no consumer and does nothing — no toast, as Plumo has none.
+Where the hook is mounted is the rule for what a drop may do, and no coordinate is read: the editor mounts with a Document's Tab and not with the empty editor, so an image dropped with no Tab open reaches no consumer and does nothing — no toast.
 
 The hook's HTML5 branch stays as carried. Under Tauri no external drop reaches it; it is the path for `pnpm dev` in a plain browser, and for the editor's own internal drags.
 

@@ -1,7 +1,10 @@
 import {
+  copyFailedImportError,
   emptyImageUploadResult,
+  imageUrlFromUploadResult,
   isUnsupportedImageFormatError,
   uploadImageFile,
+  type ImageImportErrorHandler,
   type UploadImageFileResult,
 } from './use-image-drop'
 
@@ -10,19 +13,29 @@ import {
  * itself becomes an Attachment beside the Document, and the image block points
  * at its asset URL.
  *
- * Plumo has no toasts, so a format the kernel cannot import is logged and the
- * block is left empty rather than announced.
+ * A format the kernel cannot import leaves the block empty, and a copy that
+ * fails still rejects so the file panel can show it; either way
+ * `onImageImportError` hears why, which is what the toast says.
  */
 export async function uploadEditorImage(
   file: File,
   vaultPath: string | undefined,
+  onImageImportError?: ImageImportErrorHandler,
 ): Promise<UploadImageFileResult> {
+  let result: UploadImageFileResult
   try {
-    return await uploadImageFile(file, vaultPath)
+    result = await uploadImageFile(file, vaultPath)
   } catch (error) {
-    if (!isUnsupportedImageFormatError(error)) throw error
+    if (!isUnsupportedImageFormatError(error)) {
+      onImageImportError?.(copyFailedImportError(file.name))
+      throw error
+    }
 
     console.warn('[editor] Unsupported image format:', error.message)
+    onImageImportError?.(error)
     return emptyImageUploadResult(file)
   }
+  // An unreadable file comes back empty rather than as a rejection.
+  if (!imageUrlFromUploadResult(result)) onImageImportError?.(copyFailedImportError(file.name))
+  return result
 }
