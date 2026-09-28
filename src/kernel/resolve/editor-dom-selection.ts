@@ -5,7 +5,7 @@ export const EDITOR_CONTAINER_SELECTOR = '.editor__blocknote-container'
  * In Raw mode the same element only clips (CodeMirror scrolls itself), and its
  * scrollTop stays 0.
  */
-const EDITOR_SCROLL_AREA_SELECTOR = '.editor-scroll-area'
+export const EDITOR_SCROLL_AREA_SELECTOR = '.editor-scroll-area'
 
 export function editorScrollArea(): Element | null {
   return document.querySelector(EDITOR_SCROLL_AREA_SELECTOR)

@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { TooltipProvider } from '@/ui/tooltip'
 import { BlockNoteEditor } from '@blocknote/core'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -14,6 +14,7 @@ import {
   readMarkdownHighlightRange,
   toggleDefaultMarkdownHighlight,
 } from './markdown-highlight-controls'
+import { HighlightBoundaryColorControl } from './markdown-highlight-boundary-control'
 import { ToolbarHighlightColorControl } from './markdown-highlight-toolbar-control'
 
 const { trackEventMock } = vi.hoisted(() => ({
@@ -53,7 +54,41 @@ function textRange(editor: Awaited<ReturnType<typeof editorFromMarkdown>>, text:
 afterEach(() => {
   document.body.innerHTML = ''
   trackEventMock.mockClear()
+  vi.restoreAllMocks()
 })
+
+const SCROLL_AREA_BOUNDS = new DOMRect(0, 100, 800, 400)
+const mountedEditors: Array<Awaited<ReturnType<typeof editorFromMarkdown>>> = []
+
+// An editor mounted in a scroll area spanning y 100–500, the caret inside the
+// highlight, and the highlight's end drawn at `anchorTop`.
+async function editorWithCaretInHighlight() {
+  const editor = await editorFromMarkdown('Start ==🔴marked== end')
+  const scrollArea = document.createElement('div')
+  scrollArea.className = 'editor-scroll-area'
+  scrollArea.getBoundingClientRect = () => SCROLL_AREA_BOUNDS
+  const host = document.createElement('div')
+  scrollArea.appendChild(host)
+  document.body.appendChild(scrollArea)
+  editor.mount(host)
+  mountedEditors.push(editor)
+  // TipTap finishes initialising on a timer; until then the editor has no domElement.
+  await vi.waitFor(() => expect(editor.headless).toBe(false))
+  const coordsAtPos = vi.spyOn(editor.prosemirrorView!, 'coordsAtPos')
+  const drawAnchorAt = (top: number) => {
+    coordsAtPos.mockReturnValue({ bottom: top + 16, left: 40, right: 60, top })
+  }
+  drawAnchorAt(200)
+
+  const marked = textRange(editor, 'marked')
+  selectText(editor, marked.from + 1)
+  editor.prosemirrorView!.focus()
+  return { drawAnchorAt, editor, scrollArea }
+}
+
+function boundaryButton() {
+  return screen.queryByRole('button', { name: 'Change highlight color' })
+}
 
 describe('Markdown highlight color controls', () => {
   it('finds the complete colored highlight boundary around a collapsed cursor', async () => {
@@ -175,5 +210,65 @@ describe('Markdown highlight color controls', () => {
 
     await act(async () => controller.abort())
     expect(document.querySelector('[data-test="highlightBoundaryControlHost"]')).toBeNull()
+  })
+})
+
+describe('the highlight boundary colour button', () => {
+  // Unmount before the body is cleared: the colour menu is portaled into it.
+  afterEach(() => {
+    cleanup()
+    for (const editor of mountedEditors.splice(0)) editor._tiptapEditor.destroy()
+  })
+
+  it('shows beside a highlight the focused caret sits in', async () => {
+    const { editor } = await editorWithCaretInHighlight()
+
+    render(<HighlightBoundaryColorControl editor={editor} />, { wrapper: TooltipProvider })
+
+    expect(boundaryButton()).not.toBeNull()
+  })
+
+  it('hides while the highlight is scrolled outside the editor, and comes back with it', async () => {
+    const { drawAnchorAt, editor, scrollArea } = await editorWithCaretInHighlight()
+    render(<HighlightBoundaryColorControl editor={editor} />, { wrapper: TooltipProvider })
+
+    drawAnchorAt(60)
+    fireEvent.scroll(scrollArea)
+    expect(boundaryButton()).toBeNull()
+
+    drawAnchorAt(495)
+    fireEvent.scroll(scrollArea)
+    expect(boundaryButton()).toBeNull()
+
+    drawAnchorAt(300)
+    fireEvent.scroll(scrollArea)
+    expect(boundaryButton()).not.toBeNull()
+  })
+
+  it('hides when the editor loses the focus', async () => {
+    const { editor } = await editorWithCaretInHighlight()
+    const elsewhere = document.createElement('button')
+    document.body.appendChild(elsewhere)
+    render(<HighlightBoundaryColorControl editor={editor} />, { wrapper: TooltipProvider })
+
+    act(() => elsewhere.focus())
+
+    expect(boundaryButton()).toBeNull()
+  })
+
+  it('stays while the focus moves into the button and its colour menu', async () => {
+    const { editor } = await editorWithCaretInHighlight()
+    render(<HighlightBoundaryColorControl editor={editor} />, { wrapper: TooltipProvider })
+
+    const button = boundaryButton()!
+    act(() => button.focus())
+    expect(boundaryButton()).not.toBeNull()
+
+    fireEvent.pointerDown(button)
+    fireEvent.click(button)
+    const red = screen.getByRole('menuitem', { name: 'Red' })
+    act(() => red.focus())
+
+    expect(boundaryButton()).not.toBeNull()
   })
 })
