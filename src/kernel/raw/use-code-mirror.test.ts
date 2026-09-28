@@ -4,7 +4,7 @@ import { EditorSelection } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { undo } from '@codemirror/commands'
 import { RUNTIME_STYLE_NONCE } from '@/platform/runtime-style-nonce'
-import { useCodeMirror, type CodeMirrorCallbacks } from './use-code-mirror'
+import { useCodeMirror, type CodeMirrorCallbacks, type CodeMirrorSnapshot } from './use-code-mirror'
 
 const noop = () => {}
 const noopCallbacks: CodeMirrorCallbacks = {
@@ -137,6 +137,67 @@ describe('useCodeMirror', () => {
     act(() => { undo(view) })
 
     expect(view.state.doc.toString()).toBe('alpha\nbeta from disk')
+  })
+
+  // AIM-486: the Raw view remounts on every Tab switch; a snapshot carries the
+  // caret, the undo history and the scroll position across the remount.
+  describe('snapshots', () => {
+    function mountWithSnapshot(content: string, snapshot: CodeMirrorSnapshot | null, callbacks: Partial<CodeMirrorCallbacks> = {}) {
+      const ref = { current: container }
+      const kept: CodeMirrorSnapshot[] = []
+      const rendered = renderHook(
+        ({ current }) => useCodeMirror(ref, current, {
+          ...noopCallbacks,
+          readSnapshot: () => snapshot,
+          onSnapshot: (next) => kept.push(next),
+          ...callbacks,
+        }),
+        { initialProps: { current: content } },
+      )
+      return { ...rendered, view: rendered.result.current.current!, kept }
+    }
+
+    it('leaves a snapshot on unmount and starts from it, with the caret, the history and the scroll position', () => {
+      const first = mountWithSnapshot('alpha\nbeta\ngamma', null)
+      act(() => {
+        first.view.dispatch({ changes: { from: 0, insert: 'typed ' }, userEvent: 'input.type' })
+        first.view.dispatch({ selection: { anchor: 'typed alpha\nbe'.length } })
+      })
+      // jsdom lays nothing out, so the scroll position is checked as CodeMirror's own snapshot of it.
+      const scrollSnapshot = vi.spyOn(first.view, 'scrollSnapshot')
+      first.unmount()
+      expect(first.kept).toHaveLength(1)
+      const snapshot = first.kept[0]
+      expect(snapshot.scroll).toBe(scrollSnapshot.mock.results[0].value)
+
+      const onDocChange = vi.fn()
+      const second = mountWithSnapshot('typed alpha\nbeta\ngamma', snapshot, { onDocChange })
+
+      expect(second.view.state.doc.toString()).toBe('typed alpha\nbeta\ngamma')
+      expect(second.view.state.selection.main.head).toBe('typed alpha\nbe'.length)
+      act(() => { undo(second.view) })
+      expect(second.view.state.doc.toString()).toBe('alpha\nbeta\ngamma')
+      // The restored editor reports to its own callbacks, not the unmounted one's.
+      expect(onDocChange).toHaveBeenCalledWith('alpha\nbeta\ngamma')
+    })
+
+    it('takes a change made on disk since the snapshot as a reload that ⌘Z cannot undo', () => {
+      const first = mountWithSnapshot('alpha\nbeta', null)
+      act(() => {
+        first.view.dispatch({ changes: { from: 0, insert: 'typed ' }, userEvent: 'input.type' })
+        first.view.dispatch({ selection: { anchor: 'typed alpha\nbe'.length } })
+      })
+      first.unmount()
+
+      const onDocChange = vi.fn()
+      const second = mountWithSnapshot('typed alpha\nbeta\nfrom disk', first.kept[0], { onDocChange })
+
+      expect(second.view.state.doc.toString()).toBe('typed alpha\nbeta\nfrom disk')
+      expect(second.view.state.selection.main.head).toBe('typed alpha\nbe'.length)
+      expect(onDocChange).not.toHaveBeenCalled()
+      act(() => { undo(second.view) })
+      expect(second.view.state.doc.toString()).toBe('alpha\nbeta\nfrom disk')
+    })
   })
 
   it('lets app Escape handling run before the CodeMirror default keymap', () => {

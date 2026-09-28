@@ -1,7 +1,7 @@
 import { useRef, useState, useCallback, useEffect, useMemo } from 'react'
 import { redo, undo } from '@codemirror/commands'
 import type { EditorView } from '@codemirror/view'
-import { useCodeMirror } from '@/kernel/raw/use-code-mirror'
+import { useCodeMirror, type CodeMirrorSnapshot } from '@/kernel/raw/use-code-mirror'
 import type { AppLocale } from '@/lib/i18n'
 import { RawEditorFindBar, type RawEditorFindRequest } from './raw-editor-find-bar'
 import type { EditorHistory } from './editor-history'
@@ -12,6 +12,7 @@ import {
   type PlainTextPasteTarget,
 } from './plain-text-paste'
 import { rawEditorLanguageIdForPath } from '@/kernel/raw/raw-editor-language-id'
+import type { RawEditorSnapshots } from './use-raw-editor-snapshots'
 
 export interface RawEditorViewProps {
   content: string
@@ -25,6 +26,8 @@ export interface RawEditorViewProps {
   findRequest?: RawEditorFindRequest | null
   /** Undo and Redo from the shell, on CodeMirror's history, for as long as Raw mode is showing. */
   historyRef?: React.MutableRefObject<EditorHistory | null>
+  /** Where each Raw Tab leaves its editor state and scroll position, to find them again when it comes back. */
+  snapshots?: RawEditorSnapshots
 }
 
 const DEBOUNCE_MS = 500
@@ -277,7 +280,7 @@ function RawEditorSurface(options: RawEditorSurfaceProps) {
 }
 
 export function RawEditorView(options: RawEditorViewProps) {
-  const { content, findRequest, historyRef, latestContentRef, locale = 'en', onContentChange, onSave, path } = options
+  const { content, findRequest, historyRef, latestContentRef, locale = 'en', onContentChange, onSave, path, snapshots } = options
   const rootRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [rawDoc, setRawDoc] = useState(content)
@@ -305,8 +308,10 @@ export function RawEditorView(options: RawEditorViewProps) {
     setFindOpen(false)
     return true
   }, [findOpen])
-  const { reportedDocRef } = pendingChanges
+  const { pathRef, reportedDocRef } = pendingChanges
   const isOwnReport = useCallback((doc: string) => doc === reportedDocRef.current, [reportedDocRef])
+  const readSnapshot = useCallback(() => snapshots?.read(pathRef.current) ?? null, [pathRef, snapshots])
+  const keepSnapshot = useCallback((snapshot: CodeMirrorSnapshot) => snapshots?.keep(pathRef.current, snapshot), [pathRef, snapshots])
   const viewRef = useCodeMirror(
     containerRef,
     content,
@@ -316,6 +321,8 @@ export function RawEditorView(options: RawEditorViewProps) {
     onSave: pendingChanges.handleSave,
     onEscape: handleEscape,
     isOwnReport,
+    readSnapshot,
+    onSnapshot: keepSnapshot,
     },
     path,
   )

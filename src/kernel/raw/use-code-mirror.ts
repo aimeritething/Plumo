@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useLayoutEffect } from 'react'
 import {
   Decoration,
   type DecorationSet,
@@ -10,7 +10,7 @@ import {
   ViewPlugin,
   type ViewUpdate,
 } from '@codemirror/view'
-import { EditorSelection, EditorState, Prec, Transaction, type SelectionRange } from '@codemirror/state'
+import { EditorSelection, EditorState, type Extension, Prec, StateEffect, Transaction, type SelectionRange } from '@codemirror/state'
 import { defaultKeymap, history, historyKeymap, insertTab } from '@codemirror/commands'
 import { rawEditorLanguageExtensionsForPath } from './raw-editor-language'
 import { RUNTIME_STYLE_NONCE } from '@/platform/runtime-style-nonce'
@@ -73,6 +73,20 @@ export interface CodeMirrorCallbacks {
    * report and that commit is newer than the echo, so the echo is not synced.
    */
   isOwnReport?: (content: string) => boolean
+  /** The snapshot to start from instead of a fresh state, read as the editor mounts. */
+  readSnapshot?: () => CodeMirrorSnapshot | null
+  /** Receives the editor's snapshot as it unmounts, while its DOM still holds the scroll position. */
+  onSnapshot?: (snapshot: CodeMirrorSnapshot) => void
+}
+
+/**
+ * What a Raw editor leaves behind when it unmounts: its state (the text, the
+ * selection and the undo history) and its scroll position. Mounting from one
+ * puts all three back.
+ */
+export interface CodeMirrorSnapshot {
+  state: EditorState
+  scroll: StateEffect<unknown>
 }
 
 function buildBaseTheme() {
@@ -393,38 +407,50 @@ export function useCodeMirror(
     const parent = readRefCurrent(containerRef)
     if (!parent) return
 
-    const state = EditorState.create({
-      doc: initialContentRef.current,
-      extensions: [
-        lineNumbers(),
-        highlightActiveLine(),
-        EditorView.lineWrapping,
-        buildAutoTextDirectionExtension(),
-        history(),
-        buildArrowLigaturesExtension(),
-        buildRawEditorKeymap(),
-        buildSaveKeymap(callbacksRef),
-        buildBaseTheme(),
-        EditorView.cspNonce.of(RUNTIME_STYLE_NONCE),
-        EditorView.contentAttributes.of(rawEditorTextInputAttributes),
-        rawEditorLanguageExtensionsForPath(sourcePath),
-        zoomCursorFix(),
-        EditorView.updateListener.of((update) => {
-          if (update.docChanged && !externalSyncRef.current) {
-            callbacksRef.current.onDocChange(update.state.doc.toString())
-          }
-          if (update.selectionSet || update.docChanged) {
-            callbacksRef.current.onCursorActivity(update.view)
-          }
-        }),
-      ],
-    })
+    const extensions: Extension[] = [
+      lineNumbers(),
+      highlightActiveLine(),
+      EditorView.lineWrapping,
+      buildAutoTextDirectionExtension(),
+      history(),
+      buildArrowLigaturesExtension(),
+      buildRawEditorKeymap(),
+      buildSaveKeymap(callbacksRef),
+      buildBaseTheme(),
+      EditorView.cspNonce.of(RUNTIME_STYLE_NONCE),
+      EditorView.contentAttributes.of(rawEditorTextInputAttributes),
+      rawEditorLanguageExtensionsForPath(sourcePath),
+      zoomCursorFix(),
+      EditorView.updateListener.of((update) => {
+        if (update.docChanged && !externalSyncRef.current) {
+          callbacksRef.current.onDocChange(update.state.doc.toString())
+        }
+        if (update.selectionSet || update.docChanged) {
+          callbacksRef.current.onCursorActivity(update.view)
+        }
+      }),
+    ]
+    // A snapshot's state carries the extensions of the editor that left it;
+    // reconfiguring swaps in this one's and keeps the fields both share, the
+    // undo history among them.
+    const snapshot = callbacksRef.current.readSnapshot?.() ?? null
+    const state = snapshot
+      ? snapshot.state.update({ effects: StateEffect.reconfigure.of(extensions) }).state
+      : EditorState.create({ doc: initialContentRef.current, extensions })
 
-    const view = new EditorView({ state, parent })
+    const view = new EditorView({ state, parent, scrollTo: snapshot?.scroll })
     viewRef.current = view
     // Expose EditorView on the parent DOM for Playwright test access
     Reflect.set(parent, '__cmView', view)
-
+    // The Document may have changed on disk since the snapshot was taken.
+    if (snapshot) {
+      externalSyncRef.current = true
+      try {
+        syncExternalContent(view, initialContentRef.current)
+      } finally {
+        externalSyncRef.current = false
+      }
+    }
 
     return () => {
       Reflect.deleteProperty(parent, '__cmView')
@@ -432,6 +458,13 @@ export function useCodeMirror(
       viewRef.current = null
     }
   }, [containerRef, sourcePath])
+
+  // A layout cleanup runs before the editor's DOM leaves the document, so the
+  // scroll position is still there to read.
+  useLayoutEffect(() => () => {
+    const view = viewRef.current
+    if (view) callbacksRef.current.onSnapshot?.({ state: view.state, scroll: view.scrollSnapshot() })
+  }, [])
 
   return viewRef
 }

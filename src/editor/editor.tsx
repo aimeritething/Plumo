@@ -44,6 +44,7 @@ import { createRichEditorTransformErrorRecoveryExtension } from '@/kernel/blockn
 import { SingleEditorView } from './single-editor-view'
 import { createTodoBlockShortcutExtension } from '@/kernel/blocknote/todo-block-shortcut-extension'
 import { useRawModeWithFlush } from './use-raw-mode-with-flush'
+import { useRawEditorSnapshots } from './use-raw-editor-snapshots'
 import { WriteFailureBar } from './write-failure-bar'
 
 /**
@@ -274,6 +275,8 @@ function useEditorRuntime(props: EditorProps) {
   const richHistory = useMemo<EditorHistory>(() => ({ undo: () => { editor.undo() }, redo: () => { editor.redo() } }), [editor])
   useRegisteredRef(rawMode ? undefined : props.historyRef, richHistory)
 
+  const rawSnapshots = useRawEditorSnapshots(tabs, activeTabPath, rawMode)
+
   useRegisterEditorContentFlushes({
     activeTab,
     flushPendingEditorChange,
@@ -284,7 +287,7 @@ function useEditorRuntime(props: EditorProps) {
     flushPendingRawContentRef,
   })
 
-  return { editor, activeTab, handleEditorChange, imageTabPath, raw, findRequest, requestFind }
+  return { editor, activeTab, handleEditorChange, imageTabPath, raw, rawSnapshots, findRequest, requestFind }
 }
 
 /**
@@ -384,7 +387,7 @@ function useImageTab({ path, imageFile, reloads, onOpenExternal, onCopyPath }: {
 }
 
 export const Editor = memo(function Editor(props: EditorProps) {
-  const { editor, activeTab, handleEditorChange, imageTabPath, raw, findRequest, requestFind } = useEditorRuntime(props)
+  const { editor, activeTab, handleEditorChange, imageTabPath, raw, rawSnapshots, findRequest, requestFind } = useEditorRuntime(props)
   const {
     tabs, activeTabPath, vaultPath, onActivateTab, onCloseTab, writeFailure, onRetryWrite, onDiscardWrite,
     sidebarCollapsed, tabCommands,
@@ -455,6 +458,7 @@ export const Editor = memo(function Editor(props: EditorProps) {
                 latestContentRef={raw.rawLatestContentRef}
                 findRequest={findRequest}
                 historyRef={props.historyRef}
+                snapshots={rawSnapshots}
               />
             </EditorFindScope>
           ) : (
