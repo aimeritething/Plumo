@@ -2,12 +2,14 @@ import { Copy, WarningCircle } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { copyLocalPath } from '@/platform/url'
 import { notePathFilename } from '@/lib/note-path-identity'
+import { isImageFilePath } from '@/tabs/image-file'
 import type { ImageImportError } from './use-image-drop'
 
 /**
  * What Plumo says through Sonner: a refused Explorer operation, Copy path
- * landing or failing, a file that could not be opened, and an image that did
- * not become an Attachment. Each says what happened and goes away on its own;
+ * landing or failing, a file that could not be opened, Tabs closed because
+ * their files went away outside Plumo, and an image that did not become an
+ * Attachment. Each says what happened and goes away on its own;
  * nothing here is ever answered, which is why a Write failure is a different
  * thing entirely. A toast's id names the event, so the same event again
  * replaces its toast and restarts the clock rather than stacking a copy.
@@ -38,6 +40,25 @@ export function copyPathWithToast(path: string): void {
 /** A Document that could not be read on open: unreadable, or gone before the Explorer caught up. */
 export function showOpenFailureToast(path: string): void {
   toast(`Couldn't open ${notePathFilename(path)}`, { id: `open:${path}`, icon: warningIcon() })
+}
+
+/** What the Tabs one change closed held: Documents, Image files, or files when they are both. */
+function closedFilesNoun(paths: readonly string[]): string {
+  const images = paths.filter(isImageFilePath).length
+  if (images === 0) return 'Documents'
+  return images === paths.length ? 'Image files' : 'files'
+}
+
+/**
+ * Tabs the watcher closed because their files were deleted or renamed in
+ * Finder (or another app): one toast per change, naming the file when it is
+ * one, counting them when there are several.
+ */
+export function showClosedOutsideToast(paths: readonly string[]): void {
+  const message = paths.length === 1
+    ? `${notePathFilename(paths[0])} was deleted or renamed outside Plumo`
+    : `${paths.length} ${closedFilesNoun(paths)} were deleted or renamed outside Plumo`
+  toast(message, { id: `closed-outside:${paths.join('\n')}`, icon: warningIcon() })
 }
 
 function imageImportMessage(error: ImageImportError): string {

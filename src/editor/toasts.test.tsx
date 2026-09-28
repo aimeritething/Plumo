@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { copyPathWithToast, showImageImportErrorToast, showOpenFailureToast, showRefusalToast } from './toasts'
+import { copyPathWithToast, showClosedOutsideToast, showImageImportErrorToast, showOpenFailureToast, showRefusalToast } from './toasts'
 
 const runtime = vi.hoisted(() => ({
   copyLocalPath: vi.fn<(path: string) => Promise<void>>(() => Promise.resolve()),
@@ -37,6 +37,25 @@ describe('toasts', () => {
     showOpenFailureToast('/n/Projects/Plan.md')
 
     expect(runtime.toast).toHaveBeenCalledWith("Couldn't open Plan.md", expect.objectContaining({ id: 'open:/n/Projects/Plan.md' }))
+  })
+
+  it('names the one file whose Tab closed because it was deleted or renamed outside Plumo', () => {
+    showClosedOutsideToast(['/n/Projects/Plan.md'])
+
+    expect(runtime.toast).toHaveBeenCalledWith('Plan.md was deleted or renamed outside Plumo', expect.objectContaining({ id: 'closed-outside:/n/Projects/Plan.md' }))
+  })
+
+  it('counts the Tabs one change closed in a single toast, as Documents, Image files, or files when they are both', () => {
+    runtime.toast.mockClear()
+    showClosedOutsideToast(['/n/a.md', '/n/b.md', '/n/c.md'])
+    showClosedOutsideToast(['/n/a.png', '/n/b.jpg'])
+    showClosedOutsideToast(['/n/a.md', '/n/b.png'])
+
+    expect(runtime.toast.mock.calls.map(([message]) => message)).toEqual([
+      '3 Documents were deleted or renamed outside Plumo',
+      '2 Image files were deleted or renamed outside Plumo',
+      '2 files were deleted or renamed outside Plumo',
+    ])
   })
 
   it('says why an image did not become an Attachment', () => {

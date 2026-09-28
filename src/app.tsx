@@ -32,7 +32,7 @@ import { useRecentFolders } from '@/recent-folders/use-recent-folders'
 import { useFolderSwitch } from '@/recent-folders/use-folder-switch'
 import { useHomeDir } from '@/platform/home-dir'
 import { useSidebar } from '@/shell/use-sidebar'
-import { copyPathWithToast, showRefusalToast } from '@/editor/toasts'
+import { copyPathWithToast, showClosedOutsideToast, showRefusalToast } from '@/editor/toasts'
 import { useTabCommands } from '@/tabs/use-tab-commands'
 import { openTabFileInDefaultApp, revealTabFile } from '@/tabs/tab-file-actions'
 import { useThemeMode } from '@/shell/use-theme-mode'
@@ -377,6 +377,7 @@ export default function App() {
     listedPaths: folderState.listedPaths,
     retargetTabs: retargetTabs,
     dropTabsUnder: dropTabsUnder,
+    onTabsClosed: showClosedOutsideToast,
   })
 
   /**
