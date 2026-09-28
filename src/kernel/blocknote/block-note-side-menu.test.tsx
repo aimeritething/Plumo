@@ -2,6 +2,7 @@ import { fireEvent, screen } from '@testing-library/react'
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   appendBlockOuters,
+  blockElement,
   cleanupSideMenuTest,
   collapsedSectionStyleText,
   dispatchHandlePointerReorder,
@@ -273,6 +274,105 @@ describe('SideMenu', () => {
 
     dispatchPointerEvent(document, 'pointerup', { clientX: 180, clientY: 122 })
     container.remove()
+  })
+
+  it('cancels a pointer reorder on Escape and leaves the document as it was', () => {
+    const { draggedElement, dragHandle } = renderPointerReorderFixture()
+
+    dispatchPointerEvent(requireParentElement(dragHandle), 'pointerdown', { button: 0, clientX: 140, clientY: 90 })
+    dispatchPointerEvent(document, 'pointermove', { clientX: 180, clientY: 122 })
+    const escape = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'Escape' })
+    mockEditor.domElement.dispatchEvent(escape)
+
+    expect(escape.defaultPrevented).toBe(true)
+    expect(screen.queryByTestId('editor-block-drag-preview')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('editor-block-drop-indicator')).not.toBeInTheDocument()
+    expect(document.querySelector('style[data-plumo-block-reorder]')).not.toBeInTheDocument()
+    expect(draggedElement).not.toHaveStyle({ opacity: '0.35' })
+
+    dispatchPointerEvent(document, 'pointermove', { clientX: 200, clientY: 140 })
+    dispatchPointerEvent(document, 'pointerup', { clientX: 200, clientY: 140 })
+    fireEvent.click(dragHandle)
+
+    expect(screen.queryByTestId('editor-block-drag-preview')).not.toBeInTheDocument()
+    expect(mockEditor.removeBlocks).not.toHaveBeenCalled()
+    expect(mockEditor.insertBlocks).not.toHaveBeenCalled()
+    expect(mockSideMenu.freezeMenu).not.toHaveBeenCalled()
+  })
+
+  it('leaves Escape alone while the handle has not started a drag', () => {
+    const { dragHandle } = renderPointerReorderFixture()
+
+    dispatchPointerEvent(requireParentElement(dragHandle), 'pointerdown', { button: 0, clientX: 80, clientY: 90 })
+    const escape = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'Escape' })
+    mockEditor.domElement.dispatchEvent(escape)
+    dispatchPointerEvent(document, 'pointerup', { clientX: 80, clientY: 90 })
+
+    expect(escape.defaultPrevented).toBe(false)
+  })
+
+  it('drops at the block under a still pointer after the editor scrolls', () => {
+    const { draggedBlock, dragHandle } = renderPointerReorderFixture()
+    const scrollArea = placeEditorInScrollArea(0)
+    const laterBlock = testBlock('later-block', 'paragraph', ['Later'])
+    const laterElement = blockElement(laterBlock.id, rect({ left: 120, top: 100, width: 420, height: 80 }))
+    mockEditor.domElement.append(laterElement)
+    const getBlock = mockEditor.getBlock.getMockImplementation()
+    mockEditor.getBlock.mockImplementation((id: string) => (id === laterBlock.id ? laterBlock : getBlock?.(id)))
+
+    dispatchPointerEvent(requireParentElement(dragHandle), 'pointerdown', { button: 0, clientX: 140, clientY: 90 })
+    dispatchPointerEvent(document, 'pointermove', { clientX: 180, clientY: 130 })
+    document.elementsFromPoint = vi.fn(() => [laterElement, mockEditor.domElement])
+    scrollArea.dispatchEvent(new Event('scroll'))
+
+    expect(screen.getByTestId('editor-block-drop-indicator')).toHaveStyle({ top: '99px' })
+
+    dispatchPointerEvent(document, 'pointerup', { clientX: 180, clientY: 130 })
+
+    expect(mockEditor.insertBlocks).toHaveBeenCalledWith([draggedBlock], laterBlock.id, 'before')
+  })
+
+  it('scrolls the editor while the dragged block is held near its top or bottom edge', () => {
+    const { dragHandle } = renderPointerReorderFixture()
+    const scrollArea = placeEditorInScrollArea(500)
+    scrollArea.getBoundingClientRect = vi.fn(() => rect({ left: 100, top: 50, width: 500, height: 400 }))
+    const frames: FrameRequestCallback[] = []
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => frames.push(callback))
+    const cancelFrame = vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => undefined)
+    const runFrame = () => frames.shift()?.(performance.now())
+
+    dispatchPointerEvent(requireParentElement(dragHandle), 'pointerdown', { button: 0, clientX: 140, clientY: 90 })
+    dispatchPointerEvent(document, 'pointermove', { clientX: 140, clientY: 200 })
+    expect(frames).toHaveLength(0)
+
+    dispatchPointerEvent(document, 'pointermove', { clientX: 140, clientY: 440 })
+    runFrame()
+    const slowStep = scrollArea.scrollTop - 500
+    runFrame()
+    expect(scrollArea.scrollTop).toBe(500 + slowStep * 2)
+
+    dispatchPointerEvent(document, 'pointermove', { clientX: 140, clientY: 470 })
+    const beforeFastStep = scrollArea.scrollTop
+    runFrame()
+    const fastStep = scrollArea.scrollTop - beforeFastStep
+    expect(slowStep).toBeGreaterThan(0)
+    expect(fastStep).toBeGreaterThan(slowStep)
+
+    dispatchPointerEvent(document, 'pointermove', { clientX: 140, clientY: 60 })
+    const beforeUpStep = scrollArea.scrollTop
+    runFrame()
+    expect(scrollArea.scrollTop).toBeLessThan(beforeUpStep)
+
+    dispatchPointerEvent(document, 'pointermove', { clientX: 140, clientY: 200 })
+    const settled = scrollArea.scrollTop
+    runFrame()
+    expect(scrollArea.scrollTop).toBe(settled)
+    expect(frames).toHaveLength(0)
+
+    dispatchPointerEvent(document, 'pointermove', { clientX: 140, clientY: 440 })
+    dispatchPointerEvent(document, 'pointerup', { clientX: 140, clientY: 440 })
+    expect(cancelFrame).toHaveBeenCalled()
+    vi.restoreAllMocks()
   })
 
   it('keeps click-to-open menu behavior when the handle does not move', () => {

@@ -24,6 +24,7 @@ import {
 
 type PointerReorderState = {
   affordances?: ReorderAffordances
+  autoscrollFrame: number | null
   clearListeners: () => void
   draggedBlockId: string
   editorElement: HTMLElement
@@ -31,6 +32,9 @@ type PointerReorderState = {
   lastDropTarget: DropTarget | null
   ownerDocument: Document
   pointerId: number
+  pointerX: number
+  pointerY: number
+  scrollArea: HTMLElement | null
   startX: number
   startY: number
 }
@@ -48,6 +52,10 @@ type DropTarget = {
 }
 
 const POINTER_REORDER_THRESHOLD_PX = 4
+// Holding the dragged block this close to the editor's top or bottom edge
+// scrolls it, faster the closer the pointer is, up to the full step at the edge.
+const AUTOSCROLL_EDGE_PX = 40
+const AUTOSCROLL_MAX_STEP_PX = 18
 
 function styleDragPreview(preview: HTMLElement, rect: DOMRect) {
   preview.setAttribute('data-testid', 'editor-block-drag-preview')
@@ -236,6 +244,54 @@ function validDropTarget({
   }
 }
 
+function refreshDropTarget(editor: RichEditor, state: PointerReorderState) {
+  state.lastDropTarget = validDropTarget({ editor, state, x: state.pointerX, y: state.pointerY })
+  updateDropIndicator(state.affordances, state.lastDropTarget)
+}
+
+function editorScrollArea(editorElement: HTMLElement): HTMLElement | null {
+  const scrollArea = editorElement.closest('.editor-scroll-area')
+  return scrollArea instanceof HTMLElement ? scrollArea : null
+}
+
+// Pixels to scroll this frame: negative near the top edge, positive near the
+// bottom, 0 anywhere else.
+function autoscrollStep(scrollArea: HTMLElement, y: number): number {
+  const rect = scrollArea.getBoundingClientRect()
+  const edge = Math.min(AUTOSCROLL_EDGE_PX, rect.height / 2)
+  if (edge <= 0) return 0
+
+  const stepFor = (depth: number) => Math.ceil(AUTOSCROLL_MAX_STEP_PX * Math.min(depth / edge, 1))
+  if (y < rect.top + edge) return -stepFor(rect.top + edge - y)
+  if (y > rect.bottom - edge) return stepFor(y - (rect.bottom - edge))
+  return 0
+}
+
+function stopAutoscroll(state: PointerReorderState) {
+  if (state.autoscrollFrame === null) return
+
+  state.ownerDocument.defaultView?.cancelAnimationFrame(state.autoscrollFrame)
+  state.autoscrollFrame = null
+}
+
+// One scroll step a frame for as long as the pointer stays at an edge; the
+// scroll listener moves the drop target along with the content.
+function continueAutoscroll(state: PointerReorderState) {
+  const { scrollArea } = state
+  const view = state.ownerDocument.defaultView
+  if (state.autoscrollFrame !== null || !scrollArea || !view) return
+  if (autoscrollStep(scrollArea, state.pointerY) === 0) return
+
+  state.autoscrollFrame = view.requestAnimationFrame(() => {
+    state.autoscrollFrame = null
+    const step = autoscrollStep(scrollArea, state.pointerY)
+    if (step === 0) return
+
+    scrollArea.scrollTop += step
+    continueAutoscroll(state)
+  })
+}
+
 function moveBlockByPointerDrop({
   editor,
   draggedBlockId,
@@ -282,6 +338,7 @@ export function usePointerBlockReorder(
     const state = reorderStateRef.current
     if (state) {
       state.clearListeners()
+      stopAutoscroll(state)
       cleanupReorderAffordances(state.affordances)
     }
     reorderStateRef.current = null
@@ -350,14 +407,11 @@ export function usePointerBlockReorder(
         state.affordances ??= createReorderAffordances(state)
         if (!state.affordances) return
 
+        state.pointerX = nativeEvent.clientX
+        state.pointerY = nativeEvent.clientY
         updateDragPreview(state.affordances, nativeEvent.clientX, nativeEvent.clientY)
-        state.lastDropTarget = validDropTarget({
-          editor,
-          state,
-          x: nativeEvent.clientX,
-          y: nativeEvent.clientY,
-        })
-        updateDropIndicator(state.affordances, state.lastDropTarget)
+        refreshDropTarget(editor, state)
+        continueAutoscroll(state)
         nativeEvent.preventDefault()
       }
       const handlePointerUp = (nativeEvent: PointerEvent) => { finishPointerReorder(nativeEvent); }
@@ -365,23 +419,46 @@ export function usePointerBlockReorder(
         if (nativeEvent.pointerId !== pointerId) return
         clearReorderState()
       }
+      // Content scrolled under a still pointer (by the wheel or by autoscroll)
+      // puts a different block there.
+      const handleScroll = () => {
+        const state = reorderStateRef.current
+        if (state?.affordances) refreshDropTarget(editor, state)
+      }
+      // Escape drops nothing; the pointerup that follows finds no gesture, and
+      // the click it may raise on the handle stays suppressed.
+      const handleKeyDown = (nativeEvent: KeyboardEvent) => {
+        if (nativeEvent.key !== 'Escape' || !reorderStateRef.current?.hasMoved) return
+
+        nativeEvent.preventDefault()
+        nativeEvent.stopPropagation()
+        clearReorderState()
+      }
 
       ownerDocument.addEventListener('pointermove', handlePointerMove, true)
       ownerDocument.addEventListener('pointerup', handlePointerUp, true)
       ownerDocument.addEventListener('pointercancel', handlePointerCancel, true)
+      ownerDocument.addEventListener('scroll', handleScroll, true)
+      ownerDocument.addEventListener('keydown', handleKeyDown, true)
 
       reorderStateRef.current = {
         clearListeners: () => {
           ownerDocument.removeEventListener('pointermove', handlePointerMove, true)
           ownerDocument.removeEventListener('pointerup', handlePointerUp, true)
           ownerDocument.removeEventListener('pointercancel', handlePointerCancel, true)
+          ownerDocument.removeEventListener('scroll', handleScroll, true)
+          ownerDocument.removeEventListener('keydown', handleKeyDown, true)
         },
+        autoscrollFrame: null,
         draggedBlockId: liveBlock.id,
         editorElement,
         hasMoved: false,
         lastDropTarget: null,
         ownerDocument,
         pointerId,
+        pointerX: event.clientX,
+        pointerY: event.clientY,
+        scrollArea: editorScrollArea(editorElement),
         startX: event.clientX,
         startY: event.clientY,
       }
