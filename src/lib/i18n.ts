@@ -52,7 +52,6 @@ export const EN_TRANSLATIONS = {
   "editor.formatting.highlightGreen": "Green",
   "editor.formatting.highlightPurple": "Purple",
   "editor.formatting.highlightRed": "Red",
-  "editor.formatting.highlightTooltip": "Highlight (persists in markdown)",
   "editor.formatting.highlightYellow": "Yellow",
   "editor.htmlBlock.blockedFallback": "This HTML was blocked by the sandbox rules.",
   "editor.htmlBlock.copySource": "Copy source",

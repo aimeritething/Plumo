@@ -6,15 +6,19 @@ import type { ReactElement } from 'react'
 import type { AppLocale } from '@/lib/i18n'
 import { MARKDOWN_HIGHLIGHT_STYLE } from '@/kernel/markdown/markdown-highlight-markdown'
 import { BlockTypeSelect } from './block-type-select'
+import { CreateLinkButton } from './create-link-button'
 import { FileDownloadButton } from './file-download-button'
+import { NestBlockButton, UnnestBlockButton } from './nest-block-buttons'
 import { TextStyleToggle } from './text-style-toggle'
 
 // Plumo's formatting toolbar: BlockNote's item list with the controls that have
 // no Markdown (underline, alignment, colour) removed, Plumo's own block type
-// select, text style toggles and file open button in place of BlockNote's, and
-// the inline code and highlight toggles added after strikethrough. Nesting and
-// the link button stay BlockNote's, rendered through the shadcn components
-// (shadcn-components.tsx).
+// select, text style toggles, file open button, nest / unnest buttons and link
+// button in place of BlockNote's, and the inline code and highlight toggles
+// added after strikethrough. Every button is Plumo's so its tooltip is one
+// row, label and shortcut chips; BlockNote's own draw two lines of text. The
+// file block buttons (caption, replace, rename, delete, preview) stay
+// BlockNote's, rendered through the shadcn components (shadcn-components.tsx).
 
 const UNSUPPORTED_FORMATTING_TOOLBAR_KEYS = new Set([
   'underlineStyleButton',
@@ -44,6 +48,12 @@ function replaceToolbarControls(items: ReactElement[], vaultPath?: string) {
         return <TextStyleToggle key={item.key} textStyle="strike" />
       case 'fileDownloadButton':
         return <FileDownloadButton key={item.key} vaultPath={vaultPath} />
+      case 'nestBlockButton':
+        return <NestBlockButton key={item.key} />
+      case 'unnestBlockButton':
+        return <UnnestBlockButton key={item.key} />
+      case 'createLinkButton':
+        return <CreateLinkButton key={item.key} />
       default:
         return item
     }

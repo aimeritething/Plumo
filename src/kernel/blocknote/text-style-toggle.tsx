@@ -31,29 +31,16 @@ export type TextStyle =
   | 'code'
   | typeof MARKDOWN_HIGHLIGHT_STYLE
 
-type TextStyleCopy = { label: string; mainTooltip: string; secondaryTooltip: string }
+// The tooltip is one row, label then one Kbd chip per key, as every tooltip in
+// Plumo. The keys are TipTap's marks' (bold, italic, strike, code) and the
+// highlight shortcut extension's; Plumo is a macOS app, so the chips are ⌘ / ⇧.
+type TextStyleCopy = { label: string; shortcut: string }
 
 const TEXT_STYLE_COPY: Record<Exclude<TextStyle, typeof MARKDOWN_HIGHLIGHT_STYLE>, TextStyleCopy> = {
-  bold: {
-    label: 'Bold',
-    mainTooltip: 'Bold (persists in markdown)',
-    secondaryTooltip: '**strong**',
-  },
-  italic: {
-    label: 'Italic',
-    mainTooltip: 'Italic (persists in markdown)',
-    secondaryTooltip: '*emphasis*',
-  },
-  strike: {
-    label: 'Strikethrough',
-    mainTooltip: 'Strikethrough (persists in markdown)',
-    secondaryTooltip: '~~strike~~',
-  },
-  code: {
-    label: 'Inline code',
-    mainTooltip: 'Inline code (persists in markdown)',
-    secondaryTooltip: '`code`',
-  },
+  bold: { label: 'Bold', shortcut: '⌘B' },
+  italic: { label: 'Italic', shortcut: '⌘I' },
+  strike: { label: 'Strikethrough', shortcut: '⌘⇧S' },
+  code: { label: 'Inline code', shortcut: '⌘E' },
 }
 
 const TEXT_STYLE_ICONS: Record<TextStyle, PhosphorIcon> = {
@@ -68,8 +55,7 @@ function textStyleCopy(textStyle: TextStyle, locale: AppLocale): TextStyleCopy {
   if (textStyle === MARKDOWN_HIGHLIGHT_STYLE) {
     return {
       label: translate(locale, 'editor.formatting.highlight'),
-      mainTooltip: translate(locale, 'editor.formatting.highlightTooltip'),
-      secondaryTooltip: '==highlight==',
+      shortcut: '⌘⇧M',
     }
   }
 
@@ -146,10 +132,7 @@ export function TextStyleToggle({
           <Icon aria-hidden="true" />
         </Toggle>
       </TooltipTrigger>
-      <TooltipContent className="flex flex-col items-center whitespace-pre-wrap">
-        <span>{copy.mainTooltip}</span>
-        <span>{copy.secondaryTooltip}</span>
-      </TooltipContent>
+      <TooltipContent shortcut={copy.shortcut}>{copy.label}</TooltipContent>
     </Tooltip>
   )
 

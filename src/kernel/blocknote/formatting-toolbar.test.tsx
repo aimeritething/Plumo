@@ -9,6 +9,8 @@ const {
   editorHasBlockWithTypeMock,
   formattingToolbarStore,
   hoverGuardMock,
+  showSelectionExtension,
+  showSelectionMock,
   positionPopoverState,
   showState,
   useBlockNoteEditorMock,
@@ -17,6 +19,8 @@ const {
   editorHasBlockWithTypeMock: vi.fn(() => true),
   formattingToolbarStore: { setState: vi.fn() },
   hoverGuardMock: vi.fn(),
+  showSelectionExtension: Symbol('ShowSelectionExtension'),
+  showSelectionMock: vi.fn(),
   positionPopoverState: { lastProps: null as null | Record<string, unknown> },
   showState: { value: true },
   useBlockNoteEditorMock: vi.fn(),
@@ -36,8 +40,20 @@ vi.mock('@blocknote/react', () => ({
     <div key="italicStyleButton" />,
     <div key="strikeStyleButton" />,
     <div key="fileDownloadButton" />,
+    <div key="nestBlockButton" />,
+    <div key="unnestBlockButton" />,
     <div key="createLinkButton" />,
   ],
+  EditLinkMenuItems: () => <div data-testid="mock-link-form" />,
+  useComponentsContext: () => ({
+    Generic: {
+      Popover: {
+        Root: ({ children, open }: { children?: ReactNode; open?: boolean }) => <div data-testid="mock-link-popover" data-open={open}>{children}</div>,
+        Trigger: ({ children }: { children?: ReactNode }) => <>{children}</>,
+        Content: ({ children }: { children?: ReactNode }) => <>{children}</>,
+      },
+    },
+  }),
   PositionPopover: (props: Record<string, unknown> & { children?: ReactNode }) => {
     positionPopoverState.lastProps = props
     return <div data-testid="mock-position-popover">{props.children}</div>
@@ -51,10 +67,17 @@ vi.mock('@blocknote/react', () => ({
           image: 'Download image',
         },
       },
+      link: { tooltip: 'Create link' },
+      nest: { tooltip: 'Nest block' },
+      unnest: { tooltip: 'Unnest block' },
     },
   }),
   useEditorState: ({ editor, selector }: { editor: unknown; selector: (context: { editor: unknown }) => unknown }) => selector({ editor }),
-  useExtension: () => ({ store: formattingToolbarStore }),
+  useExtension: (extension: unknown) => (
+    extension === showSelectionExtension
+      ? { showSelection: showSelectionMock }
+      : { store: formattingToolbarStore }
+  ),
   useExtensionState: () => showState.value,
 }))
 
@@ -63,10 +86,12 @@ vi.mock('@blocknote/core', () => ({
   createExtension: (factory: unknown) => factory,
   defaultProps: { textAlignment: 'left' },
   editorHasBlockWithType: editorHasBlockWithTypeMock,
+  isTableCellSelection: () => false,
 }))
 
 vi.mock('@blocknote/core/extensions', () => ({
   FormattingToolbarExtension: Symbol('FormattingToolbarExtension'),
+  ShowSelectionExtension: showSelectionExtension,
 }))
 
 vi.mock('@/ui/dropdown-menu', () => ({
@@ -92,6 +117,7 @@ vi.mock('@phosphor-icons/react', () => ({
   Code: MockIcon,
   CodeBlock: MockIcon,
   Highlighter: MockIcon,
+  LinkSimple: MockIcon,
   ListBullets: MockIcon,
   ListChecks: MockIcon,
   ListNumbers: MockIcon,
@@ -104,7 +130,9 @@ vi.mock('@phosphor-icons/react', () => ({
   TextHSix: MockIcon,
   TextHThree: MockIcon,
   TextHTwo: MockIcon,
+  TextIndent: MockIcon,
   TextItalic: MockIcon,
+  TextOutdent: MockIcon,
   TextStrikethrough: MockIcon,
 }))
 
@@ -146,7 +174,14 @@ function createMockEditor(blockType = 'image', props: Record<string, unknown> = 
         code: { type: 'code', propSchema: 'boolean' },
         highlight: { type: 'highlight', propSchema: 'boolean' },
       },
+      inlineContentSchema: { link: 'link' },
     },
+    canNestBlock: () => true,
+    canUnnestBlock: () => false,
+    nestBlock: vi.fn(),
+    unnestBlock: vi.fn(),
+    getSelectedLinkUrl: () => undefined,
+    getSelectedText: () => 'Selected block',
     prosemirrorState: { doc: { content: { size: 0 } }, selection: { from: 1, to: 5 } },
     domElement,
     focus: vi.fn(),
@@ -180,8 +215,11 @@ describe('the formatting toolbar and its controller', () => {
     fireEvent.click(screen.getByRole('button', { name: /inline code/i }))
     fireEvent.click(screen.getByRole('button', { name: 'Highlight' }))
     fireEvent.click(screen.getByRole('button', { name: 'Heading 1' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Nest block' }))
 
     expect(editor.focus).toHaveBeenCalled()
+    expect(editor.nestBlock).toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: 'Unnest block' })).toBeDisabled()
     expect(editor.toggleStyles).toHaveBeenCalledWith({ bold: true })
     expect(editor.toggleStyles).toHaveBeenCalledWith({ code: true })
     // The highlight toggle goes through the highlight model: colour mark off, then the style.

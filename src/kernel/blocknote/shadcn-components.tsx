@@ -27,7 +27,7 @@ import {
 } from '@/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/ui/tabs'
 import { Toggle } from '@/ui/toggle'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/ui/tooltip'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
 
 // The shadcn primitives BlockNote's shadcn adapters render, all twelve groups
 // from ui/ (BlockNoteView merges by group, so a group is given whole). This is
@@ -40,6 +40,16 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/ui/t
 // fields. Typed against the package's group so the contract stays checked.
 // eslint-disable-next-line react-refresh/only-export-components -- the map is the module's product, the shim its one component
 function Form({ children }: { children?: ReactNode }) {
+  return <>{children}</>
+}
+
+// BlockNote's Toolbar (formatting and link) wraps itself in the map's
+// TooltipProvider with `delayDuration={0}`, and a Radix provider shadows the
+// one above it for everything inside. The map hands over a provider that makes
+// no context, so a toolbar tooltip reads the one Provider in main.tsx and waits
+// and fades like every other.
+// eslint-disable-next-line react-refresh/only-export-components -- see Form
+function TooltipProvider({ children }: { children?: ReactNode }) {
   return <>{children}</>
 }
 
