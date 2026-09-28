@@ -67,4 +67,22 @@ describe('WriteFailureDialog', () => {
     expect(onDismiss).toHaveBeenCalledOnce()
     expect(onAnswer).not.toHaveBeenCalled()
   })
+
+  it('while an answer is in flight, says so and takes no button', () => {
+    const onAnswer = vi.fn()
+    render(
+      <WriteFailureDialog
+        prompt={{ kind: 'quit', path: PATH, message: 'Permission denied' }}
+        pending="retry"
+        onAnswer={onAnswer}
+        onDismiss={vi.fn()}
+      />,
+    )
+
+    const retry = screen.getByRole('button', { name: 'Retrying…' })
+    expect(retry).toHaveAttribute('aria-busy', 'true')
+    expect(screen.getAllByRole('button').every((button) => (button as HTMLButtonElement).disabled)).toBe(true)
+    fireEvent.click(retry)
+    expect(onAnswer).not.toHaveBeenCalled()
+  })
 })

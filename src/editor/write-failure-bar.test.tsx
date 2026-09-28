@@ -27,4 +27,26 @@ describe('WriteFailureBar', () => {
     expect(screen.getByRole('button', { name: 'Retry' })).toHaveAttribute('data-variant', 'default')
     expect(screen.getByRole('button', { name: 'Discard changes' })).toHaveAttribute('data-variant', 'secondary')
   })
+
+  it('while a Retry is in flight, says so and takes neither button', () => {
+    const onRetry = vi.fn()
+    const onDiscard = vi.fn()
+    render(<WriteFailureBar path={PATH} message="Permission denied" pending="retry" onRetry={onRetry} onDiscard={onDiscard} />)
+
+    const retry = screen.getByRole('button', { name: 'Retrying…' })
+    expect(retry).toBeDisabled()
+    expect(retry).toHaveAttribute('aria-busy', 'true')
+    expect(screen.getByRole('button', { name: 'Discard changes' })).toBeDisabled()
+    fireEvent.click(retry)
+    expect(onRetry).not.toHaveBeenCalled()
+  })
+
+  it('while a Discard is in flight, says so and takes neither button', () => {
+    render(<WriteFailureBar path={PATH} message="Permission denied" pending="discard" onRetry={vi.fn()} onDiscard={vi.fn()} />)
+
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeDisabled()
+    const discard = screen.getByRole('button', { name: 'Discarding…' })
+    expect(discard).toBeDisabled()
+    expect(discard).toHaveAttribute('aria-busy', 'true')
+  })
 })

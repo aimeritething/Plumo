@@ -597,6 +597,7 @@ export default function App() {
         onNewDocument={hasFolder ? createDocumentFromShell : undefined}
         tabCommands={tabFileCommands}
         writeFailure={writeFailures.failureFor(activeTabPath)}
+        writeFailurePending={writeFailures.pendingFor(activeTabPath)}
         onRetryWrite={retry}
         onDiscardWrite={discard}
         onCopyPath={onCopyPath}
@@ -604,7 +605,12 @@ export default function App() {
         sidebarCollapsed={sidebar.collapsed}
       />
       <SidebarToggle collapsed={sidebar.collapsed} onToggle={toggleSidebar} />
-      <WriteFailureDialog prompt={writeFailures.prompt} onAnswer={answerPrompt} onDismiss={dismissPrompt} />
+      <WriteFailureDialog
+        prompt={writeFailures.prompt}
+        pending={writeFailures.promptPending ?? writeFailures.pendingFor(writeFailures.prompt?.path ?? null)}
+        onAnswer={answerPrompt}
+        onDismiss={dismissPrompt}
+      />
       <CommandMenu
         open={commandMenuOpen}
         mode={commandMenuMode}

@@ -149,6 +149,89 @@ describe('useWriteFailures', () => {
     })
   })
 
+  describe('one Retry or Discard at a time', () => {
+    /** A write that waits for `land()`. */
+    function heldWrite() {
+      let land!: () => void
+      const writeBuffer = () => new Promise<void>((resolve) => { land = resolve })
+      return { writeBuffer, land: () => land() }
+    }
+
+    it('rapid Retry writes once, and says it is retrying until the write lands', async () => {
+      const held = heldWrite()
+      const { result, deps } = renderFailures({ writeBuffer: held.writeBuffer })
+      act(() => {
+        result.current.recordFailure(A, REFUSED)
+      })
+
+      let first!: Promise<boolean>
+      let second!: Promise<boolean>
+      act(() => {
+        first = result.current.retry(A)
+        second = result.current.retry(A)
+      })
+      expect(result.current.pendingFor(A)).toBe('retry')
+      expect(result.current.pendingFor(B)).toBeNull()
+
+      await act(async () => {
+        held.land()
+        await Promise.all([first, second])
+      })
+
+      expect(deps.writeBuffer).toHaveBeenCalledOnce()
+      await expect(second).resolves.toBe(true)
+      expect(result.current.pendingFor(A)).toBeNull()
+      expect(result.current.failureFor(A)).toBeNull()
+    })
+
+    it('a Discard asked for while a Retry is in flight adds nothing', async () => {
+      const held = heldWrite()
+      const { result, deps } = renderFailures({ writeBuffer: held.writeBuffer })
+      act(() => {
+        result.current.recordFailure(A, REFUSED)
+      })
+
+      let retrying!: Promise<boolean>
+      act(() => {
+        retrying = result.current.retry(A)
+        void result.current.discard(A)
+      })
+      await act(async () => {
+        held.land()
+        await retrying
+      })
+
+      expect(deps.writeBuffer).toHaveBeenCalledOnce()
+      expect(deps.revertToDisk).not.toHaveBeenCalled()
+    })
+
+    it('rapid Retry in the close prompt writes once and closes the Tab once', async () => {
+      const held = heldWrite()
+      const { result, deps } = renderFailures({ writeBuffer: held.writeBuffer })
+      act(() => {
+        result.current.recordFailure(A, REFUSED)
+        result.current.closeTabOrAsk(A)
+      })
+
+      let first!: Promise<void>
+      let second!: Promise<void>
+      act(() => {
+        first = result.current.answerPrompt('retry')
+        second = result.current.answerPrompt('retry')
+      })
+      expect(result.current.promptPending).toBe('retry')
+
+      await act(async () => {
+        held.land()
+        await Promise.all([first, second])
+      })
+
+      expect(deps.writeBuffer).toHaveBeenCalledOnce()
+      expect(deps.closeTab).toHaveBeenCalledOnce()
+      expect(result.current.promptPending).toBeNull()
+    })
+  })
+
   describe('closing a Tab', () => {
     it('closes a Tab whose writes all landed without asking', () => {
       const { result, deps } = renderFailures()

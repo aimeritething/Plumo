@@ -13,7 +13,7 @@ import { activeTabPaths, imageFetchVersion, imageMetadataLabel, type ImageNatura
 import { noteRootForPath } from '@/folder/note-entry'
 import { notePathFilename } from '@/lib/note-path-identity'
 import { installRichEditorMarkdownSerializer } from '@/kernel/markdown/rich-editor-markdown'
-import type { WriteFailure } from './use-write-failures'
+import type { WriteFailure, WriteFailureAction } from './use-write-failures'
 import { useRegisterEditorContentFlushes } from './editor-content-flush-registration'
 import { applyPendingRawExitContent, resolvePendingRawExitContent, resolveRawModeContent } from './editor-raw-mode-sync'
 import { uploadEditorImage } from './editor-image-upload'
@@ -121,6 +121,8 @@ export interface EditorProps {
   tabCommands?: TabCommands
   /** The active Document's refused write, if its last write failed; the error bar's reason to exist. */
   writeFailure: WriteFailure | null
+  /** The error bar's Retry or Discard changes while it is in flight. */
+  writeFailurePending?: WriteFailureAction | null
   onRetryWrite: (path: string) => void
   onDiscardWrite: (path: string) => void
   /** Copy path (⌘⇧,), the same handler the app command runs; the tab bar's link button calls it. */
@@ -453,6 +455,7 @@ export const Editor = memo(function Editor(props: EditorProps) {
             <WriteFailureBar
               path={writeFailure.path}
               message={writeFailure.message}
+              pending={props.writeFailurePending}
               onRetry={() => onRetryWrite(writeFailure.path)}
               onDiscard={() => onDiscardWrite(writeFailure.path)}
             />

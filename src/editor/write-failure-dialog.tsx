@@ -4,6 +4,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 
 export interface WriteFailureDialogProps {
   prompt: WritePrompt | null
+  /** The answer in flight: it says so, and no button takes another click until it settles. */
+  pending?: WritePromptChoice | null
   onAnswer: (choice: WritePromptChoice) => void
   /** Escape or a click outside: keep the Tab, or the app, open with its bar. */
   onDismiss: () => void
@@ -16,7 +18,8 @@ export interface WriteFailureDialogProps {
  * control, the rest are the secondary control. The `default` dialog; the
  * title and the mono detail wrap anywhere, since both carry a path.
  */
-export function WriteFailureDialog({ prompt, onAnswer, onDismiss }: WriteFailureDialogProps) {
+export function WriteFailureDialog({ prompt, pending = null, onAnswer, onDismiss }: WriteFailureDialogProps) {
+  const busy = pending !== null
   return (
     <Dialog open={prompt !== null} onOpenChange={(open) => { if (!open) onDismiss() }}>
       {prompt && (
@@ -26,10 +29,22 @@ export function WriteFailureDialog({ prompt, onAnswer, onDismiss }: WriteFailure
             <DialogDescription className="font-mono text-xs tracking-normal wrap-anywhere">{prompt.message}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button size="sm" onClick={() => onAnswer('retry')}>Retry</Button>
-            <Button size="sm" variant="secondary" onClick={() => onAnswer('discard')}>Discard changes</Button>
+            <Button size="sm" disabled={busy} aria-busy={pending === 'retry'} onClick={() => onAnswer('retry')}>
+              {pending === 'retry' ? 'Retrying…' : 'Retry'}
+            </Button>
+            <Button size="sm" variant="secondary" disabled={busy} aria-busy={pending === 'discard'} onClick={() => onAnswer('discard')}>
+              {pending === 'discard' ? 'Discarding…' : 'Discard changes'}
+            </Button>
             {prompt.kind === 'quit' && (
-              <Button size="sm" variant="secondary" onClick={() => onAnswer('discardAndQuit')}>Discard and quit</Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={busy}
+                aria-busy={pending === 'discardAndQuit'}
+                onClick={() => onAnswer('discardAndQuit')}
+              >
+                {pending === 'discardAndQuit' ? 'Quitting…' : 'Discard and quit'}
+              </Button>
             )}
           </DialogFooter>
         </DialogContent>

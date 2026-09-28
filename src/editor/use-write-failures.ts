@@ -26,6 +26,9 @@ export interface WritePrompt {
 
 export type WritePromptChoice = 'retry' | 'discard' | 'discardAndQuit'
 
+/** What the error bar is doing for a Document while the boundary answers. */
+export type WriteFailureAction = 'retry' | 'discard'
+
 export interface WriteFailureRecord {
   /** The Document's failure while its last write stands refused, else null. */
   failureFor: (path: string | null) => WriteFailure | null
@@ -57,12 +60,16 @@ export interface WriteFailures extends WriteFailureRecord {
   retry: (path: string) => Promise<boolean>
   /** The bar's Discard changes: true once the disk bytes are back (or the Tab is closed, the file being gone). */
   discard: (path: string) => Promise<boolean>
+  /** The Retry or Discard changes in flight for a Document, else null; the bar's buttons wait on it. */
+  pendingFor: (path: string | null) => WriteFailureAction | null
   /** Close a Tab, or ask first when its last write stands refused. */
   closeTabOrAsk: (path: string) => void
   /** ⌘Q: write every pending edit, then exit; ask about the first refusal instead. */
   quit: () => Promise<void>
   prompt: WritePrompt | null
   answerPrompt: (choice: WritePromptChoice) => Promise<void>
+  /** The prompt's answer in flight, else null; the prompt's buttons wait on it. */
+  promptPending: WritePromptChoice | null
   /** Escape: keep the Tab, or the app, open with its bar. */
   dismissPrompt: () => void
 }
@@ -129,8 +136,37 @@ export function useWriteFailures(deps: WriteFailureDeps): WriteFailures {
     }
   }, [recordFailure])
 
+  /**
+   * One Retry or Discard changes per Document at a time: asked again while
+   * one is in flight, the answer is the one already coming, so a burst of
+   * clicks writes once. The bar shows which is in flight meanwhile.
+   */
+  const [pending, pendingRef, setPending] = useStateWithRef<Readonly<Record<string, WriteFailureAction>>>({})
+  const inFlight = useRef(new Map<string, Promise<boolean>>())
+  const once = useCallback(
+    (path: string, action: WriteFailureAction, run: () => Promise<boolean>): Promise<boolean> => {
+      const running = inFlight.current.get(path)
+      if (running) return running
+      setPending({ ...pendingRef.current, [path]: action })
+      const settled = run().finally(() => {
+        inFlight.current.delete(path)
+        const { [path]: _done, ...rest } = pendingRef.current
+        void _done
+        setPending(rest)
+      })
+      inFlight.current.set(path, settled)
+      return settled
+    },
+    [pendingRef, setPending],
+  )
+
+  const pendingFor = useCallback(
+    (path: string | null): WriteFailureAction | null => (path === null ? null : pending[path] ?? null),
+    [pending],
+  )
+
   /** Write the Document's buffer again; a Document that is no longer open has nothing left to write. */
-  const retry = useCallback(
+  const writeAgain = useCallback(
     async (path: string): Promise<boolean> => {
       const tab = depsRef.current.tabs.find((candidate) => candidate.entry.path === path)
       if (!tab) {
@@ -148,13 +184,14 @@ export function useWriteFailures(deps: WriteFailureDeps): WriteFailures {
     },
     [clearFailure, recordFailure],
   )
+  const retry = useCallback((path: string) => once(path, 'retry', () => writeAgain(path)), [once, writeAgain])
 
   /**
    * Put the disk bytes back. A file that cannot be read any more has no bytes
    * to go back to: the Document is gone, so its Tab closes (the rule for a
    * Document deleted from outside).
    */
-  const discard = useCallback(
+  const revert = useCallback(
     async (path: string): Promise<boolean> => {
       try {
         await depsRef.current.revertToDisk(path)
@@ -167,6 +204,7 @@ export function useWriteFailures(deps: WriteFailureDeps): WriteFailures {
     },
     [clearFailure],
   )
+  const discard = useCallback((path: string) => once(path, 'discard', () => revert(path)), [once, revert])
 
   const closeTabOrAsk = useCallback(
     (path: string) => {
@@ -210,10 +248,11 @@ export function useWriteFailures(deps: WriteFailureDeps): WriteFailures {
     await continueQuit()
   }, [continueQuit, settleAndRecord])
 
-  const answerPrompt = useCallback(
-    async (choice: WritePromptChoice) => {
-      const current = promptRef.current
-      if (!current) return
+  /** The prompt answers one choice at a time, so a burst of clicks is one answer. */
+  const [promptPending, promptPendingRef, setPromptPending] = useStateWithRef<WritePromptChoice | null>(null)
+
+  const answer = useCallback(
+    async (current: WritePrompt, choice: WritePromptChoice) => {
       if (choice === 'discardAndQuit') {
         await exit()
         return
@@ -230,7 +269,21 @@ export function useWriteFailures(deps: WriteFailureDeps): WriteFailures {
       }
       await continueQuit()
     },
-    [continueQuit, discard, exit, failuresRef, promptRef, retry, showPrompt],
+    [continueQuit, discard, exit, failuresRef, retry, showPrompt],
+  )
+
+  const answerPrompt = useCallback(
+    async (choice: WritePromptChoice) => {
+      const current = promptRef.current
+      if (!current || promptPendingRef.current !== null) return
+      setPromptPending(choice)
+      try {
+        await answer(current, choice)
+      } finally {
+        setPromptPending(null)
+      }
+    },
+    [answer, promptPendingRef, promptRef, setPromptPending],
   )
 
   const dismissPrompt = useCallback(() => showPrompt(null), [showPrompt])
@@ -240,10 +293,12 @@ export function useWriteFailures(deps: WriteFailureDeps): WriteFailures {
     settleAndRecord,
     retry,
     discard,
+    pendingFor,
     closeTabOrAsk,
     quit,
     prompt,
     answerPrompt,
+    promptPending,
     dismissPrompt,
   }
 }
