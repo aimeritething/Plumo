@@ -1,5 +1,7 @@
 import { createExtension } from '@blocknote/core'
 import type { useCreateBlockNote } from '@blocknote/react'
+import type { RichEditor } from './block-note-dom'
+import { collapsedSectionHiding } from './collapsed-sections'
 import {
   consumeKeyboardEvent,
   createCaptureKeydownMount,
@@ -20,6 +22,7 @@ type EmptyListNavigationEditor = EditorLike & { isEditable?: boolean }
 type CursorPosition = ReturnType<EmptyListNavigationEditor['getTextCursorPosition']>
 type BlockLike = {
   content?: unknown
+  id?: string
   type: string
 }
 type Navigation = {
@@ -84,6 +87,8 @@ function moveToAdjacentEmptyList(
 
   const adjacentBlock = navigation.adjacentBlock(editor.getTextCursorPosition())
   if (!isEmptyListItem(adjacentBlock)) return false
+  // One a collapsed section hides takes no cursor.
+  if (adjacentBlock.id && collapsedSectionHiding(editor as unknown as RichEditor, adjacentBlock.id)) return false
 
   editor.setTextCursorPosition(adjacentBlock, navigation.placement)
   return true

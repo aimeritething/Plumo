@@ -4,6 +4,7 @@ import {
   adjacentCodeLineOffset,
   createRichEditorCodeBlockArrowNavigationExtension,
 } from './rich-editor-code-block-arrow-navigation-extension'
+import { endCollapsedSectionAfter, toggleCollapsedHeading } from './collapsed-sections'
 
 vi.mock('@tiptap/pm/state', () => ({
   TextSelection: {
@@ -89,6 +90,7 @@ function createFixture({
   }
   const editor = {
     _tiptapEditor: { view },
+    document: [] as unknown[],
     getTextCursorPosition: vi.fn(() => ({
       block: { id: 'code', type: blockType },
       nextBlock,
@@ -200,6 +202,21 @@ describe('createRichEditorCodeBlockArrowNavigationExtension', () => {
       { id: 'previous', type: 'paragraph' },
       'end',
     )
+  })
+
+  it('moves up onto a collapsed heading, not into the hidden block above the code block', () => {
+    const fixture = createFixture({ offset: 0 })
+    fixture.editor.document = [
+      { id: 'heading', type: 'heading', props: { level: 2 }, content: [], children: [] },
+      { id: 'previous', type: 'paragraph', content: [], children: [] },
+      { id: 'code', type: 'codeBlock', content: [], children: [] },
+    ]
+    toggleCollapsedHeading(fixture.editor as never, 'heading')
+    endCollapsedSectionAfter(fixture.editor as never, 'heading', 'previous')
+
+    fixture.fire('ArrowUp')
+
+    expect(fixture.editor.setTextCursorPosition).toHaveBeenCalledWith('heading', 'end')
   })
 
   it('leaves modified, composing, read-only, and non-code arrow keys alone', () => {

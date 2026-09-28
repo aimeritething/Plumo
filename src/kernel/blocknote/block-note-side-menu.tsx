@@ -42,6 +42,7 @@ import {
 } from './collapsed-sections'
 import {
   liveSideMenuBlock,
+  removeSideMenuSection,
   runSideMenuAction,
   type SideMenuBlock,
 } from './side-menu-blocks'
@@ -358,9 +359,7 @@ function RemoveBlockItem({ children }: { children: ReactNode }) {
       className="bn-menu-item"
       onClick={() => {
         runSideMenuAction(() => {
-          const liveBlock = liveSideMenuBlock(editor, block)
-          if (!liveBlock) return
-          editor.removeBlocks([liveBlock.id])
+          removeSideMenuSection(editor, block)
         })
       }}
     >

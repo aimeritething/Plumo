@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createRichEditorEmptyListNavigationExtension } from './rich-editor-empty-list-navigation-extension'
+import { toggleCollapsedHeading } from './collapsed-sections'
 
 type KeyListener = (event: KeyboardEvent) => void
 
@@ -40,6 +41,7 @@ function createFixture({
   }
   const editor = {
     _tiptapEditor: { view },
+    document: [] as unknown[],
     getTextCursorPosition: vi.fn(() => ({
       block: { content: [{ text: 'Current', type: 'text' }], id: 'current', type: 'paragraph' },
       nextBlock,
@@ -96,6 +98,20 @@ describe('createRichEditorEmptyListNavigationExtension', () => {
     expect(createFixture({ nextContent: [{ text: 'Next', type: 'text' }] })
       .fire('ArrowDown').preventDefault).not.toHaveBeenCalled()
     expect(createFixture({ selectionEmpty: false }).fire('ArrowDown').preventDefault).not.toHaveBeenCalled()
+  })
+
+  it('does not move into an empty list item a collapsed heading hides', () => {
+    const fixture = createFixture()
+    fixture.editor.document = [
+      { id: 'current', type: 'heading', props: { level: 2 }, content: [], children: [] },
+      { id: 'next', type: 'bulletListItem', content: [], children: [] },
+    ]
+    toggleCollapsedHeading(fixture.editor as never, 'current')
+
+    const event = fixture.fire('ArrowDown')
+
+    expect(fixture.editor.setTextCursorPosition).not.toHaveBeenCalled()
+    expect(event.preventDefault).not.toHaveBeenCalled()
   })
 
   it('ignores modified, composing, and read-only arrow keys', () => {

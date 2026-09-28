@@ -1,4 +1,9 @@
-import { collapsedSectionHiddenBlockIds } from './collapsed-sections'
+import {
+  collapsedSectionHiddenBlockIds,
+  endCollapsedSectionAfter,
+  isCollapsedBlock,
+  keepBlockOutOfCollapsedSections,
+} from './collapsed-sections'
 import type { RichEditor } from './block-note-dom'
 import {
   documentBlock,
@@ -180,6 +185,49 @@ export function collapsedContentOperationBlockIds(
   return pruneNestedOperationBlockIds(operationBlockIds, entries)
 }
 
+/**
+ * A block and the collapsed content that goes wherever it goes: a collapsed
+ * heading with its section, a collapsed list item with its children, any
+ * other block alone. Block selection, and the side menu's drag and Delete,
+ * move and delete this unit.
+ */
+export function collapsedSectionBlockIds(
+  editor: RichEditorBlockSelectionEditor,
+  blockId: string,
+): string[] {
+  const blockIds = collapsedContentOperationBlockIds(editor, [blockId])
+  return blockIds.length > 0 ? blockIds : [blockId]
+}
+
+function isHeadingBlock(editor: RichEditorBlockSelectionEditor, blockId: string): boolean {
+  return findDocumentBlock(editor.document, blockId)?.type === 'heading'
+}
+
+/**
+ * Runs `move` (a move of whole units, `operationBlockIds` first to last) so
+ * collapsed sections come out as they went in: a moved collapsed heading hides
+ * exactly the blocks it hid, not what follows it at its new place, and a block
+ * that lands just past another collapsed section stays in view.
+ */
+export function moveKeepingCollapsedSections(
+  editor: RichEditorBlockSelectionEditor,
+  operationBlockIds: readonly string[],
+  move: () => boolean,
+): boolean {
+  const richEditor = editor as unknown as RichEditor
+  const movedSectionEnds = operationBlockIds
+    .filter((blockId) => isCollapsedBlock(richEditor, blockId) && isHeadingBlock(editor, blockId))
+    .map((headingId) => [headingId, collapsedSectionBlockIds(editor, headingId).at(-1) ?? headingId] as const)
+  if (!move()) return false
+
+  movedSectionEnds.forEach(([headingId, lastBlockId]) => {
+    endCollapsedSectionAfter(richEditor, headingId, lastBlockId)
+  })
+  const firstBlockId = operationBlockIds.at(0)
+  if (firstBlockId) keepBlockOutOfCollapsedSections(richEditor, firstBlockId)
+  return true
+}
+
 function hasSameBlockIds(leftBlockIds: readonly string[], rightBlockIds: readonly string[]): boolean {
   const left = uniqueBlockIds(leftBlockIds)
   const right = uniqueBlockIds(rightBlockIds)
@@ -257,9 +305,12 @@ export function moveSelectedDocumentBlocks(
   if (!placement) return true
   if (isNoOpMove(operationBlockIds, selectedBlockIds, placement)) return false
 
-  editor.transact?.(() => {
-    editor.removeBlocks?.(operationBlockIds)
-    editor.insertBlocks?.(blocks, placement.referenceBlockId, placement.placement)
+  moveKeepingCollapsedSections(editor, operationBlockIds, () => {
+    editor.transact?.(() => {
+      editor.removeBlocks?.(operationBlockIds)
+      editor.insertBlocks?.(blocks, placement.referenceBlockId, placement.placement)
+    })
+    return true
   })
   editor.focus?.()
   return true

@@ -16,8 +16,9 @@ import {
   type RichEditor,
 } from './block-note-dom'
 import {
-  hasChildBlock,
+  canDropSideMenuSection,
   liveSideMenuBlock,
+  moveSideMenuSection,
   runSideMenuAction,
   type SideMenuBlock,
 } from './side-menu-blocks'
@@ -231,11 +232,7 @@ function validDropTarget({
   if (!targetElement) return null
 
   const blockId = blockIdFromElement(targetElement)
-  if (!blockId || blockId === state.draggedBlockId) return null
-
-  const draggedBlock = liveSideMenuBlock(editor, { id: state.draggedBlockId })
-  const targetBlock = liveSideMenuBlock(editor, { id: blockId })
-  if (!draggedBlock || !targetBlock || hasChildBlock(draggedBlock, blockId)) return null
+  if (!blockId || !canDropSideMenuSection(editor, state.draggedBlockId, blockId)) return null
 
   return {
     blockId,
@@ -304,24 +301,12 @@ function moveBlockByPointerDrop({
   placement: DropPlacement
 }): boolean {
   if (draggedBlockId === targetBlockId) return false
-
-  const draggedBlock = liveSideMenuBlock(editor, { id: draggedBlockId })
-  const targetBlock = liveSideMenuBlock(editor, { id: targetBlockId })
-  if (!draggedBlock || !targetBlock || hasChildBlock(draggedBlock, targetBlockId)) return false
+  if (!canDropSideMenuSection(editor, draggedBlockId, targetBlockId)) return false
 
   let moved = false
   runSideMenuAction(() => {
     editor.focus()
-    editor.transact(() => {
-      const currentDraggedBlock = liveSideMenuBlock(editor, { id: draggedBlockId })
-      const currentTargetBlock = liveSideMenuBlock(editor, { id: targetBlockId })
-      if (!currentDraggedBlock || !currentTargetBlock) return
-      if (hasChildBlock(currentDraggedBlock, targetBlockId)) return
-
-      editor.removeBlocks([currentDraggedBlock.id])
-      editor.insertBlocks([currentDraggedBlock], currentTargetBlock.id, placement)
-      moved = true
-    })
+    moved = moveSideMenuSection(editor, draggedBlockId, targetBlockId, placement)
   })
 
   return moved

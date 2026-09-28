@@ -1,6 +1,8 @@
 import { createExtension } from '@blocknote/core'
 import type { useCreateBlockNote } from '@blocknote/react'
 import { TextSelection, type Transaction } from '@tiptap/pm/state'
+import type { RichEditor } from './block-note-dom'
+import { collapsedSectionHiding } from './collapsed-sections'
 import {
   consumeKeyboardEvent,
   createCaptureKeydownMount,
@@ -91,7 +93,12 @@ function moveAcrossCodeBlockBoundary(
   const adjacentBlock = key === 'ArrowDown' ? nextBlock : prevBlock
   if (!adjacentBlock) return false
 
-  editor.setTextCursorPosition(adjacentBlock, key === 'ArrowDown' ? 'start' : 'end')
+  // Above a code block that follows a collapsed section, the line in view is
+  // the collapsed heading, not the section's last, hidden block.
+  const hiderId = collapsedSectionHiding(editor as unknown as RichEditor, adjacentBlock.id)
+  if (hiderId && key === 'ArrowDown') return false
+
+  editor.setTextCursorPosition(hiderId ?? adjacentBlock, key === 'ArrowDown' ? 'start' : 'end')
   return true
 }
 

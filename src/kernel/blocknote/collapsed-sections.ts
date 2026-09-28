@@ -16,8 +16,20 @@ export type CollapsibleBlock = {
   type?: unknown
 }
 
+/**
+ * What is collapsed: headings and list items, by block id. A collapsed
+ * heading's section runs to the next heading of its level or higher, unless
+ * `sectionEnds` names the block it stops after (with that block's children):
+ * a block placed just past a collapsed section, by Enter on its heading or a
+ * move, would fall inside it otherwise. Expanding a heading drops its end.
+ */
+type CollapsedSections = {
+  collapsedHeadingIds: ReadonlySet<string>
+  sectionEnds: ReadonlyMap<string, string>
+}
 type CollapsedHeadingStore = {
   collapsedHeadingIds: Set<string>
+  sectionEnds: Map<string, string>
   emit: () => void
   getSnapshot: () => number
   listeners: Set<() => void>
@@ -27,6 +39,19 @@ type CollapsedHeadingStore = {
 type CollapsedSectionRenderState = {
   collapsedHeadingIds: Set<string>
   hiddenBlockIds: Set<string>
+}
+// One block, in document order, as the section walk sees it.
+type SectionEntry = {
+  depth: number
+  headingLevel: number | null
+  id: string | undefined
+  isListItem: boolean
+}
+type ActiveCollapsedSection = {
+  endDepth: number | null
+  endId: string | undefined
+  id: string
+  level: number
 }
 type CollapsedHeadingDotsHit = {
   blockId: string
@@ -66,6 +91,7 @@ function createCollapsedHeadingStore(): CollapsedHeadingStore {
     },
     getSnapshot: () => store.version,
     listeners: new Set(),
+    sectionEnds: new Map(),
     subscribe: (listener) => {
       store.listeners.add(listener)
       return () => store.listeners.delete(listener)
@@ -123,56 +149,89 @@ function isCollapsibleSectionBlock(block: CollapsibleBlock | undefined) {
   return blockHeadingLevel(block) !== null || isCollapsibleListItemBlock(block)
 }
 
-function addDescendantBlockIds(block: CollapsibleBlock, hiddenBlockIds: Set<string>) {
-  if (!Array.isArray(block.children)) return
-
-  for (const child of block.children) {
-    if (typeof child.id === 'string') hiddenBlockIds.add(child.id)
-    addDescendantBlockIds(child, hiddenBlockIds)
+function documentSectionEntries(
+  blocks: readonly CollapsibleBlock[],
+  depth = 0,
+  entries: SectionEntry[] = [],
+): SectionEntry[] {
+  for (const block of blocks) {
+    entries.push({
+      depth,
+      headingLevel: blockHeadingLevel(block),
+      id: typeof block.id === 'string' ? block.id : undefined,
+      isListItem: isListItemBlockType(block.type),
+    })
+    if (Array.isArray(block.children)) documentSectionEntries(block.children, depth + 1, entries)
   }
+
+  return entries
 }
 
-function flattenBlocks(blocks: readonly CollapsibleBlock[], result: CollapsibleBlock[] = []) {
-  for (const block of blocks) {
-    result.push(block)
-    if (Array.isArray(block.children)) flattenBlocks(block.children, result)
-  }
+function sectionClosesAt(section: ActiveCollapsedSection, entry: SectionEntry) {
+  return isClosingHeading(entry.headingLevel, section.level)
+    || (section.endDepth !== null && entry.depth <= section.endDepth)
+}
 
-  return result
+/**
+ * Walks the blocks in document order and reports each collapsed heading or
+ * list item that hides something, and each hidden block with the outermost
+ * one hiding it.
+ */
+function walkCollapsedSections(
+  entries: readonly SectionEntry[],
+  sections: CollapsedSections,
+  report: {
+    collapsed?: (blockId: string) => void
+    hidden: (blockId: string, hiderId: string) => void
+  },
+) {
+  let active: ActiveCollapsedSection | null = null
+  const collapsedListItems: { depth: number; id: string }[] = []
+
+  entries.forEach((entry, index) => {
+    if (active && sectionClosesAt(active, entry)) active = null
+
+    if (active) {
+      if (entry.id) report.hidden(entry.id, active.id)
+      if (entry.id !== undefined && entry.id === active.endId) active.endDepth = entry.depth
+      return
+    }
+
+    while ((collapsedListItems.at(-1)?.depth ?? -1) >= entry.depth) collapsedListItems.pop()
+    const hidingListItem = collapsedListItems.at(0)
+    if (entry.id && hidingListItem) report.hidden(entry.id, hidingListItem.id)
+
+    if (!entry.id || !sections.collapsedHeadingIds.has(entry.id)) return
+
+    if (entry.headingLevel !== null) {
+      const endId = sections.sectionEnds.get(entry.id)
+      active = {
+        endDepth: endId === entry.id ? entry.depth : null,
+        endId,
+        id: entry.id,
+        level: entry.headingLevel,
+      }
+      report.collapsed?.(entry.id)
+      return
+    }
+
+    const hasChildren = (entries.at(index + 1)?.depth ?? -1) > entry.depth
+    if (entry.isListItem && hasChildren) {
+      collapsedListItems.push({ depth: entry.depth, id: entry.id })
+      report.collapsed?.(entry.id)
+    }
+  })
 }
 
 function collapsedSectionRenderState(
-  blocks: readonly CollapsibleBlock[],
-  collapsedHeadingIds: ReadonlySet<string>,
+  entries: readonly SectionEntry[],
+  sections: CollapsedSections,
 ): CollapsedSectionRenderState {
   const state = emptyCollapsedSectionRenderState()
-  let activeCollapsedLevel: number | null = null
-
-  for (const block of flattenBlocks(blocks)) {
-    const blockId = typeof block.id === 'string' ? block.id : undefined
-    const headingLevel = blockHeadingLevel(block)
-    const closesActiveSection = activeCollapsedLevel !== null
-      && isClosingHeading(headingLevel, activeCollapsedLevel)
-
-    if (closesActiveSection) activeCollapsedLevel = null
-
-    if (activeCollapsedLevel !== null) {
-      if (blockId) state.hiddenBlockIds.add(blockId)
-      continue
-    }
-
-    if (blockId && headingLevel !== null && collapsedHeadingIds.has(blockId)) {
-      state.collapsedHeadingIds.add(blockId)
-      activeCollapsedLevel = headingLevel
-      continue
-    }
-
-    if (blockId && isCollapsibleListItemBlock(block) && collapsedHeadingIds.has(blockId)) {
-      state.collapsedHeadingIds.add(blockId)
-      addDescendantBlockIds(block, state.hiddenBlockIds)
-    }
-  }
-
+  walkCollapsedSections(entries, sections, {
+    collapsed: (blockId) => state.collapsedHeadingIds.add(blockId),
+    hidden: (blockId) => state.hiddenBlockIds.add(blockId),
+  })
   return state
 }
 
@@ -359,12 +418,6 @@ function renderedListItemHasChildren(element: HTMLElement) {
   return isRenderedListItemBlock(element) && renderedChildBlockElements(element).length > 0
 }
 
-function addRenderedDescendantBlockIds(element: HTMLElement, hiddenBlockIds: Set<string>) {
-  for (const child of renderedChildBlockElements(element)) {
-    if (child.dataset.id) hiddenBlockIds.add(child.dataset.id)
-  }
-}
-
 function emptyCollapsedSectionRenderState(): CollapsedSectionRenderState {
   return {
     collapsedHeadingIds: new Set(),
@@ -376,39 +429,22 @@ function isClosingHeading(headingLevel: number | null, activeCollapsedLevel: num
   return headingLevel !== null && headingLevel <= activeCollapsedLevel
 }
 
-function collapsedSectionRenderStateFromElements(
-  elements: readonly HTMLElement[],
-  collapsedHeadingIds: ReadonlySet<string>,
-): CollapsedSectionRenderState {
-  const state = emptyCollapsedSectionRenderState()
-  let activeCollapsedLevel: number | null = null
-
-  for (const element of elements) {
-    const blockId = element.dataset.id
-    const headingLevel = headingLevelFromRenderedBlock(element)
-    const closesActiveSection = activeCollapsedLevel !== null
-      && isClosingHeading(headingLevel, activeCollapsedLevel)
-
-    if (closesActiveSection) activeCollapsedLevel = null
-
-    if (activeCollapsedLevel !== null) {
-      if (blockId) state.hiddenBlockIds.add(blockId)
-      continue
-    }
-
-    if (blockId && headingLevel !== null && collapsedHeadingIds.has(blockId)) {
-      state.collapsedHeadingIds.add(blockId)
-      activeCollapsedLevel = headingLevel
-      continue
-    }
-
-    if (blockId && collapsedHeadingIds.has(blockId) && renderedListItemHasChildren(element)) {
-      state.collapsedHeadingIds.add(blockId)
-      addRenderedDescendantBlockIds(element, state.hiddenBlockIds)
-    }
+function renderedBlockDepth(element: HTMLElement, blockElements: ReadonlySet<HTMLElement>) {
+  let depth = 0
+  for (let parent = element.parentElement; parent; parent = parent.parentElement) {
+    if (blockElements.has(parent)) depth += 1
   }
+  return depth
+}
 
-  return state
+function renderedSectionEntries(elements: readonly HTMLElement[]): SectionEntry[] {
+  const blockElements = new Set(elements)
+  return elements.map((element) => ({
+    depth: renderedBlockDepth(element, blockElements),
+    headingLevel: headingLevelFromRenderedBlock(element),
+    id: element.dataset.id,
+    isListItem: isRenderedListItemBlock(element),
+  }))
 }
 
 function mergeCollapsedSectionRenderStates(...states: CollapsedSectionRenderState[]): CollapsedSectionRenderState {
@@ -426,42 +462,52 @@ function mergeCollapsedSectionRenderStates(...states: CollapsedSectionRenderStat
   return merged
 }
 
-function applyCollapsedSectionRenderingToElement(
-  editorElement: HTMLElement,
-  collapsedHeadingIds: ReadonlySet<string>,
+// The Document and the rendered blocks both count: either can be a step behind the other.
+function currentCollapsedSectionRenderState(
+  editorElement: HTMLElement | null,
+  sections: CollapsedSections,
   fallbackBlocks: readonly CollapsibleBlock[],
-) {
-  const blockElements = renderedSectionBlockElements(editorElement)
-  const renderState = mergeCollapsedSectionRenderStates(
+): CollapsedSectionRenderState {
+  const blockElements = editorElement ? renderedSectionBlockElements(editorElement) : []
+  return mergeCollapsedSectionRenderStates(
     fallbackBlocks.length > 0
-      ? collapsedSectionRenderState(fallbackBlocks, collapsedHeadingIds)
+      ? collapsedSectionRenderState(documentSectionEntries(fallbackBlocks), sections)
       : emptyCollapsedSectionRenderState(),
     blockElements.length > 0
-      ? collapsedSectionRenderStateFromElements(blockElements, collapsedHeadingIds)
+      ? collapsedSectionRenderState(renderedSectionEntries(blockElements), sections)
       : emptyCollapsedSectionRenderState(),
   )
+}
 
-  syncCollapsedSectionStyle(editorElement, renderState)
+function applyCollapsedSectionRenderingToElement(
+  editorElement: HTMLElement,
+  sections: CollapsedSections,
+  fallbackBlocks: readonly CollapsibleBlock[],
+) {
+  syncCollapsedSectionStyle(
+    editorElement,
+    currentCollapsedSectionRenderState(editorElement, sections, fallbackBlocks),
+  )
 }
 
 function applyCollapsedSectionRenderingFromHeadingIds(
   editorElement: HTMLElement,
-  collapsedHeadingIds: ReadonlySet<string>,
+  sections: CollapsedSections,
   fallbackBlocks: readonly CollapsibleBlock[] = [],
 ) {
-  applyCollapsedSectionRenderingToElement(editorElement, collapsedHeadingIds, fallbackBlocks)
+  applyCollapsedSectionRenderingToElement(editorElement, sections, fallbackBlocks)
 }
 
 function applyCollapsedSectionRendering(
   editor: RichEditor,
-  collapsedHeadingIds: ReadonlySet<string>,
+  sections: CollapsedSections,
 ) {
   const editorElement = editorBlockElement(editor)
   if (!editorElement) return
 
   applyCollapsedSectionRenderingToElement(
     editorElement,
-    collapsedHeadingIds,
+    sections,
     editor.document as readonly CollapsibleBlock[],
   )
 }
@@ -470,20 +516,10 @@ export function collapsedSectionHiddenBlockIds(editor: RichEditor): ReadonlySet<
   const store = collapsedHeadingStore(editor)
   if (store.collapsedHeadingIds.size === 0) return new Set()
 
-  const fallbackBlocks = editor.document as readonly CollapsibleBlock[]
-  const editorElement = editorBlockElement(editor)
-  if (!editorElement) {
-    return collapsedSectionRenderState(fallbackBlocks, store.collapsedHeadingIds).hiddenBlockIds
-  }
-
-  const blockElements = renderedSectionBlockElements(editorElement)
-  return mergeCollapsedSectionRenderStates(
-    fallbackBlocks.length > 0
-      ? collapsedSectionRenderState(fallbackBlocks, store.collapsedHeadingIds)
-      : emptyCollapsedSectionRenderState(),
-    blockElements.length > 0
-      ? collapsedSectionRenderStateFromElements(blockElements, store.collapsedHeadingIds)
-      : emptyCollapsedSectionRenderState(),
+  return currentCollapsedSectionRenderState(
+    editorBlockElement(editor),
+    store,
+    editor.document as readonly CollapsibleBlock[],
   ).hiddenBlockIds
 }
 
@@ -623,7 +659,8 @@ function expandCollapsedHeading(
   if (!collapsedHeadingIds.delete(headingId)) return
 
   store.collapsedHeadingIds = collapsedHeadingIds
-  applyCollapsedSectionRenderingFromHeadingIds(editorElement, store.collapsedHeadingIds, fallbackBlocks)
+  store.sectionEnds = withoutSectionEnd(store.sectionEnds, headingId)
+  applyCollapsedSectionRenderingFromHeadingIds(editorElement, store, fallbackBlocks)
   store.emit()
 }
 
@@ -640,7 +677,7 @@ function ensureCollapsedHeadingRenderer(
   let frame: number | null = null
   const apply = () => { applyCollapsedSectionRenderingFromHeadingIds(
     editorElement,
-    store.collapsedHeadingIds,
+    store,
     editor.document as readonly CollapsibleBlock[],
   ); }
   const scheduleApply = () => {
@@ -731,6 +768,14 @@ function releaseCollapsedHeadingRenderer(editorElement: HTMLElement) {
   headingCollapseRenderers.delete(editorElement)
 }
 
+function withoutSectionEnd(sectionEnds: Map<string, string>, headingId: string) {
+  if (!sectionEnds.has(headingId)) return sectionEnds
+
+  const nextSectionEnds = new Map(sectionEnds)
+  nextSectionEnds.delete(headingId)
+  return nextSectionEnds
+}
+
 function toggledCollapsedHeadingIds(collapsedHeadingIds: ReadonlySet<string>, headingId: string) {
   const nextCollapsedHeadingIds = new Set(collapsedHeadingIds)
   if (nextCollapsedHeadingIds.has(headingId)) nextCollapsedHeadingIds.delete(headingId)
@@ -764,14 +809,14 @@ function applyCollapsedHeadingToggleRendering(options: {
   }
 
   if (!editorElement) {
-    applyCollapsedSectionRendering(editor, store.collapsedHeadingIds)
+    applyCollapsedSectionRendering(editor, store)
     return
   }
 
   ensureCollapsedHeadingRenderer(editor, editorElement, store)
   applyCollapsedSectionRenderingFromHeadingIds(
     editorElement,
-    store.collapsedHeadingIds,
+    store,
     editor.document as readonly CollapsibleBlock[],
   )
 }
@@ -831,39 +876,24 @@ export function toggleCollapsedHeading(
 ) {
   const store = collapsedHeadingStore(editor)
   store.collapsedHeadingIds = toggledCollapsedHeadingIds(store.collapsedHeadingIds, headingId)
+  store.sectionEnds = withoutSectionEnd(store.sectionEnds, headingId)
   applyCollapsedHeadingToggleRendering({ editor, editorElement, store })
   store.emit()
 }
 
-/** The collapsed heading or list item that keeps `targetId` out of sight, if one does. */
+/** The collapsed heading or list item that keeps `targetId` out of sight, if one does: the outermost, which is in view. */
 function collapsedBlockHiding(
   blocks: readonly CollapsibleBlock[],
-  collapsedHeadingIds: ReadonlySet<string>,
+  sections: CollapsedSections,
   targetId: string,
 ): string | null {
-  let active: { id: string; level: number } | null = null
-
-  for (const block of flattenBlocks(blocks)) {
-    const blockId = typeof block.id === 'string' ? block.id : undefined
-    const headingLevel = blockHeadingLevel(block)
-    if (active && isClosingHeading(headingLevel, active.level)) active = null
-
-    if (active) {
-      if (blockId === targetId) return active.id
-      continue
-    }
-    if (!blockId || !collapsedHeadingIds.has(blockId)) continue
-
-    if (headingLevel !== null) {
-      active = { id: blockId, level: headingLevel }
-    } else if (isCollapsibleListItemBlock(block)) {
-      const hidden = new Set<string>()
-      addDescendantBlockIds(block, hidden)
-      if (hidden.has(targetId)) return blockId
-    }
-  }
-
-  return null
+  let hiderId: string | null = null
+  walkCollapsedSections(documentSectionEntries(blocks), sections, {
+    hidden: (blockId, blockHiderId) => {
+      if (blockId === targetId) hiderId ??= blockHiderId
+    },
+  })
+  return hiderId
 }
 
 /**
@@ -876,9 +906,88 @@ export function expandSectionsHidingBlock(editor: RichEditor, blockId: string) {
   const store = collapsedHeadingStore(editor)
   // Each pass opens one level; the bound is only a guard against a Document that changes underneath.
   for (let pass = 0; pass < store.collapsedHeadingIds.size + 1; pass += 1) {
-    const hider = collapsedBlockHiding(editor.document as readonly CollapsibleBlock[], store.collapsedHeadingIds, blockId)
+    const hider = collapsedBlockHiding(editor.document as readonly CollapsibleBlock[], store, blockId)
     if (!hider) return
     toggleCollapsedHeading(editor, hider)
+  }
+}
+
+/** Whether the user collapsed this heading or list item. */
+export function isCollapsedBlock(editor: RichEditor, blockId: string) {
+  return collapsedHeadingStore(editor).collapsedHeadingIds.has(blockId)
+}
+
+/** The collapsed heading or list item, in view, that keeps `blockId` out of sight, if one does. */
+export function collapsedSectionHiding(editor: RichEditor, blockId: string): string | null {
+  const store = collapsedHeadingStore(editor)
+  if (store.collapsedHeadingIds.size === 0) return null
+
+  return collapsedBlockHiding(editor.document as readonly CollapsibleBlock[], store, blockId)
+}
+
+/**
+ * Stops a collapsed heading's section after `lastBlockId` (and its children)
+ * instead of at the next heading of its level, so what the Document places
+ * after that block stays in view. The heading stays collapsed.
+ */
+export function endCollapsedSectionAfter(editor: RichEditor, headingId: string, lastBlockId: string) {
+  const store = collapsedHeadingStore(editor)
+  if (!store.collapsedHeadingIds.has(headingId) || store.sectionEnds.get(headingId) === lastBlockId) return
+
+  store.sectionEnds = new Map(store.sectionEnds).set(headingId, lastBlockId)
+  const editorElement = editorBlockElement(editor)
+  if (editorElement) {
+    applyCollapsedSectionRenderingFromHeadingIds(
+      editorElement,
+      store,
+      editor.document as readonly CollapsibleBlock[],
+    )
+  }
+  store.emit()
+}
+
+/**
+ * The block before `blockId` at its own level, if the collapsed heading
+ * `hiderId` hides it too: the block a section that hides `blockId` can end
+ * after and leave `blockId` in view.
+ */
+function sectionEndBefore(
+  blocks: readonly CollapsibleBlock[],
+  hiderId: string,
+  blockId: string,
+): string | null {
+  const entries = documentSectionEntries(blocks)
+  const hiderIndex = entries.findIndex((entry) => entry.id === hiderId)
+  const blockIndex = entries.findIndex((entry) => entry.id === blockId)
+  const block = entries.at(blockIndex)
+  if (hiderIndex < 0 || blockIndex < 0 || !block || entries[hiderIndex].headingLevel === null) return null
+
+  for (let index = blockIndex - 1; index >= hiderIndex; index -= 1) {
+    const entry = entries[index]
+    if (entry.depth < block.depth) return null
+    if (entry.depth === block.depth) return entry.id ?? null
+  }
+
+  return null
+}
+
+/**
+ * A block moved or created just past a collapsed section falls inside it,
+ * since a heading's section runs to the next heading of its level. End the
+ * section before the block instead, so it keeps hiding what it hid and the
+ * block stays in view. Where no section end can do that (the block lands among
+ * a collapsed list item's children), the section opens.
+ */
+export function keepBlockOutOfCollapsedSections(editor: RichEditor, blockId: string) {
+  const store = collapsedHeadingStore(editor)
+  for (let pass = 0; pass < store.collapsedHeadingIds.size + 1; pass += 1) {
+    const blocks = editor.document as readonly CollapsibleBlock[]
+    const hiderId = collapsedBlockHiding(blocks, store, blockId)
+    if (!hiderId) return
+
+    const lastBlockId = sectionEndBefore(blocks, hiderId, blockId)
+    if (lastBlockId) endCollapsedSectionAfter(editor, hiderId, lastBlockId)
+    else toggleCollapsedHeading(editor, hiderId)
   }
 }
 

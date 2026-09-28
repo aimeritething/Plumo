@@ -7,7 +7,7 @@ import {
   createRichEditorBlockSelectionExtension,
   richEditorBlockSelectionPluginKey,
 } from './rich-editor-block-selection-extension'
-import { toggleCollapsedHeading } from './collapsed-sections'
+import { collapsedSectionHiddenBlockIds, toggleCollapsedHeading } from './collapsed-sections'
 
 type MountedEditor = {
   cleanup: () => void
@@ -467,6 +467,35 @@ describe('rich editor block selection extension', () => {
     expect(down.handled).toBe(true)
     expect(nonEmptyDocumentText(editor)).toEqual(['Second', 'Second body', 'First', 'First body', 'Third'])
     expect(selectedBlockIds(editor)).toEqual(['first'])
+  })
+
+  it('keeps a moved collapsed heading hiding exactly its own section', () => {
+    const editor = mountEditorWithContent([
+      { id: 'first', type: 'heading', content: 'First', props: { level: 2 } },
+      { id: 'first-body', type: 'paragraph', content: 'First body' },
+      { id: 'second', type: 'heading', content: 'Second', props: { level: 2 } },
+      { id: 'second-body', type: 'paragraph', content: 'Second body' },
+    ])
+    collapseAndSelectBlock(editor, 'second')
+
+    dispatchEditorKey(editor, 'ArrowUp', { metaKey: true, shiftKey: true })
+
+    expect(nonEmptyDocumentText(editor)).toEqual(['First', 'Second', 'Second body', 'First body'])
+    expect([...collapsedSectionHiddenBlockIds(editor)]).toEqual(['second-body'])
+  })
+
+  it('keeps a block moved down past a collapsed section in view', () => {
+    const editor = mountEditorWithContent([
+      { id: 'loose', type: 'paragraph', content: 'Loose' },
+      ...headingSectionBlocks(),
+    ])
+    toggleCollapsedHeading(editor, 'heading')
+    selectBlock(editor, 'loose')
+
+    dispatchEditorKey(editor, 'ArrowDown', { metaKey: true, shiftKey: true })
+
+    expect(nonEmptyDocumentText(editor)).toEqual(['Heading', 'Hidden paragraph', 'Loose', 'Next heading'])
+    expect([...collapsedSectionHiddenBlockIds(editor)]).toEqual(['hidden'])
   })
 
   it('pastes after a selected collapsed heading section', () => {

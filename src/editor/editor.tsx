@@ -35,6 +35,7 @@ import { createRichEditorBlockSelectionExtension } from '@/kernel/blocknote/rich
 import { createRichEditorCodeBlockArrowNavigationExtension } from '@/kernel/blocknote/rich-editor-code-block-arrow-navigation-extension'
 import { createRichEditorCodeBlockShortcutExtension } from '@/kernel/blocknote/rich-editor-code-block-shortcut-extension'
 import { createRichEditorCodeBlockTabExtension } from '@/kernel/blocknote/rich-editor-code-block-tab-extension'
+import { createRichEditorCollapsedSectionKeysExtension } from '@/kernel/blocknote/rich-editor-collapsed-section-keys-extension'
 import { installRichEditorDispatchPerformanceProbe } from '@/kernel/blocknote/rich-editor-dispatch-performance'
 import { createRichEditorEmptyListNavigationExtension } from '@/kernel/blocknote/rich-editor-empty-list-navigation-extension'
 import { createRichEditorMarkdownInputTransformExtension } from '@/kernel/blocknote/rich-editor-input-transform-extension'
@@ -173,6 +174,7 @@ function useRichEditor(options: { activeTabPath: string | null; vaultPath?: stri
       createImeCompositionKeyGuardExtension(),
       createRichEditorCodeBlockArrowNavigationExtension(),
       createRichEditorEmptyListNavigationExtension(),
+      createRichEditorCollapsedSectionKeysExtension(),
       createRichEditorCodeBlockTabExtension(),
       createRichEditorListTabExtension(),
       createRichEditorCodeBlockShortcutExtension(),
