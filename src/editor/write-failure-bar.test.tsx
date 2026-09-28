@@ -13,6 +13,16 @@ describe('WriteFailureBar', () => {
     expect(bar).toHaveTextContent('Permission denied (os error 13)')
   })
 
+  it('after a Retry refused again, says it still could not save and when, keeping what the boundary said', () => {
+    const failedAgainAt = new Date(2026, 8, 28, 9, 5).getTime()
+    render(<WriteFailureBar path={PATH} message="Disk full" failedAgainAt={failedAgainAt} onRetry={vi.fn()} onDiscard={vi.fn()} />)
+
+    const bar = screen.getByRole('alert')
+    expect(bar).toHaveTextContent(`Still couldn't save to ${PATH} · 09:05`)
+    expect(bar).not.toHaveTextContent(/^Couldn't/)
+    expect(bar).toHaveTextContent('Disk full')
+  })
+
   it('offers Retry as the primary control and Discard changes as the secondary one', () => {
     const onRetry = vi.fn()
     const onDiscard = vi.fn()

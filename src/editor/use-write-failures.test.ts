@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Tab } from '@/types'
 import { noteEntryForPath } from '@/folder/note-entry'
 import { useWriteFailureRecord, useWriteFailures, type WriteFailureDeps } from './use-write-failures'
@@ -114,6 +114,109 @@ describe('useWriteFailures', () => {
 
       expect(retried).toBe(false)
       expect(result.current.failureFor(A)?.message).toBe('Disk full')
+    })
+
+    describe('a Retry refused again', () => {
+      beforeEach(() => {
+        vi.useFakeTimers({ toFake: ['Date'] })
+      })
+      afterEach(() => {
+        vi.useRealTimers()
+      })
+
+      it('is told apart from the first refusal by the time it was refused, which each further refusal moves on', async () => {
+        const { result } = renderFailures({ writeBuffer: async () => { throw new Error('Disk full') } })
+        vi.setSystemTime(new Date(2026, 8, 28, 14, 30))
+        act(() => {
+          result.current.recordFailure(A, REFUSED)
+        })
+        expect(result.current.failureFor(A)?.failedAgainAt).toBeUndefined()
+
+        vi.setSystemTime(new Date(2026, 8, 28, 14, 32))
+        await act(async () => {
+          await result.current.retry(A)
+        })
+        expect(result.current.failureFor(A)).toEqual({ path: A, message: 'Disk full', failedAgainAt: new Date(2026, 8, 28, 14, 32).getTime() })
+
+        vi.setSystemTime(new Date(2026, 8, 28, 14, 35))
+        await act(async () => {
+          await result.current.retry(A)
+        })
+        expect(result.current.failureFor(A)?.failedAgainAt).toBe(new Date(2026, 8, 28, 14, 35).getTime())
+
+        // An Autosave refused after that is one more failed attempt: the time moves on too.
+        vi.setSystemTime(new Date(2026, 8, 28, 14, 36))
+        act(() => {
+          result.current.recordFailure(A, REFUSED)
+        })
+        expect(result.current.failureFor(A)?.failedAgainAt).toBe(new Date(2026, 8, 28, 14, 36).getTime())
+      })
+
+      it('an Autosave refused again before any Retry is still the first refusal', () => {
+        const { result } = renderFailures()
+        act(() => {
+          result.current.recordFailure(A, REFUSED)
+          result.current.recordFailure(A, REFUSED)
+        })
+
+        expect(result.current.failureFor(A)?.failedAgainAt).toBeUndefined()
+      })
+
+      it('is forgotten once a write lands or the changes are discarded, so a later refusal is a first one again', async () => {
+        let refuse = true
+        const { result } = renderFailures({ writeBuffer: async () => { if (refuse) throw REFUSED } })
+        act(() => {
+          result.current.recordFailure(A, REFUSED)
+        })
+        await act(async () => {
+          await result.current.retry(A)
+        })
+        expect(result.current.failureFor(A)?.failedAgainAt).toBeDefined()
+
+        refuse = false
+        await act(async () => {
+          await result.current.retry(A)
+        })
+        expect(result.current.failureFor(A)).toBeNull()
+        act(() => {
+          result.current.recordFailure(A, REFUSED)
+        })
+        expect(result.current.failureFor(A)).toEqual({ path: A, message: REFUSED.message })
+
+        refuse = true
+        await act(async () => {
+          await result.current.retry(A)
+        })
+        await act(async () => {
+          await result.current.discard(A)
+        })
+        act(() => {
+          result.current.recordFailure(A, REFUSED)
+        })
+        expect(result.current.failureFor(A)?.failedAgainAt).toBeUndefined()
+      })
+
+      it('carries into the close prompt, and a Retry refused there moves it on', async () => {
+        const { result } = renderFailures({ writeBuffer: async () => { throw REFUSED } })
+        act(() => {
+          result.current.recordFailure(A, REFUSED)
+        })
+        vi.setSystemTime(new Date(2026, 8, 28, 14, 32))
+        await act(async () => {
+          await result.current.retry(A)
+        })
+
+        act(() => {
+          result.current.closeTabOrAsk(A)
+        })
+        expect(result.current.prompt).toEqual({ kind: 'close', path: A, message: REFUSED.message, failedAgainAt: new Date(2026, 8, 28, 14, 32).getTime() })
+
+        vi.setSystemTime(new Date(2026, 8, 28, 14, 40))
+        await act(async () => {
+          await result.current.answerPrompt('retry')
+        })
+        expect(result.current.prompt?.failedAgainAt).toBe(new Date(2026, 8, 28, 14, 40).getTime())
+      })
     })
 
     it('Discard changes puts the disk bytes back and clears the bar', async () => {
@@ -290,7 +393,7 @@ describe('useWriteFailures', () => {
         await result.current.answerPrompt('retry')
       })
       expect(deps.closeTab).not.toHaveBeenCalled()
-      expect(result.current.prompt).toEqual({ kind: 'close', path: A, message: 'Still read-only' })
+      expect(result.current.prompt).toEqual({ kind: 'close', path: A, message: 'Still read-only', failedAgainAt: expect.any(Number) })
 
       await act(async () => {
         await result.current.answerPrompt('retry')

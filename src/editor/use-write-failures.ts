@@ -11,17 +11,25 @@ import type { Tab } from '@/types'
  * top of it. The save hook keeps the buffer, the Tabs hold the bytes.
  */
 
-export interface WriteFailure {
-  path: string
-  /** What the boundary said when it refused the write. */
+/** A Document's standing refusal, as the record keeps it. */
+interface RecordedFailure {
+  /** What the boundary said when it last refused the write. */
   message: string
+  /**
+   * When the write was last refused (epoch ms), once a Retry has been
+   * refused too: the bar then says it still could not save, and when.
+   * Absent for a first refusal.
+   */
+  failedAgainAt?: number
 }
 
-export interface WritePrompt {
+export interface WriteFailure extends RecordedFailure {
+  path: string
+}
+
+export interface WritePrompt extends WriteFailure {
   /** `close`: the user closed a Tab whose write was refused; `quit`: ⌘Q could not flush this Document. */
   kind: 'close' | 'quit'
-  path: string
-  message: string
 }
 
 export type WritePromptChoice = 'retry' | 'discard' | 'discardAndQuit'
@@ -32,11 +40,12 @@ export type WriteFailureAction = 'retry' | 'discard'
 export interface WriteFailureRecord {
   /** The Document's failure while its last write stands refused, else null. */
   failureFor: (path: string | null) => WriteFailure | null
-  recordFailure: (path: string, error: unknown) => void
+  /** `retried`: the refusal answers a Retry, so the failure stands again rather than for the first time. */
+  recordFailure: (path: string, error: unknown, retried?: boolean) => void
   /** A write landed (from any path): the bar goes away. */
   clearFailure: (path: string) => void
   /** The record as of now, for a decision made before React re-renders. */
-  failuresRef: MutableRefObject<Readonly<Record<string, string>>>
+  failuresRef: MutableRefObject<Readonly<Record<string, RecordedFailure>>>
 }
 
 export interface WriteFailureDeps {
@@ -74,6 +83,17 @@ export interface WriteFailures extends WriteFailureRecord {
   dismissPrompt: () => void
 }
 
+/** The heading's opening words: a first refusal, or one that stands again after a Retry. */
+export function couldNotSaveTo(failedAgainAt: number | undefined): string {
+  return failedAgainAt === undefined ? "Couldn't save to" : "Still couldn't save to"
+}
+
+/** The local clock's hours and minutes, 24-hour: `14:32`. */
+export function clockTime(at: number): string {
+  const time = new Date(at)
+  return `${String(time.getHours()).padStart(2, '0')}:${String(time.getMinutes()).padStart(2, '0')}`
+}
+
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
 }
@@ -90,11 +110,18 @@ function useStateWithRef<T>(initial: T): [T, MutableRefObject<T>, (next: T) => v
 }
 
 export function useWriteFailureRecord(): WriteFailureRecord {
-  const [failures, failuresRef, setFailures] = useStateWithRef<Readonly<Record<string, string>>>({})
+  const [failures, failuresRef, setFailures] = useStateWithRef<Readonly<Record<string, RecordedFailure>>>({})
 
-  const recordFailure = useCallback((path: string, error: unknown) => {
+  /**
+   * A refused Retry marks the failure as standing again, with the time; from
+   * then on every refusal (a Retry or an Autosave) moves the time on, until a
+   * write lands or the changes are discarded and the record is cleared.
+   */
+  const recordFailure = useCallback((path: string, error: unknown, retried = false) => {
     console.error(`Could not save ${path}:`, error)
-    setFailures({ ...failuresRef.current, [path]: messageOf(error) })
+    const message = messageOf(error)
+    const again = retried || failuresRef.current[path]?.failedAgainAt !== undefined
+    setFailures({ ...failuresRef.current, [path]: again ? { message, failedAgainAt: Date.now() } : { message } })
   }, [failuresRef, setFailures])
 
   const clearFailure = useCallback((path: string) => {
@@ -107,8 +134,8 @@ export function useWriteFailureRecord(): WriteFailureRecord {
   const failureFor = useCallback(
     (path: string | null): WriteFailure | null => {
       if (path === null) return null
-      const message = failures[path]
-      return message === undefined ? null : { path, message }
+      const failure = failures[path]
+      return failure === undefined ? null : { path, ...failure }
     },
     [failures],
   )
@@ -165,9 +192,12 @@ export function useWriteFailures(deps: WriteFailureDeps): WriteFailures {
     [pending],
   )
 
-  /** Write the Document's buffer again; a Document that is no longer open has nothing left to write. */
+  /**
+   * Write the Document's buffer again; a Document that is no longer open has
+   * nothing left to write. `retried`: the user asked, so a refusal stands again.
+   */
   const writeAgain = useCallback(
-    async (path: string): Promise<boolean> => {
+    async (path: string, retried: boolean): Promise<boolean> => {
       const tab = depsRef.current.tabs.find((candidate) => candidate.entry.path === path)
       if (!tab) {
         clearFailure(path)
@@ -176,7 +206,7 @@ export function useWriteFailures(deps: WriteFailureDeps): WriteFailures {
       try {
         await depsRef.current.writeBuffer(path, tab.content)
       } catch (error) {
-        recordFailure(path, error)
+        recordFailure(path, error, retried)
         return false
       }
       clearFailure(path)
@@ -184,7 +214,7 @@ export function useWriteFailures(deps: WriteFailureDeps): WriteFailures {
     },
     [clearFailure, recordFailure],
   )
-  const retry = useCallback((path: string) => once(path, 'retry', () => writeAgain(path)), [once, writeAgain])
+  const retry = useCallback((path: string) => once(path, 'retry', () => writeAgain(path, true)), [once, writeAgain])
 
   /**
    * Put the disk bytes back. A file that cannot be read any more has no bytes
@@ -208,12 +238,12 @@ export function useWriteFailures(deps: WriteFailureDeps): WriteFailures {
 
   const closeTabOrAsk = useCallback(
     (path: string) => {
-      const message = failuresRef.current[path]
-      if (message === undefined) {
+      const failure = failuresRef.current[path]
+      if (failure === undefined) {
         depsRef.current.closeTab(path)
         return
       }
-      showPrompt({ kind: 'close', path, message })
+      showPrompt({ kind: 'close', path, ...failure })
     },
     [failuresRef, showPrompt],
   )
@@ -227,17 +257,22 @@ export function useWriteFailures(deps: WriteFailureDeps): WriteFailures {
     }
   }, [showPrompt])
 
-  /** Write every refused Document again, in Tab order; ask about the first that is refused again, else exit. */
+  /**
+   * Write every refused Document again, in Tab order; ask about the first that
+   * is refused again, else exit. The quit's own flush, not a Retry: the
+   * Document whose refusal the flush has just recorded is asked about as a
+   * first refusal.
+   */
   const continueQuit = useCallback(async () => {
     for (const tab of depsRef.current.tabs) {
       const path = tab.entry.path
       if (!(path in failuresRef.current)) continue
-      if (await retry(path)) continue
-      showPrompt({ kind: 'quit', path, message: failuresRef.current[path] })
+      if (await once(path, 'retry', () => writeAgain(path, false))) continue
+      showPrompt({ kind: 'quit', path, ...failuresRef.current[path] })
       return
     }
     await exit()
-  }, [exit, failuresRef, retry, showPrompt])
+  }, [exit, failuresRef, once, showPrompt, writeAgain])
 
   const quit = useCallback(async () => {
     try {
@@ -259,7 +294,7 @@ export function useWriteFailures(deps: WriteFailureDeps): WriteFailures {
       }
       const resolved = choice === 'retry' ? await retry(current.path) : await discard(current.path)
       if (!resolved) {
-        showPrompt({ ...current, message: failuresRef.current[current.path] ?? current.message })
+        showPrompt({ ...current, ...failuresRef.current[current.path] })
         return
       }
       if (current.kind === 'close') {

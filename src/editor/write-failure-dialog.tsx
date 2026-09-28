@@ -1,4 +1,4 @@
-import type { WritePrompt, WritePromptChoice } from './use-write-failures'
+import { clockTime, couldNotSaveTo, type WritePrompt, type WritePromptChoice } from './use-write-failures'
 import { Button } from '@/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/ui/dialog'
 
@@ -16,7 +16,8 @@ export interface WriteFailureDialogProps {
  * refused asks Retry or Discard changes instead of closing silently; ⌘Q with a
  * refused flush asks the same plus Discard and quit. Retry is the primary
  * control, the rest are the secondary control. The `default` dialog; the
- * title and the mono detail wrap anywhere, since both carry a path.
+ * title and the mono detail wrap anywhere, since both carry a path. A Retry
+ * refused again reads "Still couldn't save to …", as the bar does.
  */
 export function WriteFailureDialog({ prompt, pending = null, onAnswer, onDismiss }: WriteFailureDialogProps) {
   const busy = pending !== null
@@ -25,7 +26,10 @@ export function WriteFailureDialog({ prompt, pending = null, onAnswer, onDismiss
       {prompt && (
         <DialogContent showCloseButton={false} data-testid="write-failure-dialog">
           <DialogHeader>
-            <DialogTitle className="text-base font-medium tracking-[-0.01em] wrap-anywhere">Couldn't save to {prompt.path}</DialogTitle>
+            <DialogTitle className="text-base font-medium tracking-[-0.01em] wrap-anywhere">
+              {couldNotSaveTo(prompt.failedAgainAt)} {prompt.path}
+              {prompt.failedAgainAt !== undefined && ` · ${clockTime(prompt.failedAgainAt)}`}
+            </DialogTitle>
             <DialogDescription className="font-mono text-xs tracking-normal wrap-anywhere">{prompt.message}</DialogDescription>
           </DialogHeader>
           <DialogFooter>

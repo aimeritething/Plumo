@@ -457,6 +457,7 @@ export const Editor = memo(function Editor(props: EditorProps) {
             <WriteFailureBar
               path={writeFailure.path}
               message={writeFailure.message}
+              failedAgainAt={writeFailure.failedAgainAt}
               pending={props.writeFailurePending}
               onRetry={() => onRetryWrite(writeFailure.path)}
               onDiscard={() => onDiscardWrite(writeFailure.path)}

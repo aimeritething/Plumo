@@ -32,6 +32,20 @@ describe('WriteFailureDialog', () => {
     expect(onAnswer).toHaveBeenLastCalledWith('discard')
   })
 
+  it('after a Retry refused again, says it still could not save and when', () => {
+    render(
+      <WriteFailureDialog
+        prompt={{ kind: 'close', path: PATH, message: 'Disk full', failedAgainAt: new Date(2026, 8, 28, 14, 32).getTime() }}
+        onAnswer={vi.fn()}
+        onDismiss={vi.fn()}
+      />,
+    )
+
+    const dialog = screen.getByRole('dialog')
+    expect(dialog).toHaveTextContent(`Still couldn't save to ${PATH} · 14:32`)
+    expect(dialog).toHaveTextContent('Disk full')
+  })
+
   it('quitting with a refused write adds Discard and quit', () => {
     const onAnswer = vi.fn()
     render(
