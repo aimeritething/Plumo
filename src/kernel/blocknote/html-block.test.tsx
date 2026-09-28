@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { TooltipProvider } from '@/ui/tooltip'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { APP_COMMAND_EVENT_NAME, APP_COMMAND_IDS } from '@/shell/app-command-dispatcher'
 import { HTML_BLOCK_DEFAULT_HEIGHT, HTML_BLOCK_TYPE, type HtmlBlockScripts } from '@/kernel/markdown/html-block-markdown'
 import { HtmlBlock, type HtmlBlockEditor, type HtmlBlockProps } from './html-block'
@@ -28,11 +28,35 @@ function renderHtmlBlock(initialProps: HtmlBlockTestProps) {
     }),
   }
 
-  render(<HtmlBlock block={liveBlock} editor={editor} />, { wrapper: TooltipProvider })
-  return { editor, liveBlock }
+  const view = render(<HtmlBlock block={liveBlock} editor={editor} />, { wrapper: TooltipProvider })
+  return { editor, liveBlock, unmount: view.unmount }
+}
+
+function pointer(type: string, init: PointerEventInit & { pointerId?: number }) {
+  return new PointerEvent(type, { bubbles: true, cancelable: true, pointerId: 1, ...init })
+}
+
+function renderResizableHtmlBlock() {
+  const rendered = renderHtmlBlock({ height: HTML_BLOCK_DEFAULT_HEIGHT, html: '<p>Resize me</p>' })
+  const handle = screen.getByRole('button', { name: 'Resize height' })
+  const region = screen.getByRole('region', { name: 'Sandboxed HTML block preview' })
+  const frame = screen.getByTitle('Sandboxed HTML block preview')
+  return { ...rendered, frame, handle, region }
+}
+
+function startResizeAt(handle: HTMLElement, clientY: number) {
+  fireEvent(handle, pointer('pointerdown', { button: 0, buttons: 1, clientY }))
+}
+
+function moveResizeTo(clientY: number, target: EventTarget = window) {
+  fireEvent(target, pointer('pointermove', { buttons: 1, clientY }))
 }
 
 describe('HtmlBlock', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
   it('does not expose inline source editing for empty slash-inserted blocks', () => {
     renderHtmlBlock({ height: HTML_BLOCK_DEFAULT_HEIGHT, html: '' })
 
@@ -122,5 +146,101 @@ describe('HtmlBlock', () => {
       type: HTML_BLOCK_TYPE,
     })
     expect(liveBlock.props.height).toBe('344')
+  })
+
+  it('captures the pointer on the handle and lets it pass over the iframe while resizing', () => {
+    const setPointerCapture = vi.fn()
+    const { frame, handle, region } = renderResizableHtmlBlock()
+    handle.setPointerCapture = setPointerCapture
+
+    startResizeAt(handle, 400)
+    moveResizeTo(300)
+
+    expect(setPointerCapture).toHaveBeenCalledWith(1)
+    expect(frame).toHaveClass('pointer-events-none')
+    expect(region).toHaveStyle({ height: '220px' })
+  })
+
+  it('ends the resize on a pointer release and stops following the pointer', () => {
+    const { editor, frame, handle, region } = renderResizableHtmlBlock()
+
+    startResizeAt(handle, 400)
+    moveResizeTo(300)
+    fireEvent(handle, pointer('pointerup', { clientY: 290 }))
+    moveResizeTo(100)
+
+    expect(editor.updateBlock).toHaveBeenCalledTimes(1)
+    expect(editor.updateBlock).toHaveBeenCalledWith('html-block', expect.objectContaining({
+      props: expect.objectContaining({ height: '210' }),
+    }))
+    expect(region).toHaveStyle({ height: '210px' })
+    expect(frame).not.toHaveClass('pointer-events-none')
+  })
+
+  it('ends the resize when the handle loses pointer capture without a release', () => {
+    const { editor, frame, handle, region } = renderResizableHtmlBlock()
+
+    startResizeAt(handle, 400)
+    moveResizeTo(300)
+    fireEvent(handle, pointer('lostpointercapture', {}))
+    moveResizeTo(100)
+
+    expect(editor.updateBlock).toHaveBeenCalledTimes(1)
+    expect(region).toHaveStyle({ height: '220px' })
+    expect(frame).not.toHaveClass('pointer-events-none')
+  })
+
+  it('restores the height a cancelled pointer started from and saves nothing', () => {
+    const { editor, frame, handle, region } = renderResizableHtmlBlock()
+
+    startResizeAt(handle, 400)
+    moveResizeTo(300)
+    fireEvent(window, pointer('pointercancel', {}))
+    moveResizeTo(100)
+
+    expect(editor.updateBlock).not.toHaveBeenCalled()
+    expect(region).toHaveStyle({ height: `${HTML_BLOCK_DEFAULT_HEIGHT}px` })
+    expect(frame).not.toHaveClass('pointer-events-none')
+  })
+
+  it('ends the resize when the pointer comes back with no button pressed', () => {
+    const { editor, handle, region } = renderResizableHtmlBlock()
+
+    startResizeAt(handle, 400)
+    moveResizeTo(300)
+    fireEvent(window, pointer('pointermove', { buttons: 0, clientY: 100 }))
+    moveResizeTo(50)
+
+    expect(editor.updateBlock).toHaveBeenCalledTimes(1)
+    expect(editor.updateBlock).toHaveBeenCalledWith('html-block', expect.objectContaining({
+      props: expect.objectContaining({ height: '220' }),
+    }))
+    expect(region).toHaveStyle({ height: '220px' })
+  })
+
+  it('ignores another pointer while one resize is under way', () => {
+    const { editor, handle, region } = renderResizableHtmlBlock()
+
+    startResizeAt(handle, 400)
+    fireEvent(window, pointer('pointermove', { buttons: 1, clientY: 100, pointerId: 2 }))
+    fireEvent(window, pointer('pointerup', { clientY: 100, pointerId: 2 }))
+    moveResizeTo(300)
+
+    expect(editor.updateBlock).not.toHaveBeenCalled()
+    expect(region).toHaveStyle({ height: '220px' })
+  })
+
+  it('removes its pointer listeners when the block unmounts mid-resize', () => {
+    const removeListener = vi.spyOn(window, 'removeEventListener')
+    const { editor, handle, unmount } = renderResizableHtmlBlock()
+
+    startResizeAt(handle, 400)
+    unmount()
+    moveResizeTo(300)
+    fireEvent(window, pointer('pointerup', { clientY: 300 }))
+
+    const removed = removeListener.mock.calls.map(([type]) => type)
+    expect(removed).toEqual(expect.arrayContaining(['pointermove', 'pointerup', 'pointercancel']))
+    expect(editor.updateBlock).not.toHaveBeenCalled()
   })
 })

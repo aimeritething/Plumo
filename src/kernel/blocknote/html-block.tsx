@@ -29,6 +29,7 @@ import { htmlBlockPreview } from './html-block-sandbox'
 import { dispatchRichEditorExternalChange } from './editor-external-change-events'
 import { readFencedPreElement } from './fenced-pre-element'
 import { Button } from '@/ui/button'
+import { cn } from '@/lib/cn'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
 import { FloatingIconGroup } from './floating-icon-group'
 
@@ -227,26 +228,68 @@ function useHtmlBlockHeight(block: HtmlBlockViewProps['block'], editor: HtmlBloc
     updateHeight(BLOCK_DEFAULT_HEIGHT, 'reset')
   }
 
+  // The gesture in progress: detaching it removes its listeners without saving.
+  const detachResizeRef = useRef<(() => void) | null>(null)
+  useEffect(() => () => detachResizeRef.current?.(), [])
+
+  // The handle captures the pointer, and the iframe stops taking pointer events
+  // while resizing, so a pointer that crosses or is released over the preview
+  // still reaches the gesture. Any way the pointer leaves ends it.
   const startResize = (event: ReactPointerEvent<HTMLButtonElement>) => {
     event.preventDefault()
     event.stopPropagation()
+    detachResizeRef.current?.()
 
+    const handle = event.currentTarget
+    const pointerId = event.pointerId
     const startHeight = Number.parseInt(displayHeight, 10)
     const startY = event.clientY
+    let height = clampBlockHeight(startHeight)
+    const heightAt = (clientY: number) => clampBlockHeight(startHeight + clientY - startY)
 
-    const onPointerMove = (moveEvent: PointerEvent) => {
-      setResizingHeight(clampBlockHeight(startHeight + moveEvent.clientY - startY))
-    }
-
-    const onPointerUp = (upEvent: PointerEvent) => {
+    const detach = () => {
       window.removeEventListener('pointermove', onPointerMove)
       window.removeEventListener('pointerup', onPointerUp)
-      setResizingHeight(null)
-      updateHeight(clampBlockHeight(startHeight + upEvent.clientY - startY), 'pointer')
+      window.removeEventListener('pointercancel', onPointerCancel)
+      handle.removeEventListener('lostpointercapture', onLostPointerCapture)
+      if (detachResizeRef.current === detach) detachResizeRef.current = null
     }
+    const finish = (save: boolean) => {
+      detach()
+      setResizingHeight(null)
+      if (save) updateHeight(height, 'pointer')
+    }
+    const onPointerMove = (moveEvent: PointerEvent) => {
+      if (moveEvent.pointerId !== pointerId) return
+      // No button held: the release happened where this page never heard it.
+      if (moveEvent.buttons === 0) {
+        finish(true)
+        return
+      }
+      height = heightAt(moveEvent.clientY)
+      setResizingHeight(height)
+    }
+    const onPointerUp = (upEvent: PointerEvent) => {
+      if (upEvent.pointerId !== pointerId) return
+      height = heightAt(upEvent.clientY)
+      finish(true)
+    }
+    const onPointerCancel = (cancelEvent: PointerEvent) => {
+      if (cancelEvent.pointerId === pointerId) finish(false)
+    }
+    const onLostPointerCapture = () => { finish(true) }
 
     window.addEventListener('pointermove', onPointerMove)
-    window.addEventListener('pointerup', onPointerUp, { once: true })
+    window.addEventListener('pointerup', onPointerUp)
+    window.addEventListener('pointercancel', onPointerCancel)
+    handle.addEventListener('lostpointercapture', onLostPointerCapture)
+    detachResizeRef.current = detach
+    setResizingHeight(height)
+    try {
+      handle.setPointerCapture(pointerId)
+    } catch {
+      // No active pointer to capture: the window listeners still end the gesture.
+    }
   }
 
   const handleResizeKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
@@ -257,7 +300,7 @@ function useHtmlBlockHeight(block: HtmlBlockViewProps['block'], editor: HtmlBloc
     event.stopPropagation()
     updateHeight(nextHeight, 'keyboard')
   }
-  return { displayHeight, handleResizeKeyDown, resetHeight, startResize }
+  return { displayHeight, handleResizeKeyDown, resetHeight, resizing: resizingHeight !== null, startResize }
 }
 
 function useHtmlBlockSourceCopy(currentMarkup: string) {
@@ -322,12 +365,13 @@ interface HtmlBlockContentProps {
   frameRef: RefObject<HTMLIFrameElement | null>
   onFocus: (event: SyntheticEvent<HTMLIFrameElement>) => void
   onLoad: (event: SyntheticEvent<HTMLIFrameElement>) => void
+  resizing: boolean
   srcDoc: string
 }
 
-function HtmlBlockContent({ blocked, frameRef, onFocus, onLoad, srcDoc }: HtmlBlockContentProps) {
+function HtmlBlockContent({ blocked, frameRef, onFocus, onLoad, resizing, srcDoc }: HtmlBlockContentProps) {
   if (!blocked) {
-    return <iframe className="block h-full w-full border-0 bg-[Canvas]" onFocus={onFocus} onLoad={onLoad} referrerPolicy="no-referrer"
+    return <iframe className={cn('block h-full w-full border-0 bg-[Canvas]', resizing && 'pointer-events-none')} onFocus={onFocus} onLoad={onLoad} referrerPolicy="no-referrer"
       ref={frameRef} sandbox={HTML_BLOCK_SANDBOX_ATTRIBUTE} srcDoc={srcDoc}
       tabIndex={-1} title={t('editor.htmlBlock.previewTitle')} />
   }
@@ -376,7 +420,7 @@ export function HtmlBlock({ block, editor }: HtmlBlockViewProps) {
       suppressContentEditableWarning>
       <HtmlBlockToolbar copySource={copySource} resetHeight={height.resetHeight} />
       <HtmlBlockContent blocked={blocked} frameRef={focus.frameRef} onFocus={focus.handlePreviewFocus}
-        onLoad={focus.handlePreviewLoad} srcDoc={preview.srcDoc} />
+        onLoad={focus.handlePreviewLoad} resizing={height.resizing} srcDoc={preview.srcDoc} />
       <HtmlBlockResizeHandle onKeyDown={height.handleResizeKeyDown} onPointerDown={height.startResize} />
     </section>
   )
