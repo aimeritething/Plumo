@@ -8,6 +8,7 @@ import { APP_COMMAND_DEFINITIONS, APP_COMMAND_IDS } from '@/shell/app-command-ca
 import { Button } from '@/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
 
+const MIDDLE_BUTTON = 1
 const NEW_DOCUMENT_SHORTCUT = APP_COMMAND_DEFINITIONS[APP_COMMAND_IDS.fileNewNote].shortcut?.display
 
 export interface TabBarProps {
@@ -100,7 +101,8 @@ interface TabPillProps {
  * One tab: 30px, 6px radius, 12px in from either side. The selected one is
  * told apart by its fill alone. Its × appears only under the pointer, after
  * the name, and the Tab grows by its width, so it never covers the name or
- * the parent folder that tells two same-name Tabs apart.
+ * the parent folder that tells two same-name Tabs apart. A middle-click
+ * closes it, as the × does.
  */
 function TabPill({ path, filename, parentHint, active, onActivate, onClose }: TabPillProps) {
   const isImage = isImageFilePath(path)
@@ -114,6 +116,17 @@ function TabPill({ path, filename, parentHint, active, onActivate, onClose }: Ta
       title={path}
       data-testid={`tab:${path}`}
       onClick={() => onActivate(path)}
+      // A middle-click closes the Tab through the same close as its ×. Both
+      // halves are prevented, so the press starts no autoscroll and the click
+      // pastes nothing.
+      onMouseDown={(event) => {
+        if (event.button === MIDDLE_BUTTON) event.preventDefault()
+      }}
+      onAuxClick={(event) => {
+        if (event.button !== MIDDLE_BUTTON) return
+        event.preventDefault()
+        onClose(path)
+      }}
       onKeyDown={(event) => {
         if (event.key === 'Enter' || event.key === ' ') onActivate(path)
       }}

@@ -40,6 +40,32 @@ describe('TabBar', () => {
     expect(onActivate).toHaveBeenCalledTimes(1)
   })
 
+  it('closes a Tab on a middle-click, the way its close affordance does, without activating it', () => {
+    const onActivate = vi.fn()
+    const onClose = vi.fn()
+    render(<TabBar tabs={tabs} activeTabPath="/n/a.md" onActivate={onActivate} onClose={onClose} />)
+    const target = screen.getByRole('tab', { name: 'b.md' })
+
+    const press = fireEvent.mouseDown(target, { button: 1 })
+    const click = fireEvent(target, new MouseEvent('auxclick', { bubbles: true, cancelable: true, button: 1 }))
+
+    expect(onClose).toHaveBeenCalledOnce()
+    expect(onClose).toHaveBeenCalledWith('/n/b.md')
+    expect(onActivate).not.toHaveBeenCalled()
+    // Prevented, so no autoscroll starts and nothing is pasted.
+    expect(press).toBe(false)
+    expect(click).toBe(false)
+  })
+
+  it('leaves a Tab open on a right-click', () => {
+    const onClose = vi.fn()
+    render(<TabBar tabs={tabs} activeTabPath="/n/a.md" onActivate={vi.fn()} onClose={onClose} />)
+
+    fireEvent(screen.getByRole('tab', { name: 'b.md' }), new MouseEvent('auxclick', { bubbles: true, cancelable: true, button: 2 }))
+
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
   it('ends the Tabs with a "+" that runs New Document, and leaves it out with no handler', () => {
     const onNewDocument = vi.fn()
     const { rerender } = render(
