@@ -75,19 +75,34 @@ async function editorWithCaretInHighlight() {
   // TipTap finishes initialising on a timer; until then the editor has no domElement.
   await vi.waitFor(() => expect(editor.headless).toBe(false))
   const coordsAtPos = vi.spyOn(editor.prosemirrorView!, 'coordsAtPos')
-  const drawAnchorAt = (top: number) => {
-    coordsAtPos.mockReturnValue({ bottom: top + 16, left: 40, right: 60, top })
+  const drawAnchorAt = (top: number, right = 60) => {
+    coordsAtPos.mockReturnValue({ bottom: top + 16, left: right - 20, right, top })
   }
   drawAnchorAt(200)
 
   const marked = textRange(editor, 'marked')
   selectText(editor, marked.from + 1)
   editor.prosemirrorView!.focus()
-  return { drawAnchorAt, editor, scrollArea }
+  return { coordsAtPos, drawAnchorAt, editor, scrollArea }
+}
+
+// A bar stuck to the top of the scroll area, as the find bar is: y 100–140.
+function stickFindBarTo(scrollArea: HTMLElement) {
+  const findBar = document.createElement('div')
+  findBar.style.position = 'sticky'
+  findBar.getBoundingClientRect = () => new DOMRect(0, 100, 800, 40)
+  scrollArea.prepend(findBar)
 }
 
 function boundaryButton() {
   return screen.queryByRole('button', { name: 'Change highlight color' })
+}
+
+// The fixed box the button sits in; the button is 24px square.
+function boundaryControlBox() {
+  const box = document.querySelector<HTMLElement>('[data-test="highlightBoundaryControl"]')
+  if (!box) throw new Error('The boundary control is not shown')
+  return { left: parseFloat(box.style.left), top: parseFloat(box.style.top) }
 }
 
 describe('Markdown highlight color controls', () => {
@@ -220,12 +235,69 @@ describe('the highlight boundary colour button', () => {
     for (const editor of mountedEditors.splice(0)) editor._tiptapEditor.destroy()
   })
 
-  it('shows beside a highlight the focused caret sits in', async () => {
+  it('shows by a highlight the focused caret sits in', async () => {
     const { editor } = await editorWithCaretInHighlight()
 
     render(<HighlightBoundaryColorControl editor={editor} />, { wrapper: TooltipProvider })
 
     expect(boundaryButton()).not.toBeNull()
+  })
+
+  it('sits just above the highlight\'s end, centred on it, clear of its line', async () => {
+    const { editor } = await editorWithCaretInHighlight()
+
+    render(<HighlightBoundaryColorControl editor={editor} />, { wrapper: TooltipProvider })
+
+    // The end's line box is y 200–216 and its end x 60: the button's 24px end 4px above.
+    expect(boundaryControlBox()).toEqual({ left: 48, top: 172 })
+  })
+
+  it('goes just below the line when there is no room above it in the scroll area', async () => {
+    const { drawAnchorAt, editor, scrollArea } = await editorWithCaretInHighlight()
+    render(<HighlightBoundaryColorControl editor={editor} />, { wrapper: TooltipProvider })
+
+    drawAnchorAt(110)
+    fireEvent.scroll(scrollArea)
+
+    expect(boundaryControlBox()).toEqual({ left: 48, top: 130 })
+  })
+
+  it('goes below the line rather than over a find bar stuck to the scroll area\'s top', async () => {
+    const { drawAnchorAt, editor, scrollArea } = await editorWithCaretInHighlight()
+    stickFindBarTo(scrollArea)
+    render(<HighlightBoundaryColorControl editor={editor} />, { wrapper: TooltipProvider })
+
+    drawAnchorAt(150)
+    fireEvent.scroll(scrollArea)
+
+    expect(boundaryControlBox()).toEqual({ left: 48, top: 170 })
+  })
+
+  it('stays within the scroll area\'s left and right edges', async () => {
+    const { drawAnchorAt, editor, scrollArea } = await editorWithCaretInHighlight()
+    render(<HighlightBoundaryColorControl editor={editor} />, { wrapper: TooltipProvider })
+
+    drawAnchorAt(200, 795)
+    fireEvent.scroll(scrollArea)
+    expect(boundaryControlBox()).toEqual({ left: 776, top: 172 })
+
+    drawAnchorAt(200, 4)
+    fireEvent.scroll(scrollArea)
+    expect(boundaryControlBox()).toEqual({ left: 0, top: 172 })
+  })
+
+  it('keeps to the line of the highlight\'s last character when the line wraps at its end', async () => {
+    const { coordsAtPos, editor } = await editorWithCaretInHighlight()
+    // After the end (side 1) is the next line's start; before it (side -1), the last character.
+    coordsAtPos.mockImplementation((_position, side) => (
+      side === -1
+        ? { bottom: 216, left: 300, right: 300, top: 200 }
+        : { bottom: 236, left: 0, right: 0, top: 220 }
+    ))
+
+    render(<HighlightBoundaryColorControl editor={editor} />, { wrapper: TooltipProvider })
+
+    expect(boundaryControlBox()).toEqual({ left: 288, top: 172 })
   })
 
   it('hides while the highlight is scrolled outside the editor, and comes back with it', async () => {
@@ -243,6 +315,17 @@ describe('the highlight boundary colour button', () => {
     drawAnchorAt(300)
     fireEvent.scroll(scrollArea)
     expect(boundaryButton()).not.toBeNull()
+  })
+
+  it('hides while the highlight\'s end is under a find bar stuck to the scroll area\'s top', async () => {
+    const { drawAnchorAt, editor, scrollArea } = await editorWithCaretInHighlight()
+    stickFindBarTo(scrollArea)
+    render(<HighlightBoundaryColorControl editor={editor} />, { wrapper: TooltipProvider })
+
+    drawAnchorAt(120)
+    fireEvent.scroll(scrollArea)
+
+    expect(boundaryButton()).toBeNull()
   })
 
   it('hides when the editor loses the focus', async () => {

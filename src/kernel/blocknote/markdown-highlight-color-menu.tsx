@@ -42,6 +42,8 @@ interface MarkdownHighlightColorMenuProps {
   open?: boolean
   // Read when a colour is chosen, so the range is the editor's at that moment.
   readRange: () => HighlightRange | null
+  // Which side of the trigger the menu opens on; below it unless given.
+  side?: 'top' | 'bottom'
   source: HighlightControlSource
   trigger: ReactNode
 }
@@ -49,7 +51,7 @@ interface MarkdownHighlightColorMenuProps {
 // Non-modal, as the block type menu: a modal menu would take the pointer
 // events from the toolbar and the editor around it while open.
 export function MarkdownHighlightColorMenu(props: MarkdownHighlightColorMenuProps) {
-  const { currentColor, editor, locale, onOpenChange, open, readRange, source, trigger } = props
+  const { currentColor, editor, locale, onOpenChange, open, readRange, side, source, trigger } = props
 
   return (
     <DropdownMenu modal={false} onOpenChange={onOpenChange} open={open}>
@@ -58,6 +60,7 @@ export function MarkdownHighlightColorMenu(props: MarkdownHighlightColorMenuProp
         align="end"
         className="min-w-36"
         onCloseAutoFocus={(event) => keepEditorFocusAfterMenuClose(editor.domElement, event)}
+        side={side}
       >
         {MARKDOWN_HIGHLIGHT_COLORS.map(color => (
           <DropdownMenuItem

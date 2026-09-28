@@ -8,10 +8,18 @@ import {
 import type { HighlightEditor, MarkdownHighlightRange } from './markdown-highlight-model'
 import { readMarkdownHighlightRange } from './markdown-highlight-range'
 
+/** Where the control sits against the highlight end's line: above it, or below when there is no room above. */
+export type CursorControlSide = 'top' | 'bottom'
+
 export type CursorControlState = MarkdownHighlightRange & {
   left: number
+  side: CursorControlSide
   top: number
 }
+
+// The button is `icon-xs`, 24px square, kept 4px off the line box it sits against.
+const CONTROL_SIZE = 24
+const CONTROL_GAP = 4
 
 function currentLocale(): AppLocale {
   return resolveEffectiveLocale(document.documentElement.lang)
@@ -33,30 +41,50 @@ export function useDocumentLocale(): AppLocale {
   return locale
 }
 
-// The control is fixed on the body, above the editor's chrome, so it is only
-// shown while the highlight's end lies within what the editor's scroll area
-// shows; it would otherwise float over the Tab bar.
-function isWithinEditorScrollArea(
-  editor: HighlightEditor,
-  coordinates: { bottom: number; top: number },
-): boolean {
-  const scrollArea = editor.domElement?.closest(EDITOR_SCROLL_AREA_SELECTOR)
-  if (!scrollArea) return true
+type EditorViewport = { bottom: number; left: number; right: number; top: number }
 
-  const bounds = scrollArea.getBoundingClientRect()
-  return coordinates.top >= bounds.top && coordinates.bottom <= bounds.bottom
+// What the editor's scroll area shows: its box, less anything stuck to its top
+// (the find bar). Without a scroll area, the window.
+function readEditorViewport(editor: HighlightEditor): EditorViewport {
+  const scrollArea = editor.domElement?.closest(EDITOR_SCROLL_AREA_SELECTOR)
+  if (!scrollArea) {
+    return { bottom: window.innerHeight, left: 0, right: window.innerWidth, top: 0 }
+  }
+
+  const { bottom, left, right, top } = scrollArea.getBoundingClientRect()
+  let visibleTop = top
+  for (const child of Array.from<Element>(scrollArea.children)) {
+    if (getComputedStyle(child).position !== 'sticky') continue
+    const bounds = child.getBoundingClientRect()
+    if (bounds.top <= visibleTop) visibleTop = Math.max(visibleTop, bounds.bottom)
+  }
+  return { bottom, left, right, top: visibleTop }
 }
 
+// The control is fixed on the body, above the editor's chrome, so it is only
+// shown while the highlight end's line lies within what the editor shows; it
+// would otherwise float over the Tab bar or the find bar. It sits just above
+// that line, centred on the end, so it never covers the highlight's line or
+// the text after it; below the line when there is no room above.
 function readCursorControlState(editor: HighlightEditor): CursorControlState | null {
   const range = readMarkdownHighlightRange(editor)
   if (!range) return null
 
   try {
-    const coordinates = editor.prosemirrorView.coordsAtPos(range.to)
-    if (!isWithinEditorScrollArea(editor, coordinates)) return null
-    const left = Math.min(coordinates.right + 8, window.innerWidth - 32)
-    const top = coordinates.top + (coordinates.bottom - coordinates.top) / 2
-    return { ...range, left, top }
+    // Side -1: the last highlighted character's line, not the next line's
+    // start when the line wraps at the highlight's end.
+    const line = editor.prosemirrorView.coordsAtPos(range.to, -1)
+    const viewport = readEditorViewport(editor)
+    if (line.top < viewport.top || line.bottom > viewport.bottom) return null
+
+    const above = line.top - CONTROL_GAP - CONTROL_SIZE
+    const side: CursorControlSide = above >= viewport.top ? 'top' : 'bottom'
+    const top = side === 'top' ? above : line.bottom + CONTROL_GAP
+    const left = Math.max(
+      viewport.left,
+      Math.min(line.right - CONTROL_SIZE / 2, viewport.right - CONTROL_SIZE),
+    )
+    return { ...range, left, side, top }
   } catch {
     return null
   }

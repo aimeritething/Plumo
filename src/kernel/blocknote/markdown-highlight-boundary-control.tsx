@@ -12,7 +12,8 @@ import { Button } from '@/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
 
 // Shown while the focus is in the editor, or in the button or its colour menu
-// (the menu is portaled, so it counts while open).
+// (the menu is portaled, so it counts while open). The menu and the tooltip
+// open away from the highlight's line, on the side the button sits.
 export function HighlightBoundaryColorControl({ editor }: { editor: HighlightEditor }) {
   const locale = useDocumentLocale()
   const state = useCursorControlState(editor)
@@ -26,7 +27,8 @@ export function HighlightBoundaryColorControl({ editor }: { editor: HighlightEdi
   return (
     <div
       ref={controlRef}
-      className="fixed z-sticky -translate-y-1/2"
+      className="fixed z-sticky"
+      data-test="highlightBoundaryControl"
       style={{ left: state.left, top: state.top }}
     >
       {/* The tooltip trigger is the menu trigger's child, so the menu's open / closed data-state is the one the button keeps. */}
@@ -37,6 +39,7 @@ export function HighlightBoundaryColorControl({ editor }: { editor: HighlightEdi
           locale={locale}
           onOpenChange={setMenuOpen}
           readRange={() => state}
+          side={state.side}
           source="cursor"
           trigger={(
             <TooltipTrigger asChild>
@@ -53,7 +56,7 @@ export function HighlightBoundaryColorControl({ editor }: { editor: HighlightEdi
             </TooltipTrigger>
           )}
         />
-        <TooltipContent>{label}</TooltipContent>
+        <TooltipContent side={state.side}>{label}</TooltipContent>
       </Tooltip>
     </div>
   )
