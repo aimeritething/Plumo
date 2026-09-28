@@ -79,7 +79,7 @@ function CalloutBlockView({ block, contentRef }: CalloutBlockViewProps) {
           heading={heading}
         />
       </div>
-      <div ref={contentRef} className="px-2.5 pt-0.5 pb-2 text-text-primary" />
+      <div ref={contentRef} className="px-2.5 pt-0.5 pb-2 text-text-document" />
     </aside>
   )
 }

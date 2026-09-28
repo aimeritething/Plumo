@@ -33,7 +33,7 @@ function MathRender({ latex, displayMode }: { latex: string; displayMode: boolea
     <SafeHtmlSpan
       aria-label={`Math: ${latex}`}
       className={cn(
-        'cursor-text text-text-primary',
+        'cursor-text text-text-document',
         displayMode ? 'block min-w-max text-center' : 'inline-flex max-w-full align-baseline',
       )}
       data-latex={latex}

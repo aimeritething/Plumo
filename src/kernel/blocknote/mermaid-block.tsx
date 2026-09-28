@@ -276,7 +276,7 @@ function MermaidSourceFallback({ source }: { source: string }) {
   )
 }
 
-const FIGURE_CLASS = 'group relative my-2.5 w-full text-text-primary'
+const FIGURE_CLASS = 'group relative my-2.5 w-full text-text-document'
 
 export function MermaidDiagram({ diagram, source }: MermaidDiagramProps) {
   const reactId = useId()

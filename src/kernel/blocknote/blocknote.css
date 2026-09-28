@@ -68,7 +68,7 @@
     font-size: var(--editor-font-size);
     /* BlockNote's colour variables, pointed at Plumo's tokens. */
     --bn-colors-editor-background: var(--surface-card);
-    --bn-colors-editor-text: var(--text-primary);
+    --bn-colors-editor-text: var(--text-document);
     --bn-colors-menu-background: var(--surface-popover);
     --bn-colors-menu-text: var(--text-primary);
     --bn-colors-tooltip-background: var(--surface-popover);
@@ -85,7 +85,7 @@
     width: 100%;
     max-width: var(--editor-max-width);
     margin: 0 auto;
-    padding: var(--editor-padding-vertical) var(--editor-padding-horizontal);
+    padding: var(--editor-padding-top) var(--editor-padding-horizontal);
     /* Half the viewport below the last line, so the end of a Document scrolls up. */
     padding-bottom: max(var(--editor-padding-vertical), 50vh);
     font-family: var(--editor-font-family);
@@ -93,8 +93,11 @@
     font-weight: var(--editor-font-weight);
     line-height: var(--editor-line-height);
     letter-spacing: var(--editor-letter-spacing);
-    color: var(--text-primary);
-    caret-color: var(--text-primary);
+    color: var(--text-document);
+    caret-color: var(--text-document);
+    /* The platform's own smoothing, not the app's antialiased: fuller strokes for reading. */
+    -webkit-font-smoothing: auto;
+    -moz-osx-font-smoothing: auto;
   }
 
   /* index.css makes the app non-selectable; the Document's text is, its buttons are not. */
@@ -279,7 +282,7 @@
     font-size: var(--headings-h1-font-size);
     font-weight: var(--headings-h1-font-weight);
     line-height: var(--headings-h1-line-height);
-    color: var(--text-heading);
+    color: var(--text-document-heading);
     letter-spacing: var(--headings-h1-letter-spacing);
   }
 
@@ -292,7 +295,7 @@
     font-size: var(--headings-h2-font-size);
     font-weight: var(--headings-h2-font-weight);
     line-height: var(--headings-h2-line-height);
-    color: var(--text-heading);
+    color: var(--text-document-heading);
     letter-spacing: var(--headings-h2-letter-spacing);
   }
 
@@ -305,7 +308,7 @@
     font-size: var(--headings-h3-font-size);
     font-weight: var(--headings-h3-font-weight);
     line-height: var(--headings-h3-line-height);
-    color: var(--text-heading);
+    color: var(--text-document-heading);
     letter-spacing: var(--headings-h3-letter-spacing);
   }
 
@@ -319,7 +322,7 @@
     font-size: var(--headings-h4-font-size);
     font-weight: var(--headings-h4-font-weight);
     line-height: var(--headings-h4-line-height);
-    color: var(--text-heading);
+    color: var(--text-document-heading);
     letter-spacing: var(--headings-h4-letter-spacing);
   }
 
@@ -331,14 +334,14 @@
     --_lists-marker: radial-gradient(
       circle,
       transparent 0 var(--_lists-marker-inner-radius),
-      var(--text-primary) var(--_lists-marker-inner-radius) var(--_lists-marker-radius),
+      var(--text-document) var(--_lists-marker-inner-radius) var(--_lists-marker-radius),
       transparent var(--_lists-marker-fade-radius)
     );
   }
 
   .bn-block-group .bn-block-group .bn-block-group {
     --_lists-marker:
-      linear-gradient(var(--text-primary), var(--text-primary))
+      linear-gradient(var(--text-document), var(--text-document))
       center / var(--_lists-marker-size) var(--_lists-marker-size) no-repeat;
   }
 
@@ -356,7 +359,7 @@
   [data-content-type="bulletListItem"]::before {
     background: var(--_lists-marker, radial-gradient(
       circle,
-      var(--text-primary) 0 var(--_lists-marker-radius),
+      var(--text-document) 0 var(--_lists-marker-radius),
       transparent var(--_lists-marker-fade-radius)
     ));
     color: transparent;
@@ -376,7 +379,7 @@
   }
 
   [data-content-type="numberedListItem"]::before {
-    color: var(--text-primary);
+    color: var(--text-document);
     font-size: var(--editor-font-size);
     min-width: var(--lists-indent-size);
     width: var(--lists-indent-size);
@@ -409,8 +412,8 @@
   }
 
   [data-content-type="checkListItem"] input[type="checkbox"]:checked {
-    border-color: var(--text-primary);
-    background: var(--text-primary);
+    border-color: var(--text-document);
+    background: var(--text-document);
   }
 
   [data-content-type="checkListItem"] input[type="checkbox"]:checked::after {
@@ -550,7 +553,7 @@
     background-color: var(--surface-app);
     border: var(--hairline) solid var(--border-default);
     border-radius: var(--radius-md);
-    color: var(--text-primary);
+    color: var(--text-document);
     font-family: var(--inline-code-font-family);
     font-size: var(--text-sm);
     line-height: var(--_code-block-line-height);
@@ -629,7 +632,7 @@
      --------------------------------------------------------------- */
   .bn-editor strong {
     font-weight: var(--inline-bold-font-weight);
-    color: var(--text-heading);
+    color: var(--text-document-heading);
   }
 
   .bn-editor em {
@@ -656,7 +659,7 @@
   /* Markdown highlight: the chromatic roles, yellow by default. */
   .bn-editor mark.markdown-highlight {
     background-color: var(--chroma-yellow-bg);
-    color: var(--text-primary);
+    color: var(--text-document);
     border-radius: var(--radius-sm);
   }
 
