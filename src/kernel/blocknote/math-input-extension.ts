@@ -2,6 +2,7 @@ import { createExtension } from '@blocknote/core'
 import type { useCreateBlockNote } from '@blocknote/react'
 import { trackEvent } from '@/lib/telemetry'
 import { MATH_BLOCK_TYPE, MATH_INLINE_TYPE, readCompletedInlineMathAtEnd } from '@/kernel/markdown/math-markdown'
+import { caretIsInCode } from './code-context'
 import {
   dispatchRichEditorInputTransaction,
   mountRichEditorInputTransforms,
@@ -61,11 +62,6 @@ function shouldHandleInput(event: InputEvent): boolean {
   return isInsertedInlineWhitespace(event) || NEWLINE_INPUT_TYPES.has(event.inputType)
 }
 
-function selectionHasCodeMark(view: EditorViewLike): boolean {
-  const marks = view.state.storedMarks ?? view.state.selection.$from.marks()
-  return marks.some((mark: { type: { name: string } }) => mark.type.name === 'code')
-}
-
 function readCursorText(view: EditorViewLike): CursorText | null {
   const { from, to, $from } = view.state.selection
   if (from !== to) return null
@@ -78,7 +74,7 @@ function readCursorText(view: EditorViewLike): CursorText | null {
 }
 
 function readInlineMathReplacement(view: EditorViewLike): InlineMathReplacement | null {
-  if (selectionHasCodeMark(view)) return null
+  if (caretIsInCode(view.state)) return null
 
   const cursorText = readCursorText(view)
   if (!cursorText) return null

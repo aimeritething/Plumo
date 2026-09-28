@@ -30,6 +30,24 @@ function createView(beforeText: string, parentStart = 0, parentTypeName = 'parag
     }
     pos: number
   }> = []
+  const parent = {
+    isTextblock: true,
+    type: { name: parentTypeName },
+    textBetween: vi.fn((
+      _from: number,
+      _to: number,
+      _blockSeparator: string,
+      leafText: (leaf: { type: { name: string } }) => string,
+    ) => {
+      let text = ''
+      let consumed = 0
+      for (const leaf of leaves) {
+        text += beforeText.slice(consumed, leaf.at) + leafText({ type: { name: leaf.name } })
+        consumed = leaf.at
+      }
+      return text + beforeText.slice(consumed)
+    }),
+  }
   const view = {
     composing: false,
     dispatch: vi.fn(),
@@ -60,24 +78,9 @@ function createView(beforeText: string, parentStart = 0, parentTypeName = 'parag
         from: cursor,
         to: cursor,
         $from: {
-          parent: {
-            isTextblock: true,
-            type: { name: parentTypeName },
-            textBetween: vi.fn((
-              _from: number,
-              _to: number,
-              _blockSeparator: string,
-              leafText: (leaf: { type: { name: string } }) => string,
-            ) => {
-              let text = ''
-              let consumed = 0
-              for (const leaf of leaves) {
-                text += beforeText.slice(consumed, leaf.at) + leafText({ type: { name: leaf.name } })
-                consumed = leaf.at
-              }
-              return text + beforeText.slice(consumed)
-            }),
-          },
+          depth: 0,
+          node: vi.fn(() => parent),
+          parent,
           parentOffset: beforeText.length + leaves.length,
           marks: vi.fn(() => []),
         },

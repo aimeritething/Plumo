@@ -3,11 +3,8 @@ import {
   readMarkdownHighlightInputReplacement,
   type MarkdownHighlightCursorText,
 } from './markdown-highlight-input-replacement'
-import {
-  addHighlightMarks,
-  rangeHasCodeMark,
-  selectionHasCodeMark,
-} from './markdown-highlight-input-marks'
+import { caretIsInCode, rangeIsInCode } from './code-context'
+import { addHighlightMarks } from './markdown-highlight-input-marks'
 import {
   createRichEditorInputTransformExtension,
   type RichEditorInputView,
@@ -15,26 +12,17 @@ import {
 } from './rich-editor-input-transform'
 
 const FINAL_MARKDOWN_HIGHLIGHT_INPUT = '='
-const CODE_BLOCK_NODE_TYPE = 'codeBlock'
 const HARD_BREAK_NODE_TYPE = 'hardBreak'
 // Stands in for an inline leaf (a wikilink, inline math) in the text the
 // replacement scans, so its character offsets stay equal to document offsets.
 const INLINE_LEAF_PLACEHOLDER = '\uFFFC'
 type EditorViewLike = RichEditorInputView
-type TextblockParent = EditorViewLike['state']['selection']['$from']['parent']
 
 export { readMarkdownHighlightInputReplacement } from './markdown-highlight-input-replacement'
 
 function isInsertedFinalEquals(event: InputEvent): event is InputEvent & { data: string } {
   return event.inputType === 'insertText'
     && event.data === FINAL_MARKDOWN_HIGHLIGHT_INPUT
-}
-
-function isCodeBlockTextblock(parent: TextblockParent): boolean {
-  const type = Reflect.get(parent, 'type') as unknown
-  return typeof type === 'object'
-    && type !== null
-    && Reflect.get(type, 'name') === CODE_BLOCK_NODE_TYPE
 }
 
 // A hard break reads as a newline, which the replacement refuses inside a
@@ -48,7 +36,6 @@ function readCursorText(view: EditorViewLike): MarkdownHighlightCursorText | nul
   const { from, to, $from } = view.state.selection
   if (from !== to) return null
   if (!$from.parent.isTextblock) return null
-  if (isCodeBlockTextblock($from.parent)) return null
 
   return {
     beforeText: $from.parent.textBetween(0, $from.parentOffset, '', inlineLeafText),
@@ -60,14 +47,14 @@ function readCursorText(view: EditorViewLike): MarkdownHighlightCursorText | nul
 function replaceCompletedMarkdownHighlight(
   view: EditorViewLike,
 ): EditorViewLike['state']['tr'] | null {
-  if (selectionHasCodeMark(view)) return null
+  if (caretIsInCode(view.state)) return null
 
   const cursorText = readCursorText(view)
   if (!cursorText) return null
 
   const replacement = readMarkdownHighlightInputReplacement(cursorText)
   if (!replacement) return null
-  if (rangeHasCodeMark(view, replacement.contentFrom, replacement.contentTo)) return null
+  if (rangeIsInCode(view.state, replacement.contentFrom, replacement.contentTo)) return null
 
   const openingLength = replacement.openingTo - replacement.openingFrom
   const highlightedFrom = replacement.contentFrom - openingLength

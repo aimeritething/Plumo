@@ -7,29 +7,6 @@ import type { MarkdownHighlightInputReplacement } from './markdown-highlight-inp
 import type { RichEditorInputView } from './rich-editor-input-transform'
 
 type EditorViewLike = RichEditorInputView
-type MarkLike = { type: { name: string } }
-
-function hasCodeMark(marks: readonly MarkLike[] | null | undefined): boolean {
-  return Boolean(marks?.some(mark => mark.type.name === 'code'))
-}
-
-export function selectionHasCodeMark(view: EditorViewLike): boolean {
-  const marks = view.state.storedMarks ?? view.state.selection.$from.marks()
-  return hasCodeMark(marks)
-}
-
-export function rangeHasCodeMark(view: EditorViewLike, from: number, to: number): boolean {
-  let containsCode = false
-  view.state.doc.nodesBetween(from, to, (node: {
-    isText?: boolean
-    marks?: readonly MarkLike[]
-  }) => {
-    if (!node.isText) return true
-    containsCode = hasCodeMark(node.marks)
-    return !containsCode
-  })
-  return containsCode
-}
 
 function readMarkType(view: EditorViewLike, name: string): MarkType | null {
   return (Reflect.get(view.state.schema.marks, name) as MarkType | undefined) ?? null

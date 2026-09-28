@@ -1,90 +1,57 @@
 import { resolveArrowLigatureInput } from '@/kernel/markdown/arrow-ligatures'
+import { caretIsInCode } from './code-context'
 import {
   createRichEditorInputTransformExtension,
+  type RichEditorInputTransaction,
   type RichEditorInputTransform,
+  type RichEditorInputView,
 } from './rich-editor-input-transform'
 
 const PREFIX_CONTEXT_LENGTH = 2
 
-interface CodeContextSelection {
-  from?: unknown
-  to?: unknown
-  $from?: {
-    depth: number
-    node: (depth?: number) => {
-      type?: {
-        name?: string
-        spec?: { code?: boolean }
-      }
-    }
-  }
-}
-
-interface ArrowLigatureTransactionArgs<Transaction> {
+interface ArrowLigatureTransactionArgs {
   event: InputEvent & { data: string }
   literalAsciiCursor: number | null
-  view: {
-    state: {
-      doc: {
-        textBetween: (from: number, to: number, blockSeparator: string, leafText: string) => string
-      }
-      selection: CodeContextSelection
-      tr: {
-        insertText: (text: string, from: number, to: number) => Transaction
-      }
-    }
-  }
+  view: RichEditorInputView
 }
 
-interface ArrowLigatureTransactionResult<Transaction> {
+interface ArrowLigatureTransactionResult {
   nextLiteralAsciiCursor: number | null
-  transaction: Transaction | null
+  transaction: RichEditorInputTransaction | null
 }
 
 function isInsertedCharacter(event: InputEvent): event is InputEvent & { data: string } {
   return event.inputType === 'insertText' && typeof event.data === 'string'
 }
 
-function isCodeContext(selection: CodeContextSelection): boolean {
-  const position = selection.$from
-  if (!position) return false
-
-  for (let depth = position.depth; depth >= 0; depth--) {
-    const type = position.node(depth).type
-    if (type?.spec?.code || type?.name === 'codeBlock') return true
-  }
-
-  return false
-}
-
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value)
 }
 
-function getWritableCursor(selection: CodeContextSelection): number | null {
+function getWritableCursor(selection: { from?: unknown; to?: unknown }): number | null {
   const { from, to } = selection
   if (!isFiniteNumber(from) || !isFiniteNumber(to)) return null
 
   return from === to ? from : null
 }
 
-function withoutTransaction<Transaction>(
+function withoutTransaction(
   nextLiteralAsciiCursor: number | null,
-): ArrowLigatureTransactionResult<Transaction> {
+): ArrowLigatureTransactionResult {
   return { nextLiteralAsciiCursor, transaction: null }
 }
 
-function buildArrowLigatureTransaction<Transaction>({
+function buildArrowLigatureTransaction({
   event,
   literalAsciiCursor,
   view,
-}: ArrowLigatureTransactionArgs<Transaction>): ArrowLigatureTransactionResult<Transaction> {
+}: ArrowLigatureTransactionArgs): ArrowLigatureTransactionResult {
   try {
     const { state } = view
     const { selection } = state
     const from = getWritableCursor(selection)
     if (from === null) return withoutTransaction(literalAsciiCursor)
-    if (isCodeContext(selection)) return withoutTransaction(null)
+    if (caretIsInCode(state)) return withoutTransaction(null)
 
     const beforeText = state.doc.textBetween(
       Math.max(0, from - PREFIX_CONTEXT_LENGTH),

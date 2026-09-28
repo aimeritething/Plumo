@@ -19,9 +19,11 @@ function createFixture() {
         to: 2,
         $from: {
           depth: 0,
+          marks: vi.fn(() => []),
           node: vi.fn(() => paragraphNode),
         },
       },
+      storedMarks: null as Array<{ type: { name: string } }> | null,
       tr: transaction,
     },
   }
@@ -103,7 +105,7 @@ describe('createArrowLigaturesExtension', () => {
   it('preserves escaped <-> as literal ASCII on the next keystroke', () => {
     const fixture = createFixture()
     fixture.mount()
-    fixture.view.state.selection = { from: 3, to: 3 }
+    fixture.view.state.selection = { ...fixture.view.state.selection, from: 3, to: 3 }
 
     fixture.view.state.doc.textBetween.mockReturnValueOnce('\\<')
     fixture.fireInput({ data: '-' })
