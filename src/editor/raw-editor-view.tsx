@@ -13,6 +13,7 @@ import {
 } from './plain-text-paste'
 import { rawEditorLanguageIdForPath } from '@/kernel/raw/raw-editor-language-id'
 import type { RawEditorSnapshots } from './use-raw-editor-snapshots'
+import { useEditorFindSession, type EditorFindSession } from './editor-find-session'
 
 export interface RawEditorViewProps {
   content: string
@@ -24,6 +25,8 @@ export interface RawEditorViewProps {
   latestContentRef?: React.MutableRefObject<string | null>
   locale?: AppLocale
   findRequest?: RawEditorFindRequest | null
+  /** The find bar's open state and query, held by the editor pane; left out, the view holds its own. */
+  find?: EditorFindSession
   /** Undo and Redo from the shell, on CodeMirror's history, for as long as Raw mode is showing. */
   historyRef?: React.MutableRefObject<EditorHistory | null>
   /** Where each Raw Tab leaves its editor state and scroll position, to find them again when it comes back. */
@@ -236,25 +239,25 @@ function useRawEditorContentSync(options: {
   content: string
   findRequest?: RawEditorFindRequest | null
   path: string
-  setFindOpen: (value: boolean) => void
+  showFind: () => void
   setRawDoc: (value: string) => void
   setReplaceOpen: (value: boolean) => void
   viewRef: React.MutableRefObject<EditorView | null>
 }): void {
-  const { content, findRequest, path, setFindOpen, setRawDoc, setReplaceOpen, viewRef } = options
+  const { content, findRequest, path, showFind, setRawDoc, setReplaceOpen, viewRef } = options
   // What the editor holds once the content prop has been synced into it: an
   // echo of its own report is not synced, and the editor has moved on since.
   useEffect(() => setRawDoc(viewRef.current?.state.doc.toString() ?? content), [content, setRawDoc, viewRef])
   useEffect(() => {
     if (!findRequest || findRequest.path !== path) return
-    setFindOpen(true)
+    showFind()
     setReplaceOpen(findRequest.replace)
-  }, [findRequest, path, setFindOpen, setReplaceOpen])
+  }, [findRequest, path, showFind, setReplaceOpen])
 }
 
 interface RawEditorSurfaceProps {
   containerRef: React.RefObject<HTMLDivElement | null>
-  findOpen: boolean
+  find: EditorFindSession
   findRequest?: RawEditorFindRequest | null
   locale: AppLocale
   path: string
@@ -262,18 +265,17 @@ interface RawEditorSurfaceProps {
   rawDoc: string
   replaceOpen: boolean
   rootRef: React.RefObject<HTMLDivElement | null>
-  setFindOpen: (value: boolean) => void
   setReplaceOpen: (value: boolean) => void
   showFrontmatterWarning: boolean
   viewRef: React.MutableRefObject<EditorView | null>
 }
 
 function RawEditorSurface(options: RawEditorSurfaceProps) {
-  const { containerRef, findOpen, findRequest, locale, path, pendingChanges, rawDoc, replaceOpen, rootRef, setFindOpen, setReplaceOpen, showFrontmatterWarning, viewRef } = options
+  const { containerRef, find, findRequest, locale, path, pendingChanges, rawDoc, replaceOpen, rootRef, setReplaceOpen, showFrontmatterWarning, viewRef } = options
   return (
     <div ref={rootRef} className="relative flex min-h-0 flex-1 flex-col bg-surface-app">
       <RawEditorYamlErrorBanner error={showFrontmatterWarning ? pendingChanges.yamlError : null} />
-      <RawEditorFindBar doc={rawDoc} locale={locale} onClose={() => setFindOpen(false)} onReplaceOpenChange={setReplaceOpen} open={findOpen} path={path} replaceOpen={replaceOpen} request={findRequest} viewRef={viewRef} />
+      <RawEditorFindBar doc={rawDoc} find={find} locale={locale} onReplaceOpenChange={setReplaceOpen} path={path} replaceOpen={replaceOpen} request={findRequest} viewRef={viewRef} />
       <div ref={containerRef} className="raw-editor-codemirror flex min-h-0 w-full flex-1" data-testid="raw-editor-codemirror" role="presentation" />
     </div>
   )
@@ -284,7 +286,8 @@ export function RawEditorView(options: RawEditorViewProps) {
   const rootRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [rawDoc, setRawDoc] = useState(content)
-  const [findOpen, setFindOpen] = useState(false)
+  const ownFind = useEditorFindSession(path)
+  const find = options.find ?? ownFind
   const [replaceOpen, setReplaceOpen] = useState(false)
   const showFrontmatterWarning = rawEditorLanguageIdForPath(path) === 'markdown'
   const pendingChanges = useRawEditorPendingChanges({
@@ -303,11 +306,11 @@ export function RawEditorView(options: RawEditorViewProps) {
   )
   const handleCursorActivity = useCallback(() => {}, [])
   const handleEscape = useCallback(() => {
-    if (!findOpen) return false
+    if (!find.open) return false
 
-    setFindOpen(false)
+    find.close()
     return true
-  }, [findOpen])
+  }, [find])
   const { pathRef, reportedDocRef } = pendingChanges
   const isOwnReport = useCallback((doc: string) => doc === reportedDocRef.current, [reportedDocRef])
   const readSnapshot = useCallback(() => snapshots?.read(pathRef.current) ?? null, [pathRef, snapshots])
@@ -337,11 +340,11 @@ export function RawEditorView(options: RawEditorViewProps) {
   }), [viewRef])
   useRegisteredRef(historyRef, history)
 
-  useRawEditorContentSync({ content, findRequest, path, setFindOpen, setRawDoc, setReplaceOpen, viewRef })
+  useRawEditorContentSync({ content, findRequest, path, showFind: find.show, setRawDoc, setReplaceOpen, viewRef })
   return (
     <RawEditorSurface
       containerRef={containerRef}
-      findOpen={findOpen}
+      find={find}
       findRequest={findRequest}
       locale={locale}
       path={path}
@@ -349,7 +352,6 @@ export function RawEditorView(options: RawEditorViewProps) {
       rawDoc={rawDoc}
       replaceOpen={replaceOpen}
       rootRef={rootRef}
-      setFindOpen={setFindOpen}
       setReplaceOpen={setReplaceOpen}
       showFrontmatterWarning={showFrontmatterWarning}
       viewRef={viewRef}

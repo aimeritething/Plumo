@@ -1,10 +1,13 @@
 import { createExtension } from '@blocknote/core'
+import { FilePanelExtension, FormattingToolbarExtension, LinkToolbarExtension, SuggestionMenu } from '@blocknote/core/extensions'
 import type { Node as ProsemirrorNode } from '@tiptap/pm/model'
 import { Plugin, PluginKey, TextSelection, type EditorState, type Transaction } from '@tiptap/pm/state'
 import { Decoration, DecorationSet, type EditorView } from '@tiptap/pm/view'
 import type { RichEditor } from './block-note-dom'
 import { expandSectionsHidingBlock } from './collapsed-sections'
 import { clampEditorFindIndex, findEditorMatches, type EditorFindOptions } from './editor-find'
+import { richEditorBlockSelectionPluginKey } from './rich-editor-block-selection-extension'
+import { isComposingKeyboardEvent } from './rich-editor-keyboard'
 
 /**
  * Find in the current Document, Rich mode (⌘F works in both modes). Raw
@@ -141,6 +144,40 @@ export function revealRichFindMatch(editor: unknown, view: EditorView, match: Ri
   const { node } = view.domAtPos(match.from)
   const element = node instanceof Element ? node : node.parentElement
   element?.scrollIntoView({ block: 'center' })
+}
+
+/** What `isRichFindEscape` asks of the BlockNote editor: its overlays, when it has them. */
+export type RichFindOverlayOwner = Partial<Pick<RichEditor, 'getExtension'>>
+
+function isPlainEscape(event: KeyboardEvent): boolean {
+  return event.key === 'Escape' && !event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey
+}
+
+/** A menu or toolbar over the Rich body that Esc closes: the slash and emoji menus, the formatting and link toolbars, the file panel. */
+function hasOpenOverlay(editor: RichFindOverlayOwner): boolean {
+  const extension = editor.getExtension?.bind(editor)
+  if (!extension) return false
+  return Boolean(
+    extension(SuggestionMenu)?.shown()
+    || extension(FormattingToolbarExtension)?.store.state
+    || extension(FilePanelExtension)?.store.state
+    || extension(LinkToolbarExtension)?.getLinkAtSelection(),
+  )
+}
+
+/**
+ * Whether an Esc typed in the Rich body is the find bar's, to close it. Esc
+ * has other meanings there, and each comes first: the input method's (it
+ * cancels a candidate), an open menu or toolbar's (it closes), a block
+ * selection's (it clears). Only an Esc from the caret itself is left, which
+ * would otherwise select the caret's block. A key in an input inside the
+ * Document (a math block's source) is that input's.
+ */
+export function isRichFindEscape(editor: RichFindOverlayOwner, view: EditorView, event: KeyboardEvent): boolean {
+  if (!isPlainEscape(event) || isComposingKeyboardEvent(event, view)) return false
+  if (event.target !== view.dom) return false
+  if (richEditorBlockSelectionPluginKey.getState(view.state)) return false
+  return !hasOpenOverlay(editor)
 }
 
 function isBlockEditor(editor: unknown): editor is RichEditor {

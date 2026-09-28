@@ -1,5 +1,5 @@
 import { CaretDown as ChevronDown, CaretRight as ChevronRight, CaretUp as ChevronUp, X } from '@phosphor-icons/react'
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { EditorView } from '@codemirror/view'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
@@ -19,6 +19,7 @@ import {
   type EditorFindMatch,
   type EditorFindOptions,
 } from '@/kernel/blocknote/editor-find'
+import { setRawFindQuery } from '@/kernel/raw/raw-editor-find'
 
 export type { RawEditorFindRequest } from './raw-editor-find-types'
 
@@ -70,22 +71,52 @@ function closeRawEditorFind(onClose: () => void, viewRef: React.MutableRefObject
   requestAnimationFrame(() => viewRef.current?.focus())
 }
 
+/** ↵ in the find input: the next match, ⇧↵ the previous. Escape is the bar's, for every control in it. */
 function handleRawEditorFindKeyDown(
-  event: React.KeyboardEvent<HTMLInputElement>,
-  close: () => void,
+  event: KeyboardEvent<HTMLInputElement>,
   moveMatch: (direction: 1 | -1) => void,
 ): void {
-  // Enter confirming a candidate and Escape cancelling one are the input method's.
-  if (isImeKeyEvent(event.nativeEvent)) return
-  if (event.key === 'Escape') {
-    event.preventDefault()
-    close()
-    return
-  }
-  if (event.key !== 'Enter') return
+  // Enter confirming a candidate is the input method's.
+  if (event.key !== 'Enter' || isImeKeyEvent(event.nativeEvent)) return
 
   event.preventDefault()
   moveMatch(event.shiftKey ? -1 : 1)
+}
+
+/** ↵ in the replace input replaces the current match, as the Replace button does, and the next match becomes current. */
+function handleRawEditorReplaceKeyDown(
+  event: KeyboardEvent<HTMLInputElement>,
+  replaceCurrent: () => void,
+): void {
+  if (event.key !== 'Enter' || event.shiftKey || isImeKeyEvent(event.nativeEvent)) return
+
+  event.preventDefault()
+  replaceCurrent()
+}
+
+/**
+ * The bar's highlights, in the editor: every match of what it is looking for,
+ * the current one distinctly; none while it is closed. Said again on mount, so
+ * an editor that comes back from a snapshot does not keep an old query's.
+ */
+function useRawEditorFindHighlights({
+  activeIndex,
+  open,
+  options,
+  query,
+  viewRef,
+}: {
+  activeIndex: number
+  open: boolean
+  options: EditorFindOptions
+  query: string
+  viewRef: React.MutableRefObject<EditorView | null>
+}): void {
+  useEffect(() => {
+    viewRef.current?.dispatch({
+      effects: setRawFindQuery.of({ query: open ? query : '', options, activeIndex }),
+    })
+  }, [activeIndex, open, options, query, viewRef])
 }
 
 function useRequestedEditorFindMatchSelection(
@@ -110,12 +141,15 @@ function useRequestedEditorFindMatchSelection(
 
 function replaceCurrentEditorFindMatch({
   activeMatch,
+  focusEditor,
   options,
   query,
   replacement,
   viewRef,
 }: {
   activeMatch?: EditorFindMatch
+  /** The Replace button hands focus to the editor; ↵ stays in the replace input, so the next ↵ replaces the next match rather than typing a line break. */
+  focusEditor: boolean
   options: EditorFindOptions
   query: string
   replacement: string
@@ -133,7 +167,7 @@ function replaceCurrentEditorFindMatch({
     },
     effects: EditorView.scrollIntoView(change.from, { y: 'center' }),
   })
-  view.focus()
+  if (focusEditor) view.focus()
 }
 
 function replaceAllEditorFindMatches({
@@ -173,13 +207,14 @@ function useEditorFindNavigation(
 }
 
 function useEditorFindOptionToggle(
-  setOption: React.Dispatch<React.SetStateAction<boolean>>,
+  { options, setOptions }: { options: EditorFindOptions; setOptions: (options: EditorFindOptions) => void },
+  option: keyof EditorFindOptions,
   requestSelection: () => void,
 ): () => void {
   return useCallback(() => {
-    setOption((value) => !value)
+    setOptions({ ...options, [option]: !options[option] })
     requestSelection()
-  }, [requestSelection, setOption])
+  }, [option, options, requestSelection, setOptions])
 }
 
 function useEditorFindState({
@@ -199,6 +234,7 @@ function useEditorFindState({
   const currentIndex = clampEditorFindIndex(activeIndex, result.matches.length)
   return {
     activeMatch: result.matches.at(currentIndex),
+    currentIndex,
     hasMatches: result.matches.length > 0 && !result.error,
     matches: result.matches,
     status: matchStatusText(locale, result.error, currentIndex, result.matches.length),
@@ -208,19 +244,18 @@ function useEditorFindState({
 function useRawEditorFindController(
   functionOptions: Omit<RawEditorFindBarProps, 'replaceOpen'>,
 ): RawEditorFindController {
-  const { doc, locale = 'en', onClose, onReplaceOpenChange, open, path, request, viewRef } = functionOptions
+  const { doc, find, locale = 'en', onReplaceOpenChange, path, request, viewRef } = functionOptions
+  const { open, options, query, setQuery } = find
+  const { caseSensitive, regex } = options
   const inputRef = useRef<HTMLInputElement>(null)
-  const [query, setQuery] = useState('')
   const [replacement, setReplacement] = useState('')
-  const [regex, setRegex] = useState(false)
-  const [caseSensitive, setCaseSensitive] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
   const [selectionRequestId, setSelectionRequestId] = useState(0)
-  const options = useMemo<EditorFindOptions>(() => ({ caseSensitive, regex }), [caseSensitive, regex])
-  const { activeMatch, hasMatches, matches, status } = useEditorFindState({ activeIndex, doc, locale, options, query })
+  const { activeMatch, currentIndex, hasMatches, matches, status } = useEditorFindState({ activeIndex, doc, locale, options, query })
 
   useRequestFocus({ inputRef, onReplaceOpenChange, open, path, request })
 
+  useRawEditorFindHighlights({ activeIndex: currentIndex, open, options, query, viewRef })
   useRequestedEditorFindMatchSelection({ activeMatch, open, requestId: selectionRequestId, viewRef })
 
   const requestSelection = useCallback(() => setSelectionRequestId((current) => current + 1), [])
@@ -229,26 +264,35 @@ function useRawEditorFindController(
     setQuery(event.target.value)
     setActiveIndex(0)
     requestSelection()
-  }, [requestSelection])
+  }, [requestSelection, setQuery])
 
-  const close = useCallback(() => closeRawEditorFind(onClose, viewRef), [onClose, viewRef])
+  const closeFind = find.close
+  const close = useCallback(() => closeRawEditorFind(closeFind, viewRef), [closeFind, viewRef])
 
   const handleFindKeyDown = useCallback(
-    (event: React.KeyboardEvent<HTMLInputElement>) => {
-      handleRawEditorFindKeyDown(event, close, moveMatch)
+    (event: KeyboardEvent<HTMLInputElement>) => {
+      handleRawEditorFindKeyDown(event, moveMatch)
     },
-    [close, moveMatch],
+    [moveMatch],
   )
 
-  const replaceCurrent = useCallback(() => {
+  const replaceMatch = useCallback((focusEditor: boolean) => {
     replaceCurrentEditorFindMatch({
       activeMatch,
+      focusEditor,
       options,
       query,
       replacement,
       viewRef,
     })
   }, [activeMatch, options, query, replacement, viewRef])
+  const replaceCurrent = useCallback(() => replaceMatch(true), [replaceMatch])
+  const handleReplaceKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLInputElement>) => {
+      handleRawEditorReplaceKeyDown(event, () => replaceMatch(false))
+    },
+    [replaceMatch],
+  )
 
   const replaceAll = useCallback(() => {
     if (
@@ -263,8 +307,8 @@ function useRawEditorFindController(
       setActiveIndex(0)
     }
   }, [matches, options, query, replacement, viewRef])
-  const toggleCaseSensitive = useEditorFindOptionToggle(setCaseSensitive, requestSelection)
-  const toggleRegex = useEditorFindOptionToggle(setRegex, requestSelection)
+  const toggleCaseSensitive = useEditorFindOptionToggle(find, 'caseSensitive', requestSelection)
+  const toggleRegex = useEditorFindOptionToggle(find, 'regex', requestSelection)
 
   return {
     caseSensitive,
@@ -272,6 +316,7 @@ function useRawEditorFindController(
     findInputRef: inputRef,
     handleFindChange,
     handleFindKeyDown,
+    handleReplaceKeyDown,
     hasMatches,
     moveNext,
     movePrevious,
@@ -388,6 +433,7 @@ function FindControls(options: FindControlsProps) {
 }
 
 function ReplaceControls({
+  handleReplaceKeyDown,
   hasMatches,
   locale,
   replaceAll,
@@ -403,6 +449,7 @@ function ReplaceControls({
         placeholder={translate(locale, 'editor.find.replacePlaceholder')}
         value={replacement}
         onChange={(event) => setReplacement(event.target.value)}
+        onKeyDown={handleReplaceKeyDown}
         className="h-7 min-w-[12rem] flex-1 rounded px-2 text-xs"
         data-testid="raw-editor-replace-input"
       />
@@ -441,33 +488,24 @@ function RawEditorFindBarContent({
 }
 
 export function RawEditorFindBar(props: RawEditorFindBarProps) {
-  const { locale = 'en', onReplaceOpenChange, open, replaceOpen } = props
-  const barRef = useRef<HTMLDivElement>(null)
+  const { find, locale = 'en', onReplaceOpenChange, replaceOpen } = props
   const controller = useRawEditorFindController(props)
   const { close } = controller
 
-  useEffect(() => {
-    if (!open) return
-    const bar = barRef.current
-    if (!bar) return
+  if (!find.open) return null
 
-    const handleKeyDown = (event: globalThis.KeyboardEvent) => {
-      if (event.key !== 'Escape' || isImeKeyEvent(event)) return
-      event.preventDefault()
-      close()
-    }
-
-    bar.addEventListener('keydown', handleKeyDown)
-    return () => bar.removeEventListener('keydown', handleKeyDown)
-  }, [close, open])
-
-  if (!open) return null
+  // Escape from any control in the bar closes it once; cancelling a candidate is the input method's.
+  const onBarKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'Escape' || isImeKeyEvent(event.nativeEvent)) return
+    event.preventDefault()
+    close()
+  }
 
   return (
     <div
-      ref={barRef}
       className="flex shrink-0 flex-col gap-1.5 border-b border-border-default bg-surface-card px-3 py-2"
       data-testid="raw-editor-find-bar"
+      onKeyDown={onBarKeyDown}
     >
       <RawEditorFindBarContent
         controller={controller}

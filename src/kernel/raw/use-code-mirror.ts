@@ -16,6 +16,7 @@ import { rawEditorLanguageExtensionsForPath } from './raw-editor-language'
 import { RUNTIME_STYLE_NONCE } from '@/platform/runtime-style-nonce'
 import { resolveArrowLigatureInput } from '@/kernel/markdown/arrow-ligatures'
 import { zoomCursorFix } from './zoom-cursor-fix'
+import { rawFindHighlights } from './raw-editor-find'
 import { rawEditorTextInputAttributes } from '@/platform/native-text-assistance'
 import { isInsideMarkdownFence } from '@/kernel/markdown/markdown-fences'
 import { isWindows } from '@/platform/os'
@@ -403,7 +404,10 @@ export function useCodeMirror(
     }
   }, [content])
 
-  useEffect(() => {
+  // A layout effect: the view exists before any passive effect of the Raw
+  // surface runs (the find bar's highlights), and its cleanup runs while the
+  // editor's DOM is still in the document, with the scroll position to read.
+  useLayoutEffect(() => {
     const parent = readRefCurrent(containerRef)
     if (!parent) return
 
@@ -421,6 +425,7 @@ export function useCodeMirror(
       EditorView.contentAttributes.of(rawEditorTextInputAttributes),
       rawEditorLanguageExtensionsForPath(sourcePath),
       zoomCursorFix(),
+      rawFindHighlights(),
       EditorView.updateListener.of((update) => {
         if (update.docChanged && !externalSyncRef.current) {
           callbacksRef.current.onDocChange(update.state.doc.toString())
@@ -453,18 +458,12 @@ export function useCodeMirror(
     }
 
     return () => {
+      callbacksRef.current.onSnapshot?.({ state: view.state, scroll: view.scrollSnapshot() })
       Reflect.deleteProperty(parent, '__cmView')
       view.destroy()
       viewRef.current = null
     }
   }, [containerRef, sourcePath])
-
-  // A layout cleanup runs before the editor's DOM leaves the document, so the
-  // scroll position is still there to read.
-  useLayoutEffect(() => () => {
-    const view = viewRef.current
-    if (view) callbacksRef.current.onSnapshot?.({ state: view.state, scroll: view.scrollSnapshot() })
-  }, [])
 
   return viewRef
 }

@@ -24,7 +24,7 @@ export type FindControlsProps = Pick<
 
 export type ReplaceControlsProps = Pick<
   RawEditorFindController,
-  'hasMatches' | 'replaceAll' | 'replaceCurrent' | 'replacement' | 'setReplacement'
+  'handleReplaceKeyDown' | 'hasMatches' | 'replaceAll' | 'replaceCurrent' | 'replacement' | 'setReplacement'
 > & {
   locale: AppLocale
 }

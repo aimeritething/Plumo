@@ -1,13 +1,18 @@
 import { Schema, type Node as ProsemirrorNode } from '@tiptap/pm/model'
-import { EditorState } from '@tiptap/pm/state'
+import { EditorState, Plugin } from '@tiptap/pm/state'
+import type { EditorView } from '@tiptap/pm/view'
+import { FilePanelExtension, FormattingToolbarExtension, LinkToolbarExtension, SuggestionMenu } from '@blocknote/core/extensions'
 import { describe, expect, it } from 'vitest'
 import {
   collectRichFindMatches,
   createRichEditorFindPlugin,
+  isRichFindEscape,
   richFindDecorations,
   richFindPluginKey,
   setRichFindState,
+  type RichFindOverlayOwner,
 } from './rich-editor-find'
+import { richEditorBlockSelectionPluginKey } from './rich-editor-block-selection-extension'
 
 // A schema small enough to reason about: paragraphs of text with an inline
 // leaf (an image), which is what a Document's inline content looks like to
@@ -84,5 +89,47 @@ describe('the find plugin', () => {
     // Clearing the query clears the decorations.
     state = state.apply(setRichFindState(state.tr, { query: '', options: CASE_INSENSITIVE, activeIndex: 0 }))
     expect(richFindDecorations(state).find()).toEqual([])
+  })
+})
+
+describe('isRichFindEscape', () => {
+  function bodyView(plugins: Plugin[] = []) {
+    const dom = document.createElement('div')
+    return { dom, composing: false, state: EditorState.create({ doc, plugins }) } as unknown as EditorView
+  }
+  const escape = (view: EditorView, init: KeyboardEventInit = {}, target: EventTarget = view.dom) => {
+    const event = new KeyboardEvent('keydown', { key: 'Escape', ...init })
+    Object.defineProperty(event, 'target', { value: target })
+    return event
+  }
+
+  it('takes a plain esc from the caret in the body', () => {
+    const view = bodyView()
+    expect(isRichFindEscape({}, view, escape(view))).toBe(true)
+  })
+
+  it('leaves esc to the input method, to a modifier, and to an input inside the Document', () => {
+    const view = bodyView()
+    expect(isRichFindEscape({}, view, escape(view, { keyCode: 229 }))).toBe(false)
+    expect(isRichFindEscape({}, view, escape(view, { isComposing: true }))).toBe(false)
+    expect(isRichFindEscape({}, view, escape(view, { shiftKey: true }))).toBe(false)
+    expect(isRichFindEscape({}, view, escape(view, {}, document.createElement('input')))).toBe(false)
+  })
+
+  it('leaves esc to a block selection, which it clears', () => {
+    const selected = new Plugin({ key: richEditorBlockSelectionPluginKey, state: { init: () => ({ blockIds: ['a'] }), apply: (_tr, value) => value } })
+    const view = bodyView([selected])
+    expect(isRichFindEscape({}, view, escape(view))).toBe(false)
+  })
+
+  it.each([
+    ['the slash menu', SuggestionMenu, { shown: () => true }],
+    ['the formatting toolbar', FormattingToolbarExtension, { store: { state: true } }],
+    ['the file panel', FilePanelExtension, { store: { state: 'block-id' } }],
+    ['the link toolbar', LinkToolbarExtension, { getLinkAtSelection: () => ({}) }],
+  ])('leaves esc to %s while it is open', (_name, open, extension) => {
+    const view = bodyView()
+    const editor = { getExtension: ((asked: unknown) => (asked === open ? extension : undefined)) } as RichFindOverlayOwner
+    expect(isRichFindEscape(editor, view, escape(view))).toBe(false)
   })
 })

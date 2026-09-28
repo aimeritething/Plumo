@@ -45,6 +45,7 @@ import { SingleEditorView } from './single-editor-view'
 import { createTodoBlockShortcutExtension } from '@/kernel/blocknote/todo-block-shortcut-extension'
 import { useRawModeWithFlush } from './use-raw-mode-with-flush'
 import { useRawEditorSnapshots } from './use-raw-editor-snapshots'
+import { useEditorFindSession } from './editor-find-session'
 import { WriteFailureBar } from './write-failure-bar'
 
 /**
@@ -271,6 +272,7 @@ function useEditorRuntime(props: EditorProps) {
   useEditorFocus(editor, editorMountedRef)
   useRegisteredRef(props.rawToggleRef, raw.toggleRaw)
   const { request: findRequest, requestFind } = useFindRequests(activeTabPath, raw.rawMode, props.findRef)
+  const find = useEditorFindSession(activeTabPath)
   // Rich mode's history is BlockNote's; Raw mode's is CodeMirror's, registered by the raw view while it is mounted.
   const richHistory = useMemo<EditorHistory>(() => ({ undo: () => { editor.undo() }, redo: () => { editor.redo() } }), [editor])
   useRegisteredRef(rawMode ? undefined : props.historyRef, richHistory)
@@ -287,7 +289,7 @@ function useEditorRuntime(props: EditorProps) {
     flushPendingRawContentRef,
   })
 
-  return { editor, activeTab, handleEditorChange, imageTabPath, raw, rawSnapshots, findRequest, requestFind }
+  return { editor, activeTab, handleEditorChange, imageTabPath, raw, rawSnapshots, find, findRequest, requestFind }
 }
 
 /**
@@ -296,7 +298,8 @@ function useEditorRuntime(props: EditorProps) {
  * open refocuses its input and a closed one opens. Raw mode's carried bar and
  * the Rich bar both read the same request. A request belongs to the surface
  * it was made on (this Tab, in this mode): switching Tab or mode drops it, so
- * a bar that mounts later does not reopen on a stale ask.
+ * a bar that mounts later does not reopen on a stale ask, nor take the focus.
+ * Whether the bar stays open across a mode switch is the find session's.
  */
 function useFindRequests(
   activeTabPath: string | null,
@@ -312,6 +315,8 @@ function useFindRequests(
     setRequest({ surface, value: { id: sequence.current, path: activeTabPath, replace: false } })
   }, [activeTabPath, surface])
   useRegisteredRef(findRef, requestFind)
+  // Dropped, not only hidden: coming back to the same surface must not revive it.
+  if (request !== null && request.surface !== surface) setRequest(null)
   return { request: request !== null && request.surface === surface ? request.value : null, requestFind }
 }
 
@@ -387,7 +392,7 @@ function useImageTab({ path, imageFile, reloads, onOpenExternal, onCopyPath }: {
 }
 
 export const Editor = memo(function Editor(props: EditorProps) {
-  const { editor, activeTab, handleEditorChange, imageTabPath, raw, rawSnapshots, findRequest, requestFind } = useEditorRuntime(props)
+  const { editor, activeTab, handleEditorChange, imageTabPath, raw, rawSnapshots, find, findRequest, requestFind } = useEditorRuntime(props)
   const {
     tabs, activeTabPath, vaultPath, onActivateTab, onCloseTab, writeFailure, onRetryWrite, onDiscardWrite,
     sidebarCollapsed, tabCommands,
@@ -457,13 +462,14 @@ export const Editor = memo(function Editor(props: EditorProps) {
                 onSave={RAW_SAVE_HANDLED_BY_APP}
                 latestContentRef={raw.rawLatestContentRef}
                 findRequest={findRequest}
+                find={find}
                 historyRef={props.historyRef}
                 snapshots={rawSnapshots}
               />
             </EditorFindScope>
           ) : (
             <EditorFindScope className={RICH_SCROLL_AREA_CLASS}>
-              <RichEditorFindBar key={activeTab.entry.path} editor={editor} path={activeTab.entry.path} request={findRequest} />
+              <RichEditorFindBar key={activeTab.entry.path} editor={editor} path={activeTab.entry.path} request={findRequest} find={find} />
               {/* The prose column: the Kernel's .bn-editor centres itself at --editor-max-width, so no padding here. */}
               <div className="mx-auto flex min-h-0 w-full max-w-(--editor-max-width) flex-1 flex-col">
                 <SingleEditorView

@@ -1,6 +1,6 @@
 import { CaretDown as ChevronDown, CaretUp as ChevronUp, X } from '@phosphor-icons/react'
 import type { EditorView } from '@tiptap/pm/view'
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Toggle } from '@/ui/toggle'
@@ -9,10 +9,18 @@ import { translate, type AppLocale } from '@/lib/i18n'
 import { isImeKeyEvent } from '@/lib/ime-key-event'
 import { clampEditorFindIndex, nextEditorFindIndex, type EditorFindOptions } from '@/kernel/blocknote/editor-find'
 import type { RawEditorFindRequest } from './raw-editor-find-types'
-import { collectRichFindMatches, revealRichFindMatch, setRichFindState, type RichFindResult } from '@/kernel/blocknote/rich-editor-find'
+import {
+  collectRichFindMatches,
+  isRichFindEscape,
+  revealRichFindMatch,
+  setRichFindState,
+  type RichFindOverlayOwner,
+  type RichFindResult,
+} from '@/kernel/blocknote/rich-editor-find'
+import type { EditorFindSession } from './editor-find-session'
 
-/** What the bar needs of the BlockNote editor: its ProseMirror view and a way to hear edits. */
-export interface RichFindEditor {
+/** What the bar needs of the BlockNote editor: its ProseMirror view, a way to hear edits, and its menus and toolbars. */
+export interface RichFindEditor extends RichFindOverlayOwner {
   readonly prosemirrorView: EditorView | undefined
   onChange?: (callback: () => void) => (() => void) | undefined
 }
@@ -22,11 +30,34 @@ export interface RichEditorFindBarProps {
   /** The Document showing; a request for another path is not this bar's. */
   path: string
   request: RawEditorFindRequest | null
+  /** Open or not, and the query: the editor pane's, so a switch to Raw mode and back keeps them. */
+  find: EditorFindSession
   locale?: AppLocale
 }
 
 const NO_RESULT: RichFindResult = { matches: [], error: null }
 const DEFAULT_OPTIONS: EditorFindOptions = { caseSensitive: false, regex: false }
+
+/**
+ * Esc in the Rich body closes the open bar, as it does in Raw mode, when no
+ * other meaning of Esc there comes first (`isRichFindEscape`). Listened for
+ * on the document, capturing, so it is seen before ProseMirror would turn it
+ * into a block selection.
+ */
+function useCloseOnBodyEscape(editor: RichFindEditor, open: boolean, close: () => void): void {
+  useEffect(() => {
+    if (!open) return
+    const onKeyDown = (event: globalThis.KeyboardEvent) => {
+      const view = viewOf(editor)
+      if (!view || !isRichFindEscape(editor, view, event)) return
+      event.preventDefault()
+      event.stopPropagation()
+      close()
+    }
+    document.addEventListener('keydown', onKeyDown, true)
+    return () => document.removeEventListener('keydown', onKeyDown, true)
+  }, [close, editor, open])
+}
 
 /** The view, or null before the editor has mounted (the getter throws until then). */
 function viewOf(editor: RichFindEditor): EditorView | null {
@@ -56,20 +87,17 @@ function useDocumentVersion(editor: RichFindEditor): number {
 /**
  * Find in Rich mode: the same bar as Raw mode's, minus replace, over the
  * ProseMirror document. A request for
- * this Document opens it; esc closes it and hands focus back to the editor.
+ * this Document opens it; esc, in the bar or in the Document's body, closes
+ * it and leaves the focus in the editor.
  * Every match is highlighted by the find plugin, the current one distinctly,
  * and ↵ / ⇧↵ walk them, moving the editor's selection along.
  */
-export function RichEditorFindBar({ editor, path, request, locale = 'en' }: RichEditorFindBarProps) {
-  const [closedRequestId, setClosedRequestId] = useState<number | null>(null)
-  const open = request !== null && request.path === path && request.id !== closedRequestId
-  const [query, setQuery] = useState('')
-  const [caseSensitive, setCaseSensitive] = useState(DEFAULT_OPTIONS.caseSensitive)
-  const [regex, setRegex] = useState(DEFAULT_OPTIONS.regex)
+export function RichEditorFindBar({ editor, path, request, find, locale = 'en' }: RichEditorFindBarProps) {
+  const { open, query, options, show, setQuery, setOptions } = find
+  const { caseSensitive, regex } = options
   const [activeIndex, setActiveIndex] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
   const documentVersion = useDocumentVersion(editor)
-  const options = useMemo<EditorFindOptions>(() => ({ caseSensitive, regex }), [caseSensitive, regex])
 
   const result = useMemo(() => {
     void documentVersion
@@ -110,15 +138,24 @@ export function RichEditorFindBar({ editor, path, request, locale = 'en' }: Rich
     setFirstMatchRequest((value) => value + 1)
   }
 
-  const requestId = open ? request.id : null
+  // A request for this Document opens the bar and puts the caret in its input.
+  const requestId = request !== null && request.path === path ? request.id : null
   useEffect(() => {
     if (requestId === null) return
+    show()
     const frame = requestAnimationFrame(() => {
       inputRef.current?.focus()
       inputRef.current?.select()
     })
     return () => cancelAnimationFrame(frame)
-  }, [requestId])
+  }, [requestId, show])
+
+  const closeFind = find.close
+  const close = useCallback(() => {
+    closeFind()
+    viewOf(editor)?.focus()
+  }, [closeFind, editor])
+  useCloseOnBodyEscape(editor, open, close)
 
   if (!open) return null
 
@@ -130,11 +167,6 @@ export function RichEditorFindBar({ editor, path, request, locale = 'en' }: Rich
   }
   const moveNext = () => revealMatch(nextEditorFindIndex(currentIndex, matchCount, 1))
   const movePrevious = () => revealMatch(nextEditorFindIndex(currentIndex, matchCount, -1))
-  const close = () => {
-    setClosedRequestId(request.id)
-    viewOf(editor)?.focus()
-  }
-
   // ↵ confirming a candidate and esc cancelling one are the input method's.
   const onInputKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key !== 'Enter' || isImeKeyEvent(event.nativeEvent)) return
@@ -182,12 +214,12 @@ export function RichEditorFindBar({ editor, path, request, locale = 'en' }: Rich
         </Button>
       </FindTooltip>
       <FindTooltip label={translate(locale, 'editor.find.regex')}>
-        <Toggle pressed={regex} data-state={regex ? 'on' : 'off'} onPressedChange={(pressed) => { setRegex(pressed); searchAgain() }} aria-label={translate(locale, 'editor.find.regex')}>
+        <Toggle pressed={regex} data-state={regex ? 'on' : 'off'} onPressedChange={(pressed) => { setOptions({ ...options, regex: pressed }); searchAgain() }} aria-label={translate(locale, 'editor.find.regex')}>
           .*
         </Toggle>
       </FindTooltip>
       <FindTooltip label={translate(locale, 'editor.find.matchCase')}>
-        <Toggle pressed={caseSensitive} data-state={caseSensitive ? 'on' : 'off'} onPressedChange={(pressed) => { setCaseSensitive(pressed); searchAgain() }} aria-label={translate(locale, 'editor.find.matchCase')}>
+        <Toggle pressed={caseSensitive} data-state={caseSensitive ? 'on' : 'off'} onPressedChange={(pressed) => { setOptions({ ...options, caseSensitive: pressed }); searchAgain() }} aria-label={translate(locale, 'editor.find.matchCase')}>
           Aa
         </Toggle>
       </FindTooltip>
