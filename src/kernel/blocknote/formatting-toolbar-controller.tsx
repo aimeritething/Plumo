@@ -44,7 +44,8 @@ import { useEditorComposing } from './use-editor-composing'
 // Plumo's controller for the floating formatting toolbar, in place of
 // BlockNote's: the toolbar stays open while it is hovered or focused, while
 // one of its menus (block type, highlight colour) is open, and for a short
-// grace after the selection collapses; it hides during IME composition; it is
+// grace after the selection collapses; a keystroke in the editor ends the
+// hover hold and the grace; it hides during IME composition; it is
 // clamped to the viewport; and it mounts the code block language controls
 // alongside.
 
@@ -105,10 +106,12 @@ function useFormattingToolbarCloseGrace({
   show,
   toolbarHasFocus,
   toolbarHovered,
+  typingInEditorRef,
 }: {
   show: boolean
   toolbarHasFocus: boolean
   toolbarHovered: boolean
+  typingInEditorRef: MutableRefObject<boolean>
 }) {
   const [closeGraceActive, setCloseGraceActive] = useState(false)
   const closeGraceTimeoutRef = useRef<number | null>(null)
@@ -127,12 +130,12 @@ function useFormattingToolbarCloseGrace({
 
     if (toolbarInteractionActive) {
       clearCloseGrace()
-    } else if (previousShowRef.current) {
+    } else if (previousShowRef.current && !typingInEditorRef.current) {
       startToolbarCloseGrace(closeGraceTimeoutRef, setCloseGraceActive)
     }
 
     previousShowRef.current = show
-  }, [clearCloseGrace, show, toolbarHasFocus, toolbarHovered])
+  }, [clearCloseGrace, show, toolbarHasFocus, toolbarHovered, typingInEditorRef])
 
   useEffect(() => () => {
     if (closeGraceTimeoutRef.current !== null) {
@@ -164,6 +167,40 @@ function useCloseToolbarMenuOnEditorInteraction(
       editorElement.removeEventListener('beforeinput', closeMenu, true)
     }
   }, [closeMenu, editor, opened])
+}
+
+// The pointer that clicked a toolbar button may still rest on the toolbar
+// while the user goes on typing; the toolbar must not then trail the caret. So
+// a keystroke in the editor drops the hover hold and any running grace, and
+// while typing is the last thing the user did, a selection that collapses
+// closes the toolbar with no grace. A pointer press, or a keystroke outside
+// the editor, gives the grace back.
+function useTypingInEditorEndsToolbarHold(
+  editor: FormattingToolbarEditor,
+  typingInEditorRef: MutableRefObject<boolean>,
+  onTyping: () => void,
+) {
+  useEffect(() => {
+    const editorElement = editor.domElement
+    if (!editorElement) return
+    const ownerDocument = editorElement.ownerDocument
+    const handleKeyboardInput = (event: Event) => {
+      const inEditor = event.target instanceof Node && editorElement.contains(event.target)
+      typingInEditorRef.current = inEditor
+      if (inEditor) onTyping()
+    }
+    const handlePointerDown = () => {
+      typingInEditorRef.current = false
+    }
+    ownerDocument.addEventListener('keydown', handleKeyboardInput, true)
+    ownerDocument.addEventListener('beforeinput', handleKeyboardInput, true)
+    ownerDocument.addEventListener('pointerdown', handlePointerDown, true)
+    return () => {
+      ownerDocument.removeEventListener('keydown', handleKeyboardInput, true)
+      ownerDocument.removeEventListener('beforeinput', handleKeyboardInput, true)
+      ownerDocument.removeEventListener('pointerdown', handlePointerDown, true)
+    }
+  }, [editor, onTyping, typingInEditorRef])
 }
 
 function useDeduplicatedFormattingToolbarStore(
@@ -270,11 +307,18 @@ function useFormattingToolbarInteractionState({
     setMenuOpen: setToolbarMenuOpen,
   }), [openToolbarMenu, setToolbarMenuOpen])
   const toolbarMenuOpened = openToolbarMenu !== null
+  const typingInEditorRef = useRef(false)
   const { closeGraceActive, clearCloseGrace, dismissImmediately } = useFormattingToolbarCloseGrace({
     show,
     toolbarHasFocus,
     toolbarHovered,
+    typingInEditorRef,
   })
+  const endHoldForTyping = useCallback(() => {
+    setToolbarHovered(false)
+    clearCloseGrace()
+  }, [clearCloseGrace])
+  useTypingInEditorEndsToolbarHold(editor, typingInEditorRef, endHoldForTyping)
   const setFormattingToolbarOpen = useDeduplicatedFormattingToolbarStore(
     formattingToolbarStore,
     show,

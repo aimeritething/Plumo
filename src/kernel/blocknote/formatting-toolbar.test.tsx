@@ -516,6 +516,65 @@ describe('the formatting toolbar and its controller', () => {
     vi.useRealTimers()
   })
 
+  it('closes at once when a keystroke in the editor collapses the selection, with the pointer resting on the toolbar', () => {
+    vi.useFakeTimers()
+    try {
+      const editor = createMockEditor('paragraph')
+      const editorInput = editor.domElement.firstElementChild as HTMLElement
+      useBlockNoteEditorMock.mockReturnValue(editor)
+      const Toolbar = () => <button data-testid="toolbar-action" type="button">Toolbar</button>
+
+      const { rerender } = render(<FormattingToolbarController formattingToolbar={Toolbar} />)
+      // Bold was clicked with the mouse, which still rests on the toolbar.
+      fireEvent.pointerEnter(screen.getByTestId('toolbar-action').parentElement as HTMLElement)
+
+      fireEvent.keyDown(editorInput, { key: 'ArrowRight' })
+      showState.value = false
+      rerender(<FormattingToolbarController formattingToolbar={Toolbar} />)
+
+      expect(screen.queryByTestId('toolbar-action')).not.toBeInTheDocument()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('keeps the toolbar open after a keystroke while the selection is not empty', () => {
+    const editor = createMockEditor('paragraph')
+    const editorInput = editor.domElement.firstElementChild as HTMLElement
+    useBlockNoteEditorMock.mockReturnValue(editor)
+    const Toolbar = () => <button data-testid="toolbar-action" type="button">Toolbar</button>
+
+    render(<FormattingToolbarController formattingToolbar={Toolbar} />)
+    fireEvent.pointerEnter(screen.getByTestId('toolbar-action').parentElement as HTMLElement)
+    fireEvent.keyDown(editorInput, { key: 'ArrowRight', shiftKey: true })
+
+    expect(screen.getByTestId('toolbar-action')).toBeInTheDocument()
+  })
+
+  it('still gives a pointer collapse its close grace after earlier typing', () => {
+    vi.useFakeTimers()
+    try {
+      const editor = createMockEditor('paragraph')
+      const editorInput = editor.domElement.firstElementChild as HTMLElement
+      useBlockNoteEditorMock.mockReturnValue(editor)
+      const Toolbar = () => <button data-testid="toolbar-action" type="button">Toolbar</button>
+
+      const { rerender } = render(<FormattingToolbarController formattingToolbar={Toolbar} />)
+      fireEvent.keyDown(editorInput, { key: 'ArrowRight', shiftKey: true })
+      fireEvent.pointerDown(editorInput)
+      showState.value = false
+      rerender(<FormattingToolbarController formattingToolbar={Toolbar} />)
+
+      expect(screen.getByTestId('toolbar-action')).toBeInTheDocument()
+      act(() => {
+        vi.advanceTimersByTime(200)
+      })
+      expect(screen.queryByTestId('toolbar-action')).not.toBeInTheDocument()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('deduplicates floating toolbar store writes during close races', () => {
     const editor = createMockEditor('paragraph')
     useBlockNoteEditorMock.mockReturnValue(editor)
