@@ -8,7 +8,6 @@ import {
   useDictionary,
   type LinkToolbarProps,
 } from '@blocknote/react'
-import { openEditorAttachmentOrUrl } from './editor-attachment-actions'
 
 function useRequiredComponentsContext() {
   const components = useComponentsContext()
@@ -16,12 +15,15 @@ function useRequiredComponentsContext() {
   return components
 }
 
-function OpenLinkButton({ url, vaultPath }: Pick<LinkToolbarProps, 'url'> & { vaultPath?: string }) {
+type OpenLink = { onOpenLink: (href: string) => void }
+
+// Opens the link the way ⌘+click does (see useEditorLinkActivation).
+function OpenLinkButton({ url, onOpenLink }: Pick<LinkToolbarProps, 'url'> & OpenLink) {
   const Components = useRequiredComponentsContext()
   const dict = useDictionary()
   const handleOpen = useCallback(() => {
-    openEditorAttachmentOrUrl({ url, vaultPath, source: 'link' })
-  }, [url, vaultPath])
+    onOpenLink(url)
+  }, [onOpenLink, url])
 
   return (
     <Components.LinkToolbar.Button
@@ -35,7 +37,7 @@ function OpenLinkButton({ url, vaultPath }: Pick<LinkToolbarProps, 'url'> & { va
   )
 }
 
-export function LinkToolbar({ vaultPath, ...props }: LinkToolbarProps & { vaultPath?: string }) {
+export function LinkToolbar({ onOpenLink, ...props }: LinkToolbarProps & OpenLink) {
   return (
     <BlockNoteLinkToolbar {...props}>
       <EditLinkButton
@@ -45,7 +47,7 @@ export function LinkToolbar({ vaultPath, ...props }: LinkToolbarProps & { vaultP
         setToolbarOpen={props.setToolbarOpen}
         setToolbarPositionFrozen={props.setToolbarPositionFrozen}
       />
-      <OpenLinkButton url={props.url} vaultPath={vaultPath} />
+      <OpenLinkButton url={props.url} onOpenLink={onOpenLink} />
       <DeleteLinkButton range={props.range} setToolbarOpen={props.setToolbarOpen} />
     </BlockNoteLinkToolbar>
   )

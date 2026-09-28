@@ -250,7 +250,7 @@ export function SingleEditorView(options: {
     handleMouseMove: handleCodeBlockCopyMouseMove,
   } = useCodeBlockCopyTarget(containerRef)
   useBlockNoteSideMenuHoverGuard(containerRef)
-  useEditorLinkActivation(
+  const openLink = useEditorLinkActivation(
     containerRef,
     onNavigateWikilink,
     vaultPath,
@@ -373,6 +373,7 @@ export function SingleEditorView(options: {
             <EditorInteractionControllers
               {...suggestionMenuItems}
               locale={locale}
+              onOpenLink={openLink}
               onToolbarMouseDown={handleToolbarMouseDownCapture}
               runEditorAction={runEditorAction}
               vaultPath={vaultPath}

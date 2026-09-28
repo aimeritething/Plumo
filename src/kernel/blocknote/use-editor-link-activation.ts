@@ -1,4 +1,4 @@
-import { useEffect, type RefObject } from 'react'
+import { useCallback, useEffect, type RefObject } from 'react'
 import { openEditorAttachmentOrUrl } from './editor-attachment-actions'
 
 const CODE_BLOCK_CONTEXT_SELECTOR = '[data-content-type="codeBlock"], pre'
@@ -15,6 +15,7 @@ type LinkActivationContext = {
   sourceVaultPath?: LinkSourcePath
   vaultPath?: string
 }
+type LinkOpenContext = Omit<LinkActivationContext, 'container'> & { container: HTMLElement | null }
 type AnchorKeyRequest = { value: string }
 type AnchorLookupRequest = {
   anchorKey: string
@@ -51,7 +52,7 @@ type MarkdownNoteTargetRequest = {
   sourceVaultPath?: LinkSourcePath
 }
 type NavigationRequest = {
-  context: LinkActivationContext
+  context: LinkOpenContext
   target: string
 }
 type PathRequest = { path: string }
@@ -248,28 +249,35 @@ function navigateNoteTarget({ context, target }: NavigationRequest) {
   scheduleAfterNativeClick(() => context.onNavigateWikilink(target))
 }
 
+/**
+ * Follows a link: `#anchor` scrolls to it in this Document, a relative `.md`
+ * opens that Document in Plumo, anything else opens as an Attachment or URL.
+ * ⌘+click and the link toolbar's Open button both come here.
+ */
+function openEditorLink(href: string, context: LinkOpenContext) {
+  if (href.startsWith('#')) {
+    if (context.container) scrollToSameNoteAnchor({ container: context.container, rawAnchor: href.slice(1) })
+    return
+  }
+
+  const markdownTarget = markdownNoteTargetFromHref({
+    href,
+    sourceEntryPath: context.sourceEntryPath,
+    sourceVaultPath: context.sourceVaultPath,
+  })
+  if (markdownTarget) {
+    navigateNoteTarget({ context, target: markdownTarget })
+    return
+  }
+
+  openEditorAttachmentOrUrl({ url: href, vaultPath: context.vaultPath, source: 'link' })
+}
+
 function activateHref({ context, event, href }: HrefActivationRequest) {
   runModifiedLinkAction({
     context,
     event,
-    action: () => {
-      if (href.startsWith('#')) {
-        scrollToSameNoteAnchor({ container: context.container, rawAnchor: href.slice(1) })
-        return
-      }
-
-      const markdownTarget = markdownNoteTargetFromHref({
-        href,
-        sourceEntryPath: context.sourceEntryPath,
-        sourceVaultPath: context.sourceVaultPath,
-      })
-      if (markdownTarget) {
-        navigateNoteTarget({ context, target: markdownTarget })
-        return
-      }
-
-      openEditorAttachmentOrUrl({ url: href, vaultPath: context.vaultPath, source: 'link' })
-    },
+    action: () => openEditorLink(href, context),
   })
 }
 
@@ -303,13 +311,14 @@ function followedAnchorHrefFromEvent(event: MouseEvent, fallback: HTMLElement) {
   return resolveAnchorHref(elementFromEventTarget(event.target) ?? fallback)
 }
 
+/** Follows ⌘+clicked links in the editor, and returns the same opener for the link toolbar's Open button. */
 export function useEditorLinkActivation(
   containerRef: RefObject<HTMLDivElement | null>,
   onNavigateWikilink: (target: string) => void,
   vaultPath?: string,
   sourceEntryPath?: LinkSourcePath,
   sourceVaultPath: LinkSourcePath = vaultPath,
-) {
+): (href: string) => void {
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
@@ -377,5 +386,15 @@ export function useEditorLinkActivation(
       clearHandledMouseDownUrl()
       resetModifierState()
     }
+  }, [containerRef, onNavigateWikilink, sourceEntryPath, sourceVaultPath, vaultPath])
+
+  return useCallback((href: string) => {
+    openEditorLink(href.trim(), {
+      container: containerRef.current,
+      onNavigateWikilink,
+      sourceEntryPath,
+      sourceVaultPath,
+      vaultPath,
+    })
   }, [containerRef, onNavigateWikilink, sourceEntryPath, sourceVaultPath, vaultPath])
 }

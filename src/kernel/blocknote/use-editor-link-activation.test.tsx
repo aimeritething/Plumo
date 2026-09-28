@@ -19,15 +19,17 @@ const mockOpenLocalFile = vi.mocked(openLocalFile)
 
 function Harness({
   onNavigateWikilink,
+  onOpenLinkReady,
   sourceEntryPath,
   vaultPath,
 }: {
   onNavigateWikilink: (target: string) => void
+  onOpenLinkReady: (openLink: (href: string) => void) => void
   sourceEntryPath?: string
   vaultPath?: string
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
-  useEditorLinkActivation(containerRef, onNavigateWikilink, vaultPath, sourceEntryPath)
+  onOpenLinkReady(useEditorLinkActivation(containerRef, onNavigateWikilink, vaultPath, sourceEntryPath))
   return <div ref={containerRef} data-testid="editor-link-container" />
 }
 
@@ -36,10 +38,21 @@ function renderHarness(
   vaultPath?: string,
   sourceEntryPath?: string,
 ) {
-  render(<Harness onNavigateWikilink={onNavigateWikilink} sourceEntryPath={sourceEntryPath} vaultPath={vaultPath} />)
+  let openLink: (href: string) => void = () => {
+    throw new Error('the link opener was not returned')
+  }
+  render(
+    <Harness
+      onNavigateWikilink={onNavigateWikilink}
+      onOpenLinkReady={(opener) => { openLink = opener }}
+      sourceEntryPath={sourceEntryPath}
+      vaultPath={vaultPath}
+    />,
+  )
   return {
     container: screen.getByTestId('editor-link-container') as HTMLDivElement,
     onNavigateWikilink,
+    openLink: (href: string) => openLink(href),
   }
 }
 
@@ -265,5 +278,68 @@ describe('useEditorLinkActivation', () => {
     expect(container.hasAttribute('data-follow-links')).toBe(true)
     fireEvent.keyUp(window, { key: 'Meta' })
     expect(container.hasAttribute('data-follow-links')).toBe(false)
+  })
+})
+
+// The link toolbar's Open button calls the opener the hook returns; ⌘+click
+// goes through the same function, so both follow a link the same way.
+describe.each([
+  ['Cmd+click', (harness: ReturnType<typeof renderHarness>, href: string) => {
+    dispatchMouseEvent(appendUrl(harness.container, href), 'click', { metaKey: true })
+  }],
+  ['the link toolbar Open button', (harness: ReturnType<typeof renderHarness>, href: string) => {
+    harness.openLink(href)
+  }],
+])('following a link with %s', (_way, follow) => {
+  beforeEach(() => {
+    mockOpenExternalUrl.mockClear()
+    mockOpenLocalFile.mockClear()
+  })
+
+  it.each([
+    ['other.md', 'other'],
+    ['notes/other.md', 'notes/other'],
+  ])('opens the Document %s in Plumo', async (href, target) => {
+    const harness = renderHarness(vi.fn(), '/vault', '/vault/current.md')
+
+    follow(harness, href)
+
+    await Promise.resolve()
+    expect(harness.onNavigateWikilink).toHaveBeenCalledWith(target)
+    expect(mockOpenExternalUrl).not.toHaveBeenCalled()
+    expect(mockOpenLocalFile).not.toHaveBeenCalled()
+  })
+
+  it('scrolls to the heading a #anchor names', () => {
+    const harness = renderHarness()
+    const heading = document.createElement('div')
+    heading.setAttribute('data-content-type', 'heading')
+    heading.textContent = 'Heading'
+    heading.scrollIntoView = vi.fn()
+    harness.container.appendChild(heading)
+
+    follow(harness, '#heading')
+
+    expect(heading.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' })
+    expect(harness.onNavigateWikilink).not.toHaveBeenCalled()
+    expect(mockOpenExternalUrl).not.toHaveBeenCalled()
+  })
+
+  it('opens an external URL in the browser', () => {
+    const harness = renderHarness()
+
+    follow(harness, 'https://example.com/docs')
+
+    expect(mockOpenExternalUrl).toHaveBeenCalledWith('https://example.com/docs')
+    expect(harness.onNavigateWikilink).not.toHaveBeenCalled()
+  })
+
+  it('opens an Attachment through the active Folder', () => {
+    const harness = renderHarness(vi.fn(), '/vault')
+
+    follow(harness, 'attachments/report.pdf')
+
+    expect(mockOpenLocalFile).toHaveBeenCalledWith('/vault/attachments/report.pdf', '/vault')
+    expect(mockOpenExternalUrl).not.toHaveBeenCalled()
   })
 })

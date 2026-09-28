@@ -473,6 +473,17 @@ describe('SingleEditorView interactions', () => {
     expect(mockOpenExternalUrl).not.toHaveBeenCalled()
   })
 
+  it('opens a relative .md link from the link toolbar as a Document in Plumo, as Cmd+click does', async () => {
+    const onNavigateWikilink = vi.fn()
+    renderLinkToolbarOpenButton({ onNavigateWikilink, url: 'notes/other.md', vaultPath: '/vault' })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open in a new tab' }))
+
+    await Promise.resolve()
+    expect(onNavigateWikilink).toHaveBeenCalledWith('notes/other')
+    expect(mockOpenExternalUrl).not.toHaveBeenCalled()
+  })
+
   it('opens BlockNote file block names through the active vault path', () => {
     const editor = createEditor()
     editor.getBlock.mockReturnValue({

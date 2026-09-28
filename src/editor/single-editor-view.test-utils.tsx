@@ -175,11 +175,17 @@ vi.mock('@/kernel/blocknote/block-note-side-menu', () => ({
   SideMenu: () => <div data-testid="side-menu" />,
 }))
 
-vi.mock('@/kernel/blocknote/use-editor-link-activation', () => ({
-  useEditorLinkActivation: (containerRef: unknown, onNavigateWikilink: unknown, vaultPath: unknown) => (
-    state.linkActivationMock(containerRef, onNavigateWikilink, vaultPath)
-  ),
-}))
+vi.mock('@/kernel/blocknote/use-editor-link-activation', async () => {
+  const actual = await vi.importActual<typeof import('@/kernel/blocknote/use-editor-link-activation')>(
+    '@/kernel/blocknote/use-editor-link-activation',
+  )
+  return {
+    useEditorLinkActivation: (...args: Parameters<typeof actual.useEditorLinkActivation>) => {
+      state.linkActivationMock(args[0], args[1], args[2])
+      return actual.useEditorLinkActivation(...args)
+    },
+  }
+})
 
 import { openExternalUrl, openLocalFile } from '@/platform/url'
 import { SingleEditorView } from './single-editor-view'
@@ -384,6 +390,7 @@ type LinkToolbarHarnessProps = {
 }
 
 export function renderLinkToolbarOpenButton(options: {
+  onNavigateWikilink?: (target: string) => void
   url: string
   text?: string
   vaultPath?: string
@@ -391,7 +398,7 @@ export function renderLinkToolbarOpenButton(options: {
   render(
     <SingleEditorView
       editor={createEditor() as never}
-      onNavigateWikilink={vi.fn()}
+      onNavigateWikilink={options.onNavigateWikilink ?? vi.fn()}
       vaultPath={options.vaultPath}
     />,
   )

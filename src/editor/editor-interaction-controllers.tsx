@@ -17,6 +17,7 @@ import type { SuggestionAction, useSuggestionMenuItems } from '@/kernel/blocknot
 
 type EditorInteractionControllersProps = ReturnType<typeof useSuggestionMenuItems> & {
   locale: AppLocale
+  onOpenLink: (href: string) => void
   onToolbarMouseDown: (event: Pick<React.MouseEvent<HTMLElement>, 'target' | 'preventDefault'>) => void
   runEditorAction: (action: SuggestionAction) => void
   vaultPath?: string
@@ -24,9 +25,10 @@ type EditorInteractionControllersProps = ReturnType<typeof useSuggestionMenuItem
 
 function EditorToolbarControllers({
   locale,
+  onOpenLink,
   onToolbarMouseDown,
   vaultPath,
-}: Pick<EditorInteractionControllersProps, 'locale' | 'onToolbarMouseDown' | 'vaultPath'>) {
+}: Pick<EditorInteractionControllersProps, 'locale' | 'onOpenLink' | 'onToolbarMouseDown' | 'vaultPath'>) {
   const sideMenu = useCallback((props: SideMenuProps) => <SideMenu {...props} locale={locale} />, [locale])
   const formattingToolbar = useCallback(
     (props: FormattingToolbarProps) => (
@@ -35,10 +37,10 @@ function EditorToolbarControllers({
     [locale, vaultPath],
   )
   const linkToolbar = useCallback(
-    (props: React.ComponentProps<typeof LinkToolbar>) => (
-      <LinkToolbar {...props} vaultPath={vaultPath} />
+    (props: Omit<React.ComponentProps<typeof LinkToolbar>, 'onOpenLink'>) => (
+      <LinkToolbar {...props} onOpenLink={onOpenLink} />
     ),
-    [vaultPath],
+    [onOpenLink],
   )
   const floatingUIOptions = { elementProps: { onMouseDownCapture: onToolbarMouseDown } }
 
