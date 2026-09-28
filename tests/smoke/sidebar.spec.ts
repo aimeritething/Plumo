@@ -8,6 +8,7 @@ import {
 
 const sidebar = (page: Page) => page.getByTestId('sidebar')
 const pane = (page: Page) => page.getByTestId('editor-pane')
+const toggle = (page: Page) => page.getByTestId('sidebar-toggle')
 
 /** The editor pane edge to edge: no margin, radius or shadow, and nothing left of it. */
 async function expectPaneFlush(page: Page) {
@@ -16,39 +17,39 @@ async function expectPaneFlush(page: Page) {
   await expect(pane(page)).toHaveCSS('box-shadow', 'none')
 }
 
+// The sidebar slides for 220ms; the sidebar leaving the DOM is the slide's end.
 async function expectFlush(page: Page) {
   await expect(sidebar(page)).toHaveCount(0)
   await expectPaneFlush(page)
   expect((await pane(page).boundingBox())!.x).toBe(0)
+  await expect(toggle(page)).toHaveAccessibleName('Show sidebar')
 }
 
 async function expectExpanded(page: Page) {
   await expect(sidebar(page)).toBeVisible()
   await expect(sidebar(page)).toHaveCSS('border-right', '1px solid rgb(229, 229, 229)')
   await expectPaneFlush(page)
+  // Settled: the sidebar is at the window's left edge and the pane starts at its right edge.
+  await expect.poll(async () => (await sidebar(page).boundingBox())!.x).toBe(0)
   const sidebarBox = (await sidebar(page).boundingBox())!
-  expect((await pane(page).boundingBox())!.x).toBe(sidebarBox.x + sidebarBox.width)
-  await expect(page.getByTestId('collapsed-chrome')).toHaveCount(0)
+  await expect.poll(async () => (await pane(page).boundingBox())!.x).toBe(sidebarBox.width)
+  await expect(toggle(page)).toHaveAccessibleName('Hide sidebar')
 }
 
-test('⌘[ toggles; collapsed, the editor is flush and the sidebar icon follows the traffic lights in the tab bar', async ({ page }) => {
+test('⌘[ toggles; collapsed, the editor is flush and the sidebar icon follows the traffic lights over the tab bar', async ({ page }) => {
   const errors = watchForErrors(page)
   await openWelcome(page)
 
   // A lone Document collapses the sidebar on open.
   await expectFlush(page)
   const tabBar = page.getByTestId('tab-bar')
-  const chrome = tabBar.getByTestId('collapsed-chrome')
-  const lights = chrome.getByTestId('traffic-lights')
-  const show = chrome.getByRole('button', { name: 'Show sidebar' })
+  const show = page.getByRole('button', { name: 'Show sidebar' })
   await expect(show).toBeVisible()
-  const lightsBox = (await lights.boundingBox())!
   const showBox = (await show.boundingBox())!
   const tabBox = (await page.getByRole('tab', { name: 'Welcome.md' }).boundingBox())!
-  expect(lightsBox.x).toBe(0)
-  expect(lightsBox.x + lightsBox.width).toBeLessThanOrEqual(showBox.x)
-  // The icon sits at x 82 in both states; the first Tab follows at 120.
+  // The icon sits at x 82 in both states, centred on the 52px row; the first Tab follows at 120.
   expect(showBox.x).toBe(82)
+  expect(showBox.y).toBe(14)
   expect(tabBox.x).toBe(120)
   await expect(tabBar).toHaveCSS('height', '52px')
   expect((await tabBar.boundingBox())!.y).toBe(0)
@@ -56,8 +57,8 @@ test('⌘[ toggles; collapsed, the editor is flush and the sidebar icon follows 
   await show.hover()
   const tooltip = page.getByRole('tooltip')
   await expect(tooltip).toHaveText('Show sidebar ⌘[')
-  await expect(tooltip.locator('kbd')).toHaveText('⌘[')
-  await expect(tooltip.locator('kbd')).toHaveCSS('font-family', /JetBrains Mono/)
+  await expect(tooltip.locator('kbd')).toHaveText(['⌘', '['])
+  await expect(tooltip.locator('kbd').first()).toHaveCSS('font-family', /JetBrains Mono/)
 
   await page.keyboard.press('Meta+BracketLeft')
   await expectExpanded(page)
@@ -66,17 +67,18 @@ test('⌘[ toggles; collapsed, the editor is flush and the sidebar icon follows 
   await expect(top).toHaveCSS('height', '52px')
   expect((await top.boundingBox())!.y).toBe(0)
   expect((await tabBar.boundingBox())!.y).toBe(0)
-  const hide = sidebar(page).getByRole('button', { name: 'Hide sidebar' })
+  const hide = page.getByRole('button', { name: 'Hide sidebar' })
   await expect(hide).toBeVisible()
   expect((await hide.boundingBox())!.x).toBe(82)
+  expect((await hide.boundingBox())!.y).toBe(14)
 
   await page.keyboard.press('Meta+BracketLeft')
   await expectFlush(page)
 
   // The icon works both ways.
-  await chrome.getByRole('button', { name: 'Show sidebar' }).click()
+  await page.getByRole('button', { name: 'Show sidebar' }).click()
   await expectExpanded(page)
-  await sidebar(page).getByRole('button', { name: 'Hide sidebar' }).click()
+  await page.getByRole('button', { name: 'Hide sidebar' }).click()
   await expectFlush(page)
 
   // View → Toggle Sidebar reaches the same handler. It is dispatched as the
@@ -98,7 +100,7 @@ test('the empty editor keeps the way back while collapsed', async ({ page }) => 
 
   await expect(page.getByTestId('editor-empty-state')).toBeVisible()
   await expectFlush(page)
-  await pane(page).getByRole('button', { name: 'Show sidebar' }).click()
+  await page.getByRole('button', { name: 'Show sidebar' }).click()
   await expectExpanded(page)
 })
 

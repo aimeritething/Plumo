@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { TooltipProvider } from '@/ui/tooltip'
-import { CollapsedChrome, SidebarToggle } from './sidebar-toggle'
+import { SidebarToggle } from './sidebar-toggle'
 
 function renderWithTooltips(ui: React.ReactElement) {
   return render(<TooltipProvider>{ui}</TooltipProvider>)
@@ -31,18 +31,5 @@ describe('SidebarToggle', () => {
     expect(await screen.findByRole('tooltip')).toHaveTextContent('Show sidebar ⌘[')
     fireEvent.click(button)
     expect(onToggle).toHaveBeenCalledTimes(1)
-  })
-})
-
-describe('CollapsedChrome', () => {
-  it('leaves room for the traffic lights and puts the sidebar icon right after them', () => {
-    renderWithTooltips(<CollapsedChrome onShowSidebar={vi.fn()} />)
-
-    const chrome = screen.getByTestId('collapsed-chrome')
-    const lights = screen.getByTestId('traffic-lights')
-    const button = screen.getByRole('button', { name: 'Show sidebar' })
-    expect(chrome).toContainElement(lights)
-    expect(chrome).toContainElement(button)
-    expect(lights.compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 })

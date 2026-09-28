@@ -1,52 +1,60 @@
 import { useCallback, useMemo, useState } from 'react'
 import { clampSidebarWidth, DEFAULT_SESSION_SIDEBAR, type SessionSidebar, type SidebarSection } from '@/session/session-schema'
 
+/** The sidebar's facts, and whether the last change to `collapsed` slides there or snaps. */
+interface SidebarState {
+  sidebar: SessionSidebar
+  slides: boolean
+}
+
 /**
  * The sidebar's persisted facts: whether it is collapsed, how wide it is when
  * shown, and which of its sections (Pinned, the Explorer) are folded away
  * under their label. All live in the Session's `sidebar` and come back on restore. Only the end states are held here; the transition
- * between them is the stylesheet's.
+ * between them is the stylesheet's. `slides` says whether the last change
+ * slides (a toggle, a collapse) or snaps (a restored Session, a resize); a
+ * collapse that changes nothing leaves it as it was.
  */
 export function useSidebar() {
-  const [sidebar, setSidebar] = useState<SessionSidebar>(DEFAULT_SESSION_SIDEBAR)
+  const [{ sidebar, slides }, setState] = useState<SidebarState>({ sidebar: DEFAULT_SESSION_SIDEBAR, slides: false })
 
   const toggle = useCallback(() => {
-    setSidebar((prev) => ({ ...prev, collapsed: !prev.collapsed }))
+    setState((prev) => ({ sidebar: { ...prev.sidebar, collapsed: !prev.sidebar.collapsed }, slides: true }))
   }, [])
 
   /** Opening a Document with no Folder open collapses the sidebar; a second collapse changes nothing. */
   const collapse = useCallback(() => {
-    setSidebar((prev) => (prev.collapsed ? prev : { ...prev, collapsed: true }))
+    setState((prev) => (prev.sidebar.collapsed ? prev : { sidebar: { ...prev.sidebar, collapsed: true }, slides: true }))
   }, [])
 
   const setWidth = useCallback((width: number) => {
-    setSidebar((prev) => {
+    setState((prev) => {
       const next = clampSidebarWidth(width)
-      return next === prev.width ? prev : { ...prev, width: next }
+      return next === prev.sidebar.width ? prev : { sidebar: { ...prev.sidebar, width: next }, slides: false }
     })
   }, [])
 
   /** A section's label: folds the section away, or opens it again. */
   const toggleSection = useCallback((section: SidebarSection) => {
-    setSidebar((prev) => {
-      const folded = prev.collapsedSections ?? []
+    setState((prev) => {
+      const folded = prev.sidebar.collapsedSections ?? []
       const collapsedSections = folded.includes(section) ? folded.filter((each) => each !== section) : [...folded, section]
-      return { ...prev, collapsedSections }
+      return { ...prev, sidebar: { ...prev.sidebar, collapsedSections } }
     })
   }, [])
 
   /** Opens a folded section; an open one stays as it is. */
   const openSection = useCallback((section: SidebarSection) => {
-    setSidebar((prev) => {
-      const folded = prev.collapsedSections ?? []
-      return folded.includes(section) ? { ...prev, collapsedSections: folded.filter((each) => each !== section) } : prev
+    setState((prev) => {
+      const folded = prev.sidebar.collapsedSections ?? []
+      return folded.includes(section) ? { ...prev, sidebar: { ...prev.sidebar, collapsedSections: folded.filter((each) => each !== section) } } : prev
     })
   }, [])
 
   const restore = useCallback((restored: SessionSidebar) => {
     const { collapsed, width, collapsedSections } = restored
-    setSidebar({ collapsed, width: clampSidebarWidth(width), ...(collapsedSections?.length ? { collapsedSections } : {}) })
+    setState({ sidebar: { collapsed, width: clampSidebarWidth(width), ...(collapsedSections?.length ? { collapsedSections } : {}) }, slides: false })
   }, [])
 
-  return useMemo(() => ({ sidebar, toggle, collapse, setWidth, toggleSection, openSection, restore }), [collapse, openSection, restore, setWidth, sidebar, toggle, toggleSection])
+  return useMemo(() => ({ sidebar, slides, toggle, collapse, setWidth, toggleSection, openSection, restore }), [collapse, openSection, restore, setWidth, sidebar, slides, toggle, toggleSection])
 }

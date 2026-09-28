@@ -84,23 +84,13 @@ describe('TabBar', () => {
     expect(screen.getByRole('tab', { name: 'a.md' }).lastElementChild).toBe(close)
   })
 
-  it('with the sidebar collapsed, seats the traffic lights and the sidebar icon before the first tab', () => {
-    const onShowSidebar = vi.fn()
-    render(
-      <TabBar tabs={tabs} activeTabPath="/n/a.md" onActivate={vi.fn()} onClose={vi.fn()} sidebarCollapsed onShowSidebar={onShowSidebar} />,
-    )
+  it('with the sidebar collapsed, leaves the traffic lights and the sidebar icon their room before the first tab', () => {
+    const { rerender } = render(<TabBar tabs={tabs} activeTabPath="/n/a.md" onActivate={vi.fn()} onClose={vi.fn()} sidebarCollapsed />)
 
     const bar = screen.getByTestId('tab-bar')
-    const chrome = screen.getByTestId('collapsed-chrome')
-    expect(bar).toContainElement(chrome)
-    expect(chrome.compareDocumentPosition(screen.getByRole('tab', { name: 'a.md' })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: 'Show sidebar' }))
-    expect(onShowSidebar).toHaveBeenCalledTimes(1)
-  })
+    expect(bar).toHaveAttribute('data-collapsed')
 
-  it('carries no chrome while the sidebar is shown', () => {
-    render(<TabBar tabs={tabs} activeTabPath="/n/a.md" onActivate={vi.fn()} onClose={vi.fn()} sidebarCollapsed={false} onShowSidebar={vi.fn()} />)
-
-    expect(screen.queryByTestId('collapsed-chrome')).toBeNull()
+    rerender(<TabBar tabs={tabs} activeTabPath="/n/a.md" onActivate={vi.fn()} onClose={vi.fn()} sidebarCollapsed={false} />)
+    expect(bar).not.toHaveAttribute('data-collapsed')
   })
 })

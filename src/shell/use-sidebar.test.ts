@@ -21,6 +21,23 @@ describe('useSidebar', () => {
     expect(result.current.sidebar.collapsed).toBe(true)
   })
 
+  it('slides on a toggle or a collapse, and snaps on a restore, a resize, or a collapse that changes nothing', () => {
+    const { result } = renderHook(() => useSidebar())
+    expect(result.current.slides).toBe(false)
+
+    act(() => result.current.toggle())
+    expect(result.current.slides).toBe(true)
+    act(() => result.current.restore({ collapsed: true, width: 260 }))
+    expect(result.current.slides).toBe(false)
+    act(() => result.current.collapse())
+    expect(result.current.slides).toBe(false)
+    act(() => result.current.toggle())
+    act(() => result.current.setWidth(320))
+    expect(result.current.slides).toBe(false)
+    act(() => result.current.collapse())
+    expect(result.current.slides).toBe(true)
+  })
+
   it('keeps a dragged width inside the sidebar range', () => {
     const { result } = renderHook(() => useSidebar())
 

@@ -13,6 +13,7 @@ import { buildExplorerTree, documentRoot } from '@/folder/explorer'
 import { findByNotePath } from '@/lib/note-path-identity'
 import { isWithinPrefix } from '@/folder/folder-action-utils'
 import { Sidebar } from '@/shell/sidebar'
+import { SidebarToggle } from '@/shell/sidebar-toggle'
 import { useAppearance } from '@/shell/use-appearance'
 import { WriteFailureDialog } from '@/editor/write-failure-dialog'
 import { dispatchAppCommand, isAppCommandId } from '@/shell/app-command-dispatcher'
@@ -100,7 +101,7 @@ export default function App() {
     restoreOpenEditors,
   } = useNoteTabs(folder, folderState.listsFile)
   const appearance = useAppearance()
-  const { sidebar, toggle: toggleSidebar, collapse: collapseSidebar, setWidth: setSidebarWidth, toggleSection: toggleSidebarSection, openSection: openSidebarSection, restore: restoreSidebar } = useSidebar()
+  const { sidebar, slides: sidebarSlides, toggle: toggleSidebar, collapse: collapseSidebar, setWidth: setSidebarWidth, toggleSection: toggleSidebarSection, openSection: openSidebarSection, restore: restoreSidebar } = useSidebar()
   const pinned = usePinned(folder, folderState.files)
   const { restored } = useSession({
     folder,
@@ -515,9 +516,13 @@ export default function App() {
   // Session's Tab, for a frame before the right state (the window's own
   // background colour is the canvas until then).
   return (
-    <div className="flex h-full w-full bg-surface-app text-text-primary data-restoring:invisible" data-testid="shell" data-restoring={!(restored && finderOpenSettled) || undefined}>
-      {!sidebar.collapsed && (
-      <Sidebar width={sidebar.width} onWidthChange={setSidebarWidth} onToggle={toggleSidebar}>
+    <div
+      className="relative flex h-full w-full bg-surface-app text-text-primary data-restoring:invisible"
+      data-testid="shell"
+      data-restoring={!(restored && finderOpenSettled) || undefined}
+      data-sidebar-slides={sidebarSlides || undefined}
+    >
+      <Sidebar collapsed={sidebar.collapsed} slides={sidebarSlides} width={sidebar.width} onWidthChange={setSidebarWidth}>
         <Pinned
           paths={pinned.paths}
           activeTabPath={activeTabPath}
@@ -544,7 +549,6 @@ export default function App() {
           onExpand={onOpenExplorerSection}
         />
       </Sidebar>
-      )}
       <Editor
         tabs={tabs}
         activeTabPath={activeTabPath}
@@ -570,8 +574,8 @@ export default function App() {
         onCopyPath={onCopyPath}
         themeMode={appearance.themeMode}
         sidebarCollapsed={sidebar.collapsed}
-        onShowSidebar={toggleSidebar}
       />
+      <SidebarToggle collapsed={sidebar.collapsed} onToggle={toggleSidebar} />
       <WriteFailureDialog prompt={writeFailures.prompt} onAnswer={answerPrompt} onDismiss={dismissPrompt} />
       <CommandMenu
         open={commandMenuOpen}

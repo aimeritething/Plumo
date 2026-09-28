@@ -124,9 +124,8 @@ export interface EditorProps {
   onCopyPath?: () => void
   /** The View → Appearance choice, which the toasts at the pane's bottom-right follow. */
   themeMode: ThemeMode
-  /** Collapsed, the pane's tab bar seats the traffic lights and the sidebar icon. */
+  /** Collapsed, the pane's tab bar leaves the traffic lights and the sidebar icon their room. */
   sidebarCollapsed: boolean
-  onShowSidebar: () => void
 }
 
 /** The File menu's commands on the active Tab's file; one left out is greyed in the "…" menu. */
@@ -388,7 +387,7 @@ export const Editor = memo(function Editor(props: EditorProps) {
   const { editor, activeTab, handleEditorChange, imageTabPath, raw, findRequest, requestFind } = useEditorRuntime(props)
   const {
     tabs, activeTabPath, vaultPath, onActivateTab, onCloseTab, writeFailure, onRetryWrite, onDiscardWrite,
-    sidebarCollapsed, onShowSidebar, tabCommands,
+    sidebarCollapsed, tabCommands,
   } = props
   const openTab = tabs.find((tab) => tab.entry.path === activeTabPath) ?? null
   const imageTab = useImageTab({
@@ -409,7 +408,7 @@ export const Editor = memo(function Editor(props: EditorProps) {
     return (
       <div className={PANE_CLASS} data-testid="editor-pane">
         <EditorToaster theme={props.themeMode} />
-        <EmptyEditor hasFolder={Boolean(props.folder)} sidebarCollapsed={sidebarCollapsed} onShowSidebar={onShowSidebar} />
+        <EmptyEditor hasFolder={Boolean(props.folder)} />
       </div>
     )
   }
@@ -430,7 +429,6 @@ export const Editor = memo(function Editor(props: EditorProps) {
         onNewDocument={props.onNewDocument}
         actions={actions}
         sidebarCollapsed={sidebarCollapsed}
-        onShowSidebar={onShowSidebar}
       />
       {/* The two bodies are exclusive: an Image Tab leaves the runtime with no active Document. */}
       {imageTab?.body}

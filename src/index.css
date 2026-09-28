@@ -623,3 +623,17 @@
 @utility focus-ring {
   @apply outline-none ring-1 ring-state-focus-ring;
 }
+
+/* The sidebar's slide: its slot's width and the collapsed tab bar's left
+   inset move on one curve and one duration, so the first Tab rides the
+   sidebar's edge and the pair reads as one motion. A steep ease-out: the
+   sidebar is off the pointer's way in the first frames. Only a toggle
+   slides (the shell's `data-sidebar-slides`); a restored Session and a
+   resize snap. */
+@utility sidebar-slide {
+  :where([data-sidebar-slides]) & {
+    transition-property: width, padding-left;
+    transition-duration: 220ms;
+    transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+  }
+}

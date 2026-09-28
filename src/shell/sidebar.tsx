@@ -1,13 +1,14 @@
-import { useCallback, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent, type ReactNode } from 'react'
+import { useCallback, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent, type ReactNode, type TransitionEvent } from 'react'
 import { clampSidebarWidth } from '@/session/session-schema'
-import { SidebarToggle, TrafficLightsRoom } from './sidebar-toggle'
 
 const KEYBOARD_RESIZE_STEP = 16
 
 interface SidebarProps {
+  collapsed: boolean
+  /** Whether a change of `collapsed` slides (a toggle) or snaps (a restored Session). */
+  slides: boolean
   width: number
   onWidthChange: (width: number) => void
-  onToggle: () => void
   children?: ReactNode
 }
 
@@ -15,40 +16,74 @@ interface SidebarProps {
  * The sidebar: the left of the window's two panes, on its own ground, with a
  * 1px line between it and the editor. Its 52px top row is the tab bar's
  * height, so the traffic lights sit at one y in both states; it drags the
- * window and carries the collapse icon right of the lights. The groups (Pinned,
- * the Explorer) stack below it. Its right edge resizes it; the width
- * (the line included) reaches the Session once the drag ends.
+ * window and leaves the lights and the sidebar icon (the shell's, laid over
+ * it) their room. The groups (Pinned, the Explorer) stack below it. Its right
+ * edge resizes it; the width (the line included) reaches the Session once the
+ * drag ends.
+ *
+ * It sits in a slot whose width is the sidebar's, or 0 collapsed. The slot's
+ * width is what slides; the sidebar keeps its own width and rides the slot's
+ * right edge, so it slides out past the window's left edge rather than being
+ * squeezed. Collapsed, it stays mounted (inert) until the slide is over.
  */
-export function Sidebar({ width, onWidthChange, onToggle, children }: SidebarProps) {
+export function Sidebar({ collapsed, slides, width, onWidthChange, children }: SidebarProps) {
   const { liveWidth, resizerProps } = useEdgeResize(width, onWidthChange)
+  const { mounted, onTransitionEnd } = useSlideOut(collapsed, slides)
   const onClickCapture = useOneOpenPerDoubleClick()
+  const shownWidth = liveWidth ?? width
+  const resizing = liveWidth !== null || undefined
 
   return (
-    <aside
-      className="relative flex min-h-0 flex-none flex-col border-r border-border-default bg-surface-app px-3 pb-2 text-sm leading-normal font-medium text-text-secondary select-none data-resizing:cursor-col-resize"
-      data-testid="sidebar"
-      data-resizing={liveWidth !== null || undefined}
-      style={{ width: liveWidth ?? width }}
-      onClickCapture={onClickCapture}
+    <div
+      className="sidebar-slide flex flex-none justify-end data-resizing:transition-none"
+      data-testid="sidebar-slot"
+      data-resizing={resizing}
+      style={{ width: collapsed ? 0 : shownWidth }}
+      onTransitionEnd={onTransitionEnd}
     >
-      {/* The traffic lights' row; the whole row drags the window, the icon after the lights does not. */}
-      <div className="-mx-3 mb-1 flex h-13 flex-none items-center gap-3" data-testid="sidebar-top" data-tauri-drag-region>
-        <TrafficLightsRoom />
-        <SidebarToggle collapsed={false} onToggle={onToggle} />
-      </div>
-      {children}
-      {/* The drag edge: a 6px hit area over the sidebar's right edge, nothing drawn. */}
-      <div
-        className="absolute inset-y-0 -right-0.75 z-raised w-1.5 cursor-col-resize outline-none focus-visible:bg-state-focus-ring"
-        role="separator"
-        aria-orientation="vertical"
-        aria-label="Resize sidebar"
-        aria-valuenow={width}
-        tabIndex={0}
-        {...resizerProps}
-      />
-    </aside>
+      {mounted && (
+        <aside
+          className="relative flex min-h-0 flex-none flex-col border-r border-border-default bg-surface-app px-3 pb-2 text-sm leading-normal font-medium text-text-secondary select-none data-resizing:cursor-col-resize"
+          data-testid="sidebar"
+          data-resizing={resizing}
+          inert={collapsed}
+          style={{ width: shownWidth }}
+          onClickCapture={onClickCapture}
+        >
+          {/* The traffic lights' row; the whole row drags the window. */}
+          <div className="-mx-3 mb-1 h-13 flex-none" data-testid="sidebar-top" data-tauri-drag-region />
+          {children}
+          {/* The drag edge: a 6px hit area over the sidebar's right edge, nothing drawn. */}
+          <div
+            className="absolute inset-y-0 -right-0.75 z-raised w-1.5 cursor-col-resize outline-none focus-visible:bg-state-focus-ring"
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Resize sidebar"
+            aria-valuenow={width}
+            tabIndex={0}
+            {...resizerProps}
+          />
+        </aside>
+      )}
+    </div>
   )
+}
+
+/**
+ * Whether the sidebar is in the DOM. Shown, it is. A collapse that slides
+ * keeps it until the slot's width transition ends shut; one that snaps (a
+ * restored Session) drops it at once. `shut` is where the slot's last slide
+ * ended, so a slide cut short by the opposite one counts only once that one
+ * ends.
+ */
+function useSlideOut(collapsed: boolean, slides: boolean) {
+  const [shut, setShut] = useState(collapsed)
+
+  const onTransitionEnd = useCallback((event: TransitionEvent<HTMLDivElement>) => {
+    if (event.target === event.currentTarget && event.propertyName === 'width') setShut(collapsed)
+  }, [collapsed])
+
+  return { mounted: !collapsed || (slides && !shut), onTransitionEnd }
 }
 
 /**

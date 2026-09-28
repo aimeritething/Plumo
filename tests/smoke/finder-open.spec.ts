@@ -43,7 +43,7 @@ test('a launch by document with no Folder lands on that Document with the sideba
   await expect(activeTab(page)).toHaveText('Welcome.md')
   await expect(page.locator('.bn-editor h1')).toHaveText('Welcome')
   await expect(page.getByTestId('sidebar')).toHaveCount(0)
-  await expect(page.getByTestId('collapsed-chrome')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Show sidebar' })).toBeVisible()
   expect(await pendingOpenCalls(page)).toBe(1)
   // Drained, never peeked: nothing is left for the next launch.
   expect(await page.evaluate(() => window.__plumoMockVault?.invoke('take_pending_open'))).toEqual([])

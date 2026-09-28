@@ -4,7 +4,6 @@ import type { Tab } from '@/types'
 import { isImageFilePath } from './image-file'
 import { tabParentHints } from './tab-labels'
 import { CloseAffordance } from './close-affordance'
-import { CollapsedChrome } from '@/shell/sidebar-toggle'
 import { APP_COMMAND_DEFINITIONS, APP_COMMAND_IDS } from '@/shell/app-command-catalog'
 import { Button } from '@/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
@@ -20,9 +19,8 @@ export interface TabBarProps {
   onNewDocument?: () => void
   /** The active Tab's own controls, at the row's right end. */
   actions?: ReactNode
-  /** Collapsed, the row seats the traffic lights and the sidebar icon before the first tab. */
+  /** Collapsed, the row leaves the traffic lights and the sidebar icon their room before the first tab. */
   sidebarCollapsed?: boolean
-  onShowSidebar?: () => void
 }
 
 /**
@@ -33,21 +31,21 @@ export interface TabBarProps {
  * lands on it. An Image file's Tab carries the image icon before its name, a
  * Document's nothing; two Tabs with the same name each add their parent
  * folder's name, dimmed. With the sidebar collapsed the editor reaches the
- * window's left edge, so this row is where the traffic lights land and where
- * the sidebar comes back from.
+ * window's left edge, so this row starts 120px in: the traffic lights and the
+ * sidebar icon sit over that room, and the first Tab follows. The inset slides
+ * with the sidebar, so the first Tab rides the sidebar's edge.
  */
-export const TabBar = memo(function TabBar({ tabs, activeTabPath, onActivate, onClose, onNewDocument, actions, sidebarCollapsed = false, onShowSidebar }: TabBarProps) {
+export const TabBar = memo(function TabBar({ tabs, activeTabPath, onActivate, onClose, onNewDocument, actions, sidebarCollapsed = false }: TabBarProps) {
   const hints = useMemo(() => tabParentHints(tabs.map((tab) => tab.entry.path)), [tabs])
   if (tabs.length === 0) return null
 
   return (
     <div
-      className="flex h-13 flex-none items-center gap-1 overflow-hidden pr-4 pl-3 select-none data-collapsed:pl-0"
+      className="sidebar-slide flex h-13 flex-none items-center gap-1 overflow-hidden pr-4 pl-3 select-none data-collapsed:pl-30"
       data-testid="tab-bar"
       data-collapsed={sidebarCollapsed || undefined}
       data-tauri-drag-region
     >
-      {sidebarCollapsed && onShowSidebar && <CollapsedChrome onShowSidebar={onShowSidebar} />}
       <div className="flex min-w-0 flex-initial items-center gap-1 overflow-hidden" role="tablist" aria-label="Tabs">
         {tabs.map(({ entry }) => (
           <TabPill

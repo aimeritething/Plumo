@@ -4,22 +4,53 @@ import { Sidebar } from './sidebar'
 import { ONE_OPEN_PER_DOUBLE_CLICK_PROPS } from './sidebar-row'
 import { TooltipProvider } from '@/ui/tooltip'
 
-function renderSidebar(width: number, onWidthChange = vi.fn(), onToggle = vi.fn()) {
+function renderSidebar(width: number, onWidthChange = vi.fn()) {
   render(
     <TooltipProvider>
-      <Sidebar width={width} onWidthChange={onWidthChange} onToggle={onToggle}><div>rows</div></Sidebar>
+      <Sidebar collapsed={false} slides={false} width={width} onWidthChange={onWidthChange}><div>rows</div></Sidebar>
     </TooltipProvider>,
   )
-  return { onWidthChange, onToggle }
+  return { onWidthChange }
+}
+
+function sidebarAt(collapsed: boolean, slides: boolean) {
+  return <Sidebar collapsed={collapsed} slides={slides} width={260} onWidthChange={vi.fn()}><div>rows</div></Sidebar>
 }
 
 describe('Sidebar', () => {
-  it('is as wide as the Session says and collapses from the icon on its top row', () => {
-    const { onToggle } = renderSidebar(300)
+  it('is as wide as the Session says, and so is its slot', () => {
+    renderSidebar(300)
 
     expect(screen.getByTestId('sidebar').style.width).toBe('300px')
-    fireEvent.click(screen.getByRole('button', { name: 'Hide sidebar' }))
-    expect(onToggle).toHaveBeenCalledTimes(1)
+    expect(screen.getByTestId('sidebar-slot').style.width).toBe('300px')
+  })
+
+  it('slides out: collapsed, its slot closes and it stays, inert, until the slot\'s width transition ends', () => {
+    const { rerender } = render(sidebarAt(false, true))
+
+    rerender(sidebarAt(true, true))
+    const slot = screen.getByTestId('sidebar-slot')
+    expect(slot.style.width).toBe('0px')
+    expect(screen.getByTestId('sidebar')).toHaveAttribute('inert')
+
+    // A row's own transition ending changes nothing; the slot's width does.
+    fireEvent.transitionEnd(screen.getByText('rows'), { propertyName: 'width' })
+    fireEvent.transitionEnd(slot, { propertyName: 'padding-left' })
+    expect(screen.getByTestId('sidebar')).toBeInTheDocument()
+    fireEvent.transitionEnd(slot, { propertyName: 'width' })
+    expect(screen.queryByTestId('sidebar')).toBeNull()
+
+    rerender(sidebarAt(false, true))
+    expect(screen.getByTestId('sidebar')).not.toHaveAttribute('inert')
+    expect(slot.style.width).toBe('260px')
+  })
+
+  it('snaps shut on a collapse that does not slide, as a restored Session', () => {
+    const { rerender } = render(sidebarAt(false, false))
+
+    rerender(sidebarAt(true, false))
+    expect(screen.queryByTestId('sidebar')).toBeNull()
+    expect(screen.getByTestId('sidebar-slot').style.width).toBe('0px')
   })
 
   it('follows the pointer while its edge is dragged and reports the width once at release', () => {
@@ -61,7 +92,7 @@ describe('Sidebar', () => {
       const onOther = vi.fn()
       render(
         <TooltipProvider>
-          <Sidebar width={260} onWidthChange={vi.fn()} onToggle={vi.fn()}>
+          <Sidebar collapsed={false} slides={false} width={260} onWidthChange={vi.fn()}>
             <button type="button" onClick={onOpen} {...ONE_OPEN_PER_DOUBLE_CLICK_PROPS}>opens a Tab</button>
             <button type="button" onClick={onOther}>other</button>
           </Sidebar>
@@ -108,7 +139,7 @@ describe('Sidebar', () => {
       const onCaret = vi.fn()
       render(
         <TooltipProvider>
-          <Sidebar width={260} onWidthChange={vi.fn()} onToggle={vi.fn()}>
+          <Sidebar collapsed={false} slides={false} width={260} onWidthChange={vi.fn()}>
             <div onClick={onRow} {...ONE_OPEN_PER_DOUBLE_CLICK_PROPS}>
               <button type="button" onClick={(event) => { event.stopPropagation(); onCaret() }}>caret</button>
               <span>folder</span>
