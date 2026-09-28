@@ -94,8 +94,6 @@ describe('RawEditorView image drop', () => {
   it('says why a dropped image did not become an Attachment', () => {
     const { props, view } = renderRaw()
     const host = screen.getByTestId('raw-editor-codemirror')
-    // Layout is not there to hit-test, so the drop point is read as the start of line 1.
-    vi.spyOn(view, 'posAtCoords').mockReturnValue(0)
     const heic = new File(['heic'], 'IMG_0001.HEIC', { type: 'image/heic' })
     const drop = new Event('drop', { bubbles: true, cancelable: true })
     Object.assign(drop, { clientX: 10, clientY: 10, dataTransfer: { files: [heic], items: [] } })
@@ -108,5 +106,30 @@ describe('RawEditorView image drop', () => {
       format: 'HEIC',
     } satisfies ImageImportError)
     expect(view.state.doc.toString()).toBe('# Plan\n\nFirst.\n\nSecond.')
+  })
+
+  it('takes a drop out in the gutter or right of a short line, beside the line at that height', async () => {
+    const { view } = renderRaw()
+    const host = screen.getByTestId('raw-editor-codemirror')
+    // jsdom lays nothing out, so the lines are given 20px each from y=100 (line 3 is 140–160).
+    vi.spyOn(view, 'documentTop', 'get').mockReturnValue(100)
+    vi.spyOn(view, 'lineBlockAtHeight').mockImplementation((height) => {
+      const line = view.state.doc.line(Math.min(view.state.doc.lines, Math.max(1, Math.floor(height / 20) + 1)))
+      return { from: line.from, top: (line.number - 1) * 20, height: 20 } as ReturnType<EditorView['lineBlockAtHeight']>
+    })
+    const lineBox = (number: number) => ({ top: 100 + (number - 1) * 20, bottom: 100 + number * 20 })
+    const dropAt = (clientX: number, clientY: number) => {
+      const png = new File(['png'], 'shot.png', { type: 'image/png' })
+      const drop = new Event('drop', { bubbles: true, cancelable: true })
+      Object.assign(drop, { clientX, clientY, dataTransfer: { files: [png], items: [] } })
+      act(() => { host.dispatchEvent(drop) })
+    }
+
+    dropAt(-400, lineBox(3).bottom - 1)
+    await vi.waitFor(() => { expect(view.state.doc.lines).toBeGreaterThan(5) })
+    expect(view.state.doc.toString()).toMatch(/^# Plan\n\nFirst\.\n\n!\[\]\(data:image\/png;base64,[^)]+\)\n\nSecond\.$/u)
+
+    dropAt(5000, lineBox(1).top + 1)
+    await vi.waitFor(() => { expect(view.state.doc.toString()).toMatch(/^!\[\]\(data:image\/png;base64,[^)]+\)\n\n# Plan\n/u) })
   })
 })

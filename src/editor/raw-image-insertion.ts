@@ -11,19 +11,20 @@ export type RawImageDropTarget = {
 }
 
 type RawImageInsertion = { from: number; insert: string }
-type RawImageView = Pick<EditorView, 'documentTop' | 'lineBlockAt' | 'posAtCoords' | 'state'>
+type RawImageView = Pick<EditorView, 'documentTop' | 'lineBlockAtHeight' | 'state'>
 
 /**
- * Where images dropped at a point go: beside the line under the pointer,
- * before it in its upper half and after it in its lower half, the rule Rich
- * mode follows for the block under the pointer. A wrapped line counts whole.
+ * Where images dropped at a point go: beside the line at the pointer's
+ * height, before it in its upper half and after it in its lower half, the
+ * rule Rich mode follows for the block under the pointer. Only the height is
+ * read, so a point in the gutter or beside a short line finds the line there;
+ * above the first line or below the last, that line. A wrapped line counts whole.
  */
 export function rawImageDropTargetAt(view: RawImageView, point: ClientPoint): RawImageDropTarget {
-  const pos = view.posAtCoords(point, false)
-  const block = view.lineBlockAt(pos)
+  const block = view.lineBlockAtHeight(point.y - view.documentTop)
   const middle = view.documentTop + block.top + block.height / 2
   return {
-    line: view.state.doc.lineAt(pos).number,
+    line: view.state.doc.lineAt(block.from).number,
     placement: point.y < middle ? 'before' : 'after',
   }
 }

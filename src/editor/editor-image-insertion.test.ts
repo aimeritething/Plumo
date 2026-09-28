@@ -91,6 +91,38 @@ describe('imageDropTargetAt', () => {
     expect(imageDropTargetAt(editor, { x: 900, y: 105 })).toEqual({ blockId: 'a', placement: 'before' })
   })
 
+  it('reads a drop out in the left or right margin as one moved sideways onto the text column at the same height', () => {
+    const editor = mountEditorDom()
+    const editorElement = editor.domElement as HTMLElement
+    // The real editor's side padding, where the side menu sits and no block is hit.
+    editorElement.style.padding = '0 56px'
+    // b holds a nested block, indented 24px, on its second 20px row (160–180).
+    const nested = document.createElement('div')
+    nested.dataset.nodeType = 'blockContainer'
+    nested.dataset.id = 'b-child'
+    vi.spyOn(nested, 'getBoundingClientRect').mockReturnValue(rect(160, 20, 80, 464))
+    const blocks = Array.from(editorElement.children) as HTMLElement[]
+    blocks[1].appendChild(nested)
+    Object.defineProperty(document, 'elementsFromPoint', {
+      configurable: true,
+      value: (x: number, y: number) => {
+        const hit = x > 56 && x < 544 && [nested, ...blocks].find((block) => {
+          const { top, bottom, left } = block.getBoundingClientRect()
+          return y >= top && y < bottom && x >= left
+        })
+        return hit ? [hit, editorElement] : [editorElement]
+      },
+    })
+
+    expect(imageDropTargetAt(editor, { x: -300, y: 105 })).toEqual({ blockId: 'a', placement: 'before' })
+    expect(imageDropTargetAt(editor, { x: 20, y: 135 })).toEqual({ blockId: 'a', placement: 'after' })
+    expect(imageDropTargetAt(editor, { x: 1200, y: 165 })).toEqual({ blockId: 'b-child', placement: 'before' })
+    expect(imageDropTargetAt(editor, { x: 580, y: 175 })).toEqual({ blockId: 'b-child', placement: 'after' })
+    // On the left the nearest point of the column is left of the nested block's indent.
+    expect(imageDropTargetAt(editor, { x: -300, y: 175 })).toEqual({ blockId: 'b', placement: 'after' })
+    expect(imageDropTargetAt(editor, { x: 1200, y: 215 })).toEqual({ blockId: 'c', placement: 'after' })
+  })
+
   it('puts a drop below the last block after it', () => {
     const editor = mountEditorDom()
 

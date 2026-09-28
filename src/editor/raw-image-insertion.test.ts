@@ -81,9 +81,8 @@ describe('rawImageDropTargetAt', () => {
     return {
       documentTop: 50,
       state: { doc },
-      posAtCoords: vi.fn(({ y }: { x: number; y: number }) => doc.line(Math.min(3, Math.max(1, Math.floor((y - 50) / 20) + 1))).from),
-      lineBlockAt: vi.fn((pos: number) => {
-        const line = doc.lineAt(pos)
+      lineBlockAtHeight: vi.fn((height: number) => {
+        const line = doc.line(Math.min(3, Math.max(1, Math.floor(height / 20) + 1)))
         return { from: line.from, to: line.to, top: (line.number - 1) * 20, height: 20 }
       }),
     } as unknown as Parameters<typeof rawImageDropTargetAt>[0]
@@ -98,6 +97,20 @@ describe('rawImageDropTargetAt', () => {
 
   it('reads a point below the last line as after it', () => {
     expect(rawImageDropTargetAt(stubView(), { x: 10, y: 400 })).toEqual({ line: 3, placement: 'after' })
+  })
+
+  it('reads a point out in the gutter or beside a short line by its height alone, as one on the line there', () => {
+    const view = new EditorView({ state: EditorState.create({ doc: 'one\n\nthree\nfour' }), parent: document.body })
+    const lineAt = (number: number) => {
+      const block = view.lineBlockAt(view.state.doc.line(number).from)
+      return { top: view.documentTop + block.top, bottom: view.documentTop + block.bottom }
+    }
+
+    expect(rawImageDropTargetAt(view, { x: -400, y: lineAt(3).top + 1 })).toEqual({ line: 3, placement: 'before' })
+    expect(rawImageDropTargetAt(view, { x: 5000, y: lineAt(3).bottom - 1 })).toEqual({ line: 3, placement: 'after' })
+    expect(rawImageDropTargetAt(view, { x: -400, y: lineAt(4).bottom - 1 })).toEqual({ line: 4, placement: 'after' })
+    expect(rawImageDropTargetAt(view, { x: 5000, y: lineAt(1).top + 1 })).toEqual({ line: 1, placement: 'before' })
+    view.destroy()
   })
 })
 

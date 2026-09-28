@@ -250,6 +250,29 @@ describe('SideMenu', () => {
     expect(document.querySelector('style[data-plumo-block-reorder]')).not.toBeInTheDocument()
   })
 
+  it('shows the drop indicator beside the block at the pointer\'s height while the pointer is out in either margin', () => {
+    const { draggedBlock, dragHandle, targetBlock } = renderPointerReorderFixture()
+    const editorElement = mockEditor.domElement as HTMLElement
+    // The editor (x 100–600) has side padding where no block is hit: the text column is x 120–540.
+    editorElement.style.padding = '0 60px 0 20px'
+    const targetElement = editorElement.querySelector(`[data-id="${targetBlock.id}"]`)
+    document.elementsFromPoint = vi.fn((x: number, y: number) => (
+      x >= 120 && x <= 540 && y >= 120 && y < 160 ? [targetElement!, editorElement] : [editorElement]
+    ))
+
+    dispatchPointerEvent(requireParentElement(dragHandle), 'pointerdown', { button: 0, clientX: 140, clientY: 90 })
+    dispatchPointerEvent(document, 'pointermove', { clientX: 20, clientY: 130 })
+
+    const indicator = screen.getByTestId('editor-block-drop-indicator')
+    expect(indicator).toHaveStyle({ display: 'block', top: '119px' })
+
+    dispatchPointerEvent(document, 'pointermove', { clientX: 1200, clientY: 150 })
+    expect(indicator).toHaveStyle({ display: 'block', top: '159px' })
+
+    dispatchPointerEvent(document, 'pointerup', { clientX: 1200, clientY: 150 })
+    expect(mockEditor.insertBlocks).toHaveBeenCalledWith([draggedBlock], targetBlock.id, 'after')
+  })
+
   it('carries a code block language control into the drag preview', () => {
     const { draggedElement, dragHandle } = renderPointerReorderFixture()
     const container = document.createElement('div')

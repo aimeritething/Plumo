@@ -815,3 +815,177 @@ describe('useImageDrop — Tauri native drag-drop', () => {
     expect(() => unmount()).not.toThrow()
   })
 })
+
+describe('useImageDrop — the margins beside the text column', () => {
+  let area: HTMLDivElement
+  let editor: HTMLDivElement
+  let findBar: HTMLDivElement
+
+  function box(element: HTMLElement, left: number, top: number, right: number, bottom: number) {
+    vi.spyOn(element, 'getBoundingClientRect').mockReturnValue({
+      top, bottom, left, right, height: bottom - top, width: right - left, x: left, y: top, toJSON: () => ({}),
+    })
+  }
+
+  /**
+   * The editor pane's document area, as a wide window lays it out: the scroll
+   * area at x 200–1600, y 100–700, the find bar across its top (y 100–140) and
+   * the text column at x 500–1300 holding the editor. Left of x 200 is the
+   * sidebar and above y 100 the tab bar; neither is inside the scroll area.
+   */
+  beforeEach(() => {
+    tauriMode = true
+    nativeDropUnlisten = () => {
+      capturedDragDropHandler = undefined
+    }
+    capturedDragDropHandler = undefined
+    area = document.createElement('div')
+    area.className = 'editor-scroll-area'
+    findBar = document.createElement('div')
+    const column = document.createElement('div')
+    editor = document.createElement('div')
+    column.appendChild(editor)
+    area.append(findBar, column)
+    document.body.appendChild(area)
+    box(area, 200, 100, 1600, 700)
+    box(findBar, 200, 100, 1600, 140)
+    box(column, 500, 140, 1300, 700)
+    box(editor, 500, 140, 1300, 700)
+    Object.defineProperty(document, 'elementFromPoint', {
+      configurable: true,
+      value: (x: number, y: number) => {
+        if (x < 200 || y < 100) return document.body
+        if (y < 140) return findBar
+        return x >= 500 && x <= 1300 ? editor : area
+      },
+    })
+  })
+
+  afterEach(() => {
+    tauriMode = false
+    capturedDragDropHandler = undefined
+    area.remove()
+    Reflect.deleteProperty(document, 'elementFromPoint')
+  })
+
+  async function renderOverEditor(opts: DropOptions = {}) {
+    const rendered = renderImageDropOver(editor, opts)
+    await waitFor(() => { expect(capturedDragDropHandler).toBeDefined() })
+    return rendered
+  }
+
+  function emit(payload: unknown) {
+    act(() => { capturedDragDropHandler!({ payload }) })
+  }
+
+  it('takes a release in the empty margin left or right of the text column, and asks for the place at that point', async () => {
+    const dropTargetAt = vi.fn((point: DropPoint) => ({ at: point }))
+    const onImagesDropped = vi.fn()
+    const { invoke, convertFileSrc } = await import('@tauri-apps/api/core')
+    vi.mocked(invoke).mockReset()
+    vi.mocked(invoke).mockResolvedValue('/vault/attachments/photo.png')
+    vi.mocked(convertFileSrc).mockReturnValue('asset://localhost/vault/attachments/photo.png')
+    await renderOverEditor({ dropTargetAt, onImagesDropped, vaultPath: '/vault' })
+
+    emit({ type: 'drop', paths: ['/tmp/photo.png'], position: { x: 260, y: 320 } } satisfies NativeDropPayload)
+    emit({ type: 'drop', paths: ['/tmp/photo.png'], position: { x: 1540, y: 480 } } satisfies NativeDropPayload)
+
+    expect(dropTargetAt.mock.calls).toEqual([[{ x: 260, y: 320 }], [{ x: 1540, y: 480 }]])
+    await waitFor(() => { expect(onImagesDropped).toHaveBeenCalledTimes(2) })
+    expect(onImagesDropped.mock.calls.map(([, target]) => target)).toEqual([
+      { at: { x: 260, y: 320 } },
+      { at: { x: 1540, y: 480 } },
+    ])
+  })
+
+  it('shows the drop affordance while the pointer is in either margin, and hides it over the find bar, the sidebar and the tab bar', async () => {
+    const { result } = await renderOverEditor({ onImagesDropped: vi.fn(), vaultPath: '/vault' })
+
+    emit({ type: 'enter', paths: ['/tmp/photo.png'], position: { x: 260, y: 320 } } satisfies NativeDropPayload)
+    expect(result.current.isDragOver).toBe(true)
+
+    emit({ type: 'over', position: { x: 1540, y: 320 } })
+    expect(result.current.isDragOver).toBe(true)
+
+    emit({ type: 'over', position: { x: 260, y: 120 } })
+    expect(result.current.isDragOver).toBe(false)
+
+    emit({ type: 'over', position: { x: 800, y: 320 } })
+    expect(result.current.isDragOver).toBe(true)
+
+    emit({ type: 'over', position: { x: 120, y: 320 } })
+    expect(result.current.isDragOver).toBe(false)
+
+    emit({ type: 'over', position: { x: 800, y: 60 } })
+    expect(result.current.isDragOver).toBe(false)
+  })
+
+  it('still takes nothing from a release over the sidebar, the tab bar, the find bar or a dialog laid over a margin', async () => {
+    const dropTargetAt = vi.fn((point: DropPoint) => ({ at: point }))
+    const onImagesDropped = vi.fn()
+    const { invoke } = await import('@tauri-apps/api/core')
+    vi.mocked(invoke).mockReset()
+    await renderOverEditor({ dropTargetAt, onImagesDropped, vaultPath: '/vault' })
+
+    emit({ type: 'drop', paths: ['/tmp/photo.png'], position: { x: 120, y: 320 } } satisfies NativeDropPayload)
+    emit({ type: 'drop', paths: ['/tmp/photo.png'], position: { x: 800, y: 60 } } satisfies NativeDropPayload)
+    emit({ type: 'drop', paths: ['/tmp/photo.png'], position: { x: 1540, y: 120 } } satisfies NativeDropPayload)
+    const dialog = document.createElement('div')
+    document.body.appendChild(dialog)
+    Object.defineProperty(document, 'elementFromPoint', { configurable: true, value: () => dialog })
+    emit({ type: 'drop', paths: ['/tmp/photo.png'], position: { x: 1540, y: 320 } } satisfies NativeDropPayload)
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    dialog.remove()
+
+    expect(dropTargetAt).not.toHaveBeenCalled()
+    expect(invoke).not.toHaveBeenCalled()
+    expect(onImagesDropped).not.toHaveBeenCalled()
+  })
+
+  it('takes an HTML5 image drop in a margin, and refuses one over the find bar', async () => {
+    const dropTargetAt = vi.fn((point: DropPoint) => ({ at: point }))
+    const onImagesDropped = vi.fn()
+    const { invoke, convertFileSrc } = await import('@tauri-apps/api/core')
+    vi.mocked(invoke).mockReset()
+    vi.mocked(invoke).mockResolvedValue('/vault/attachments/photo.png')
+    vi.mocked(convertFileSrc).mockReturnValue('asset://localhost/vault/attachments/photo.png')
+    const { result } = await renderOverEditor({ dropTargetAt, onImagesDropped, vaultPath: '/vault' })
+    const photo = () => new File(['png'], 'photo.png', { type: 'image/png' })
+
+    const overFindBar = createDragEvent('dragover', [photo()], { clientX: 260, clientY: 120 })
+    act(() => { findBar.dispatchEvent(overFindBar) })
+    expect(overFindBar.defaultPrevented).toBe(false)
+    expect(result.current.isDragOver).toBe(false)
+
+    const overMargin = createDragEvent('dragover', [photo()], { clientX: 260, clientY: 320 })
+    act(() => { area.dispatchEvent(overMargin) })
+    expect(overMargin.defaultPrevented).toBe(true)
+    expect(result.current.isDragOver).toBe(true)
+
+    act(() => { area.dispatchEvent(createDragEvent('drop', [photo()], { clientX: 260, clientY: 320 })) })
+
+    expect(dropTargetAt).toHaveBeenCalledWith({ x: 260, y: 320 })
+    await waitFor(() => { expect(onImagesDropped).toHaveBeenCalledOnce() })
+  })
+
+  it('stops the synthetic copy BlockNote re-dispatches into the editor, so a drag near it is read once, where it really is', async () => {
+    const dropTargetAt = vi.fn((point: DropPoint) => ({ at: point }))
+    const editorDrop = vi.fn()
+    const editorDragOver = vi.fn()
+    const { result } = await renderOverEditor({ dropTargetAt, onImagesDropped: vi.fn(), vaultPath: '/vault' })
+    editor.addEventListener('drop', editorDrop)
+    editor.addEventListener('dragover', editorDragOver)
+    const synthetic = (type: string) => Object.assign(
+      createDragEvent(type, [new File(['png'], 'photo.png', { type: 'image/png' })], { clientX: 600, clientY: 150 }),
+      { synthetic: true },
+    )
+
+    act(() => { editor.dispatchEvent(synthetic('dragover')) })
+    act(() => { editor.dispatchEvent(synthetic('drop')) })
+
+    expect(result.current.isDragOver).toBe(false)
+    expect(editorDragOver).not.toHaveBeenCalled()
+    expect(editorDrop).not.toHaveBeenCalled()
+    expect(dropTargetAt).not.toHaveBeenCalled()
+  })
+})

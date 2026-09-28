@@ -305,21 +305,54 @@ function insertDroppedImages<Target>({
 }
 
 /**
- * Whether a point is over the editor itself: inside its box, and with nothing
- * laid over it there (a dialog, the tab bar over a scrolled pane). The drop
- * affordance is `pointer-events: none`, so it never hides the editor from this.
+ * The editor pane's document area around an editor, Rich or Raw: the scroll
+ * area it sits in, the empty margins beside a centred text column included.
+ * An editor mounted anywhere else is its own area.
  */
-function isPointOverElement(element: HTMLElement | null, point: ClientPoint): boolean {
+function editorDropArea(editor: HTMLElement): HTMLElement {
+  const area = editor.closest('.editor-scroll-area')
+  return area instanceof HTMLElement ? area : editor
+}
+
+/**
+ * Whether an element under the pointer is the editor or the empty ground
+ * around it in its document area (the area itself, the column that centres
+ * the editor), rather than the find bar above it or anything laid over it
+ * (a dialog, a menu). The drop affordance is `pointer-events: none`, so it
+ * is never what is under the pointer.
+ */
+function isEditorOrItsMargin(editor: HTMLElement, element: Node | null): boolean {
   if (!element) return false
 
-  const rect = element.getBoundingClientRect()
+  const area = editorDropArea(editor)
+  return editor.contains(element) || (area.contains(element) && element.contains(editor))
+}
+
+/**
+ * BlockNote's side menu re-dispatches a drag event that lands within 250px of
+ * its editor into the editor, as a `synthetic` copy with the point pulled
+ * inside. The real event has already crossed the document area and been read
+ * by the rule above, so a copy carrying an image is stopped: neither this
+ * hook nor the editor takes it a second time, or from over the find bar.
+ */
+function stopBlockNoteSyntheticCopy(event: DragEvent): boolean {
+  if (Reflect.get(event, 'synthetic') !== true) return false
+
+  event.stopImmediatePropagation()
+  return true
+}
+
+/** Whether a point in the window is over the editor or the margins of its document area. */
+function isPointOverEditor(editor: HTMLElement | null, point: ClientPoint): boolean {
+  if (!editor) return false
+
+  const rect = editorDropArea(editor).getBoundingClientRect()
   const inside = point.x >= rect.left && point.x <= rect.right && point.y >= rect.top && point.y <= rect.bottom
   if (!inside) return false
 
-  const { ownerDocument } = element
+  const { ownerDocument } = editor
   if (typeof ownerDocument.elementFromPoint !== 'function') return true
-  const hit = ownerDocument.elementFromPoint(point.x, point.y)
-  return hit !== null && element.contains(hit)
+  return isEditorOrItsMargin(editor, ownerDocument.elementFromPoint(point.x, point.y))
 }
 
 function dropNativeImages<Target>(
@@ -330,7 +363,7 @@ function dropNativeImages<Target>(
   const { container, dropTargetAt, onImageImportError, onImagesDropped, vaultPath } = request
   const imagePaths = paths.filter((path) => isImageFilePath(path) || isUnsupportedHeicPath(path))
   if (imagePaths.length === 0 || !dropTargetAt || !onImagesDropped) return
-  if (!isPointOverElement(container, point)) return
+  if (!isPointOverEditor(container, point)) return
 
   const target = dropTargetAt(point)
   if (target === null) return
@@ -348,11 +381,11 @@ function handleNativeDropEvent<Target>(request: NativeDropEventRequest<Target>):
   // says where the pointer is, and the affordance shows while that is the editor.
   if (payload.type === 'enter') {
     imageDragRef.current = payload.paths.some(isImageFilePath)
-    setIsDragOver(imageDragRef.current && isPointOverElement(container, dragDropClientPoint(payload.position)))
+    setIsDragOver(imageDragRef.current && isPointOverEditor(container, dragDropClientPoint(payload.position)))
     return
   }
   if (payload.type === 'over') {
-    if (imageDragRef.current) setIsDragOver(isPointOverElement(container, dragDropClientPoint(payload.position)))
+    if (imageDragRef.current) setIsDragOver(isPointOverEditor(container, dragDropClientPoint(payload.position)))
     return
   }
   imageDragRef.current = false
@@ -361,7 +394,10 @@ function handleNativeDropEvent<Target>(request: NativeDropEventRequest<Target>):
 }
 
 interface UseImageDropOptions<Target> {
-  /** The editor: a drop is taken only when it is released over this element. */
+  /**
+   * The editor: a drop is taken only when it is released over it, or over the
+   * empty margins of the document area it sits in (its `.editor-scroll-area`).
+   */
   containerRef: RefObject<HTMLDivElement | null>
   /**
    * Where images released at this point go, read the moment they are dropped,
@@ -396,19 +432,28 @@ export function useImageDrop<Target>({
   // HTML5 DnD handles OS image files while allowing internal editor drags
   // through. Under Tauri nothing external reaches it — the drop is the native
   // branch's below — so this is the browser's path, and the editor's own drags.
+  // It listens on the whole document area; an event's target is what is under
+  // the pointer, so it is read by the native branch's rule without a hit test.
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
+    const area = editorDropArea(container)
+    const isOverEditor = (event: DragEvent) => isEditorOrItsMargin(container, event.target as Node | null)
 
     const handleDragOver = (e: DragEvent) => {
       if (!e.dataTransfer || !hasImageFiles(e.dataTransfer)) return
+      if (stopBlockNoteSyntheticCopy(e)) return
+      if (!isOverEditor(e)) {
+        setIsDragOver(false)
+        return
+      }
       e.preventDefault()
       e.dataTransfer.dropEffect = 'copy'
       setIsDragOver(true)
     }
 
     const handleDragLeave = (e: DragEvent) => {
-      if (!container.contains(e.relatedTarget as Node)) {
+      if (!area.contains(e.relatedTarget as Node)) {
         setIsDragOver(false)
       }
     }
@@ -420,6 +465,7 @@ export function useImageDrop<Target>({
       const currentDropTargetAt = dropTargetAtRef.current
       const currentOnImagesDropped = onImagesDroppedRef.current
       if (files.length === 0 || !currentDropTargetAt || !currentOnImagesDropped) return
+      if (stopBlockNoteSyntheticCopy(event) || !isOverEditor(event)) return
 
       // Taken even when it finds no place, so the editor underneath never
       // inserts the file its own way (CodeMirror would insert its bytes as text).
@@ -436,14 +482,15 @@ export function useImageDrop<Target>({
       })
     }
 
-    container.addEventListener('dragover', handleDragOver)
-    container.addEventListener('dragleave', handleDragLeave)
-    container.addEventListener('drop', handleDrop, true)
+    // Captured, so a synthetic copy is stopped before the editor inside sees it.
+    area.addEventListener('dragover', handleDragOver, true)
+    area.addEventListener('dragleave', handleDragLeave)
+    area.addEventListener('drop', handleDrop, true)
 
     return () => {
-      container.removeEventListener('dragover', handleDragOver)
-      container.removeEventListener('dragleave', handleDragLeave)
-      container.removeEventListener('drop', handleDrop, true)
+      area.removeEventListener('dragover', handleDragOver, true)
+      area.removeEventListener('dragleave', handleDragLeave)
+      area.removeEventListener('drop', handleDrop, true)
     }
   }, [containerRef])
 
