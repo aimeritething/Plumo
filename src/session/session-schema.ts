@@ -2,6 +2,7 @@ import { DEFAULT_THEME_MODE, normalizeThemeMode, type ThemeMode } from '@/shell/
 import type { EditorMode } from '@/types'
 import { isImageFilePath } from '@/tabs/image-file'
 import { parsePinnedLists, type PinnedLists } from '@/pinned/pinned-list'
+import { MAX_RECENT_FOLDERS, type RecentFolders } from '@/recent-folders/recent-folders'
 
 /**
  * The Session file: one `session.json` in the app's config
@@ -13,6 +14,9 @@ import { parsePinnedLists, type PinnedLists } from '@/pinned/pinned-list'
  * wide it is when shown and which of its sections are folded away; `theme` is
  * the View → Appearance choice; `pinned` is each Folder's Pinned list, keyed by
  * the Folder's path, so a Folder opened again gets its pins back.
+ * `openEditors` and `activePath` are the current Folder's Tabs; `tabsByFolder`
+ * holds every other Folder's, as they were when it was last shown, and
+ * `recentFolders` is the Recent Folders, most recent first.
  */
 
 export const SESSION_VERSION = 1
@@ -35,6 +39,15 @@ export interface SessionSidebar {
   collapsedSections?: readonly SidebarSection[]
 }
 
+/** A Folder's Tabs, in order, and its active Tab, as it had them when it was last shown. */
+export interface FolderTabs {
+  openEditors: SessionEditor[]
+  activePath: string | null
+}
+
+/** Each Folder's Tabs but the current one's, keyed by the Folder's path; a Folder with none has no key. */
+export type TabsByFolder = Readonly<Record<string, FolderTabs>>
+
 export interface Session {
   version: typeof SESSION_VERSION
   folder: string | null
@@ -45,6 +58,9 @@ export interface Session {
   sidebar: SessionSidebar
   /** Each Folder's pinned paths, in order; a Folder with none has no key. */
   pinned: PinnedLists
+  /** The Recent Folders' paths, most recent first. */
+  recentFolders: string[]
+  tabsByFolder: TabsByFolder
 }
 
 export interface RestoredOpenEditors {
@@ -101,6 +117,24 @@ function parseNullableString(value: unknown): string | null {
   return typeof value === 'string' ? value : null
 }
 
+/** Paths only, each once, at most ten. */
+function parseRecentFolders(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return [...new Set(value.filter((path): path is string => typeof path === 'string' && path !== ''))].slice(0, MAX_RECENT_FOLDERS)
+}
+
+/** A Folder whose entry holds no Tab leaves no key. */
+function parseTabsByFolder(value: unknown): TabsByFolder {
+  if (!isRecord(value)) return {}
+  const byFolder: Record<string, FolderTabs> = {}
+  for (const [folder, tabs] of Object.entries(value)) {
+    if (!isRecord(tabs)) continue
+    const openEditors = parseEditors(tabs.openEditors)
+    if (openEditors.length > 0) byFolder[folder] = { openEditors, activePath: parseNullableString(tabs.activePath) }
+  }
+  return byFolder
+}
+
 /**
  * The Session the file holds, or null when there is none to restore: a
  * missing file, something that is not a Session, or an unknown `version`
@@ -116,6 +150,8 @@ export function parseSession(raw: unknown): Session | null {
     theme: normalizeThemeMode(raw.theme) ?? DEFAULT_THEME_MODE,
     sidebar: parseSidebar(raw.sidebar),
     pinned: parsePinnedLists(raw.pinned),
+    recentFolders: parseRecentFolders(raw.recentFolders),
+    tabsByFolder: parseTabsByFolder(raw.tabsByFolder),
   }
 }
 
@@ -155,9 +191,17 @@ export interface OpenEditorInput {
   mode?: SessionEditorMode
 }
 
+/** An Image file entry carries no `mode`; a Document with none named is Rich. */
+export function sessionEditors(editors: readonly OpenEditorInput[]): SessionEditor[] {
+  return editors.map(({ path, mode }) => (isImageFilePath(path) ? { path } : { path, mode: mode ?? 'rich' }))
+}
+
+const NO_RECENT_FOLDERS: RecentFolders = { paths: [], tabsByFolder: {} }
+
 /**
  * The Session for the open Tabs, each Document with its Rich or Raw mode,
- * the chosen appearance, the sidebar state and every Folder's Pinned list. An Image file entry
+ * the chosen appearance, the sidebar state, every Folder's Pinned list, the
+ * Recent Folders and the other Folders' Tabs. An Image file entry
  * carries no `mode`: its kind comes from the extension. A Document with no
  * mode named is written as Rich, the default for a freshly opened one.
  */
@@ -168,15 +212,18 @@ export function sessionForOpenEditors(
   folder: string | null = null,
   sidebar: SessionSidebar = DEFAULT_SESSION_SIDEBAR,
   pinned: PinnedLists = {},
+  recent: RecentFolders = NO_RECENT_FOLDERS,
 ): Session {
   const { collapsed, width, collapsedSections = [] } = sidebar
   return {
     version: SESSION_VERSION,
     folder,
-    openEditors: openEditors.map(({ path, mode }) => (isImageFilePath(path) ? { path } : { path, mode: mode ?? 'rich' })),
+    openEditors: sessionEditors(openEditors),
     activePath,
     theme,
     sidebar: collapsedSections.length > 0 ? { collapsed, width, collapsedSections } : { collapsed, width },
     pinned,
+    recentFolders: [...recent.paths],
+    tabsByFolder: recent.tabsByFolder,
   }
 }

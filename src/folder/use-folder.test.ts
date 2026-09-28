@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react'
 import { beforeEach, expect, it, vi } from 'vitest'
-import { useFolder } from './use-folder'
+import { FolderNotFoundError, useFolder } from './use-folder'
 
 const { invoke, allow } = vi.hoisted(() => ({ invoke: vi.fn(), allow: vi.fn() }))
 vi.mock('@tauri-apps/api/core', () => ({ invoke }))
@@ -85,4 +85,31 @@ it('lets a second Folder change wait for the one in flight, then reports what it
   expect(await waiting).toBe('/Notes')
   expect(result.current.listsFile('/Notes/cover.png')).toBe(true)
   expect(result.current.listsFile('/Notes/gone.png')).toBe(false)
+})
+
+it('leaves a missing Folder to the caller when asked, with the path on the error', async () => {
+  const { result } = renderHook(() => useFolder())
+  invoke.mockRejectedValueOnce(new Error('Folder not found'))
+  let error: unknown
+  await act(async () => {
+    await result.current.changeFolder('/Gone/', async () => {}, { reportMissing: false }).catch((caught: unknown) => { error = caught })
+  })
+  expect(error).toBeInstanceOf(FolderNotFoundError)
+  expect((error as FolderNotFoundError).path).toBe('/Gone')
+  expect(result.current.error).toBeNull()
+})
+
+it('tells the caller whether it made the change or waited on another', async () => {
+  const { result } = renderHook(() => useFolder())
+  let finish!: () => void
+  const settle = vi.fn(() => new Promise<void>((resolve) => { finish = resolve }))
+  let first!: Promise<boolean>
+  let second!: Promise<boolean>
+  await act(async () => { first = result.current.changeFolder('/Notes', settle) })
+  await act(async () => { second = result.current.changeFolder('/Other', async () => {}) })
+  await act(async () => { finish(); await first })
+
+  expect(await first).toBe(true)
+  expect(await second).toBe(false)
+  expect(result.current.folder).toBe('/Notes')
 })

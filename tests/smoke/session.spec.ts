@@ -41,6 +41,8 @@ test('quit and relaunch restores the Tabs in order and the active Tab, and the f
     // A Document opened with no Folder collapses the sidebar.
     sidebar: { collapsed: true, width: 260 },
     pinned: {},
+    recentFolders: [],
+    tabsByFolder: {},
   })
 
   await page.reload()

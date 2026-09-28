@@ -69,5 +69,13 @@ _Avoid_: Command palette, palette
 The Command Menu's search-only mode, opened with Cmd+P: it fuzzy-matches Document and Image file names within the Folder and shows no commands. Searches names only, never contents.
 _Avoid_: Search, file picker
 
+**Recent Folders**:
+The Folders Plumo has opened, most recent first, at most ten. Only a directory opened as a Folder counts; the directory of a Document opened on its own does not. The current Folder is in the list. Choosing one replaces the current Folder in the same window.
+_Avoid_: Recent workspaces, history, vault list
+
+**Folder switcher**:
+The control at the bottom of the sidebar that names the current Folder. Choosing it lists the Recent Folders, then Open Folder… and Close Folder. There is none while no Folder is open; the Recent Folders are then listed under Open Folder instead.
+_Avoid_: Footer, workspace switcher, folder picker
+
 **Session**:
-The state Plumo restores on launch: the Folder, the open Tabs (with each Document's Rich or Raw mode), the active Tab, theme, sidebar state (its width, and which sections are collapsed), and window geometry. It also keeps each Folder's Pinned list, so a Folder opened again gets its pins back. Stored in the app's own config directory, never in the Folder.
+The state Plumo restores on launch: the Folder, the open Tabs (with each Document's Rich or Raw mode), the active Tab, theme, sidebar state (its width, and which sections are collapsed), and window geometry. It also keeps, for each Folder, its Pinned list and the Tabs that were open when the Folder was last shown, so a Folder opened again gets its pins and its Tabs back; a Tab belongs to the Folder that was open when it was opened, wherever its file lives. It also keeps the Recent Folders. Stored in the app's own config directory, never in the Folder.

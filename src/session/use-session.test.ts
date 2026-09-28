@@ -80,8 +80,34 @@ describe('useSession', () => {
         theme: 'dark',
         sidebar: { collapsed: false, width: 260 },
         pinned: {},
+        recentFolders: [],
+        tabsByFolder: {},
       },
     ]))
+  })
+
+  it('restores the Recent Folders once the Folder is back, and writes them back whenever they change', async () => {
+    const tabsByFolder = { '/w': { openEditors: [{ path: '/w/plan.md', mode: 'rich' }], activePath: '/w/plan.md' } }
+    answerWith({ ...STORED_SESSION, folder: '/n', recentFolders: ['/w', '/n'], tabsByFolder })
+    const order: string[] = []
+    const restoreFolder = vi.fn(async (folder: string | null) => { order.push('folder'); return folder })
+    const restoreRecent = vi.fn(() => { order.push('recent') })
+    const restoreOpenEditors = vi.fn(async () => { order.push('tabs') })
+
+    const { result, rerender } = renderHook(
+      (props: { recent: { paths: string[]; tabsByFolder: typeof tabsByFolder } }) => useSession({
+        tabs: [], activeTabPath: null, theme: 'dark', restoreOpenEditors, restoreTheme, restoreFolder,
+        sidebar: DEFAULT_SESSION_SIDEBAR, restoreSidebar, restoreRecent, ...props,
+      }),
+      { initialProps: { recent: { paths: [], tabsByFolder: {} } } },
+    )
+
+    await waitFor(() => expect(result.current.restored).toBe(true))
+    expect(restoreRecent).toHaveBeenCalledWith({ paths: ['/w', '/n'], tabsByFolder }, '/n')
+    expect(order).toEqual(['folder', 'recent', 'tabs'])
+
+    rerender({ recent: { paths: ['/n', '/w'], tabsByFolder } })
+    await waitFor(() => expect(sessionWrites().at(-1)).toMatchObject({ recentFolders: ['/n', '/w'], tabsByFolder }))
   })
 
   it('restores the Pinned lists before the Folder, and writes them back whenever they change', async () => {

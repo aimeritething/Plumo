@@ -26,6 +26,11 @@ import { useFinderOpen } from '@/tabs/use-finder-open'
 import { useMenuEvents, type MenuEventHandlers } from '@/shell/use-menu-events'
 import { useNoteTabs } from '@/tabs/use-note-tabs'
 import { useSession } from '@/session/use-session'
+import { FolderSwitcher } from '@/recent-folders/folder-switcher'
+import { RecentFolderList } from '@/recent-folders/recent-folder-list'
+import { useRecentFolders } from '@/recent-folders/use-recent-folders'
+import { useFolderSwitch } from '@/recent-folders/use-folder-switch'
+import { useHomeDir } from '@/platform/home-dir'
 import { useSidebar } from '@/shell/use-sidebar'
 import { copyPathWithToast, showRefusalToast } from '@/editor/toasts'
 import { useTabCommands } from '@/tabs/use-tab-commands'
@@ -103,6 +108,8 @@ export default function App() {
   const appearance = useAppearance()
   const { sidebar, slides: sidebarSlides, toggle: toggleSidebar, collapse: collapseSidebar, setWidth: setSidebarWidth, toggleSection: toggleSidebarSection, openSection: openSidebarSection, restore: restoreSidebar } = useSidebar()
   const pinned = usePinned(folder, folderState.files)
+  const recent = useRecentFolders()
+  const home = useHomeDir()
   const { restored } = useSession({
     folder,
     restoreFolder: folderState.restoreFolder,
@@ -115,6 +122,8 @@ export default function App() {
     restoreSidebar,
     pinned: pinned.lists,
     restorePinned: pinned.restore,
+    recent,
+    restoreRecent: recent.restore,
   })
   useThemeMode(appearance.themeMode, restored)
   const flushPendingEditorContentRef = useRef<((path: string) => void) | null>(null)
@@ -340,15 +349,21 @@ export default function App() {
     for (const tab of tabs) clearWriteFailure(tab.entry.path)
   }, [activeTabPath, clearWriteFailure, closeAllTabs, closeTabOrAsk, retry, savePendingForPath, settleAndRecord, tabs, writeFailureRecord.failuresRef])
 
+  const { switchFolder, openRecentFolder } = useFolderSwitch({
+    folder, tabs, activeTabPath, changeFolder, settleAndCloseAll, restoreOpenEditors, recent,
+  })
   const onOpenFolder = useCallback(() => {
     void (async () => {
       const path = await pickFolderToOpen()
-      if (path) await changeFolder(path, settleAndCloseAll)
+      if (path) await switchFolder(path)
     })().catch((error: unknown) => console.warn('Could not open Folder:', error))
-  }, [changeFolder, settleAndCloseAll])
+  }, [switchFolder])
   const onCloseFolder = useCallback(() => {
-    void changeFolder(null, settleAndCloseAll).catch((error: unknown) => console.warn('Could not close Folder:', error))
-  }, [changeFolder, settleAndCloseAll])
+    void switchFolder(null).catch((error: unknown) => console.warn('Could not close Folder:', error))
+  }, [switchFolder])
+  const onOpenRecentFolder = useCallback((path: string) => {
+    openRecentFolder(path).catch((error: unknown) => console.warn('Could not open Folder:', error))
+  }, [openRecentFolder])
 
   const isPending = useCallback((path: string) => Boolean(
     hasPendingEditorContentRef.current?.(path) || hasPendingSave(path) || writeFailureRecord.failuresRef.current[path]
@@ -548,6 +563,19 @@ export default function App() {
           onToggleCollapsed={onToggleExplorerSection}
           onExpand={onOpenExplorerSection}
         />
+        {folder === null ? (
+          <RecentFolderList paths={recent.paths} home={home} onOpen={onOpenRecentFolder} />
+        ) : (
+          <FolderSwitcher
+            folder={folder}
+            files={folderState.files}
+            recentFolders={recent.paths}
+            home={home}
+            onOpenRecent={onOpenRecentFolder}
+            onOpenFolder={onOpenFolder}
+            onCloseFolder={onCloseFolder}
+          />
+        )}
       </Sidebar>
       <Editor
         tabs={tabs}

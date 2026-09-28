@@ -21,6 +21,15 @@ export function SidebarLabel({ className, ...props }: ComponentProps<'div'>) {
   )
 }
 
+/** The row's look, for a row that has to be a `<button>` (a menu's trigger). */
+export const SIDEBAR_ROW_CLASSES = cn(
+  'group flex h-7.5 cursor-default items-center gap-1.5 rounded-lg pr-1.5 pl-2 whitespace-nowrap text-text-secondary outline-none',
+  'hover:bg-sidebar-row-hover hover:text-text-heading',
+  'data-[state=open]:bg-sidebar-row-hover data-[state=open]:text-text-heading',
+  'aria-selected:bg-sidebar-row-active aria-selected:text-text-heading',
+  'focus-visible:focus-ring',
+)
+
 /**
  * A row: hover and selection from the sidebar link tokens, a focus ring from
  * the keyboard. A row whose context menu is open (`data-state="open"`, from the
@@ -29,19 +38,7 @@ export function SidebarLabel({ className, ...props }: ComponentProps<'div'>) {
  * acts on, and it must not look like the selected row.
  */
 export function SidebarRow({ className, ...props }: ComponentProps<'div'>) {
-  return (
-    <div
-      className={cn(
-        'group flex h-7.5 cursor-default items-center gap-1.5 rounded-lg pr-1.5 pl-2 whitespace-nowrap text-text-secondary outline-none',
-        'hover:bg-sidebar-row-hover hover:text-text-heading',
-        'data-[state=open]:bg-sidebar-row-hover data-[state=open]:text-text-heading',
-        'aria-selected:bg-sidebar-row-active aria-selected:text-text-heading',
-        'focus-visible:focus-ring',
-        className,
-      )}
-      {...props}
-    />
-  )
+  return <div className={cn(SIDEBAR_ROW_CLASSES, className)} {...props} />
 }
 
 /** A row's icon colours: tertiary, a step quieter than the name, until the row is hovered or selected. */

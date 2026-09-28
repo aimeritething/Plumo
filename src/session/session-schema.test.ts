@@ -15,6 +15,8 @@ describe('parseSession', () => {
       theme: 'dark',
       sidebar: { collapsed: false, width: 260, collapsedSections: ['pinned', 'explorer'] },
       pinned: { '/Users/x/notes': [C, A, '/Users/x/notes/cover.png'], '/Users/x/work': ['/Users/x/work/plan.md'] },
+      recentFolders: ['/Users/x/notes', '/Users/x/work'],
+      tabsByFolder: { '/Users/x/work': { openEditors: [{ path: '/Users/x/work/plan.md', mode: 'raw' }], activePath: '/Users/x/work/plan.md' } },
       window: { x: 0, y: 0, width: 1200, height: 800 },
     }
 
@@ -26,6 +28,8 @@ describe('parseSession', () => {
       theme: 'dark',
       sidebar: { collapsed: false, width: 260, collapsedSections: ['pinned', 'explorer'] },
       pinned: { '/Users/x/notes': [C, A, '/Users/x/notes/cover.png'], '/Users/x/work': ['/Users/x/work/plan.md'] },
+      recentFolders: ['/Users/x/notes', '/Users/x/work'],
+      tabsByFolder: { '/Users/x/work': { openEditors: [{ path: '/Users/x/work/plan.md', mode: 'raw' }], activePath: '/Users/x/work/plan.md' } },
     })
   })
 
@@ -43,6 +47,23 @@ describe('parseSession', () => {
     expect(parsed?.pinned).toEqual({ '/Users/x/notes': [A, B] })
     expect(parsed?.sidebar.collapsedSections).toEqual(['pinned'])
     expect(parseSession({ version: 1, pinned: ['a.md'] })?.pinned).toEqual({})
+  })
+
+  it('keeps each Recent Folder once, at most ten, and only the Folders with Tabs in tabsByFolder', () => {
+    const folders = Array.from({ length: 12 }, (_, index) => `/Users/x/f${index}`)
+    const parsed = parseSession({
+      version: 1,
+      recentFolders: [folders[0], 7, folders[0], '', ...folders.slice(1)],
+      tabsByFolder: {
+        '/Users/x/f1': { openEditors: [{ path: A }, 'b.md'], activePath: 3 },
+        '/Users/x/f2': { openEditors: [] },
+        '/Users/x/f3': 'tabs',
+      },
+    })
+
+    expect(parsed?.recentFolders).toEqual(folders.slice(0, 10))
+    expect(parsed?.tabsByFolder).toEqual({ '/Users/x/f1': { openEditors: [{ path: A }], activePath: null } })
+    expect(parseSession({ version: 1, recentFolders: 'notes', tabsByFolder: [] })).toMatchObject({ recentFolders: [], tabsByFolder: {} })
   })
 
   it('ignores a Session with an unknown version', () => {
@@ -73,6 +94,8 @@ describe('parseSession', () => {
       theme: 'light',
       sidebar: { collapsed: false, width: 260 },
       pinned: {},
+      recentFolders: [],
+      tabsByFolder: {},
     })
   })
 })
@@ -133,6 +156,8 @@ describe('sessionForOpenEditors', () => {
       theme: 'light',
       sidebar: { collapsed: false, width: 260 },
       pinned: {},
+      recentFolders: [],
+      tabsByFolder: {},
     })
   })
 
@@ -165,6 +190,15 @@ describe('sessionForOpenEditors', () => {
 
     expect(session.sidebar).toEqual({ collapsed: false, width: 260, collapsedSections: ['pinned'] })
     expect(session.pinned).toEqual(pinned)
+    expect(parseSession(JSON.parse(JSON.stringify(session)))).toEqual(session)
+  })
+
+  it('writes the Recent Folders and the other Folders\' Tabs it is given', () => {
+    const tabsByFolder = { '/Users/x/work': { openEditors: [{ path: '/Users/x/work/plan.md', mode: 'rich' as const }], activePath: null } }
+    const session = sessionForOpenEditors([], null, 'dark', '/Users/x/notes', undefined, {}, { paths: ['/Users/x/notes', '/Users/x/work'], tabsByFolder })
+
+    expect(session.recentFolders).toEqual(['/Users/x/notes', '/Users/x/work'])
+    expect(session.tabsByFolder).toEqual(tabsByFolder)
     expect(parseSession(JSON.parse(JSON.stringify(session)))).toEqual(session)
   })
 })
