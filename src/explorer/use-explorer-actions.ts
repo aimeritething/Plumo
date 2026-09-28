@@ -74,6 +74,8 @@ export interface ExplorerActions {
   startRename: (path: string, kind: ExplorerRowKind) => void
   commitRename: (stem: string) => Promise<boolean>
   cancelRename: () => void
+  /** The name in rename was changed after a refusal: the message goes until the next commit. */
+  clearError: () => void
   /** Move to Trash: no confirmation, and every Tab at or under the row closes. */
   trash: (path: string, kind: ExplorerRowKind) => void
   /** A dragged Document or Image file dropped on a folder row, or on the header or empty area (the Folder's top level). */
@@ -206,6 +208,8 @@ export function useExplorerActions(options: Options): ExplorerActions {
     setEditing(null)
     setError(null)
   }, [])
+
+  const clearError = useCallback(() => setError(null), [])
 
   const createDocumentIn = useCallback((folderPath: string, { rename = true }: CreateDocumentOptions = {}) => {
     void (async () => {
@@ -352,12 +356,13 @@ export function useExplorerActions(options: Options): ExplorerActions {
     startRename,
     commitRename,
     cancelRename,
+    clearError,
     trash,
     moveInto,
     reveal,
     copyPath,
   }), [
-    cancelRename, commitRename, copyPath, createDocument, createDocumentIn, createFolder,
+    cancelRename, clearError, commitRename, copyPath, createDocument, createDocumentIn, createFolder,
     createFolderIn, editing, error, moveInto, reveal, selected, setSelected, startRename, trash,
   ])
 }

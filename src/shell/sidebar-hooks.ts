@@ -124,6 +124,14 @@ export function useSidebarInlineRenameInput({
     }
   }, [onSubmit, value])
 
+  // A blur whose name is refused gives the rename up, as Escape would: there
+  // is no one left looking at the input to read why (AIM-481). A blur that
+  // lands while Enter's commit is still out leaves that commit to answer.
+  const handleBlur = useCallback(() => {
+    if (submittingRef.current) return
+    void Promise.resolve(submitValue()).then((accepted) => { if (!accepted) onCancel() })
+  }, [onCancel, submitValue])
+
   const handleKeyDown = useCallback((event: ReactKeyboardEvent<HTMLInputElement>) => {
     // Enter confirming a candidate is not Enter committing the name.
     if (isImeKeyEvent(event.nativeEvent)) return
@@ -141,6 +149,7 @@ export function useSidebarInlineRenameInput({
   }, [onCancel, onKeyboardEnd, submitValue])
 
   return {
+    handleBlur,
     handleKeyDown,
     inputRef,
     setValue,

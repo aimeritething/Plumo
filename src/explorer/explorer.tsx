@@ -388,6 +388,7 @@ function ExplorerRow(props: RowProps) {
           error={actions.error}
           onSubmit={actions.commitRename}
           onCancel={actions.cancelRename}
+          onEdit={actions.clearError}
           onKeyboardEnd={() => onRenameKeyboardEnd(editing.created)}
         />
         {children}

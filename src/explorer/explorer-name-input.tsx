@@ -12,7 +12,9 @@ import { SidebarRow, SidebarRowIcon } from '@/shell/sidebar-row'
  * hairline ring and one muted line under the row.
  *
  * Enter commits, Escape cancels, and blur commits a changed name — the carried
- * inline-rename hook holds the Enter/blur double-fire guard.
+ * inline-rename hook holds the Enter/blur double-fire guard. A refused Enter
+ * keeps the input and its message; a refused blur gives the rename up, as
+ * Escape would. The message goes as soon as the name is changed.
  */
 
 interface ExplorerNameInputProps {
@@ -24,14 +26,16 @@ interface ExplorerNameInputProps {
   error: string | null
   onSubmit: (stem: string) => Promise<boolean>
   onCancel: () => void
+  /** The name was changed: a refusal on show no longer describes it. */
+  onEdit: () => void
   /** Enter or Escape ended the rename: the row, or the editor, is to take focus. */
   onKeyboardEnd?: () => void
 }
 
 export function ExplorerNameInput(props: ExplorerNameInputProps) {
-  const { stem, extension, kind, depth, error, onSubmit, onCancel, onKeyboardEnd } = props
+  const { stem, extension, kind, depth, error, onSubmit, onCancel, onEdit, onKeyboardEnd } = props
   const Icon = EXPLORER_ROW_ICONS[kind]
-  const { handleKeyDown, inputRef, setValue, submitValue, value } = useSidebarInlineRenameInput({
+  const { handleBlur, handleKeyDown, inputRef, setValue, value } = useSidebarInlineRenameInput({
     initialValue: stem,
     onCancel,
     onSubmit,
@@ -51,8 +55,11 @@ export function ExplorerNameInput(props: ExplorerNameInputProps) {
           aria-label="Name"
           aria-invalid={error ? true : undefined}
           value={value}
-          onChange={(event) => setValue(stripBlockedNameCharacters(event.target.value))}
-          onBlur={() => { void submitValue() }}
+          onChange={(event) => {
+            setValue(stripBlockedNameCharacters(event.target.value))
+            if (error) onEdit()
+          }}
+          onBlur={handleBlur}
           onKeyDown={handleKeyDown}
         />
         {extension && <span className="flex-none text-text-muted">{extension}</span>}

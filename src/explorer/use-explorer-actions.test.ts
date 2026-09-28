@@ -328,6 +328,17 @@ describe('renaming', () => {
     expect(result.current.editing).toBeNull()
   })
 
+  it('clears a refusal once the name is changed, and keeps the rename going (AIM-481)', async () => {
+    const { result } = setup()
+
+    act(() => { result.current.startRename(`${FOLDER}/Projects/Plumo.md`, 'note') })
+    await act(async () => { await result.current.commitRename('Notes') })
+    act(() => { result.current.clearError() })
+
+    expect(result.current.error).toBeNull()
+    expect(result.current.editing).not.toBeNull()
+  })
+
   it('drops the input and the message on Escape', () => {
     const { result } = setup()
 

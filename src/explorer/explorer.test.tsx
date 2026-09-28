@@ -32,6 +32,7 @@ function stubActions(overrides: Partial<ExplorerActions> = {}): ExplorerActions 
     startRename: vi.fn(),
     commitRename: vi.fn(async () => true),
     cancelRename: vi.fn(),
+    clearError: vi.fn(),
     trash: vi.fn(),
     moveInto: vi.fn(),
     reveal: vi.fn(),
@@ -402,6 +403,57 @@ describe('the inline rename input', () => {
     fireEvent.blur(input)
 
     await waitFor(() => expect(actions.commitRename).toHaveBeenCalledWith('Readme'))
+  })
+
+  describe('after a refused name (AIM-481)', () => {
+    const error = 'A Document named Readme.md already exists'
+
+    it('clears the refusal as soon as the name changes', () => {
+      const actions = stubActions({ editing, error })
+      renderExplorer(actions)
+
+      fireEvent.change(screen.getByTestId('explorer-rename-input'), { target: { value: 'Readme 2' } })
+
+      expect(actions.clearError).toHaveBeenCalled()
+    })
+
+    it('gives the rename up on a blur that is refused, as Escape would', async () => {
+      const actions = stubActions({ editing, commitRename: vi.fn(async () => false) })
+      renderExplorer(actions)
+
+      const input = screen.getByTestId('explorer-rename-input')
+      fireEvent.change(input, { target: { value: 'Readme' } })
+      fireEvent.blur(input)
+
+      await waitFor(() => expect(actions.cancelRename).toHaveBeenCalledTimes(1))
+      expect(actions.commitRename).toHaveBeenCalledWith('Readme')
+    })
+
+    it('keeps the input, and the message, on an Enter that is refused', async () => {
+      const actions = stubActions({ editing, commitRename: vi.fn(async () => false) })
+      renderExplorer(actions)
+
+      const input = screen.getByTestId('explorer-rename-input')
+      fireEvent.change(input, { target: { value: 'Readme' } })
+      fireEvent.keyDown(input, { key: 'Enter' })
+      await waitFor(() => expect(actions.commitRename).toHaveBeenCalled())
+      await Promise.resolve()
+
+      expect(actions.cancelRename).not.toHaveBeenCalled()
+    })
+
+    it('leaves an accepted blur alone', async () => {
+      const actions = stubActions({ editing })
+      renderExplorer(actions)
+
+      const input = screen.getByTestId('explorer-rename-input')
+      fireEvent.change(input, { target: { value: 'Readme' } })
+      fireEvent.blur(input)
+      await waitFor(() => expect(actions.commitRename).toHaveBeenCalled())
+      await Promise.resolve()
+
+      expect(actions.cancelRename).not.toHaveBeenCalled()
+    })
   })
 
   it('shows the refusal under the row and rings the input', () => {
