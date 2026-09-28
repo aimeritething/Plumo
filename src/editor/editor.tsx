@@ -474,6 +474,9 @@ export const Editor = memo(function Editor(props: EditorProps) {
                 find={find}
                 historyRef={props.historyRef}
                 snapshots={rawSnapshots}
+                vaultPath={vaultPath}
+                attachmentVaultPath={noteRootForPath(activeTab.entry.path)}
+                onImageImportError={showImageImportErrorToast}
               />
             </EditorFindScope>
           ) : (

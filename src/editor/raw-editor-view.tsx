@@ -14,6 +14,15 @@ import {
 import { rawEditorLanguageIdForPath } from '@/kernel/raw/raw-editor-language-id'
 import type { RawEditorSnapshots } from './use-raw-editor-snapshots'
 import { useEditorFindSession, type EditorFindSession } from './editor-find-session'
+import { useImageDrop, type ImageImportErrorHandler } from './use-image-drop'
+import { ImageDropAffordance } from './image-drop-affordance'
+import {
+  insertRawImages,
+  rawImageDropTargetAt,
+  rawImageMarkdown,
+  type RawImageDropTarget,
+} from './raw-image-insertion'
+import type { ClientPoint } from '@/platform/use-tauri-drag-drop-event'
 
 export interface RawEditorViewProps {
   content: string
@@ -31,6 +40,12 @@ export interface RawEditorViewProps {
   historyRef?: React.MutableRefObject<EditorHistory | null>
   /** Where each Raw Tab leaves its editor state and scroll position, to find them again when it comes back. */
   snapshots?: RawEditorSnapshots
+  /** The Folder, which the Markdown written for a dropped image is made portable against, as Rich mode's is. */
+  vaultPath?: string
+  /** The directory whose `attachments/` a dropped image is copied into: the Document's own. */
+  attachmentVaultPath?: string
+  /** Says why a dropped image did not become an Attachment. */
+  onImageImportError?: ImageImportErrorHandler
 }
 
 const DEBOUNCE_MS = 500
@@ -255,10 +270,47 @@ function useRawEditorContentSync(options: {
   }, [findRequest, path, showFind, setReplaceOpen])
 }
 
+/**
+ * An Image file dropped on the Raw editor becomes an Attachment exactly as in
+ * Rich mode (ADR-0006), and its image line goes in beside the line under the
+ * pointer, written as Rich mode would write the image block.
+ */
+function useRawEditorImageDrop({
+  attachmentVaultPath,
+  containerRef,
+  onImageImportError,
+  pathRef,
+  vaultPath,
+  viewRef,
+}: Pick<RawEditorViewProps, 'attachmentVaultPath' | 'onImageImportError' | 'vaultPath'> & {
+  containerRef: React.RefObject<HTMLDivElement | null>
+  pathRef: React.MutableRefObject<string>
+  viewRef: React.MutableRefObject<EditorView | null>
+}) {
+  const vaultPathRef = useLatestRef(vaultPath)
+  const dropTargetAt = useCallback(
+    (point: ClientPoint) => (viewRef.current ? rawImageDropTargetAt(viewRef.current, point) : null),
+    [viewRef],
+  )
+  const onImagesDropped = useCallback((urls: string[], target: RawImageDropTarget) => {
+    const view = viewRef.current
+    if (!view) return
+    insertRawImages(view, target, urls.map((url) => rawImageMarkdown(url, vaultPathRef.current, pathRef.current)))
+  }, [pathRef, vaultPathRef, viewRef])
+  return useImageDrop({
+    containerRef,
+    dropTargetAt,
+    onImageImportError,
+    onImagesDropped,
+    vaultPath: attachmentVaultPath ?? vaultPath,
+  })
+}
+
 interface RawEditorSurfaceProps {
   containerRef: React.RefObject<HTMLDivElement | null>
   find: EditorFindSession
   findRequest?: RawEditorFindRequest | null
+  isDragOver: boolean
   locale: AppLocale
   path: string
   pendingChanges: ReturnType<typeof useRawEditorPendingChanges>
@@ -271,18 +323,22 @@ interface RawEditorSurfaceProps {
 }
 
 function RawEditorSurface(options: RawEditorSurfaceProps) {
-  const { containerRef, find, findRequest, locale, path, pendingChanges, rawDoc, replaceOpen, rootRef, setReplaceOpen, showFrontmatterWarning, viewRef } = options
+  const { containerRef, find, findRequest, isDragOver, locale, path, pendingChanges, rawDoc, replaceOpen, rootRef, setReplaceOpen, showFrontmatterWarning, viewRef } = options
   return (
     <div ref={rootRef} className="relative flex min-h-0 flex-1 flex-col bg-surface-app">
       <RawEditorYamlErrorBanner error={showFrontmatterWarning ? pendingChanges.yamlError : null} />
       <RawEditorFindBar doc={rawDoc} find={find} locale={locale} onReplaceOpenChange={setReplaceOpen} path={path} replaceOpen={replaceOpen} request={findRequest} viewRef={viewRef} />
-      <div ref={containerRef} className="raw-editor-codemirror flex min-h-0 w-full flex-1" data-testid="raw-editor-codemirror" role="presentation" />
+      {/* CodeMirror owns the host's children, so the drop affordance is laid over it from beside it. */}
+      <div className="relative flex min-h-0 w-full flex-1">
+        <div ref={containerRef} className="raw-editor-codemirror flex min-h-0 w-full flex-1" data-testid="raw-editor-codemirror" role="presentation" />
+        {isDragOver && <ImageDropAffordance />}
+      </div>
     </div>
   )
 }
 
 export function RawEditorView(options: RawEditorViewProps) {
-  const { content, findRequest, historyRef, latestContentRef, locale = 'en', onContentChange, onSave, path, snapshots } = options
+  const { attachmentVaultPath, content, findRequest, historyRef, latestContentRef, locale = 'en', onContentChange, onImageImportError, onSave, path, snapshots, vaultPath } = options
   const rootRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [rawDoc, setRawDoc] = useState(content)
@@ -334,6 +390,14 @@ export function RawEditorView(options: RawEditorViewProps) {
     viewRef,
   })
   useRawEditorDomEvents(rootRef, activatePlainTextPaste)
+  const { isDragOver } = useRawEditorImageDrop({
+    attachmentVaultPath,
+    containerRef,
+    onImageImportError,
+    pathRef,
+    vaultPath,
+    viewRef,
+  })
   const history = useMemo<EditorHistory>(() => ({
     undo: () => { if (viewRef.current) undo(viewRef.current) },
     redo: () => { if (viewRef.current) redo(viewRef.current) },
@@ -346,6 +410,7 @@ export function RawEditorView(options: RawEditorViewProps) {
       containerRef={containerRef}
       find={find}
       findRequest={findRequest}
+      isDragOver={isDragOver}
       locale={locale}
       path={path}
       pendingChanges={pendingChanges}
