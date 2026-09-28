@@ -1,10 +1,11 @@
 import { Copy, WarningCircle } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { copyLocalPath } from '@/platform/url'
+import { notePathFilename } from '@/lib/note-path-identity'
 
 /**
- * What Plumo says through Sonner: a refused Explorer operation, and Copy
- * path landing or failing. Each says what happened and goes away on its own;
+ * What Plumo says through Sonner: a refused Explorer operation, Copy path
+ * landing or failing, and a file that could not be opened. Each says what happened and goes away on its own;
  * nothing here is ever answered, which is why a Write failure is a different
  * thing entirely. A toast's id names the event, so the same event again
  * replaces its toast and restarts the clock rather than stacking a copy.
@@ -30,4 +31,9 @@ export function copyPathWithToast(path: string): void {
       toast("Couldn't copy path", { id: COPY_PATH_TOAST_ID, icon: warningIcon() })
     },
   )
+}
+
+/** A Document that could not be read on open: unreadable, or gone before the Explorer caught up. */
+export function showOpenFailureToast(path: string): void {
+  toast(`Couldn't open ${notePathFilename(path)}`, { id: `open:${path}`, icon: warningIcon() })
 }

@@ -70,6 +70,8 @@ const NO_FOLDER_LISTING = () => false
  */
 export function useNoteTabs(folder?: string | null, folderLists: (path: string) => boolean = NO_FOLDER_LISTING) {
   const generation = useRef(0)
+  /** Counts open requests, so a read that finishes after a later open knows it lost. */
+  const latestOpen = useRef(0)
   const [state, setState] = useState<NoteTabsState>(EMPTY_NOTE_TABS)
   const stateRef = useRef(state)
   useEffect(() => {
@@ -81,8 +83,13 @@ export function useNoteTabs(folder?: string | null, folderLists: (path: string) 
    * puts a Document straight into Raw (⌘↵ in Quick Open) so Rich
    * never mounts for it, or switches an open one; the Tab rules still decide
    * whether it takes, and an Image Tab has no mode to set.
+   *
+   * The last open asked for decides the active Tab: a read that finishes
+   * after a later open (a large file, then a small one) is dropped rather
+   * than taking the Tab from it, so the file it was for is simply not opened.
    */
   const openNote = useCallback(async (path: string, mode?: EditorMode): Promise<void> => {
+    latestOpen.current += 1
     const alreadyOpen = stateRef.current.tabs.some((tab) => tab.entry.path === path)
     if (alreadyOpen) {
       setState((prev) => {
@@ -92,8 +99,9 @@ export function useNoteTabs(folder?: string | null, folderLists: (path: string) 
       return
     }
     const request = generation.current
+    const open = latestOpen.current
     const tab = await readTab(path, folder)
-    if (request !== generation.current) return
+    if (request !== generation.current || open !== latestOpen.current) return
     setState((prev) => tabsState.openTab(prev, mode ? { ...tab, mode } : tab))
     announceOpened(tab)
   }, [folder])

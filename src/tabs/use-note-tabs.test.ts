@@ -365,6 +365,61 @@ describe('useNoteTabs', () => {
   })
 })
 
+describe('useNoteTabs: the last open wins', () => {
+  beforeEach(() => {
+    runtime.invoke.mockReset()
+  })
+
+  /** Holds A's read until `finishA` is called; every other path reads at once. */
+  function holdReadOf(path: string) {
+    let finish!: () => void
+    runtime.invoke.mockImplementation(async (_cmd, args) => {
+      const target = String(args?.path)
+      if (target === path) await new Promise<void>((resolve) => { finish = resolve })
+      return `# ${target}\n`
+    })
+    return () => finish()
+  }
+
+  it('keeps the later open active when an earlier, slower read finishes after it, and drops the earlier one', async () => {
+    const finishA = holdReadOf(A)
+    const { result } = renderHook(() => useNoteTabs())
+
+    let openingA!: Promise<void>
+    await act(async () => {
+      openingA = result.current.openNote(A)
+      await result.current.openNote(B)
+    })
+    await act(async () => {
+      finishA()
+      await openingA
+    })
+
+    expect(openPaths(result)).toEqual([B])
+    expect(result.current.activeTabPath).toBe(B)
+  })
+
+  it('keeps an already-open Tab active when it was asked for after a slower read began', async () => {
+    seedFiles({ [B]: '# B\n' })
+    const { result } = renderHook(() => useNoteTabs())
+    await act(async () => { await result.current.openNote(B) })
+    const finishA = holdReadOf(A)
+
+    let openingA!: Promise<void>
+    await act(async () => {
+      openingA = result.current.openNote(A)
+      await result.current.openNote(B)
+    })
+    await act(async () => {
+      finishA()
+      await openingA
+    })
+
+    expect(openPaths(result)).toEqual([B])
+    expect(result.current.activeTabPath).toBe(B)
+  })
+})
+
 it('does not apply an external read when edits become pending while the read is in flight', async () => {
   seedFiles({ [A]: '# Original\n' })
   const { result } = renderHook(() => useNoteTabs('/n'))
