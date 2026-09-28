@@ -110,6 +110,61 @@ describe('TabBar', () => {
     expect(screen.getByRole('tab', { name: 'a.md' }).lastElementChild).toBe(close)
   })
 
+  it('keeps each Tab at least 96px wide, its name cut short with an ellipsis, and scrolls the Tabs sideways with no scrollbar', () => {
+    render(<TabBar tabs={tabs} activeTabPath="/n/a.md" onActivate={vi.fn()} onClose={vi.fn()} />)
+
+    const pill = screen.getByRole('tab', { name: 'a.md' })
+    expect(pill).toHaveClass('min-w-24')
+    expect(within(pill).getByTestId('tab-name')).toHaveClass('truncate')
+    const strip = screen.getByRole('tablist')
+    expect(strip).toHaveClass('overflow-x-auto', '[scrollbar-width:none]')
+    // Only the Tabs scroll: the "+" and the active Tab's controls stay outside the strip.
+    expect(strip).not.toContainElement(screen.queryByTestId('tab-bar-actions'))
+  })
+
+  it('scrolls the active Tab into view whenever another Tab becomes active, and not on other renders', () => {
+    const scrollIntoView = vi.mocked(Element.prototype.scrollIntoView)
+    scrollIntoView.mockClear()
+    const { rerender } = render(<TabBar tabs={tabs} activeTabPath="/n/a.md" onActivate={vi.fn()} onClose={vi.fn()} />)
+    expect(scrollIntoView).toHaveBeenCalledOnce()
+    expect(scrollIntoView.mock.contexts[0]).toBe(screen.getByRole('tab', { name: 'a.md' }))
+    expect(scrollIntoView).toHaveBeenCalledWith({ inline: 'nearest', block: 'nearest' })
+
+    scrollIntoView.mockClear()
+    rerender(<TabBar tabs={tabs} activeTabPath="/n/c.md" onActivate={vi.fn()} onClose={vi.fn()} />)
+    expect(scrollIntoView).toHaveBeenCalledOnce()
+    expect(scrollIntoView.mock.contexts[0]).toBe(screen.getByRole('tab', { name: 'c.md' }))
+
+    // A Tab opened in the background leaves the strip where it is.
+    scrollIntoView.mockClear()
+    rerender(<TabBar tabs={[...tabs, tab('/n/d.md')]} activeTabPath="/n/c.md" onActivate={vi.fn()} onClose={vi.fn()} />)
+    expect(scrollIntoView).not.toHaveBeenCalled()
+
+    // Closing the active Tab makes a neighbour active, which is brought into view.
+    rerender(<TabBar tabs={[tab('/n/a.md'), tab('/n/b.md'), tab('/n/d.md')]} activeTabPath="/n/d.md" onActivate={vi.fn()} onClose={vi.fn()} />)
+    expect(scrollIntoView).toHaveBeenCalledOnce()
+    expect(scrollIntoView.mock.contexts[0]).toBe(screen.getByRole('tab', { name: 'd.md' }))
+  })
+
+  it('turns a vertical wheel over the Tabs into a sideways scroll while they overflow', () => {
+    render(<TabBar tabs={tabs} activeTabPath="/n/a.md" onActivate={vi.fn()} onClose={vi.fn()} />)
+    const strip = screen.getByRole('tablist')
+    Object.defineProperty(strip, 'clientWidth', { configurable: true, value: 200 })
+    Object.defineProperty(strip, 'scrollWidth', { configurable: true, value: 600 })
+
+    const wheel = fireEvent.wheel(strip, { deltaY: 40 })
+    expect(strip.scrollLeft).toBe(40)
+    expect(wheel).toBe(false)
+
+    // A sideways swipe is the browser's own to scroll.
+    expect(fireEvent.wheel(strip, { deltaX: 30, deltaY: 2 })).toBe(true)
+    expect(strip.scrollLeft).toBe(40)
+
+    // Nothing to scroll: the wheel goes on its way.
+    Object.defineProperty(strip, 'scrollWidth', { configurable: true, value: 200 })
+    expect(fireEvent.wheel(strip, { deltaY: 40 })).toBe(true)
+  })
+
   it('with the sidebar collapsed, leaves the traffic lights and the sidebar icon their room before the first tab', () => {
     const { rerender } = render(<TabBar tabs={tabs} activeTabPath="/n/a.md" onActivate={vi.fn()} onClose={vi.fn()} sidebarCollapsed />)
 

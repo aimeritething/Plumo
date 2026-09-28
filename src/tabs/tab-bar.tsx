@@ -1,4 +1,4 @@
-import { memo, useMemo, type ReactNode } from 'react'
+import { memo, useEffect, useMemo, useRef, type ReactNode, type RefObject } from 'react'
 import { Image, Plus } from '@phosphor-icons/react'
 import type { Tab } from '@/types'
 import { isImageFilePath } from './image-file'
@@ -34,10 +34,16 @@ export interface TabBarProps {
  * folder's name, dimmed. With the sidebar collapsed the editor reaches the
  * window's left edge, so this row starts 120px in: the traffic lights and the
  * sidebar icon sit over that room, and the first Tab follows. The inset slides
- * with the sidebar, so the first Tab rides the sidebar's edge.
+ * with the sidebar, so the first Tab rides the sidebar's edge. Too many Tabs
+ * to fit shrink to 96px each, then the Tabs alone scroll sideways, with no
+ * scrollbar drawn; the "+" and the controls stay put, and whichever Tab
+ * becomes active is scrolled into view.
  */
 export const TabBar = memo(function TabBar({ tabs, activeTabPath, onActivate, onClose, onNewDocument, actions, sidebarCollapsed = false }: TabBarProps) {
   const hints = useMemo(() => tabParentHints(tabs.map((tab) => tab.entry.path)), [tabs])
+  const stripRef = useRef<HTMLDivElement>(null)
+  useActiveTabInView(stripRef, activeTabPath)
+  useWheelScrollsSideways(stripRef, tabs.length > 0)
   if (tabs.length === 0) return null
 
   return (
@@ -47,7 +53,12 @@ export const TabBar = memo(function TabBar({ tabs, activeTabPath, onActivate, on
       data-collapsed={sidebarCollapsed || undefined}
       data-tauri-drag-region
     >
-      <div className="flex min-w-0 flex-initial items-center gap-1 overflow-hidden" role="tablist" aria-label="Tabs">
+      <div
+        ref={stripRef}
+        className="flex min-w-0 flex-initial items-center gap-1 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        role="tablist"
+        aria-label="Tabs"
+      >
         {tabs.map(({ entry }) => (
           <TabPill
             key={entry.path}
@@ -65,6 +76,37 @@ export const TabBar = memo(function TabBar({ tabs, activeTabPath, onActivate, on
     </div>
   )
 })
+
+/**
+ * Whenever another Tab becomes active (a click, an open, a shortcut, the
+ * active one closing), bring it into view in the strip, at once: the nearest
+ * edge, so a Tab already showing does not move.
+ */
+function useActiveTabInView(stripRef: RefObject<HTMLDivElement | null>, activeTabPath: string | null) {
+  useEffect(() => {
+    stripRef.current?.querySelector('[role="tab"][aria-selected="true"]')?.scrollIntoView({ inline: 'nearest', block: 'nearest' })
+  }, [activeTabPath, stripRef])
+}
+
+/**
+ * A plain mouse wheel only scrolls up and down, which the strip cannot, so
+ * over overflowing Tabs its vertical turn scrolls them sideways. A trackpad's
+ * sideways swipe, or Shift with the wheel, arrives sideways already and is
+ * left to the browser. Not passive, so the page never also takes the turn.
+ */
+function useWheelScrollsSideways(stripRef: RefObject<HTMLDivElement | null>, mounted: boolean) {
+  useEffect(() => {
+    const strip = stripRef.current
+    if (!strip) return
+    const onWheel = (event: WheelEvent) => {
+      if (strip.scrollWidth <= strip.clientWidth || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return
+      event.preventDefault()
+      strip.scrollLeft += event.deltaY
+    }
+    strip.addEventListener('wheel', onWheel, { passive: false })
+    return () => strip.removeEventListener('wheel', onWheel)
+  }, [mounted, stripRef])
+}
 
 /** "+": a 24px icon button, 2px further from the last Tab than the Tabs are from each other. */
 function NewDocumentButton({ onNewDocument }: { onNewDocument: () => void }) {
@@ -101,14 +143,15 @@ interface TabPillProps {
  * One tab: 30px, 6px radius, 12px in from either side. The selected one is
  * told apart by its fill alone. Its × appears only under the pointer, after
  * the name, and the Tab grows by its width, so it never covers the name or
- * the parent folder that tells two same-name Tabs apart. A middle-click
- * closes it, as the × does.
+ * the parent folder that tells two same-name Tabs apart. However many Tabs
+ * are open it keeps 96px, enough for a name to stay recognisable, cut short
+ * with an ellipsis. A middle-click closes it, as the × does.
  */
 function TabPill({ path, filename, parentHint, active, onActivate, onClose }: TabPillProps) {
   const isImage = isImageFilePath(path)
   return (
     <div
-      className="group flex h-7.5 max-w-55 min-w-0 flex-initial cursor-default items-center gap-1.5 rounded-md px-3 text-sm whitespace-nowrap text-text-secondary outline-none hover:bg-tab-hover hover:text-text-heading aria-selected:bg-tab-active aria-selected:text-text-heading focus-visible:focus-ring"
+      className="group flex h-7.5 max-w-55 min-w-24 flex-initial cursor-default items-center gap-1.5 rounded-md px-3 text-sm whitespace-nowrap text-text-secondary outline-none hover:bg-tab-hover hover:text-text-heading aria-selected:bg-tab-active aria-selected:text-text-heading focus-visible:focus-ring"
       role="tab"
       aria-selected={active}
       aria-label={parentHint ? `${filename}, ${parentHint}` : filename}
