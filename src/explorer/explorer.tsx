@@ -2,6 +2,7 @@ import { memo, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, 
 import { ContextMenu, ContextMenuTrigger } from '@/ui/context-menu'
 import type { SidebarSelection } from '@/types'
 import { holdsDocument, type ExplorerNode } from '@/folder/explorer'
+import { noteRootForPath } from '@/folder/note-entry'
 import type { ExplorerActions } from './use-explorer-actions'
 import { isPathInsideVaultRoot } from '@/lib/vault-path-containment'
 import { cn } from '@/lib/cn'
@@ -11,7 +12,7 @@ import { useFolderTreeDisclosure } from './use-folder-tree-disclosure'
 import type { ExplorerMemory } from './use-explorer-memory'
 import { ExplorerContextMenu } from './explorer-context-menu'
 import { ExplorerHeader } from './explorer-header'
-import { useFolderDropTarget } from './use-folder-drop-target'
+import { useFolderDropTarget, type FolderDropProps, type FolderDropTarget } from './use-folder-drop-target'
 import { ExplorerNameInput } from './explorer-name-input'
 import { EXPLORER_ROW_ICONS, explorerRowIndent } from './explorer-row'
 import { ExplorerDisclosure, ExplorerDisclosureSlot } from './explorer-disclosure'
@@ -214,7 +215,8 @@ function useRowBroughtIntoView({ treeRef, folder, tree, selected, editingPath, e
  * starts fresh when the Folder changes. The tree scrolls inside a
  * `ScrollArea`; the section shrinks to give it the room. The header and the
  * empty area below the tree are one drop target, the Folder's top level,
- * which the header marks while a file is over either.
+ * which the header marks while a file is over either (or over a top-level
+ * file row).
  */
 function ExplorerBody(props: LoadedProps) {
   const { folder, tree, actions, memory, onCloseFolder, error, collapsed = false, onToggleCollapsed, onExpand } = props
@@ -225,7 +227,7 @@ function ExplorerBody(props: LoadedProps) {
   const treeRef = useRef<HTMLDivElement>(null)
   const keys = useMemo(() => folderKeys(tree, folder), [folder, tree])
   const handleCollapseAll = useCallback(() => collapseAll(keys), [collapseAll, keys])
-  const topLevelDrop = useFolderDropTarget(folder, actions.moveInto)
+  const drop = useFolderDropTarget(actions.moveInto)
   const treeId = useId()
   const editingPath = actions.editing?.path ?? null
 
@@ -262,12 +264,13 @@ function ExplorerBody(props: LoadedProps) {
         actions={actions}
         onCollapseAll={handleCollapseAll}
         onCloseFolder={onCloseFolder}
-        drop={topLevelDrop}
+        drop={drop}
       />
       {!collapsed && (
         <ScrollArea ref={treeRef} id={treeId} className="min-h-0" role="tree" aria-label={tree.name}>
           {tree.children.map((child) => (
-            <ExplorerRow key={child.path} {...props} node={child} depth={0} expanded={expanded} onToggle={toggleFolder} onRenameKeyboardEnd={onRenameKeyboardEnd} />
+            <ExplorerRow key={child.path} {...props} node={child} depth={0} expanded={expanded} onToggle={toggleFolder} expandFolder={expandFolder}
+              drop={drop} onRenameKeyboardEnd={onRenameKeyboardEnd} />
           ))}
           {/* The empty-Folder line: no `.md` anywhere in the Folder. It goes with the first ⌘N. */}
           {!holdsDocument(tree) && (
@@ -278,7 +281,7 @@ function ExplorerBody(props: LoadedProps) {
         </ScrollArea>
       )}
       {error && <div className="p-2 text-xs leading-normal wrap-anywhere" role="status">{error}</div>}
-      <EmptyArea actions={actions} folder={folder} dropProps={topLevelDrop.dropProps} />
+      <EmptyArea actions={actions} folder={folder} dropProps={drop.dropProps(folder)} />
     </>
   )
 }
@@ -286,7 +289,7 @@ function ExplorerBody(props: LoadedProps) {
 interface EmptyAreaProps {
   actions: ExplorerActions
   folder: string
-  dropProps: ReturnType<typeof useFolderDropTarget>['dropProps']
+  dropProps: FolderDropProps
 }
 
 /**
@@ -315,6 +318,9 @@ interface RowProps extends LoadedProps {
   depth: number
   expanded: Record<string, boolean>
   onToggle: (path: string) => void
+  /** Opens a folder and never shuts one: a dragged file resting on a shut folder. */
+  expandFolder: (path: string) => void
+  drop: FolderDropTarget
   onRenameKeyboardEnd: (created: boolean) => void
 }
 
@@ -333,26 +339,33 @@ function useRowMenuAction(node: ExplorerNode, actions: ExplorerActions, pins: Ex
 }
 
 /**
- * Dragging a row: a Document or an Image file is the thing dragged, a folder
- * row is the thing dropped on (as are the header and the empty area, for the
- * Folder's top level), and a folder is never dragged itself. The dragged path
- * is written to the drag and kept beside it, because a browser hides the data
- * from `dragover` and, on some platforms, from the drop as well.
+ * Dragging a row: a Document or an Image file is the thing dragged, and a
+ * folder is never dragged itself. Every row takes a drop: a folder row into
+ * that folder, and a file row into the folder it sits in, which that folder's
+ * row marks (the header, at the Folder's top level). A shut folder the file
+ * rests on opens. The dragged path is written to the drag and kept beside it,
+ * because a browser hides the data from `dragover` and, on some platforms,
+ * from the drop as well.
  */
-function useRowDragAndDrop(node: ExplorerNode, isFolder: boolean, actions: ExplorerActions) {
-  const { dropProps, isDropTarget } = useFolderDropTarget(isFolder ? node.path : null, actions.moveInto)
+function useRowDragAndDrop(node: ExplorerNode, isFolder: boolean, isExpanded: boolean, relative: string, drop: FolderDropTarget, expandFolder: (path: string) => void) {
+  const destination = isFolder ? node.path : noteRootForPath(node.path)
+  const dropProps = drop.dropProps(destination, isFolder && !isExpanded ? () => expandFolder(relative) : undefined)
+  const { endDrag } = drop
 
   const dragProps = useMemo(() => (isFolder ? {} : {
     draggable: true,
     onDragStart: (event: DragEvent<HTMLDivElement>) => writeNoteDragData(event.dataTransfer, node.path),
-    onDragEnd: () => clearDraggedNotePath(),
-  }), [isFolder, node.path])
+    onDragEnd: () => {
+      clearDraggedNotePath()
+      endDrag()
+    },
+  }), [endDrag, isFolder, node.path])
 
-  return { dragProps, dropProps, isDropTarget }
+  return { dragProps, dropProps, isDropTarget: isFolder && drop.target === node.path }
 }
 
 function ExplorerRow(props: RowProps) {
-  const { node, folder, depth, expanded, onToggle, onOpenFile, actions, pins, onRenameKeyboardEnd } = props
+  const { node, folder, depth, expanded, onToggle, expandFolder, drop, onOpenFile, actions, pins, onRenameKeyboardEnd } = props
   const isFolder = node.kind === 'folder'
   const relative = node.path.slice(folder.length + 1)
   const isExpanded = expanded[relative] ?? false
@@ -361,7 +374,7 @@ function ExplorerRow(props: RowProps) {
   const onMenuAction = useRowMenuAction(node, actions, pins)
   const target: ExplorerMenuTargetKind = node.kind
   const editing = actions.editing?.path === node.path ? actions.editing : null
-  const { dragProps, dropProps, isDropTarget } = useRowDragAndDrop(node, isFolder, actions)
+  const { dragProps, dropProps, isDropTarget } = useRowDragAndDrop(node, isFolder, isExpanded, relative, drop, expandFolder)
 
   // A Document and an Image file both open a real Tab; a folder opens or
   // shuts, as its caret does. Right-click does neither.
@@ -399,8 +412,8 @@ function ExplorerRow(props: RowProps) {
   // The selection is the treeitem's `aria-selected`, right above the row. The
   // row reads that parent and only that parent (`in-aria-selected:` would match
   // any ancestor, and a selected folder's children sit inside its treeitem).
-  // The folder row under a dragged file takes the selected colours and an inset
-  // ring, so it is clear which folder the file would land in.
+  // The folder row a dragged file would land in takes the selected colours and
+  // an inset ring, so it is clear which folder that is.
   return (
     <div role="treeitem" aria-label={node.name} aria-selected={selected} aria-expanded={isFolder ? isExpanded : undefined}
       aria-level={depth + 1}>

@@ -1,6 +1,6 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { TooltipProvider } from '@/ui/tooltip'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Explorer, type ExplorerPins } from './explorer'
 import { useExplorerMemory } from './use-explorer-memory'
 import { buildExplorerTree, type ListedFile } from '@/folder/explorer'
@@ -710,16 +710,12 @@ describe('drag-and-drop', () => {
     expect(moveInto).toHaveBeenCalledWith(`${FOLDER}/Welcome.md`, `${FOLDER}/Projects`)
   })
 
-  it('takes no drop on a Document row, and none with nothing being dragged', () => {
+  it('takes no drop with nothing being dragged', () => {
     const moveInto = vi.fn()
     renderExplorer(stubActions({ moveInto }))
-    expandProjects()
     const transfer = dataTransfer()
 
     fireEvent.dragStart(screen.getByTestId(`explorer-row:${FOLDER}/Welcome.md`), { dataTransfer: transfer })
-    fireEvent.drop(screen.getByTestId(`explorer-row:${FOLDER}/Projects/Plumo.md`), { dataTransfer: transfer })
-    expect(moveInto).not.toHaveBeenCalled()
-
     fireEvent.dragEnd(screen.getByTestId(`explorer-row:${FOLDER}/Welcome.md`), { dataTransfer: transfer })
     const target = screen.getByTestId(`explorer-row:${FOLDER}/Projects`)
     fireEvent.dragOver(target, { dataTransfer: dataTransfer(false) })
@@ -727,8 +723,139 @@ describe('drag-and-drop', () => {
     fireEvent.drop(target, { dataTransfer: dataTransfer(false) })
     expect(moveInto).not.toHaveBeenCalled()
   })
-})
 
+  describe('a file row takes the drop for its folder (AIM-474)', () => {
+    it('moves the file into the folder of the Document row it is dropped on, and marks that folder\'s row', () => {
+      const moveInto = vi.fn()
+      renderExplorer(stubActions({ moveInto }))
+      expandProjects()
+      const transfer = dataTransfer()
+
+      fireEvent.dragStart(screen.getByTestId(`explorer-row:${FOLDER}/Welcome.md`), { dataTransfer: transfer })
+      const row = screen.getByTestId(`explorer-row:${FOLDER}/Projects/Plumo.md`)
+      fireEvent.dragEnter(row, { dataTransfer: transfer })
+      expect(fireEvent.dragOver(row, { dataTransfer: transfer })).toBe(false)
+      expect(screen.getByTestId(`explorer-row:${FOLDER}/Projects`)).toHaveAttribute('data-drop-target')
+      expect(row).not.toHaveAttribute('data-drop-target')
+      fireEvent.drop(row, { dataTransfer: transfer })
+
+      expect(moveInto).toHaveBeenCalledWith(`${FOLDER}/Welcome.md`, `${FOLDER}/Projects`)
+      expect(screen.getByTestId(`explorer-row:${FOLDER}/Projects`)).not.toHaveAttribute('data-drop-target')
+    })
+
+    it('moves it to the Folder\'s top level from a top-level file row, and marks the header', () => {
+      const moveInto = vi.fn()
+      renderExplorer(stubActions({ moveInto }))
+      expandProjects()
+      const transfer = dataTransfer()
+
+      fireEvent.dragStart(screen.getByTestId(`explorer-row:${FOLDER}/Projects/Plumo.md`), { dataTransfer: transfer })
+      const row = screen.getByTestId(`explorer-row:${FOLDER}/Welcome.md`)
+      fireEvent.dragEnter(row, { dataTransfer: transfer })
+      fireEvent.dragOver(row, { dataTransfer: transfer })
+      expect(screen.getByTestId('explorer-header')).toHaveAttribute('data-drop-target')
+      fireEvent.drop(row, { dataTransfer: transfer })
+
+      expect(moveInto).toHaveBeenCalledWith(`${FOLDER}/Projects/Plumo.md`, FOLDER)
+    })
+  })
+
+  describe('a drop that would move nothing is not offered (AIM-474)', () => {
+    it('marks neither the folder a file is already in nor its rows, and takes no drop there', () => {
+      const moveInto = vi.fn()
+      renderExplorer(stubActions({ moveInto }))
+      expandProjects()
+      const transfer = dataTransfer()
+
+      fireEvent.dragStart(screen.getByTestId(`explorer-row:${FOLDER}/Projects/Plumo.md`), { dataTransfer: transfer })
+      for (const path of [`${FOLDER}/Projects`, `${FOLDER}/Projects/lake.png`, `${FOLDER}/Projects/Plumo.md`]) {
+        const row = screen.getByTestId(`explorer-row:${path}`)
+        fireEvent.dragEnter(row, { dataTransfer: transfer })
+        // Leaving the dragover untaken is what tells the browser the drop is refused.
+        expect(fireEvent.dragOver(row, { dataTransfer: transfer })).toBe(true)
+        expect(screen.getByTestId(`explorer-row:${FOLDER}/Projects`)).not.toHaveAttribute('data-drop-target')
+        fireEvent.drop(row, { dataTransfer: transfer })
+        fireEvent.dragStart(screen.getByTestId(`explorer-row:${FOLDER}/Projects/Plumo.md`), { dataTransfer: transfer })
+      }
+
+      expect(moveInto).not.toHaveBeenCalled()
+    })
+
+    it.each(['explorer-header', 'explorer-empty-area'])('marks no header for a top-level file over %s, and takes no drop', (testId) => {
+      const moveInto = vi.fn()
+      renderExplorer(stubActions({ moveInto }))
+      const transfer = dataTransfer()
+
+      fireEvent.dragStart(screen.getByTestId(`explorer-row:${FOLDER}/Welcome.md`), { dataTransfer: transfer })
+      fireEvent.dragEnter(screen.getByTestId(testId), { dataTransfer: transfer })
+      expect(fireEvent.dragOver(screen.getByTestId(testId), { dataTransfer: transfer })).toBe(true)
+      expect(screen.getByTestId('explorer-header')).not.toHaveAttribute('data-drop-target')
+      fireEvent.drop(screen.getByTestId(testId), { dataTransfer: transfer })
+
+      expect(moveInto).not.toHaveBeenCalled()
+    })
+  })
+
+  it('keeps the mark steady while the file crosses the row\'s own icon and name (AIM-474)', () => {
+    renderExplorer(stubActions())
+    const transfer = dataTransfer()
+    fireEvent.dragStart(screen.getByTestId(`explorer-row:${FOLDER}/Welcome.md`), { dataTransfer: transfer })
+    const target = screen.getByTestId(`explorer-row:${FOLDER}/Projects`)
+    const name = within(target).getByText('Projects')
+
+    fireEvent.dragEnter(target, { dataTransfer: transfer })
+    fireEvent.dragOver(target, { dataTransfer: transfer })
+    // Onto the name: it is entered before the row is left.
+    fireEvent.dragEnter(name, { dataTransfer: transfer, relatedTarget: target })
+    fireEvent.dragLeave(target, { dataTransfer: transfer, relatedTarget: name })
+    expect(target).toHaveAttribute('data-drop-target')
+
+    // Off the row altogether, onto the next one.
+    const next = screen.getByTestId(`explorer-row:${FOLDER}/Welcome.md`)
+    fireEvent.dragEnter(next, { dataTransfer: transfer, relatedTarget: name })
+    fireEvent.dragLeave(name, { dataTransfer: transfer, relatedTarget: next })
+    expect(target).not.toHaveAttribute('data-drop-target')
+  })
+
+  describe('a shut folder opens under a file that rests on it (AIM-474)', () => {
+    beforeEach(() => { vi.useFakeTimers() })
+    afterEach(() => { vi.useRealTimers() })
+
+    function dragOntoProjects() {
+      const transfer = dataTransfer()
+      fireEvent.dragStart(screen.getByTestId(`explorer-row:${FOLDER}/Welcome.md`), { dataTransfer: transfer })
+      const target = screen.getByTestId(`explorer-row:${FOLDER}/Projects`)
+      fireEvent.dragEnter(target, { dataTransfer: transfer })
+      fireEvent.dragOver(target, { dataTransfer: transfer })
+      return { target, transfer }
+    }
+
+    it('after 600ms', () => {
+      renderExplorer(stubActions())
+      dragOntoProjects()
+
+      act(() => { vi.advanceTimersByTime(599) })
+      expect(isExpanded('Projects')).toBe(false)
+      act(() => { vi.advanceTimersByTime(1) })
+      expect(isExpanded('Projects')).toBe(true)
+    })
+
+    it.each([
+      { name: 'the file leaves it', end: (target: HTMLElement, transfer: ReturnType<typeof dataTransfer>) => fireEvent.dragLeave(target, { dataTransfer: transfer }) },
+      { name: 'the file is dropped', end: (target: HTMLElement, transfer: ReturnType<typeof dataTransfer>) => fireEvent.drop(target, { dataTransfer: transfer }) },
+      { name: 'the drag ends', end: (_target: HTMLElement, transfer: ReturnType<typeof dataTransfer>) => fireEvent.dragEnd(screen.getByTestId(`explorer-row:${FOLDER}/Welcome.md`), { dataTransfer: transfer }) },
+    ])('and stays shut when $name first', ({ end }) => {
+      renderExplorer(stubActions())
+      const { target, transfer } = dragOntoProjects()
+
+      act(() => { vi.advanceTimersByTime(300) })
+      end(target, transfer)
+      act(() => { vi.advanceTimersByTime(1000) })
+
+      expect(isExpanded('Projects')).toBe(false)
+    })
+  })
+})
 
 describe('collapsing and expanding the sidebar', () => {
   it('keeps the folders that were opened and the scroll position', () => {

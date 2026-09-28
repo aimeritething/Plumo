@@ -20,10 +20,10 @@ import {
   renameFolderDirectory,
   revealPath,
 } from '@/folder/explorer-commands'
-import { noteRootForPath } from '@/folder/note-entry'
 import { notePathFilename } from '@/lib/note-path-identity'
 import { isPathInsideVaultRoot } from '@/lib/vault-path-containment'
 import { isWithinPrefix, replaceFolderPrefix } from '@/folder/folder-action-utils'
+import { canMoveInto } from './note-drag-drop'
 
 /**
  * The Explorer's write operations and the state behind them:
@@ -78,7 +78,7 @@ export interface ExplorerActions {
   clearError: () => void
   /** Move to Trash: no confirmation, and every Tab at or under the row closes. */
   trash: (path: string, kind: ExplorerRowKind) => void
-  /** A dragged Document or Image file dropped on a folder row, or on the header or empty area (the Folder's top level). */
+  /** A dragged Document or Image file dropped on a folder row, a file row (its folder), or the header or empty area (the Folder's top level). */
   moveInto: (path: string, destination: string) => void
   reveal: (path: string) => void
   copyPath: (path: string) => void
@@ -322,7 +322,7 @@ export function useExplorerActions(options: Options): ExplorerActions {
   const moveInto = useCallback((path: string, destination: string) => {
     void (async () => {
       if (!folder || !tree) return
-      if (noteRootForPath(path) === destination) return
+      if (!canMoveInto(path, destination)) return
       const filename = notePathFilename(path)
       if (isNameTaken(siblingNames(tree, destination, { of: 'children' }), filename)) {
         showToast(`${destinationLabel(folder, destination)} already has ${filename}`)

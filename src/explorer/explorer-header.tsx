@@ -7,7 +7,7 @@ import type { ExplorerActions } from './use-explorer-actions'
 import { ExplorerContextMenu } from './explorer-context-menu'
 import { ExplorerHeaderActions } from './explorer-header-actions'
 import type { ExplorerMenuAction } from './explorer-menu-items'
-import type { useFolderDropTarget } from './use-folder-drop-target'
+import type { FolderDropTarget } from './use-folder-drop-target'
 
 interface ExplorerHeaderProps {
   folder: string
@@ -21,7 +21,7 @@ interface ExplorerHeaderProps {
   onCollapseAll: () => void
   onCloseFolder: () => void
   /** The Folder's top level as a drop target, shared with the empty area below the tree. */
-  drop: ReturnType<typeof useFolderDropTarget>
+  drop: FolderDropTarget
 }
 
 /**
@@ -30,7 +30,8 @@ interface ExplorerHeaderProps {
  * and the hover-only "+" and "…" on the right. Its caret shows while the
  * pointer is over the Explorer or the name has focus, as Pinned's does. The
  * Folder itself is not a row in the tree, so the header stands in for it:
- * a file dropped here moves to the Folder's top level, and its right-click
+ * a file dropped here moves to the Folder's top level (and a drop on a
+ * top-level file row marks it too), and its right-click
  * menu is the Folder's (New Document, New Folder, Reveal in Finder, Copy Path).
  */
 export function ExplorerHeader(props: ExplorerHeaderProps) {
@@ -55,8 +56,8 @@ export function ExplorerHeader(props: ExplorerHeaderProps) {
             'data-drop-target:bg-sidebar-row-active data-drop-target:text-text-heading data-drop-target:ring-1 data-drop-target:ring-accent-base data-drop-target:ring-inset',
           )}
           data-testid="explorer-header"
-          data-drop-target={drop.isDropTarget || undefined}
-          {...drop.dropProps}
+          data-drop-target={drop.target === folder || undefined}
+          {...drop.dropProps(folder)}
         >
           <button
             type="button"

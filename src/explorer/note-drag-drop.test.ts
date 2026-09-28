@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { clearDraggedNotePath, NOTE_DRAG_MIME_TYPE, readDraggedNotePath, writeNoteDragData } from './note-drag-drop'
+import { canMoveInto, clearDraggedNotePath, NOTE_DRAG_MIME_TYPE, readDraggedNotePath, writeNoteDragData } from './note-drag-drop'
 
 function dataTransferWithGetData(getData: (type: string) => unknown): DataTransfer {
   return { getData } as DataTransfer
@@ -29,5 +29,19 @@ describe('note drag/drop data', () => {
     const dataTransfer = dataTransferWithGetData(() => null)
 
     expect(readDraggedNotePath(dataTransfer)).toBeNull()
+  })
+})
+
+describe('where a dragged path can land (AIM-474)', () => {
+  it('lands in any folder but the one it is already in', () => {
+    expect(canMoveInto('/vault/notes/alpha.md', '/vault')).toBe(true)
+    expect(canMoveInto('/vault/notes/alpha.md', '/vault/other')).toBe(true)
+    expect(canMoveInto('/vault/notes/alpha.md', '/vault/notes')).toBe(false)
+  })
+
+  it('never takes a folder into itself or below itself', () => {
+    expect(canMoveInto('/vault/notes', '/vault/notes')).toBe(false)
+    expect(canMoveInto('/vault/notes', '/vault/notes/deep')).toBe(false)
+    expect(canMoveInto('/vault/notes', '/vault/notes-archive')).toBe(true)
   })
 })
