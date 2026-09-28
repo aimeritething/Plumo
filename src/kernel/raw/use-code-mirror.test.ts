@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { EditorSelection } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
+import { undo } from '@codemirror/commands'
 import { RUNTIME_STYLE_NONCE } from '@/platform/runtime-style-nonce'
 import { useCodeMirror, type CodeMirrorCallbacks } from './use-code-mirror'
 
@@ -93,6 +94,49 @@ describe('useCodeMirror', () => {
     expect(view.state.doc.toString()).toBe('---\ntitle: Hello\nTrashed: true\n---\nBody')
     // External sync should NOT trigger onDocChange (would cause infinite loop)
     expect(onDocChange).not.toHaveBeenCalled()
+  })
+
+  // AIM-483: a reload from disk replaced the whole buffer as an undoable edit,
+  // so ⌘Z brought the pre-reload text back and Autosave wrote it over the
+  // other program's change; the caret and the scroll jumped with it.
+  it('applies an external change as the span that differs, off the undo history', () => {
+    const ref = { current: container }
+    const before = 'first\nsecond line\nthird\nfourth'
+    const { result, rerender } = renderHook(
+      ({ content }) => useCodeMirror(ref, content, noopCallbacks),
+      { initialProps: { content: before } },
+    )
+    const view = result.current.current!
+    const caret = before.indexOf('fourth') + 3
+    act(() => { view.dispatch({ selection: { anchor: caret } }) })
+    const dispatch = vi.spyOn(view, 'dispatch')
+
+    rerender({ content: 'first\nsecond line, edited elsewhere\nthird\nfourth' })
+
+    expect(view.state.doc.toString()).toBe('first\nsecond line, edited elsewhere\nthird\nfourth')
+    expect(dispatch).toHaveBeenCalledOnce()
+    const spec = dispatch.mock.calls[0][0] as { changes: unknown }
+    expect(spec.changes).toEqual({ from: 'first\nsecond line'.length, to: 'first\nsecond line'.length, insert: ', edited elsewhere' })
+    // The caret keeps its place in the text after the change.
+    expect(view.state.sliceDoc(view.state.selection.main.head - 3, view.state.selection.main.head + 3)).toBe('fourth')
+
+    act(() => { undo(view) })
+    expect(view.state.doc.toString()).toBe('first\nsecond line, edited elsewhere\nthird\nfourth')
+  })
+
+  it('keeps earlier edits undoable across an external change without restoring the pre-reload text', () => {
+    const ref = { current: container }
+    const { result, rerender } = renderHook(
+      ({ content }) => useCodeMirror(ref, content, noopCallbacks),
+      { initialProps: { content: 'alpha\nbeta' } },
+    )
+    const view = result.current.current!
+    act(() => { view.dispatch({ changes: { from: 0, insert: 'typed ' }, userEvent: 'input.type' }) })
+
+    rerender({ content: 'typed alpha\nbeta from disk' })
+    act(() => { undo(view) })
+
+    expect(view.state.doc.toString()).toBe('alpha\nbeta from disk')
   })
 
   it('lets app Escape handling run before the CodeMirror default keymap', () => {

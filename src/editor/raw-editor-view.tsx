@@ -34,6 +34,8 @@ type PendingChangeRefs = {
   latestDocRef: React.MutableRefObject<string>
   onContentChangeRef: React.MutableRefObject<RawEditorViewProps['onContentChange']>
   pathRef: React.MutableRefObject<string>
+  /** The last doc handed to `onContentChange`, so its echo in the content prop is known for one. */
+  reportedDocRef: React.MutableRefObject<string | null>
 }
 
 /** Basic YAML frontmatter structural checks. */
@@ -55,17 +57,21 @@ function useLatestRef<T>(value: T): React.MutableRefObject<T> {
   return ref
 }
 
-function flushPendingRawEditorChange({
-  debounceRef,
-  latestDocRef,
-  onContentChangeRef,
-  pathRef,
-}: PendingChangeRefs): void {
+function reportRawEditorChange(
+  { onContentChangeRef, pathRef, reportedDocRef }: PendingChangeRefs,
+  doc: string,
+): void {
+  reportedDocRef.current = doc
+  onContentChangeRef.current(pathRef.current, doc)
+}
+
+function flushPendingRawEditorChange(refs: PendingChangeRefs): void {
+  const { debounceRef, latestDocRef } = refs
   if (!debounceRef.current) return
 
   clearTimeout(debounceRef.current)
   debounceRef.current = null
-  onContentChangeRef.current(pathRef.current, latestDocRef.current)
+  reportRawEditorChange(refs, latestDocRef.current)
 }
 
 function RawEditorYamlErrorBanner({ error }: { error: string | null }) {
@@ -105,6 +111,7 @@ function useRawEditorPendingChanges({
   const onSaveRef = useLatestRef(onSave)
   const latestContentRefStable = useRef(latestContentRef)
   const latestDocRef = useRef(content)
+  const reportedDocRef = useRef<string | null>(null)
   const [yamlError, setYamlError] = useState<string | null>(() => detectYamlError(content))
 
   useEffect(() => {
@@ -121,7 +128,7 @@ function useRawEditorPendingChanges({
     setYamlError(detectYamlError(doc))
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
-      onContentChangeRef.current(pathRef.current, doc)
+      reportRawEditorChange({ debounceRef, latestDocRef, onContentChangeRef, pathRef, reportedDocRef }, doc)
     }, DEBOUNCE_MS)
     },
     [onContentChangeRef, pathRef],
@@ -133,6 +140,7 @@ function useRawEditorPendingChanges({
       latestDocRef,
       onContentChangeRef,
       pathRef,
+      reportedDocRef,
     })
     onSaveRef.current()
   }, [onContentChangeRef, onSaveRef, pathRef])
@@ -144,6 +152,7 @@ function useRawEditorPendingChanges({
         latestDocRef,
         onContentChangeRef,
         pathRef,
+        reportedDocRef,
       })
     }
   }, [onContentChangeRef, pathRef])
@@ -155,6 +164,7 @@ function useRawEditorPendingChanges({
     latestDocRef,
     onContentChangeRef,
     pathRef,
+    reportedDocRef,
     yamlError,
   }
 }
@@ -226,9 +236,12 @@ function useRawEditorContentSync(options: {
   setFindOpen: (value: boolean) => void
   setRawDoc: (value: string) => void
   setReplaceOpen: (value: boolean) => void
+  viewRef: React.MutableRefObject<EditorView | null>
 }): void {
-  const { content, findRequest, path, setFindOpen, setRawDoc, setReplaceOpen } = options
-  useEffect(() => setRawDoc(content), [content, setRawDoc])
+  const { content, findRequest, path, setFindOpen, setRawDoc, setReplaceOpen, viewRef } = options
+  // What the editor holds once the content prop has been synced into it: an
+  // echo of its own report is not synced, and the editor has moved on since.
+  useEffect(() => setRawDoc(viewRef.current?.state.doc.toString() ?? content), [content, setRawDoc, viewRef])
   useEffect(() => {
     if (!findRequest || findRequest.path !== path) return
     setFindOpen(true)
@@ -292,6 +305,8 @@ export function RawEditorView(options: RawEditorViewProps) {
     setFindOpen(false)
     return true
   }, [findOpen])
+  const { reportedDocRef } = pendingChanges
+  const isOwnReport = useCallback((doc: string) => doc === reportedDocRef.current, [reportedDocRef])
   const viewRef = useCodeMirror(
     containerRef,
     content,
@@ -300,6 +315,7 @@ export function RawEditorView(options: RawEditorViewProps) {
     onCursorActivity: handleCursorActivity,
     onSave: pendingChanges.handleSave,
     onEscape: handleEscape,
+    isOwnReport,
     },
     path,
   )
@@ -314,7 +330,7 @@ export function RawEditorView(options: RawEditorViewProps) {
   }), [viewRef])
   useRegisteredRef(historyRef, history)
 
-  useRawEditorContentSync({ content, findRequest, path, setFindOpen, setRawDoc, setReplaceOpen })
+  useRawEditorContentSync({ content, findRequest, path, setFindOpen, setRawDoc, setReplaceOpen, viewRef })
   return (
     <RawEditorSurface
       containerRef={containerRef}

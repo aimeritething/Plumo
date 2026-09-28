@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
+import { useState } from 'react'
 import { render, screen, act } from '@testing-library/react'
 import type { EditorHistory } from './editor-history'
 import { language, syntaxTree } from '@codemirror/language'
@@ -142,6 +143,29 @@ describe('RawEditorView', () => {
     const cmScroller = container.querySelector('.cm-scroller')
     // The font is applied via CM theme classes, verify the structure exists
     expect(cmScroller).toBeInTheDocument()
+  })
+
+  // AIM-483: the idle debounce reports a keystroke, the Tab takes it, and the
+  // content prop comes back. A key typed between the report and that commit
+  // is newer than the echo, which must not overwrite it.
+  it('keeps a keystroke typed between its idle report and the Tab taking the report', () => {
+    vi.useFakeTimers()
+    function Tab() {
+      const [content, setContent] = useState('hello')
+      return <RawEditorView {...defaultProps} content={content} onContentChange={(_path, next) => setContent(next)} />
+    }
+    render(<Tab />)
+    const view = (screen.getByTestId('raw-editor-codemirror') as CodeMirrorHost).__cmView!
+
+    act(() => { view.dispatch({ changes: { from: 5, insert: ' a' }, selection: { anchor: 7 }, userEvent: 'input.type' }) })
+    act(() => {
+      vi.advanceTimersByTime(500)
+      view.dispatch({ changes: { from: 7, insert: 'b' }, selection: { anchor: 8 }, userEvent: 'input.type' })
+    })
+
+    expect(view.state.doc.toString()).toBe('hello ab')
+    expect(view.state.selection.main.head).toBe(8)
+    vi.useRealTimers()
   })
 
   it('cleans up CodeMirror view on unmount', () => {

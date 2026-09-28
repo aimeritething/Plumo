@@ -10,7 +10,7 @@ import {
   ViewPlugin,
   type ViewUpdate,
 } from '@codemirror/view'
-import { EditorSelection, EditorState, Prec, type SelectionRange } from '@codemirror/state'
+import { EditorSelection, EditorState, Prec, Transaction, type SelectionRange } from '@codemirror/state'
 import { defaultKeymap, history, historyKeymap, insertTab } from '@codemirror/commands'
 import { rawEditorLanguageExtensionsForPath } from './raw-editor-language'
 import { RUNTIME_STYLE_NONCE } from '@/platform/runtime-style-nonce'
@@ -67,6 +67,12 @@ export interface CodeMirrorCallbacks {
   onCursorActivity: (view: EditorView) => void
   onSave: () => void
   onEscape: () => boolean
+  /**
+   * Whether a content prop is this editor's own report coming back (the idle
+   * debounce reported it and the Tab took it). A keystroke typed between the
+   * report and that commit is newer than the echo, so the echo is not synced.
+   */
+  isOwnReport?: (content: string) => boolean
 }
 
 function buildBaseTheme() {
@@ -318,6 +324,39 @@ function buildArrowLigaturesExtension() {
   })
 }
 
+/**
+ * The one span where `next` differs from `current`: their common prefix and
+ * suffix stay, so the caret, the selection and the scroll position outside
+ * the span are mapped rather than thrown away.
+ */
+function differingSpan(current: string, next: string): { from: number; to: number; insert: string } {
+  const shorter = Math.min(current.length, next.length)
+  let from = 0
+  while (from < shorter && current.charCodeAt(from) === next.charCodeAt(from)) from += 1
+  let suffix = 0
+  while (
+    suffix < shorter - from
+    && current.charCodeAt(current.length - 1 - suffix) === next.charCodeAt(next.length - 1 - suffix)
+  ) suffix += 1
+  return { from, to: current.length - suffix, insert: next.slice(from, next.length - suffix) }
+}
+
+/**
+ * Bring the editor in line with bytes that changed outside it (a reload from
+ * disk). Kept off the undo history: ⌘Z must never bring back what another
+ * program replaced, which Autosave would then write over its change.
+ */
+function syncExternalContent(view: EditorView, content: string): boolean {
+  const current = view.state.doc.toString()
+  const next = view.state.toText(content).toString()
+  if (current === next) return false
+  view.dispatch({
+    changes: differingSpan(current, next),
+    annotations: Transaction.addToHistory.of(false),
+  })
+  return true
+}
+
 function readRefCurrent<T>(ref: React.RefObject<T>): T | null {
   return ref.current
 }
@@ -337,15 +376,17 @@ export function useCodeMirror(
   // Track whether we're dispatching an external sync so the updateListener skips it
   const externalSyncRef = useRef(false)
 
-  // Sync content prop changes to the editor (e.g. after frontmatter update on disk)
+  // Sync content prop changes to the editor (a reload from disk, a Frontmatter update)
   useEffect(() => {
     const view = viewRef.current
-    if (!view) return
-    const current = view.state.doc.toString()
-    if (current === content) return
+    if (!view || view.state.doc.toString() === content) return
+    if (callbacksRef.current.isOwnReport?.(content)) return
     externalSyncRef.current = true
-    view.dispatch({ changes: { from: 0, to: current.length, insert: content } })
-    externalSyncRef.current = false
+    try {
+      syncExternalContent(view, content)
+    } finally {
+      externalSyncRef.current = false
+    }
   }, [content])
 
   useEffect(() => {
