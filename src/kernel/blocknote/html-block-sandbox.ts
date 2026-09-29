@@ -9,6 +9,7 @@ const REMOTE_LOADING_ATTRIBUTES = [
   'srcset',
   'xlink:href',
 ]
+const SVG_NAMESPACE = 'http://www.w3.org/2000/svg'
 const BASE_CSP_DIRECTIVES = [
   "default-src 'none'",
   "connect-src 'none'",
@@ -21,11 +22,11 @@ const BASE_CSP_DIRECTIVES = [
   "font-src data:",
   "style-src 'unsafe-inline'",
 ]
-const ALLOWED_URI_PATTERN = /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.-]+(?:[^a-z+.-:]|$))/iu
+const ALLOWED_URI_PATTERN = /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/iu
 
 const SANITIZE_CONFIG = {
   ALLOWED_URI_REGEXP: ALLOWED_URI_PATTERN,
-  USE_PROFILES: { html: true },
+  USE_PROFILES: { html: true, svg: true, svgFilters: true },
   FORBID_TAGS: ['base', 'embed', 'iframe', 'link', 'meta', 'object', 'script'],
   WHOLE_DOCUMENT: true,
 }
@@ -55,6 +56,14 @@ function removeRemoteLoadingAttributes(element: Element): void {
   for (const attribute of REMOTE_LOADING_ATTRIBUTES) {
     element.removeAttribute(attribute)
   }
+}
+
+// An SVG element other than a link may only point at another element in the block.
+function removeRemoteSvgReference(element: Element): void {
+  if (element.namespaceURI !== SVG_NAMESPACE || element.localName === 'a') return
+
+  const href = element.getAttribute('href')
+  if (href !== null && !href.startsWith('#')) element.removeAttribute('href')
 }
 
 function sanitizeInlineStyle(element: Element): void {
@@ -93,6 +102,7 @@ function sanitizeAnchor(anchor: HTMLAnchorElement): void {
 function sanitizeParsedMarkup(documentObject: Document): SanitizedHtmlBlockMarkup {
   documentObject.querySelectorAll('*').forEach((element) => {
     removeRemoteLoadingAttributes(element)
+    removeRemoteSvgReference(element)
     sanitizeInlineStyle(element)
     if (element instanceof HTMLStyleElement) sanitizeStyleElement(element)
     if (element instanceof HTMLAnchorElement) sanitizeAnchor(element)

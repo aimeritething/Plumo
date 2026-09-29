@@ -26,6 +26,12 @@ describe('HTML block sandbox', () => {
     expect(sanitized).toContain('rel="noreferrer noopener"')
   })
 
+  it('keeps attribute values where letters run into digits', () => {
+    const sanitized = sanitizeHtmlBlockMarkup('<a href="page1.html">next</a>')
+
+    expect(sanitized).toContain('href="page1.html"')
+  })
+
   it('removes nested browsing contexts and remote-loading attributes', () => {
     const sanitized = sanitizeHtmlBlockMarkup([
       '<iframe src="https://example.com"></iframe>',
@@ -42,6 +48,26 @@ describe('HTML block sandbox', () => {
     expect(sanitized).toContain('<style>')
     expect(sanitized).toContain('.ok { color: red }')
     expect(sanitized).toContain('Styled')
+  })
+
+  it('keeps inline SVG and removes its script surfaces and remote loads', () => {
+    const sanitized = sanitizeHtmlBlockMarkup([
+      '<svg viewBox="0 0 10 10" role="img" onload="window.parent.evil = true">',
+      '<path d="M463.7 50 l5 5 l-5 5 z"/>',
+      '<rect class="a1" x="0" y="0" width="4" height="4" rx="1"><title>July</title></rect>',
+      '<text x="5" y="5" text-anchor="middle">7 月</text>',
+      '<image href="https://example.com/tracker.png"/>',
+      '<script>window.parent.evil = true</script>',
+      '</svg>',
+    ].join(''))
+
+    expect(sanitized).toContain('<svg viewBox="0 0 10 10" role="img">')
+    expect(sanitized).toContain('<rect class="a1" x="0" y="0" width="4" height="4" rx="1"><title>July</title></rect>')
+    expect(sanitized).toContain('<text x="5" y="5" text-anchor="middle">7 月</text>')
+    expect(sanitized).toContain('<path d="M463.7 50 l5 5 l-5 5 z"></path>')
+    expect(sanitized).not.toContain('onload')
+    expect(sanitized).not.toContain('<script')
+    expect(sanitized).not.toContain('example.com')
   })
 
   it('generates a srcdoc with a restrictive CSP and no script permission dependency', () => {
