@@ -295,7 +295,8 @@ interface EmptyAreaProps {
 /**
  * The area below the tree, down to the bottom of the sidebar: New Document
  * and New Folder, both at the Folder's top level, and a drop there moves a
- * file to the top level too.
+ * file to the top level too. A tree that fills the sidebar leaves it no
+ * height; the header does both then.
  */
 function EmptyArea({ actions, folder, dropProps }: EmptyAreaProps) {
   const onAction = useCallback((action: ExplorerMenuAction) => {
@@ -306,7 +307,7 @@ function EmptyArea({ actions, folder, dropProps }: EmptyAreaProps) {
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
-        <div className="min-h-6 flex-1" data-testid="explorer-empty-area" {...dropProps} />
+        <div className="flex-1" data-testid="explorer-empty-area" {...dropProps} />
       </ContextMenuTrigger>
       <ExplorerContextMenu target="empty" onAction={onAction} />
     </ContextMenu>
