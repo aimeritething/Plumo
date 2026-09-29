@@ -123,10 +123,11 @@ function mockMenuDropdown({ children, className, sub }: MenuDropdownProps) {
   return <div className={className} data-testid={sub ? 'menu-sub-dropdown' : 'menu-dropdown'}>{children}</div>
 }
 
-function mockMenuItem({ children, icon, onClick, subTrigger }: MenuItemProps) {
+function mockMenuItem({ children, className, icon, onClick, subTrigger }: MenuItemProps) {
   return (
     <button
       aria-haspopup={subTrigger ? 'menu' : undefined}
+      className={className}
       data-sub-trigger={subTrigger ? 'true' : undefined}
       type="button"
       onClick={onClick}
@@ -155,6 +156,10 @@ function mockMenuRoot({
       {children}
     </div>
   )
+}
+
+function mockMenuDivider() {
+  return <hr data-testid="menu-divider" />
 }
 
 function mockMenuTrigger({ children, sub }: PropsWithChildren<{ sub?: boolean }>) {
@@ -219,6 +224,7 @@ vi.mock('@blocknote/react', () => ({
   useComponentsContext: () => ({
     Generic: {
       Menu: {
+        Divider: mockMenuDivider,
         Dropdown: mockMenuDropdown,
         Item: mockMenuItem,
         Root: mockMenuRoot,
@@ -388,6 +394,15 @@ export function rootSideMenuButtonText() {
     .filter((button) => button.closest('[data-testid="side-menu"]') === sideMenu)
     .filter((button) => !button.closest('[data-testid="menu-sub-dropdown"]'))
     .map((button) => button.getAttribute('aria-label') ?? button.textContent)
+}
+
+/** The drag handle menu's top level in order: each item's text, a separator as `---`. */
+export function dragHandleMenuEntries() {
+  return Array.from(screen.getByTestId('drag-handle-menu').children, (child) => {
+    if (child.matches('[data-testid="menu-divider"]')) return '---'
+    const subTrigger = child.querySelector(':scope > [data-testid="menu-sub-trigger"]')
+    return (subTrigger ?? child).textContent
+  })
 }
 
 export function renderPointerReorderFixture() {

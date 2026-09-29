@@ -38,6 +38,11 @@ export const EXPLORER_MENU_LABELS: Record<ExplorerMenuAction, string> = {
 /** Pin's label on a row that is pinned already. */
 export const EXPLORER_UNPIN_LABEL = 'Unpin'
 
+/** Whether the item removes what it acts on, which draws it in the `destructive` style. */
+export function isDestructiveExplorerMenuAction(action: ExplorerMenuAction): boolean {
+  return action === 'trash'
+}
+
 const SEPARATOR: ExplorerMenuEntry = { kind: 'separator' }
 
 function items(...actions: ExplorerMenuAction[]): ExplorerMenuEntry[] {
@@ -46,13 +51,15 @@ function items(...actions: ExplorerMenuAction[]): ExplorerMenuEntry[] {
 
 const CREATION = items('newDocument', 'newFolder')
 const HAND_OFFS = items('reveal', 'copyPath')
-const OWN_FILE = items('rename', 'trash')
+const RENAME = items('rename')
 const PIN = items('pin')
+// Last and on its own, as every menu puts what removes content.
+const TRASH = items('trash')
 
 const MENUS: Record<ExplorerMenuTargetKind, ExplorerMenuEntry[]> = {
-  note: [...PIN, SEPARATOR, ...OWN_FILE, SEPARATOR, ...HAND_OFFS],
-  image: [...PIN, SEPARATOR, ...OWN_FILE, SEPARATOR, ...HAND_OFFS],
-  folder: [...CREATION, SEPARATOR, ...OWN_FILE, SEPARATOR, ...HAND_OFFS],
+  note: [...PIN, SEPARATOR, ...RENAME, SEPARATOR, ...HAND_OFFS, SEPARATOR, ...TRASH],
+  image: [...PIN, SEPARATOR, ...RENAME, SEPARATOR, ...HAND_OFFS, SEPARATOR, ...TRASH],
+  folder: [...CREATION, SEPARATOR, ...RENAME, SEPARATOR, ...HAND_OFFS, SEPARATOR, ...TRASH],
   root: [...CREATION, SEPARATOR, ...HAND_OFFS],
   empty: CREATION,
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { EXPLORER_MENU_LABELS, explorerMenuEntries } from './explorer-menu-items'
+import { EXPLORER_MENU_LABELS, explorerMenuEntries, isDestructiveExplorerMenuAction } from './explorer-menu-items'
 
 function labels(target: Parameters<typeof explorerMenuEntries>[0]): string[] {
   return explorerMenuEntries(target).map((entry) =>
@@ -7,8 +7,8 @@ function labels(target: Parameters<typeof explorerMenuEntries>[0]): string[] {
 }
 
 describe('explorerMenuEntries', () => {
-  it('gives a Document Pin, rename, trash and the system hand-offs', () => {
-    expect(labels('note')).toEqual(['Pin', '─', 'Rename…', 'Move to Trash', '─', 'Reveal in Finder', 'Copy Path'])
+  it('gives a Document Pin, rename, the system hand-offs and trash last', () => {
+    expect(labels('note')).toEqual(['Pin', '─', 'Rename…', '─', 'Reveal in Finder', 'Copy Path', '─', 'Move to Trash'])
   })
 
   it('gives an Image file the same items as a Document', () => {
@@ -17,7 +17,7 @@ describe('explorerMenuEntries', () => {
 
   it('gives a folder the creation items above its own', () => {
     expect(labels('folder')).toEqual([
-      'New Document', 'New Folder', '─', 'Rename…', 'Move to Trash', '─', 'Reveal in Finder', 'Copy Path',
+      'New Document', 'New Folder', '─', 'Rename…', '─', 'Reveal in Finder', 'Copy Path', '─', 'Move to Trash',
     ])
   })
 
@@ -27,6 +27,12 @@ describe('explorerMenuEntries', () => {
 
   it('gives the empty area below the tree the two creation items only', () => {
     expect(labels('empty')).toEqual(['New Document', 'New Folder'])
+  })
+
+  it('draws Move to Trash, and nothing else, as destructive', () => {
+    const destructive = Object.keys(EXPLORER_MENU_LABELS)
+      .filter((action) => isDestructiveExplorerMenuAction(action as keyof typeof EXPLORER_MENU_LABELS))
+    expect(destructive).toEqual(['trash'])
   })
 
   it('never puts a separator at either end', () => {

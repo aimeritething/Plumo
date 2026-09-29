@@ -154,8 +154,9 @@ describe('the context menu', () => {
     rightClick(screen.getByTestId(`explorer-row:${FOLDER}/Welcome.md`))
 
     const menu = await screen.findByTestId('explorer-menu:note')
-    expect(menuLabels(menu)).toEqual(['Pin', 'Rename…', 'Move to Trash', 'Reveal in Finder', 'Copy Path'])
+    expect(menuLabels(menu)).toEqual(['Pin', 'Rename…', 'Reveal in Finder', 'Copy Path', 'Move to Trash'])
     expect(within(menu).getByText('Move to Trash')).not.toHaveAttribute('data-disabled')
+    expect(within(menu).getByText('Move to Trash')).toHaveAttribute('data-variant', 'destructive')
   })
 
   it('pins the row it was opened on, and names the item Unpin on a pinned row', async () => {
@@ -182,7 +183,7 @@ describe('the context menu', () => {
 
     const menu = await screen.findByTestId('explorer-menu:folder')
     expect(menuLabels(menu)).toEqual([
-      'New Document', 'New Folder', 'Rename…', 'Move to Trash', 'Reveal in Finder', 'Copy Path',
+      'New Document', 'New Folder', 'Rename…', 'Reveal in Finder', 'Copy Path', 'Move to Trash',
     ])
   })
 

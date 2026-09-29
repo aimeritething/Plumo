@@ -231,12 +231,12 @@ function AddBlockButton() {
   )
 }
 
-/** A side menu button's tooltip, in the margin left of it, where the menu already is. */
+/** A side menu button's tooltip, below it, as the tab bar's are. */
 function SideMenuTooltip({ label, children }: { label: string; children: ReactNode }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>{children}</TooltipTrigger>
-      <TooltipContent side="left">{label}</TooltipContent>
+      <TooltipContent side="bottom">{label}</TooltipContent>
     </Tooltip>
   )
 }
@@ -348,6 +348,13 @@ function DragHandleButton({
   )
 }
 
+/**
+ * The menu item's `destructive` variant, spelled in the red it aliases.
+ * BlockNote's Menu.Item passes on a className and nothing else, so the
+ * variant's classes come this way.
+ */
+const DESTRUCTIVE_MENU_ITEM_CLASS = 'text-chroma-red focus:bg-chroma-red/10 focus:text-chroma-red dark:focus:bg-chroma-red/20'
+
 function RemoveBlockItem({ children }: { children: ReactNode }) {
   const Components = useRequiredComponentsContext()
   const { block, editor } = useSideMenuBlock()
@@ -356,7 +363,7 @@ function RemoveBlockItem({ children }: { children: ReactNode }) {
 
   return (
     <Components.Generic.Menu.Item
-      className="bn-menu-item"
+      className={`bn-menu-item ${DESTRUCTIVE_MENU_ITEM_CLASS}`}
       onClick={() => {
         runSideMenuAction(() => {
           removeSideMenuSection(editor, block)
@@ -365,6 +372,23 @@ function RemoveBlockItem({ children }: { children: ReactNode }) {
     >
       {children}
     </Components.Generic.Menu.Item>
+  )
+}
+
+/** Header row and Header column behind their separator, for a table whose headers can be set. */
+function TableHeaderItems() {
+  const Components = useRequiredComponentsContext()
+  const dict = useDictionary()
+  const { block, editor } = useSideMenuBlock()
+
+  if (!tableHeaderContent(liveSideMenuBlock(editor, block)) || !editor.settings.tables.headers) return null
+
+  return (
+    <>
+      <Components.Generic.Menu.Divider />
+      <TableHeaderItem header="row">{dict.drag_handle.header_row_menuitem}</TableHeaderItem>
+      <TableHeaderItem header="column">{dict.drag_handle.header_column_menuitem}</TableHeaderItem>
+    </>
   )
 }
 
@@ -444,6 +468,7 @@ function TurnBlockIntoSubmenu({ locale }: { locale: AppLocale }) {
   )
 }
 
+/** Turn into, a table's header items, then Delete last on its own, as every menu puts what removes content. */
 function DragHandleMenu({
   children,
   locale = 'en',
@@ -451,15 +476,16 @@ function DragHandleMenu({
   children?: ReactNode
   locale?: AppLocale
 }) {
+  const Components = useRequiredComponentsContext()
   const dict = useDictionary()
 
   return (
     <BlockNoteDragHandleMenu>
       {children}
-      <RemoveBlockItem>{dict.drag_handle.delete_menuitem}</RemoveBlockItem>
       <TurnBlockIntoSubmenu locale={locale} />
-      <TableHeaderItem header="row">{dict.drag_handle.header_row_menuitem}</TableHeaderItem>
-      <TableHeaderItem header="column">{dict.drag_handle.header_column_menuitem}</TableHeaderItem>
+      <TableHeaderItems />
+      <Components.Generic.Menu.Divider />
+      <RemoveBlockItem>{dict.drag_handle.delete_menuitem}</RemoveBlockItem>
     </BlockNoteDragHandleMenu>
   )
 }
@@ -470,8 +496,8 @@ export function SideMenu({ locale = 'en', ...props }: BlockNoteSideMenuProps) {
 
   return (
     <BlockNoteSideMenu {...props}>
-      <DragHandleButton locale={locale} />
       <SectionControlButton locale={locale} />
+      <DragHandleButton locale={locale} />
     </BlockNoteSideMenu>
   )
 }

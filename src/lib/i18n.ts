@@ -65,7 +65,7 @@ export const EN_TRANSLATIONS = {
   "editor.sideMenu.collapseSection": "Collapse section",
   "editor.sideMenu.expandItem": "Expand item",
   "editor.sideMenu.expandSection": "Expand section",
-  "editor.sideMenu.turnIntoMenu": "Turn into...",
+  "editor.sideMenu.turnIntoMenu": "Turn into…",
   "editor.slash.callout": "Callout",
   "editor.slash.callout.abstract": "Abstract",
   "editor.slash.callout.bug": "Bug",

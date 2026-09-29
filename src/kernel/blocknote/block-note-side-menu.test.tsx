@@ -7,6 +7,7 @@ import {
   collapsedSectionStyleText,
   dispatchHandlePointerReorder,
   dispatchPointerEvent,
+  dragHandleMenuEntries,
   expectCollapsedSectionStyleNotToTarget,
   expectCollapsedSectionStyleToTarget,
   headingBlock,
@@ -41,14 +42,16 @@ describe('SideMenu', () => {
 
     expect(screen.getByTestId('side-menu')).toBeInTheDocument()
     expect(rootSideMenuButtonText()).toEqual([
-      'Drag block',
-      'Delete',
-      'Turn into...',
       'Add block',
+      'Drag block',
+      'Turn into…',
+      'Delete',
     ])
+    expect(dragHandleMenuEntries()).toEqual(['Turn into…', '---', 'Delete'])
+    expect(screen.getByText('Delete')).toHaveClass('text-chroma-red')
 
     expect(screen.getByText('Delete')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Turn into...' })).toHaveAttribute('aria-haspopup', 'menu')
+    expect(screen.getByRole('button', { name: 'Turn into…' })).toHaveAttribute('aria-haspopup', 'menu')
     expect(screen.getByTestId('menu-sub-dropdown')).toHaveClass('min-w-0')
     for (const label of turnIntoButtonLabels) {
       expect(screen.getByTestId(`menu-item-icon-${label}`)).toBeInTheDocument()
@@ -124,6 +127,7 @@ describe('SideMenu', () => {
     mockEditor.getBlock.mockReturnValue(liveTable)
 
     renderSideMenuWithBlock(staleTable)
+    expect(dragHandleMenuEntries()).toEqual(['Turn into…', '---', 'Header row', 'Header column', '---', 'Delete'])
     fireEvent.click(screen.getByText('Header row'))
 
     expect(mockEditor.updateBlock).toHaveBeenCalledWith(liveTable.id, {
@@ -434,7 +438,7 @@ describe('SideMenu', () => {
     expect(mockSideMenu.freezeMenu).not.toHaveBeenCalled()
   })
 
-  it('renders drag handle before heading collapse toggle for headings', () => {
+  it('renders the heading collapse toggle before the drag handle', () => {
     const heading = headingBlock('heading-block', 2)
     mockEditor.document = [heading]
     mockEditor.getBlock.mockReturnValue(heading)
@@ -442,10 +446,10 @@ describe('SideMenu', () => {
     renderSideMenuWithBlock(heading)
 
     expect(rootSideMenuButtonText()).toEqual([
-      'Drag block',
-      'Delete',
-      'Turn into...',
       'Collapse section',
+      'Drag block',
+      'Turn into…',
+      'Delete',
     ])
   })
 
@@ -473,7 +477,7 @@ describe('SideMenu', () => {
     expect(screen.queryByRole('button', { name: 'Collapse item' })).not.toBeInTheDocument()
   })
 
-  it('renders drag handle before list item collapse toggle for list items with children', () => {
+  it('renders the list item collapse toggle before the drag handle for list items with children', () => {
     const parentListItem = listItemBlock('parent-list-item', [listItemBlock('child-list-item')])
     mockEditor.document = [parentListItem]
     mockEditor.getBlock.mockReturnValue(parentListItem)
@@ -481,10 +485,10 @@ describe('SideMenu', () => {
     renderSideMenuWithBlock(parentListItem)
 
     expect(rootSideMenuButtonText()).toEqual([
-      'Drag block',
-      'Delete',
-      'Turn into...',
       'Collapse item',
+      'Drag block',
+      'Turn into…',
+      'Delete',
     ])
   })
 

@@ -3,6 +3,7 @@ import {
   EXPLORER_MENU_LABELS,
   EXPLORER_UNPIN_LABEL,
   explorerMenuEntries,
+  isDestructiveExplorerMenuAction,
   type ExplorerMenuAction,
   type ExplorerMenuTargetKind,
 } from './explorer-menu-items'
@@ -27,7 +28,11 @@ export function ExplorerContextMenu({ target, pinned = false, onAction }: Explor
         entry.kind === 'separator'
           ? <ContextMenuSeparator key={`separator-${index}`} />
           : (
-            <ContextMenuItem key={entry.action} onSelect={() => onAction(entry.action)}>
+            <ContextMenuItem
+              key={entry.action}
+              variant={isDestructiveExplorerMenuAction(entry.action) ? 'destructive' : 'default'}
+              onSelect={() => onAction(entry.action)}
+            >
               {entry.action === 'pin' && pinned ? EXPLORER_UNPIN_LABEL : EXPLORER_MENU_LABELS[entry.action]}
             </ContextMenuItem>
           )
