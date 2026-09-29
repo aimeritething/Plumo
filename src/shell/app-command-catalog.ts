@@ -48,6 +48,7 @@ type SimpleHandlerKey =
   | 'onUndo'
   | 'onRedo'
   | 'onPastePlainText'
+  | 'onDuplicateBlock'
   | 'onFindInNote'
   | 'onCommandPalette'
   | 'onToggleSidebar'

@@ -17,6 +17,8 @@ export interface MenuEventHandlers extends AppCommandHandlers {
   hasTab: boolean
   /** Whether the active Tab's file can be pinned: a Document or an Image file in the Folder. Pin/Unpin follows it. */
   canPin?: boolean
+  /** Whether the active Tab is a Document in Rich mode, where there are Blocks. Duplicate Block follows it. */
+  hasRichDocument?: boolean
 }
 
 declare global {
@@ -35,6 +37,7 @@ interface MenuStatePayload {
   hasVault: boolean
   hasTab: boolean
   canPin: boolean
+  hasRichNote: boolean
 }
 
 function readCustomEventDetail(event: Event): string | null {
@@ -145,7 +148,11 @@ export function useMenuEvents(handlers: MenuEventHandlers) {
   const hasVault = handlers.hasFolder
   const hasTab = handlers.hasTab
   const canPin = handlers.canPin ?? false
-  const menuState = useMemo(() => ({ hasActiveNote, hasVault, hasTab, canPin }), [canPin, hasActiveNote, hasTab, hasVault])
+  const hasRichNote = handlers.hasRichDocument ?? false
+  const menuState = useMemo(
+    () => ({ hasActiveNote, hasVault, hasTab, canPin, hasRichNote }),
+    [canPin, hasActiveNote, hasRichNote, hasTab, hasVault],
+  )
 
   useEffect(() => {
     ref.current = handlers

@@ -9,6 +9,7 @@ import {
   CalendarDots,
   CodeBlock,
   Clock,
+  Copy,
   File,
   FlowArrow,
   ImageSquare,
@@ -42,6 +43,8 @@ import { MATH_BLOCK_TYPE } from '@/kernel/markdown/math-markdown'
 import { MERMAID_BLOCK_TYPE, mermaidFenceSource } from '@/kernel/markdown/mermaid-markdown'
 import { TLDRAW_BLOCK_TYPE, TLDRAW_DEFAULT_HEIGHT } from '@/kernel/markdown/tldraw-markdown'
 import { calloutIconForType } from './callout-icons'
+import type { RichEditor } from './block-note-dom'
+import { duplicateBlocksAndSelect } from './rich-editor-duplicate-blocks'
 
 export type SlashMenuItem = DefaultReactSuggestionItem & {
   key: string
@@ -65,6 +68,7 @@ type SlashMenuLabels = {
   calloutTypeTitles: Record<ObsidianCalloutType, string>
   dateTitle: string
   datetimeTitle: string
+  duplicateTitle: string
   sandboxBlockTitle: string
   mathTitle: string
   timeTitle: string
@@ -101,6 +105,7 @@ const SLASH_MENU_ICONS: Partial<Record<string, PhosphorIcon>> = {
   date: CalendarBlank,
   datetime: CalendarDots,
   divider: Minus,
+  duplicate: Copy,
   emoji: Smiley,
   file: File,
   heading: TextHOne,
@@ -184,6 +189,27 @@ export function createDateTimeSlashMenuItems(
       trackEvent('editor_timestamp_slash_command_used', { kind: key })
     },
   } as SlashMenuItem))
+}
+
+/**
+ * /duplicate copies the Block the slash menu was opened in, as the handle's
+ * Duplicate does. The menu has cleared the typed query by the time it runs,
+ * so the copy doesn't carry it.
+ */
+export function createDuplicateSlashMenuItem(
+  editor: Parameters<typeof getDefaultReactSlashMenuItems>[0],
+  labels: Pick<SlashMenuLabels, 'duplicateTitle'> = { duplicateTitle: 'Duplicate' },
+): SlashMenuItem {
+  const richEditor = editor as unknown as RichEditor
+
+  return {
+    aliases: ['copy', 'clone'],
+    key: 'duplicate',
+    title: labels.duplicateTitle,
+    onItemClick: () => {
+      duplicateBlocksAndSelect(richEditor, [richEditor.getTextCursorPosition().block.id])
+    },
+  } as SlashMenuItem
 }
 
 /**
@@ -464,7 +490,7 @@ export function getSlashMenuItems(
       ],
     ),
     otherGroup,
-    dateTimeItems,
+    [...dateTimeItems, { ...createDuplicateSlashMenuItem(editor, labels), group: otherGroup }],
   )
 
   const matches = filterSuggestionItems(

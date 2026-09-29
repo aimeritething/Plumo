@@ -41,6 +41,14 @@ _Avoid_: Preview, WYSIWYG mode, rendered mode
 The plain-Markdown editing surface (CodeMirror). Shows the exact bytes that are on disk, including Frontmatter.
 _Avoid_: Source mode, code mode, plain mode
 
+**Block**:
+One unit of a Document's body in Rich mode (a paragraph, heading, list item, table, image, …), together with the Blocks nested under it. Raw mode has no Blocks, only lines.
+_Avoid_: Node, element, paragraph (when you mean any kind of Block)
+
+**Section**:
+A heading Block and every Block after it up to the next heading of the same or a higher level. A folded heading hides its Section; moving, deleting or duplicating a folded heading acts on the whole Section.
+_Avoid_: Chapter, group
+
 **Autosave**:
 Writing a Document's pending edits to disk after a short idle delay. Disk is written first; in-memory state updates only after the write succeeds.
 

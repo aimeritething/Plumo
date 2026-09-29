@@ -152,6 +152,19 @@
         "requiresManualNativeAcceleratorQa": true
       }
     },
+    "editDuplicateBlock": {
+      "id": "edit-duplicate-block",
+      "route": { "kind": "handler", "handler": "onDuplicateBlock" },
+      "menuOwned": true,
+      "shortcut": {
+        "combo": "command-or-ctrl",
+        "key": "d",
+        "code": "KeyD",
+        "display": "⌘D",
+        "accelerator": "CmdOrCtrl+D",
+        "requiresManualNativeAcceleratorQa": true
+      }
+    },
     "editFindInNote": {
       "id": "edit-find-in-note",
       "route": { "kind": "handler", "handler": "onFindInNote" },
@@ -404,6 +417,8 @@
         { "kind": "separator" },
         { "kind": "command", "command": "editPastePlainText", "label": "Paste without Formatting" },
         { "kind": "separator" },
+        { "kind": "command", "command": "editDuplicateBlock", "label": "Duplicate Block" },
+        { "kind": "separator" },
         { "kind": "command", "command": "editFindInNote", "label": "Find" },
         { "kind": "separator" },
         { "kind": "command", "command": "editCopyPath", "label": "Copy Path" }
@@ -459,6 +474,9 @@
     ],
     "pinnableDependent": [
       { "command": "fileTogglePin" }
+    ],
+    "richNoteDependent": [
+      { "command": "editDuplicateBlock" }
     ]
   }
 }

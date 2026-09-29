@@ -22,6 +22,7 @@ export type KeyboardActions = Pick<
   | 'onRedo'
   | 'onFindInNote'
   | 'onPastePlainText'
+  | 'onDuplicateBlock'
   | 'onToggleSidebar'
   | 'onToggleRawEditor'
   | 'onCopyPath'
@@ -192,6 +193,12 @@ export function handleAppKeyboardEvent(actions: KeyboardActions, event: Keyboard
   // in some other text field, the Command Menu's input or an Explorer rename,
   // which keeps the chord.
   if (commandId === APP_COMMAND_IDS.editFindInNote && isTextInputFocused() && !isEditorFindScopeFocused()) return
+  // ⌘D is Duplicate Block over a Document in Rich mode. Anywhere else it is
+  // left alone: in Raw mode it stays CodeMirror's, in a text field the field's.
+  if (
+    commandId === APP_COMMAND_IDS.editDuplicateBlock
+    && (!actions.onDuplicateBlock || (isTextInputFocused() && !activeRichEditor()))
+  ) return
   if (
     commandId === APP_COMMAND_IDS.viewCommandPalette
     && handleRichEditorCreateLinkShortcut(event)

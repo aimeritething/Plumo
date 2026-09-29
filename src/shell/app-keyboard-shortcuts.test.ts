@@ -129,6 +129,34 @@ describe('handleAppKeyboardEvent', () => {
     expect(handlers.onFindInNote).toHaveBeenCalledTimes(2)
   })
 
+  it('⌘D duplicates Blocks from the Rich editor', () => {
+    document.body.innerHTML = '<div class="bn-editor" contenteditable="true" tabindex="0">Text</div>'
+    document.querySelector<HTMLElement>('.bn-editor')!.focus()
+    const handlers = actions({ onDuplicateBlock: vi.fn() })
+    const event = press('d')
+    handleAppKeyboardEvent(handlers, event)
+    expect(handlers.onDuplicateBlock).toHaveBeenCalledTimes(1)
+    expect(event.defaultPrevented).toBe(true)
+  })
+
+  it('⌘D is left to CodeMirror in Raw mode, where Duplicate Block has no handler', () => {
+    document.body.innerHTML = '<div class="cm-content" contenteditable="true" tabindex="0">Text</div>'
+    document.querySelector<HTMLElement>('.cm-content')!.focus()
+    const event = press('d')
+    handleAppKeyboardEvent(actions(), event)
+    expect(event.defaultPrevented).toBe(false)
+  })
+
+  it('⌘D leaves a text field outside the Rich editor alone, such as a rename field', () => {
+    document.body.innerHTML = '<input type="text" />'
+    document.querySelector('input')!.focus()
+    const handlers = actions({ onDuplicateBlock: vi.fn() })
+    const event = press('d')
+    handleAppKeyboardEvent(handlers, event)
+    expect(handlers.onDuplicateBlock).not.toHaveBeenCalled()
+    expect(event.defaultPrevented).toBe(false)
+  })
+
   it('⌘F leaves a text field outside the editor alone, such as the palette\'s input', () => {
     document.body.innerHTML = '<div data-command-palette="true"><input type="text" /></div>'
     document.querySelector('input')!.focus()

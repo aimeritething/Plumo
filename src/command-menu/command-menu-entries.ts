@@ -27,6 +27,8 @@ export interface CommandMenuState {
   hasTab: boolean
   /** The active Tab's file can be pinned or unpinned: a Document or an Image file in the Folder. */
   canPin: boolean
+  /** The active Tab is a Document in Rich mode: Duplicate Block. */
+  hasRichDocument: boolean
 }
 
 const APP_MENU_LABEL = 'Plumo'
@@ -38,6 +40,7 @@ function groupEnabled(commandId: string, state: CommandMenuState): boolean {
   if (APP_COMMAND_MENU_STATE_GROUPS.tabDependent.includes(commandId)) return state.hasTab
   if (APP_COMMAND_MENU_STATE_GROUPS.vaultDependent.includes(commandId)) return state.hasFolder
   if (APP_COMMAND_MENU_STATE_GROUPS.pinnableDependent.includes(commandId)) return state.canPin
+  if (APP_COMMAND_MENU_STATE_GROUPS.richNoteDependent.includes(commandId)) return state.hasRichDocument
   return true
 }
 

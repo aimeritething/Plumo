@@ -19,6 +19,7 @@ const NOTE_DEPENDENT_GROUP: &str = "noteDependent";
 const TAB_DEPENDENT_GROUP: &str = "tabDependent";
 const VAULT_DEPENDENT_GROUP: &str = "vaultDependent";
 const PINNABLE_DEPENDENT_GROUP: &str = "pinnableDependent";
+const RICH_NOTE_DEPENDENT_GROUP: &str = "richNoteDependent";
 
 type MenuResult = Result<Submenu<tauri::Wry>, Box<dyn Error>>;
 type AppSubmenuBuilder<'a> = SubmenuBuilder<'a, tauri::Wry, App>;
@@ -485,6 +486,13 @@ pub fn set_pinnable_items_enabled(app_handle: &AppHandle, enabled: bool) {
     set_menu_state_group_enabled(app_handle, PINNABLE_DEPENDENT_GROUP, enabled);
 }
 
+/// Enable or disable menu items that need a Document in Rich mode, where
+/// there are Blocks: Duplicate Block. Greyed in Raw mode, its ⌘D is not
+/// consumed by the menu and stays CodeMirror's.
+pub fn set_rich_note_items_enabled(app_handle: &AppHandle, enabled: bool) {
+    set_menu_state_group_enabled(app_handle, RICH_NOTE_DEPENDENT_GROUP, enabled);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -589,13 +597,14 @@ mod tests {
     }
 
     #[test]
-    fn state_groups_are_note_tab_vault_and_pinnable_dependent() {
+    fn state_groups_are_note_rich_note_tab_vault_and_pinnable_dependent() {
         let groups: Vec<_> = manifest().menu_state_groups.keys().cloned().collect();
         assert_eq!(
             groups,
             [
                 NOTE_DEPENDENT_GROUP,
                 PINNABLE_DEPENDENT_GROUP,
+                RICH_NOTE_DEPENDENT_GROUP,
                 TAB_DEPENDENT_GROUP,
                 VAULT_DEPENDENT_GROUP
             ]
@@ -627,6 +636,10 @@ mod tests {
         assert_eq!(
             menu_state_group_ids(PINNABLE_DEPENDENT_GROUP),
             ["file-toggle-pin"]
+        );
+        assert_eq!(
+            menu_state_group_ids(RICH_NOTE_DEPENDENT_GROUP),
+            ["edit-duplicate-block"]
         );
     }
 
@@ -698,6 +711,8 @@ mod tests {
                 Some("edit-redo"),
                 None,
                 Some("edit-paste-plain-text"),
+                None,
+                Some("edit-duplicate-block"),
                 None,
                 Some("edit-find-in-note"),
                 None,

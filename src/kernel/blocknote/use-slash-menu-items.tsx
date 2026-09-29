@@ -59,6 +59,7 @@ function useSlashMenuItems(
           },
           dateTitle: t('editor.slash.date'),
           datetimeTitle: t('editor.slash.datetime'),
+          duplicateTitle: t('editor.slash.duplicate'),
           sandboxBlockTitle: t('editor.slash.htmlBlock'),
           mathTitle: t('editor.slash.math'),
           timeTitle: t('editor.slash.time'),

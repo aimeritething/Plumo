@@ -135,6 +135,8 @@ export default function App() {
   const findRef = useRef<(() => void) | null>(null)
   // Undo and Redo the same way: BlockNote's history in Rich mode, CodeMirror's in Raw.
   const historyRef = useRef<EditorHistory | null>(null)
+  // Duplicate Block the same way, registered by the editor in Rich mode only.
+  const duplicateBlockRef = useRef<(() => void) | null>(null)
   /** Push whichever surface is showing the Document's fresh keystrokes into the save buffer. */
   const flushEditorBuffers = useCallback((path: string) => {
     flushPendingEditorContentRef.current?.(path)
@@ -423,6 +425,14 @@ export default function App() {
   const onRedo = useCallback(() => {
     if (!nativeTextFieldHasFocus()) historyRef.current?.redo()
   }, [])
+  // Duplicate Block (⌘D, Edit menu, the Command Menu) needs a Document in Rich
+  // mode, where there are Blocks; Raw mode keeps ⌘D for CodeMirror. A menu
+  // click while a rename field or a find bar holds the caret does nothing.
+  const activeDocumentMode = tabs.find((tab) => tab.entry.path === activeDocumentPath)?.mode
+  const hasRichDocument = activeDocumentPath !== null && activeDocumentMode !== 'raw'
+  const onDuplicateBlock = useCallback(() => {
+    if (!nativeTextFieldHasFocus()) duplicateBlockRef.current?.()
+  }, [])
   // Copy path (⌘⇧,, Edit menu, the tab bar's link button) works on any Tab,
   // an Image Tab included, so it goes with no Tab rather than no Document.
   const onCopyPath = useCallback(() => {
@@ -476,6 +486,7 @@ export default function App() {
     hasFolder,
     hasTab,
     canPin: canPinActiveTab,
+    hasRichDocument,
     onOpenNote,
     onOpenVault: onOpenFolder,
     onCloseVault: onCloseFolder,
@@ -486,6 +497,7 @@ export default function App() {
     onFindInNote: activeDocumentPath ? onFindInNote : undefined,
     onUndo: activeDocumentPath ? onUndo : undefined,
     onRedo: activeDocumentPath ? onRedo : undefined,
+    onDuplicateBlock: hasRichDocument ? onDuplicateBlock : undefined,
     onCopyPath: hasTab ? onCopyPath : undefined,
     ...tabFileCommands,
     ...tabCommands.handlers,
@@ -494,16 +506,16 @@ export default function App() {
     onQuickOpen: hasFolder ? openQuickOpen : undefined,
     onCommandPalette: openCommandMenu,
     onPastePlainText,
-  }), [activeDocumentPath, appearance.handlers, canPinActiveTab, createDocumentFromShell, hasFolder, hasTab, onCloseFolder, onCopyPath, onFindInNote, onOpenFolder, onOpenNote, onPastePlainText, onRedo, onSave, onToggleRawEditor, onUndo, openCommandMenu, openQuickOpen, quit, tabCommands, tabFileCommands, toggleSidebar])
+  }), [activeDocumentPath, appearance.handlers, canPinActiveTab, createDocumentFromShell, hasFolder, hasRichDocument, hasTab, onCloseFolder, onCopyPath, onDuplicateBlock, onFindInNote, onOpenFolder, onOpenNote, onPastePlainText, onRedo, onSave, onToggleRawEditor, onUndo, openCommandMenu, openQuickOpen, quit, tabCommands, tabFileCommands, toggleSidebar])
   useAppKeyboard(handlers)
   useMenuEvents(handlers)
 
   // The palette's rows: every menu-bar command with its enable state, and the
   // Folder's Documents and Image files by name (CONTEXT.md, Command Menu).
   const commandMenuEntries = useMemo(() => [
-    ...commandMenuCommandEntries({ hasDocument: activeDocumentPath !== null, hasFolder, hasTab, canPin: canPinActiveTab }),
+    ...commandMenuCommandEntries({ hasDocument: activeDocumentPath !== null, hasFolder, hasTab, canPin: canPinActiveTab, hasRichDocument }),
     ...commandMenuFileEntries(folderState.files, folder),
-  ], [activeDocumentPath, canPinActiveTab, folder, folderState.files, hasFolder, hasTab])
+  ], [activeDocumentPath, canPinActiveTab, folder, folderState.files, hasFolder, hasRichDocument, hasTab])
   // A command row runs the same handler its menu item and shortcut would.
   const runCommandMenuCommand = useCallback((id: string) => {
     closeCommandMenu()
@@ -592,6 +604,7 @@ export default function App() {
         rawToggleRef={rawToggleRef}
         findRef={findRef}
         historyRef={historyRef}
+        duplicateBlockRef={duplicateBlockRef}
         onSetTabMode={setTabMode}
         onActivateTab={tabCommands.activateTabSettled}
         onCloseTab={tabCommands.closeTabSettled}

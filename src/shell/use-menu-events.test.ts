@@ -146,12 +146,12 @@ describe('useMenuEvents', () => {
       )
       await flushMicrotasks()
 
-      expect(runtime.invoke).toHaveBeenCalledWith('update_menu_state', { state: { hasActiveNote: false, hasVault: false, hasTab: false, canPin: false } })
+      expect(runtime.invoke).toHaveBeenCalledWith('update_menu_state', { state: { hasActiveNote: false, hasVault: false, hasTab: false, canPin: false, hasRichNote: false } })
 
       rerender({ activeDocumentPath: '/n/a.md' })
       await flushMicrotasks()
 
-      expect(runtime.invoke).toHaveBeenLastCalledWith('update_menu_state', { state: { hasActiveNote: true, hasVault: false, hasTab: false, canPin: false } })
+      expect(runtime.invoke).toHaveBeenLastCalledWith('update_menu_state', { state: { hasActiveNote: true, hasVault: false, hasTab: false, canPin: false, hasRichNote: false } })
       expect(runtime.invoke).toHaveBeenCalledTimes(2)
 
       // Save, Toggle Rich/Raw and Find in Document go back to disabled over an
@@ -159,7 +159,7 @@ describe('useMenuEvents', () => {
       rerender({ activeDocumentPath: null })
       await flushMicrotasks()
 
-      expect(runtime.invoke).toHaveBeenLastCalledWith('update_menu_state', { state: { hasActiveNote: false, hasVault: false, hasTab: false, canPin: false } })
+      expect(runtime.invoke).toHaveBeenLastCalledWith('update_menu_state', { state: { hasActiveNote: false, hasVault: false, hasTab: false, canPin: false, hasRichNote: false } })
     })
 
     // New Document, Quick Open and Close Folder follow the open Folder;
@@ -171,12 +171,12 @@ describe('useMenuEvents', () => {
       )
       await flushMicrotasks()
 
-      expect(runtime.invoke).toHaveBeenLastCalledWith('update_menu_state', { state: { hasActiveNote: false, hasVault: false, hasTab: false, canPin: false } })
+      expect(runtime.invoke).toHaveBeenLastCalledWith('update_menu_state', { state: { hasActiveNote: false, hasVault: false, hasTab: false, canPin: false, hasRichNote: false } })
 
       rerender({ hasFolder: true })
       await flushMicrotasks()
 
-      expect(runtime.invoke).toHaveBeenLastCalledWith('update_menu_state', { state: { hasActiveNote: false, hasVault: true, hasTab: false, canPin: false } })
+      expect(runtime.invoke).toHaveBeenLastCalledWith('update_menu_state', { state: { hasActiveNote: false, hasVault: true, hasTab: false, canPin: false, hasRichNote: false } })
       expect(runtime.invoke).toHaveBeenCalledTimes(2)
     })
 
@@ -192,7 +192,7 @@ describe('useMenuEvents', () => {
       rerender({ hasTab: true })
       await flushMicrotasks()
 
-      expect(runtime.invoke).toHaveBeenLastCalledWith('update_menu_state', { state: { hasActiveNote: false, hasVault: false, hasTab: true, canPin: false } })
+      expect(runtime.invoke).toHaveBeenLastCalledWith('update_menu_state', { state: { hasActiveNote: false, hasVault: false, hasTab: true, canPin: false, hasRichNote: false } })
       expect(runtime.invoke).toHaveBeenCalledTimes(2)
     })
 
@@ -208,7 +208,24 @@ describe('useMenuEvents', () => {
       rerender({ canPin: true })
       await flushMicrotasks()
 
-      expect(runtime.invoke).toHaveBeenLastCalledWith('update_menu_state', { state: { hasActiveNote: false, hasVault: false, hasTab: true, canPin: true } })
+      expect(runtime.invoke).toHaveBeenLastCalledWith('update_menu_state', { state: { hasActiveNote: false, hasVault: false, hasTab: true, canPin: true, hasRichNote: false } })
+    })
+
+    // Duplicate Block needs Blocks: a Document in Rich mode. Greyed in Raw
+    // mode, its ⌘D is not taken by the menu and stays CodeMirror's.
+    it('keeps Duplicate Block in step with whether the active Document is in Rich mode', async () => {
+      const { rerender } = renderHook(
+        ({ hasRichDocument }: { hasRichDocument: boolean }) => useMenuEvents(makeHandlers({ activeDocumentPath: '/n/a.md', hasRichDocument })),
+        { initialProps: { hasRichDocument: true } },
+      )
+      await flushMicrotasks()
+
+      expect(runtime.invoke).toHaveBeenLastCalledWith('update_menu_state', { state: { hasActiveNote: true, hasVault: false, hasTab: false, canPin: false, hasRichNote: true } })
+
+      rerender({ hasRichDocument: false })
+      await flushMicrotasks()
+
+      expect(runtime.invoke).toHaveBeenLastCalledWith('update_menu_state', { state: { hasActiveNote: true, hasVault: false, hasTab: false, canPin: false, hasRichNote: false } })
     })
   })
 })

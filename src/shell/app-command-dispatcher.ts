@@ -38,6 +38,8 @@ export interface AppCommandHandlers {
   onUndo?: () => void
   onRedo?: () => void
   onPastePlainText: () => void
+  /** ⌘D: copies the selected Blocks, or the caret's; disabled unless a Document is in Rich mode. */
+  onDuplicateBlock?: () => void
   onFindInNote?: () => void
   onCommandPalette: () => void
   onToggleSidebar?: () => void
@@ -79,6 +81,7 @@ type SimpleHandlerKey = keyof Pick<
   | 'onUndo'
   | 'onRedo'
   | 'onPastePlainText'
+  | 'onDuplicateBlock'
   | 'onFindInNote'
   | 'onCommandPalette'
   | 'onToggleSidebar'
@@ -117,6 +120,7 @@ const SIMPLE_HANDLER_EXECUTORS: readonly [SimpleHandlerKey, SimpleHandlerExecuto
   ['onUndo', (handlers) => handlers.onUndo?.()],
   ['onRedo', (handlers) => handlers.onRedo?.()],
   ['onPastePlainText', (handlers) => handlers.onPastePlainText()],
+  ['onDuplicateBlock', (handlers) => handlers.onDuplicateBlock?.()],
   ['onFindInNote', (handlers) => handlers.onFindInNote?.()],
   ['onCommandPalette', (handlers) => handlers.onCommandPalette()],
   ['onToggleSidebar', (handlers) => handlers.onToggleSidebar?.()],

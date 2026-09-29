@@ -305,6 +305,16 @@ function dispatchBlockSelection(view: EditorView, blockIds: readonly string[]): 
   return true
 }
 
+/** The blocks the block selection holds, or null with none. */
+export function readRichEditorBlockSelection(view: EditorView): string[] | null {
+  return readBlockSelection(view.state)?.blockIds ?? null
+}
+
+/** Puts the block selection on those of `blockIds` that exist; false when none does. */
+export function selectRichEditorBlocks(view: EditorView, blockIds: readonly string[]): boolean {
+  return dispatchBlockSelection(view, blockIds)
+}
+
 function clearBlockSelection(view: EditorView): void {
   view.dispatch(view.state.tr.setMeta(richEditorBlockSelectionPluginKey, { type: 'clear' } satisfies BlockSelectionMeta))
 }

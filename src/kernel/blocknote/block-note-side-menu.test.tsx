@@ -45,9 +45,10 @@ describe('SideMenu', () => {
       'Add block',
       'Drag block',
       'Turn into…',
+      'Duplicate',
       'Delete',
     ])
-    expect(dragHandleMenuEntries()).toEqual(['Turn into…', '---', 'Delete'])
+    expect(dragHandleMenuEntries()).toEqual(['Turn into…', 'Duplicate', '---', 'Delete'])
     expect(screen.getByText('Delete')).toHaveClass('text-chroma-red')
 
     expect(screen.getByText('Delete')).toBeInTheDocument()
@@ -127,7 +128,7 @@ describe('SideMenu', () => {
     mockEditor.getBlock.mockReturnValue(liveTable)
 
     renderSideMenuWithBlock(staleTable)
-    expect(dragHandleMenuEntries()).toEqual(['Turn into…', '---', 'Header row', 'Header column', '---', 'Delete'])
+    expect(dragHandleMenuEntries()).toEqual(['Turn into…', 'Duplicate', '---', 'Header row', 'Header column', '---', 'Delete'])
     fireEvent.click(screen.getByText('Header row'))
 
     expect(mockEditor.updateBlock).toHaveBeenCalledWith(liveTable.id, {
@@ -449,6 +450,7 @@ describe('SideMenu', () => {
       'Collapse section',
       'Drag block',
       'Turn into…',
+      'Duplicate',
       'Delete',
     ])
   })
@@ -488,6 +490,7 @@ describe('SideMenu', () => {
       'Collapse item',
       'Drag block',
       'Turn into…',
+      'Duplicate',
       'Delete',
     ])
   })

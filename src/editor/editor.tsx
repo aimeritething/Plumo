@@ -32,6 +32,8 @@ import { showImageImportErrorToast } from './toasts'
 import { TabBar } from '@/tabs/tab-bar'
 import { RICH_EDITOR_BLOCKNOTE_OPTIONS } from '@/kernel/blocknote/rich-editor-block-note-options'
 import { createRichEditorBlockSelectionExtension } from '@/kernel/blocknote/rich-editor-block-selection-extension'
+import { duplicateSelectedBlocks } from '@/kernel/blocknote/rich-editor-duplicate-blocks'
+import type { RichEditor } from '@/kernel/blocknote/block-note-dom'
 import { createRichEditorCodeBlockArrowNavigationExtension } from '@/kernel/blocknote/rich-editor-code-block-arrow-navigation-extension'
 import { createRichEditorCodeBlockShortcutExtension } from '@/kernel/blocknote/rich-editor-code-block-shortcut-extension'
 import { createRichEditorCodeBlockTabExtension } from '@/kernel/blocknote/rich-editor-code-block-tab-extension'
@@ -111,6 +113,8 @@ export interface EditorProps {
   findRef?: MutableRefObject<(() => void) | null>
   /** Undo and Redo (⌘Z, ⌘⇧Z, the Edit menu, the Command Menu), on whichever surface is showing. */
   historyRef?: MutableRefObject<EditorHistory | null>
+  /** Duplicate Block (⌘D, the Edit menu, the Command Menu): registered in Rich mode only, Raw mode having no Blocks. */
+  duplicateBlockRef?: MutableRefObject<(() => void) | null>
   /** Puts a Document Tab in Rich or Raw mode; the Tab rules decide whether it takes. */
   onSetTabMode: (path: string, mode: EditorMode) => void
   /** The tab bar's clicks. */
@@ -286,6 +290,8 @@ function useEditorRuntime(props: EditorProps) {
   // Rich mode's history is BlockNote's; Raw mode's is CodeMirror's, registered by the raw view while it is mounted.
   const richHistory = useMemo<EditorHistory>(() => ({ undo: () => { editor.undo() }, redo: () => { editor.redo() } }), [editor])
   useRegisteredRef(rawMode ? undefined : props.historyRef, richHistory)
+  const duplicateBlock = useCallback(() => { duplicateSelectedBlocks(editor as unknown as RichEditor) }, [editor])
+  useRegisteredRef(rawMode ? undefined : props.duplicateBlockRef, duplicateBlock)
 
   const rawSnapshots = useRawEditorSnapshots(tabs, activeTabPath, rawMode)
 

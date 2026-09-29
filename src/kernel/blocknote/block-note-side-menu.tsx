@@ -47,6 +47,7 @@ import {
   type SideMenuBlock,
 } from './side-menu-blocks'
 import { turnBlockIntoType } from './rich-editor-block-type-commands'
+import { duplicateBlocksAndSelect } from './rich-editor-duplicate-blocks'
 import { getBlockTypeSelectItems } from './block-type-select'
 import { createSlashMenuIcon } from './slash-menu-items'
 
@@ -375,6 +376,33 @@ function RemoveBlockItem({ children }: { children: ReactNode }) {
   )
 }
 
+/**
+ * Copies the block, with its Section when it is a folded heading, right after
+ * it, and puts the block selection on the copy. The editor takes the focus
+ * back once the menu has closed, so the keys that act on a selection reach it.
+ */
+function DuplicateBlockItem({ locale }: { locale: AppLocale }) {
+  const Components = useRequiredComponentsContext()
+  const { block, editor } = useSideMenuBlock()
+
+  if (!block) return null
+
+  return (
+    <Components.Generic.Menu.Item
+      className="bn-menu-item"
+      onClick={() => {
+        runSideMenuAction(() => {
+          const liveBlock = liveSideMenuBlock(editor, block)
+          if (!liveBlock || !duplicateBlocksAndSelect(editor, [liveBlock.id])) return
+          window.setTimeout(() => editor.focus(), 0)
+        })
+      }}
+    >
+      {translate(locale, 'editor.sideMenu.duplicate')}
+    </Components.Generic.Menu.Item>
+  )
+}
+
 /** Header row and Header column behind their separator, for a table whose headers can be set. */
 function TableHeaderItems() {
   const Components = useRequiredComponentsContext()
@@ -468,7 +496,7 @@ function TurnBlockIntoSubmenu({ locale }: { locale: AppLocale }) {
   )
 }
 
-/** Turn into, a table's header items, then Delete last on its own, as every menu puts what removes content. */
+/** Turn into and Duplicate, a table's header items, then Delete last on its own, as every menu puts what removes content. */
 function DragHandleMenu({
   children,
   locale = 'en',
@@ -483,6 +511,7 @@ function DragHandleMenu({
     <BlockNoteDragHandleMenu>
       {children}
       <TurnBlockIntoSubmenu locale={locale} />
+      <DuplicateBlockItem locale={locale} />
       <TableHeaderItems />
       <Components.Generic.Menu.Divider />
       <RemoveBlockItem>{dict.drag_handle.delete_menuitem}</RemoveBlockItem>

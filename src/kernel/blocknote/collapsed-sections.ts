@@ -881,6 +881,22 @@ export function toggleCollapsedHeading(
   store.emit()
 }
 
+/**
+ * Folds each copy whose original is folded, as Duplicate leaves them.
+ * `copies` maps an original block id to its copy's.
+ */
+export function collapseCopiedBlocks(editor: RichEditor, copies: ReadonlyMap<string, string>) {
+  const store = collapsedHeadingStore(editor)
+  const copyIds = Array.from(copies)
+    .filter(([originalId]) => store.collapsedHeadingIds.has(originalId))
+    .map(([, copyId]) => copyId)
+  if (copyIds.length === 0) return
+
+  store.collapsedHeadingIds = new Set([...store.collapsedHeadingIds, ...copyIds])
+  applyCollapsedHeadingToggleRendering({ editor, store })
+  store.emit()
+}
+
 /** The collapsed heading or list item that keeps `targetId` out of sight, if one does: the outermost, which is in view. */
 function collapsedBlockHiding(
   blocks: readonly CollapsibleBlock[],
