@@ -233,6 +233,18 @@ describe('the Explorer write operations in the fixture', () => {
       .rejects.toThrow('File already exists')
   })
 
+  it('duplicates a file beside it and refuses a name it already holds', async () => {
+    const vault = createMockVault(seed)
+    const path = `${MOCK_VAULT_PATH}/Welcome.md`
+    const newPath = `${MOCK_VAULT_PATH}/Welcome copy.md`
+
+    await vault.invoke('duplicate_vault_file', { path, newPath, vaultPath: MOCK_VAULT_PATH })
+
+    await expect(vault.invoke('get_note_content', { path: newPath })).resolves.toBe('# Welcome\n')
+    await expect(vault.invoke('duplicate_vault_file', { path, newPath, vaultPath: MOCK_VAULT_PATH }))
+      .rejects.toThrow('File already exists')
+  })
+
   it('creates a folder under a parent and refuses a second of the same name', async () => {
     const vault = createMockVault(seed)
     const args = { vaultPath: MOCK_VAULT_PATH, folderName: 'New Folder', parentPath: 'Projects' }

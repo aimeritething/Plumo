@@ -3,7 +3,7 @@ import { CaretDown, CaretRight, FileText, Image } from '@phosphor-icons/react'
 import { notePathFilename } from '@/lib/note-path-identity'
 import { isImageFilePath } from '@/tabs/image-file'
 import { tabParentHints } from '@/tabs/tab-labels'
-import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/ui/context-menu'
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from '@/ui/context-menu'
 import { SidebarLabel, SidebarRow, SidebarRowIcon, SidebarRowName } from '@/shell/sidebar-row'
 
 const LABEL = 'Pinned'
@@ -19,6 +19,8 @@ export interface PinnedProps {
   /** A row was activated: its file opens in a Tab, as from the Explorer. */
   onOpen: (path: string) => void
   onUnpin: (path: string) => void
+  /** Duplicate the row's file: the copy lands beside it, unpinned, and opens as the active Tab. */
+  onDuplicate: (path: string) => void
   /** A row dropped before `before`, or last when it is null. */
   onMove: (path: string, before: string | null) => void
 }
@@ -36,7 +38,7 @@ type DropSpot = { before: string | null } | null
  * row cannot be dragged in from the Explorer. Two rows with the same name
  * each add their parent folder's name, dimmed, as Tabs do.
  */
-export const Pinned = memo(function Pinned({ paths, activeTabPath, collapsed, onToggleCollapsed, onOpen, onUnpin, onMove }: PinnedProps) {
+export const Pinned = memo(function Pinned({ paths, activeTabPath, collapsed, onToggleCollapsed, onOpen, onUnpin, onDuplicate, onMove }: PinnedProps) {
   const hints = useMemo(() => tabParentHints(paths), [paths])
   const { dragging, dropSpot, rowDragProps, listDropProps } = usePinnedDrag(paths, onMove)
   if (paths.length === 0) return null
@@ -74,6 +76,7 @@ export const Pinned = memo(function Pinned({ paths, activeTabPath, collapsed, on
               dragProps={rowDragProps(path)}
               onOpen={onOpen}
               onUnpin={onUnpin}
+              onDuplicate={onDuplicate}
               onKeyboardMove={(offset) => {
                 const target = index + offset
                 if (target < 0 || target >= paths.length) return
@@ -154,10 +157,11 @@ interface PinnedRowProps {
   dragProps: ReturnType<ReturnType<typeof usePinnedDrag>['rowDragProps']>
   onOpen: (path: string) => void
   onUnpin: (path: string) => void
+  onDuplicate: (path: string) => void
   onKeyboardMove: (offset: -1 | 1) => void
 }
 
-function PinnedRow({ path, parentHint, active, dragging, dropMark, dragProps, onOpen, onUnpin, onKeyboardMove }: PinnedRowProps) {
+function PinnedRow({ path, parentHint, active, dragging, dropMark, dragProps, onOpen, onUnpin, onDuplicate, onKeyboardMove }: PinnedRowProps) {
   const filename = notePathFilename(path)
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.altKey && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
@@ -204,6 +208,8 @@ function PinnedRow({ path, parentHint, active, dragging, dropMark, dragProps, on
       </ContextMenuTrigger>
       <ContextMenuContent data-testid="pinned-menu">
         <ContextMenuItem onSelect={() => onUnpin(path)}>Unpin</ContextMenuItem>
+        <ContextMenuSeparator />
+        <ContextMenuItem onSelect={() => onDuplicate(path)}>Duplicate</ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
   )

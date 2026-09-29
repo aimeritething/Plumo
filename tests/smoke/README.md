@@ -9,7 +9,7 @@ specs against a second checkout while another dev server holds that port.
 
 Outside Tauri every command goes to the in-memory Folder fixture in
 `src/platform/mock/vault-fixture.ts`. It answers the file commands (`list_files`,
-`get_note_content`, `save_note_content`, `create_note_content`, `create_vault_folder`,
+`get_note_content`, `save_note_content`, `create_note_content`, `duplicate_vault_file`, `create_vault_folder`,
 `rename_vault_file`, `rename_vault_folder`, `move_note_to_folder`, `delete_note`,
 `delete_vault_folder`), the watcher (`start_vault_watcher`, `stop_vault_watcher`), the
 Finder-open buffer (`take_pending_open`), the Session (`read_session`, `update_session`),

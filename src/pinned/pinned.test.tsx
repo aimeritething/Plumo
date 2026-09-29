@@ -14,6 +14,7 @@ function renderPinned(overrides: Partial<PinnedProps> = {}) {
     onToggleCollapsed: vi.fn(),
     onOpen: vi.fn(),
     onUnpin: vi.fn(),
+    onDuplicate: vi.fn(),
     onMove: vi.fn(),
     ...overrides,
   }
@@ -102,6 +103,16 @@ describe('Pinned', () => {
     const menu = await screen.findByTestId('pinned-menu')
     fireEvent.click(within(menu).getByText('Unpin'))
     await waitFor(() => expect(onUnpin).toHaveBeenCalledWith(B))
+  })
+
+  it('puts Unpin first and Duplicate after it, which duplicates the row\'s file', async () => {
+    const { onDuplicate } = renderPinned()
+
+    fireEvent.contextMenu(row(LAKE), { button: 2, clientX: 10, clientY: 10 })
+    const menu = await screen.findByTestId('pinned-menu')
+    expect(within(menu).getAllByRole('menuitem').map((item) => item.textContent)).toEqual(['Unpin', 'Duplicate'])
+    fireEvent.click(within(menu).getByText('Duplicate'))
+    await waitFor(() => expect(onDuplicate).toHaveBeenCalledWith(LAKE))
   })
 
   it('reorders with ⌥↑ and ⌥↓', () => {

@@ -332,6 +332,7 @@ function useRowMenuAction(node: ExplorerNode, actions: ExplorerActions, pins: Ex
       case 'newDocument': return actions.createDocumentIn(node.path)
       case 'newFolder': return actions.createFolderIn(node.path)
       case 'rename': return actions.startRename(node.path, node.kind)
+      case 'duplicate': return actions.duplicate(node.path)
       case 'reveal': return actions.reveal(node.path)
       case 'copyPath': return actions.copyPath(node.path)
       case 'trash': return actions.trash(node.path, node.kind)

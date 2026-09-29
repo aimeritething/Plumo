@@ -41,6 +41,32 @@ export function createDocumentFile(params: { folder: string; path: string }): Pr
   })
 }
 
+/**
+ * Duplicate: a new file at `newPath`, beside `path`, inside `root` (the
+ * file's boundary root). With `content`, a Document's unsaved edits are
+ * written in place of the bytes on disk. Fails when the name is taken, so the
+ * caller suffixes and retries.
+ */
+export function duplicateFile(params: {
+  root: string
+  path: string
+  newPath: string
+  content?: string
+}): Promise<void> {
+  if (params.content !== undefined) {
+    return command<void>('create_note_content', {
+      path: params.newPath,
+      content: params.content,
+      vaultPath: params.root,
+    })
+  }
+  return command<void>('duplicate_vault_file', {
+    path: params.path,
+    newPath: params.newPath,
+    vaultPath: params.root,
+  })
+}
+
 /** Create a folder. Fails when the name is taken, so the caller suffixes and retries. */
 export function createFolderDirectory(params: {
   folder: string

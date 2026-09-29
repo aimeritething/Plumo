@@ -164,6 +164,27 @@ pub fn create_note_content(
     })
 }
 
+/// Duplicate: copy a Document's or an Image file's bytes to `new_path`, beside
+/// it. Both paths must stay inside `vault_path`, the file's boundary root.
+#[tauri::command]
+pub fn duplicate_vault_file(
+    path: PathBuf,
+    new_path: PathBuf,
+    vault_path: Option<PathBuf>,
+) -> Result<(), String> {
+    let destination_root = vault_path.clone();
+    with_note_path(
+        path.as_path(),
+        vault_path.as_deref(),
+        ValidatedPathMode::Existing,
+        |validated_source| {
+            with_writable_note_path(new_path, destination_root, |validated_destination| {
+                vault::duplicate_file(&validated_source.to_string_lossy(), validated_destination)
+            })
+        },
+    )
+}
+
 /// Move a note to the Trash. `vault_path` is required: the boundary has no
 /// registry to look a bare path up in.
 #[tauri::command]
@@ -256,6 +277,35 @@ mod tests {
 
     fn note_path(dir: &TempDir, name: &str) -> PathBuf {
         dir.path().join(name)
+    }
+
+    #[test]
+    fn duplicate_vault_file_copies_beside_the_original_inside_the_root() {
+        let dir = TempDir::new().unwrap();
+        let root = vault_root(&dir);
+        fs::create_dir(root.join("notes")).unwrap();
+        let note = note_path(&dir, "notes/Plan.md");
+        fs::write(&note, "# Plan\n").unwrap();
+        let copy = note_path(&dir, "notes/Plan copy.md");
+
+        duplicate_vault_file(note, copy.clone(), Some(root)).unwrap();
+
+        assert_eq!(fs::read_to_string(copy).unwrap(), "# Plan\n");
+    }
+
+    #[test]
+    fn duplicate_vault_file_rejects_a_source_outside_the_root() {
+        let outer = TempDir::new().unwrap();
+        let root = outer.path().join("folder");
+        fs::create_dir(&root).unwrap();
+        let outside = outer.path().join("Outside.md");
+        fs::write(&outside, "# Outside\n").unwrap();
+
+        let result =
+            duplicate_vault_file(outside, outer.path().join("Outside copy.md"), Some(root));
+
+        assert!(result.is_err());
+        assert!(!outer.path().join("Outside copy.md").exists());
     }
 
     #[tokio::test]

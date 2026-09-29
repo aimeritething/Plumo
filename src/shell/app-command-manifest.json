@@ -96,6 +96,11 @@
         "requiresManualNativeAcceleratorQa": true
       }
     },
+    "fileDuplicate": {
+      "id": "file-duplicate",
+      "route": { "kind": "handler", "handler": "onDuplicate" },
+      "menuOwned": true
+    },
     "fileTogglePin": {
       "id": "file-toggle-pin",
       "route": { "kind": "handler", "handler": "onTogglePin" },
@@ -402,6 +407,7 @@
         { "kind": "separator" },
         { "kind": "command", "command": "fileSave", "label": "Save" },
         { "kind": "separator" },
+        { "kind": "command", "command": "fileDuplicate", "label": "Duplicate" },
         { "kind": "command", "command": "fileTogglePin", "label": "Pin/Unpin" },
         { "kind": "command", "command": "fileRevealInFinder", "label": "Reveal in Finder" },
         { "kind": "command", "command": "fileOpenInDefaultApp", "label": "Open in Default App" },
@@ -463,6 +469,7 @@
     ],
     "tabDependent": [
       { "command": "fileCloseTab" },
+      { "command": "fileDuplicate" },
       { "command": "editCopyPath" },
       { "command": "fileRevealInFinder" },
       { "command": "fileOpenInDefaultApp" }

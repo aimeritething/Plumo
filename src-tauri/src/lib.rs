@@ -171,6 +171,7 @@ pub fn run() {
             commands::get_note_content,
             commands::save_note_content,
             commands::create_note_content,
+            commands::duplicate_vault_file,
             commands::delete_note,
             commands::batch_delete_notes,
             commands::rename_note_filename,

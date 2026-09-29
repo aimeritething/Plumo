@@ -48,6 +48,8 @@ export interface AppCommandHandlers {
   onCopyPath?: () => void
   /** Pin/Unpin (File menu, the tab bar's "…"): the active Tab's file in the Pinned list. */
   onTogglePin?: () => void
+  /** Duplicate (File menu, the tab bar's "…"): a copy of the active Tab's file, beside it; disabled with no Tab. */
+  onDuplicate?: () => void
   /** Reveal in Finder (File menu, the tab bar's "…"): the active Tab's file, selected in Finder. */
   onRevealInFinder?: () => void
   /** Open in Default App (File menu, the tab bar's "…"): the active Tab's file, handed to the app macOS opens it with. */
@@ -88,6 +90,7 @@ type SimpleHandlerKey = keyof Pick<
   | 'onToggleRawEditor'
   | 'onCopyPath'
   | 'onTogglePin'
+  | 'onDuplicate'
   | 'onRevealInFinder'
   | 'onOpenInDefaultApp'
   | 'onAppearanceSystem'
@@ -127,6 +130,7 @@ const SIMPLE_HANDLER_EXECUTORS: readonly [SimpleHandlerKey, SimpleHandlerExecuto
   ['onToggleRawEditor', (handlers) => handlers.onToggleRawEditor?.()],
   ['onCopyPath', (handlers) => handlers.onCopyPath?.()],
   ['onTogglePin', (handlers) => handlers.onTogglePin?.()],
+  ['onDuplicate', (handlers) => handlers.onDuplicate?.()],
   ['onRevealInFinder', (handlers) => handlers.onRevealInFinder?.()],
   ['onOpenInDefaultApp', (handlers) => handlers.onOpenInDefaultApp?.()],
   ['onAppearanceSystem', (handlers) => handlers.onAppearanceSystem?.()],

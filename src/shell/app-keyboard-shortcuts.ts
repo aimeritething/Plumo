@@ -27,6 +27,7 @@ export type KeyboardActions = Pick<
   | 'onToggleRawEditor'
   | 'onCopyPath'
   | 'onTogglePin'
+  | 'onDuplicate'
   | 'onRevealInFinder'
   | 'onOpenInDefaultApp'
   | 'onAppearanceSystem'

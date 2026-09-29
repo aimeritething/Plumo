@@ -130,7 +130,7 @@ test('the "…" menu hands the Document to Finder and to its default app, its Fi
 
   await page.getByRole('button', { name: 'More', exact: true }).click()
   expect(await page.getByTestId('tab-more-menu').getByRole('menuitem').allTextContents()).toEqual([
-    'Pin', 'Reveal in Finder', 'Open in Default App', 'Find⌘F', 'Close Tab⌘W',
+    'Pin', 'Duplicate', 'Reveal in Finder', 'Open in Default App', 'Find⌘F', 'Close Tab⌘W',
   ])
   await page.getByRole('menuitem', { name: 'Reveal in Finder' }).click()
   await expect.poll(() => page.evaluate(() => window.__plumoMockVault?.revealedPath())).toBe(WELCOME_PATH)

@@ -214,5 +214,11 @@ export function useEditorSave({ setTabs, onNotePersisted, persistenceScope }: Ed
 
   const hasPendingSave = useCallback((path: string) => matchesPendingPath(pendingContentRef.current, path), [])
 
-  return { handleContentChange, savePendingForPath, discardPending, hasPendingSave }
+  /** The buffered edits of `path` that have not reached disk, or undefined when there are none. */
+  const pendingContentFor = useCallback((path: string): string | undefined => {
+    const pending = pendingContentRef.current
+    return matchesPendingPath(pending, path) ? pending.content : undefined
+  }, [])
+
+  return { handleContentChange, savePendingForPath, discardPending, hasPendingSave, pendingContentFor }
 }

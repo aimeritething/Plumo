@@ -49,6 +49,10 @@ _Avoid_: Node, element, paragraph (when you mean any kind of Block)
 A heading Block and every Block after it up to the next heading of the same or a higher level. A folded heading hides its Section; moving, deleting or duplicating a folded heading acts on the whole Section.
 _Avoid_: Chapter, group
 
+**Duplicate**:
+To make a copy of something right beside it. A duplicated Block is inserted right after the original. Any file Plumo shows or opens can be duplicated, even one outside the Folder; its copy is a new file in the same directory, named `<name> copy`, then `<name> copy 2`, and so on. The copy has the content the user sees, is not pinned, and becomes the active Tab. A folder cannot be duplicated.
+_Avoid_: Copy, clone, make a copy
+
 **Autosave**:
 Writing a Document's pending edits to disk after a short idle delay. Disk is written first; in-memory state updates only after the write succeeds.
 

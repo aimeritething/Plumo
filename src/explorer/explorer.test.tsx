@@ -35,6 +35,7 @@ function stubActions(overrides: Partial<ExplorerActions> = {}): ExplorerActions 
     clearError: vi.fn(),
     trash: vi.fn(),
     moveInto: vi.fn(),
+    duplicate: vi.fn(),
     reveal: vi.fn(),
     copyPath: vi.fn(),
     ...overrides,
@@ -154,7 +155,7 @@ describe('the context menu', () => {
     rightClick(screen.getByTestId(`explorer-row:${FOLDER}/Welcome.md`))
 
     const menu = await screen.findByTestId('explorer-menu:note')
-    expect(menuLabels(menu)).toEqual(['Pin', 'Rename…', 'Reveal in Finder', 'Copy Path', 'Move to Trash'])
+    expect(menuLabels(menu)).toEqual(['Pin', 'Rename…', 'Duplicate', 'Reveal in Finder', 'Copy Path', 'Move to Trash'])
     expect(within(menu).getByText('Move to Trash')).not.toHaveAttribute('data-disabled')
     expect(within(menu).getByText('Move to Trash')).toHaveAttribute('data-variant', 'destructive')
   })

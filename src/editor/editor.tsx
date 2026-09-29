@@ -142,6 +142,7 @@ export interface EditorProps {
 export interface TabCommands {
   pinned?: boolean
   onTogglePin?: () => void
+  onDuplicate?: () => void
   onRevealInFinder?: () => void
   onOpenInDefaultApp?: () => void
 }

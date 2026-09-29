@@ -80,6 +80,8 @@ export interface ExplorerActions {
   trash: (path: string, kind: ExplorerRowKind) => void
   /** A dragged Document or Image file dropped on a folder row, a file row (its folder), or the header or empty area (the Folder's top level). */
   moveInto: (path: string, destination: string) => void
+  /** Duplicate a Document or an Image file: the copy lands beside it and opens as the active Tab. */
+  duplicate: (path: string) => void
   reveal: (path: string) => void
   copyPath: (path: string) => void
 }
@@ -114,6 +116,8 @@ interface Options {
   dropTabsUnder: (prefix: string) => void
   /** A toast saying a move or a Trash was refused. */
   showToast: (message: string) => void
+  /** Duplicate, which the Pinned list and the active Tab's menus run too, so it is App's. */
+  duplicate: (path: string) => void
 }
 
 /** How many suffixes to try before giving up; creation never errors, so it gives up quietly. */
@@ -185,7 +189,7 @@ function destinationLabel(folder: string, destination: string): string {
 export function useExplorerActions(options: Options): ExplorerActions {
   const {
     folder, tree, activeTabPath, refresh, openNote, focusEditor, settleActiveDocument, retargetTabs,
-    settleTabsUnder, dropTabsUnder, showToast,
+    settleTabsUnder, dropTabsUnder, showToast, duplicate,
   } = options
   const { selected, setSelected, selectThroughRename } = useSelectionFollowingActiveTab(activeTabPath, folder)
   const [editing, setEditing] = useState<ExplorerEditing | null>(null)
@@ -359,10 +363,11 @@ export function useExplorerActions(options: Options): ExplorerActions {
     clearError,
     trash,
     moveInto,
+    duplicate,
     reveal,
     copyPath,
   }), [
     cancelRename, clearError, commitRename, copyPath, createDocument, createDocumentIn, createFolder,
-    createFolderIn, editing, error, moveInto, reveal, selected, setSelected, startRename, trash,
+    createFolderIn, duplicate, editing, error, moveInto, reveal, selected, setSelected, startRename, trash,
   ])
 }

@@ -7,6 +7,8 @@ import { usePinned } from '@/pinned/use-pinned'
 import { Explorer } from '@/explorer/explorer'
 import { useFolder, pickFolderToOpen } from '@/folder/use-folder'
 import { useExplorerActions } from '@/explorer/use-explorer-actions'
+import { useDuplicateFile } from '@/folder/use-duplicate-file'
+import type { EditorMode } from '@/types'
 import { useExplorerMemory } from '@/explorer/use-explorer-memory'
 import { useDocumentWatcher } from '@/folder/use-document-watcher'
 import { buildExplorerTree, documentRoot } from '@/folder/explorer'
@@ -155,7 +157,7 @@ export default function App() {
   const { clearFailure: clearWriteFailure, recordFailure: recordWriteFailure } = writeFailureRecord
   const onNotePersisted = clearWriteFailure
 
-  const { handleContentChange, savePendingForPath, discardPending, hasPendingSave } = useEditorSave({
+  const { handleContentChange, savePendingForPath, discardPending, hasPendingSave, pendingContentFor } = useEditorSave({
     setTabs,
     onNotePersisted,
     persistenceScope,
@@ -296,6 +298,34 @@ export default function App() {
     () => (folder ? buildExplorerTree(folder, folderState.files) : null),
     [folder, folderState.files],
   )
+  // Duplicate (CONTEXT.md): the Explorer's and Pinned's menus on a row, and
+  // File ▸ Duplicate, the Command Menu and the "…" menu on the active Tab. The
+  // copy holds what the Tab shows: its pending edits are written first, and a
+  // refused write leaves them in the buffer, or on the Tab under a Write
+  // failure, for the copy to take instead.
+  const settleForDuplicate = useCallback(async (path: string) => {
+    if (path === activeTabPath) flushEditorBuffers(path)
+    await savePendingForPath(path).catch((error: unknown) => recordWriteFailure(path, error))
+  }, [activeTabPath, flushEditorBuffers, recordWriteFailure, savePendingForPath])
+  const unsavedContent = useCallback((path: string) => (
+    pendingContentFor(path)
+      ?? (writeFailureRecord.failuresRef.current[path] ? tabsRef.current.find((tab) => tab.entry.path === path)?.content : undefined)
+  ), [pendingContentFor, writeFailureRecord.failuresRef])
+  const openDuplicate = useCallback((path: string, mode: EditorMode | undefined) => {
+    void openNotesSettled({ openNote: (target) => openNote(target, mode), paths: [path], settleActiveNote: settleAndRecord })
+    focusEditorFor(path)
+  }, [focusEditorFor, openNote, settleAndRecord])
+  const duplicate = useDuplicateFile({
+    folder,
+    tree: explorerTree,
+    tabs,
+    settle: settleForDuplicate,
+    unsavedContent,
+    refresh: folderState.refresh,
+    open: openDuplicate,
+    showToast: showRefusalToast,
+  })
+
   const explorerActions = useExplorerActions({
     folder,
     tree: explorerTree,
@@ -308,6 +338,7 @@ export default function App() {
     settleTabsUnder,
     dropTabsUnder,
     showToast: showRefusalToast,
+    duplicate,
   })
 
   // A Pinned row opens its file as its Explorer row would, and selects that
@@ -457,12 +488,16 @@ export default function App() {
   const onTogglePin = useCallback(() => {
     if (activeTabPath) togglePin(activeTabPath)
   }, [activeTabPath, togglePin])
+  const onDuplicate = useCallback(() => {
+    if (activeTabPath) duplicate(activeTabPath)
+  }, [activeTabPath, duplicate])
   const tabFileCommands = useMemo<TabCommands>(() => ({
     pinned: activeTabPinned,
     onTogglePin: canPinActiveTab ? onTogglePin : undefined,
+    onDuplicate: activeTabPath ? onDuplicate : undefined,
     onRevealInFinder: activeTabPath ? onRevealInFinder : undefined,
     onOpenInDefaultApp: activeTabPath ? onOpenInDefaultApp : undefined,
-  }), [activeTabPath, activeTabPinned, canPinActiveTab, onOpenInDefaultApp, onRevealInFinder, onTogglePin])
+  }), [activeTabPath, activeTabPinned, canPinActiveTab, onDuplicate, onOpenInDefaultApp, onRevealInFinder, onTogglePin])
 
   // Paste without Formatting (⌘⇧V, Edit menu): the clipboard's text, read
   // through the carried Rust clipboard module in Tauri, inserted as plain
@@ -558,6 +593,7 @@ export default function App() {
           onToggleCollapsed={onTogglePinnedSection}
           onOpen={openPinnedFile}
           onUnpin={togglePin}
+          onDuplicate={duplicate}
           onMove={pinned.move}
         />
         <Explorer

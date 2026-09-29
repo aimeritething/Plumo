@@ -80,6 +80,7 @@ function setup(files: ListedFile[] = FILES, initialActiveTabPath: string | null 
       settleTabsUnder,
       dropTabsUnder,
       showToast,
+      duplicate: vi.fn(),
     })
   })
   return { ...hook, refresh, openNote, focusEditor, retargetTabs, settleActiveDocument, settleTabsUnder, dropTabsUnder, showToast, order }

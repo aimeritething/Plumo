@@ -114,13 +114,13 @@ describe('DocumentTabActions', () => {
   })
 
   describe('the "…" menu', () => {
-    it('holds Pin, Reveal in Finder, Open in Default App, Find and Close Tab, the last two with their shortcuts', async () => {
-      renderDocument({ menu: { onTogglePin: vi.fn(), onRevealInFinder: vi.fn(), onOpenInDefaultApp: vi.fn(), onFind: vi.fn(), onCloseTab: vi.fn() } })
+    it('holds Pin, Duplicate, Reveal in Finder, Open in Default App, Find and Close Tab, the last two with their shortcuts', async () => {
+      renderDocument({ menu: { onTogglePin: vi.fn(), onDuplicate: vi.fn(), onRevealInFinder: vi.fn(), onOpenInDefaultApp: vi.fn(), onFind: vi.fn(), onCloseTab: vi.fn() } })
 
       await openMore()
 
       const items = await screen.findAllByRole('menuitem')
-      expect(items.map((item) => item.textContent)).toEqual(['Pin', 'Reveal in Finder', 'Open in Default App', 'Find⌘F', 'Close Tab⌘W'])
+      expect(items.map((item) => item.textContent)).toEqual(['Pin', 'Duplicate', 'Reveal in Finder', 'Open in Default App', 'Find⌘F', 'Close Tab⌘W'])
     })
 
     it('names the first item Unpin for a pinned Document', async () => {
@@ -132,11 +132,12 @@ describe('DocumentTabActions', () => {
     })
 
     it('runs each item\'s command', async () => {
-      const menu = { onTogglePin: vi.fn(), onRevealInFinder: vi.fn(), onOpenInDefaultApp: vi.fn(), onFind: vi.fn(), onCloseTab: vi.fn() }
+      const menu = { onTogglePin: vi.fn(), onDuplicate: vi.fn(), onRevealInFinder: vi.fn(), onOpenInDefaultApp: vi.fn(), onFind: vi.fn(), onCloseTab: vi.fn() }
       renderDocument({ menu })
 
       for (const [name, handler] of [
         ['Pin', menu.onTogglePin],
+        ['Duplicate', menu.onDuplicate],
         ['Reveal in Finder', menu.onRevealInFinder],
         ['Open in Default App', menu.onOpenInDefaultApp],
         ['Find', menu.onFind],

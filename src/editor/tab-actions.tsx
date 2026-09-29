@@ -40,6 +40,7 @@ export interface DocumentMenuActions {
   /** Whether the Document is in the Pinned list, which names the first item Pin or Unpin. */
   pinned?: boolean
   onTogglePin?: () => void
+  onDuplicate?: () => void
   onRevealInFinder?: () => void
   onOpenInDefaultApp?: () => void
   onFind?: () => void
@@ -182,6 +183,7 @@ function DocumentMenu({ menu }: { menu: DocumentMenuActions }) {
         }}
       >
         <MenuItem label={menu.pinned ? 'Unpin' : 'Pin'} onSelect={menu.onTogglePin} />
+        <MenuItem label="Duplicate" onSelect={menu.onDuplicate} />
         <MenuItem label="Reveal in Finder" onSelect={menu.onRevealInFinder} />
         <MenuItem label="Open in Default App" onSelect={menu.onOpenInDefaultApp} />
         <DropdownMenuSeparator />

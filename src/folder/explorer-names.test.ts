@@ -4,6 +4,7 @@ import {
   creationParentPath,
   lockedExtension,
   nameCommitError,
+  duplicateName,
   nextAvailableName,
   siblingNames,
   stripBlockedNameCharacters,
@@ -45,6 +46,27 @@ describe('creationParentPath', () => {
 
   it('falls back to the Folder root when the selected row has gone', () => {
     expect(creationParentPath(TREE, `${FOLDER}/Deleted.md`)).toBe(FOLDER)
+  })
+})
+
+describe('duplicateName', () => {
+  it('adds copy to the stem and keeps the extension', () => {
+    expect(duplicateName(['Plan.md'], 'Plan.md')).toBe('Plan copy.md')
+    expect(duplicateName(['lake.png'], 'lake.png')).toBe('lake copy.png')
+  })
+
+  it('counts on Finder style once the copy is taken', () => {
+    expect(duplicateName(['Plan.md', 'Plan copy.md'], 'Plan.md')).toBe('Plan copy 2.md')
+    expect(duplicateName(['Plan.md', 'plan copy.md', 'Plan copy 2.md'], 'Plan.md')).toBe('Plan copy 3.md')
+  })
+
+  it('counts on from a copy rather than stacking another copy', () => {
+    expect(duplicateName(['Plan.md', 'Plan copy.md'], 'Plan copy.md')).toBe('Plan copy 2.md')
+    expect(duplicateName(['Plan copy.md', 'Plan copy 2.md'], 'Plan copy 2.md')).toBe('Plan copy 3.md')
+  })
+
+  it('leaves a stem that only contains the word alone', () => {
+    expect(duplicateName(['copyedit.md'], 'copyedit.md')).toBe('copyedit copy.md')
   })
 })
 

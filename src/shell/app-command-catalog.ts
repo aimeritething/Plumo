@@ -55,6 +55,7 @@ type SimpleHandlerKey =
   | 'onToggleRawEditor'
   | 'onCopyPath'
   | 'onTogglePin'
+  | 'onDuplicate'
   | 'onRevealInFinder'
   | 'onOpenInDefaultApp'
   | 'onAppearanceSystem'

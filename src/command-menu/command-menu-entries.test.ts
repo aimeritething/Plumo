@@ -12,7 +12,7 @@ describe('commandMenuCommandEntries', () => {
     const entries = commandMenuCommandEntries(EVERYTHING)
     expect(entries.map((entry) => entry.name)).toEqual([
       'New Document', 'Open Folder…', 'Open Document…', 'Close Folder', 'Quick Open', 'Save',
-      'Pin/Unpin', 'Reveal in Finder', 'Open in Default App', 'Close Tab',
+      'Duplicate', 'Pin/Unpin', 'Reveal in Finder', 'Open in Default App', 'Close Tab',
       'Undo', 'Redo', 'Paste without Formatting', 'Duplicate Block', 'Find', 'Copy Path',
       'Toggle Sidebar', 'Toggle Rich/Raw', 'Appearance: System', 'Appearance: Dark', 'Appearance: Light',
       'Previous Tab', 'Next Tab',
@@ -37,7 +37,7 @@ describe('commandMenuCommandEntries', () => {
 
   it('greys the state groups: no Document, no Tab, no Folder', () => {
     const entries = byId(NOTHING)
-    for (const id of ['file-save', 'edit-toggle-raw-editor', 'edit-find-in-note', 'edit-undo', 'edit-redo', 'file-close-tab', 'edit-copy-path', 'file-toggle-pin', 'file-reveal-in-finder', 'file-open-in-default-app', 'file-new-note', 'file-quick-open', 'file-close-vault', 'edit-duplicate-block']) {
+    for (const id of ['file-save', 'edit-toggle-raw-editor', 'edit-find-in-note', 'edit-undo', 'edit-redo', 'file-close-tab', 'file-duplicate', 'edit-copy-path', 'file-toggle-pin', 'file-reveal-in-finder', 'file-open-in-default-app', 'file-new-note', 'file-quick-open', 'file-close-vault', 'edit-duplicate-block']) {
       expect(entries.get(id)?.enabled, id).toBe(false)
     }
     for (const id of ['file-open-vault', 'file-open-note', 'view-toggle-sidebar', 'app-quit']) {
@@ -48,6 +48,7 @@ describe('commandMenuCommandEntries', () => {
   it('keeps Close Tab, Copy Path and the file hand-offs live over an Image Tab, where Save and Find are greyed', () => {
     const entries = byId({ hasDocument: false, hasFolder: true, hasTab: true, canPin: true, hasRichDocument: false })
     expect(entries.get('file-close-tab')?.enabled).toBe(true)
+    expect(entries.get('file-duplicate')).toMatchObject({ enabled: true, detail: 'File', shortcut: undefined })
     expect(entries.get('file-toggle-pin')?.enabled).toBe(true)
     expect(entries.get('file-reveal-in-finder')).toMatchObject({ enabled: true, detail: 'File', shortcut: undefined })
     expect(entries.get('file-open-in-default-app')).toMatchObject({ enabled: true, detail: 'File', shortcut: undefined })

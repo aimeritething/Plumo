@@ -89,6 +89,17 @@ export function nextAvailableName(taken: Iterable<string>, base: string, extensi
 }
 
 /**
+ * A Duplicate's name in Finder's shape: `Plan copy.md`, then `Plan copy 2.md`.
+ * A name already ending in ` copy` or ` copy N` counts on from there rather
+ * than stacking another ` copy`, so duplicating `Plan copy.md` gives
+ * `Plan copy 2.md`. The extension stays as it was.
+ */
+export function duplicateName(taken: Iterable<string>, filename: string): string {
+  const { stem, extension } = lockedExtension(filename)
+  return nextAvailableName(taken, `${stem.replace(/ copy(?: \d+)?$/u, '')} copy`, extension)
+}
+
+/**
  * The editable stem and the locked extension of a file name. A leading dot is
  * part of the stem, so a dotfile is never left with an empty name.
  */

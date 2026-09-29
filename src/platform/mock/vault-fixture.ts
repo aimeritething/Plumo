@@ -79,6 +79,7 @@ export interface MockVaultCommands {
   update_session: { args: { session: unknown }; result: void }
   quit_app: { args?: undefined; result: void }
   create_note_content: { args: { path: string; content: string; vaultPath?: string }; result: void }
+  duplicate_vault_file: { args: { path: string; newPath: string; vaultPath?: string }; result: void }
   create_vault_folder: { args: { vaultPath: string; folderName: string; parentPath?: string }; result: string }
   rename_vault_file: { args: { vaultPath: string; oldPath: string; newStem: string }; result: { new_path: string } }
   rename_vault_folder: { args: { vaultPath: string; folderPath: string; newName: string }; result: { old_path: string; new_path: string } }
@@ -391,6 +392,14 @@ export function createMockVault(seed: MockVaultFile[] = DEFAULT_MOCK_VAULT_FILES
         const path = requireInsideVault(args?.path)
         if (files.has(path)) throw new Error(`${FILE_EXISTS_ERROR}: ${path}`)
         writeNote(path, typeof args?.content === 'string' ? args.content : '')
+        return undefined
+      }
+      case 'duplicate_vault_file': {
+        const source = files.get(requireInsideVault(args?.path))
+        const path = requireInsideVault(args?.newPath)
+        if (!source || source.kind === 'folder') throw new Error(FILE_DOES_NOT_EXIST_ERROR)
+        if (files.has(path)) throw new Error(`${FILE_EXISTS_ERROR}: ${path}`)
+        files.set(path, { ...source, path, modifiedAt: nowInSeconds() })
         return undefined
       }
       case 'create_vault_folder': {
