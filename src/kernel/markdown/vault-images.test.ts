@@ -141,17 +141,22 @@ describe('resolveImageUrls', () => {
     )
   })
 
-  it('resolves portable attachment image paths against the vault root from subfolder notes', () => {
+  it('resolves relative attachment image paths beside a subfolder note, where its Attachments are saved', () => {
     tauriMode = true
     const notePath = '/vault/projects/notes/plan.md'
 
     expect(resolveImageUrls('![shot](attachments/shot.png)', '/vault', notePath)).toBe(
-      `![shot](${assetUrl('/vault/attachments/shot.png')})`,
+      `![shot](${assetUrl('/vault/projects/notes/attachments/shot.png')})`,
     )
-    expect(resolveImageUrls('![shot](./attachments/shot.png)', '/vault', notePath)).toBe(
-      `![shot](${assetUrl('/vault/attachments/shot.png')})`,
+    expect(resolveImageUrls('![shot](./attachments/Team%20截图.png)', '/vault', notePath)).toBe(
+      `![shot](${assetUrl('/vault/projects/notes/attachments/Team 截图.png')})`,
     )
-    expect(resolveImageUrls('![shot](/attachments/Team%20截图.png)', '/vault', notePath)).toBe(
+  })
+
+  it('resolves root-relative attachment image paths against the vault root from subfolder notes', () => {
+    tauriMode = true
+
+    expect(resolveImageUrls('![shot](/attachments/Team%20截图.png)', '/vault', '/vault/projects/notes/plan.md')).toBe(
       `![shot](${assetUrl('/vault/attachments/Team 截图.png')})`,
     )
   })
@@ -391,16 +396,31 @@ describe('portableImageUrls', () => {
   it('serializes root attachment asset URLs as vault-portable attachment paths', () => {
     const markdown = `![shot](${assetUrl('/vault/attachments/shot.png')})`
 
-    expect(portableImageUrls(markdown, '/vault', '/vault/projects/notes/plan.md')).toBe(
-      '![shot](attachments/shot.png)',
-    )
+    expect(portableImageUrls(markdown, '/vault')).toBe('![shot](attachments/shot.png)')
+    expect(portableImageUrls(markdown, '/vault', '/vault/plan.md')).toBe('![shot](attachments/shot.png)')
   })
 
   it('serializes Windows root attachment asset URLs as vault-portable attachment paths', () => {
     const markdown = `![shot](${assetUrl('C:\\Vault\\attachments\\shot.png')})`
 
-    expect(portableImageUrls(markdown, 'c:\\vault', 'C:\\Vault\\Projects\\Notes\\plan.md')).toBe(
+    expect(portableImageUrls(markdown, 'c:\\vault', 'C:\\Vault\\plan.md')).toBe(
       '![shot](attachments/shot.png)',
+    )
+  })
+
+  it('serializes root attachment asset URLs relative to a subfolder note', () => {
+    const markdown = `![shot](${assetUrl('/vault/attachments/shot.png')})`
+
+    expect(portableImageUrls(markdown, '/vault', '/vault/projects/notes/plan.md')).toBe(
+      '![shot](../../attachments/shot.png)',
+    )
+  })
+
+  it('serializes Windows root attachment asset URLs relative to a subfolder note', () => {
+    const markdown = `![shot](${assetUrl('C:\\Vault\\attachments\\shot.png')})`
+
+    expect(portableImageUrls(markdown, 'c:\\vault', 'C:\\Vault\\Projects\\Notes\\plan.md')).toBe(
+      '![shot](../../attachments/shot.png)',
     )
   })
 
@@ -417,6 +437,16 @@ describe('resolveImageUrls / portableImageUrls round-trip', () => {
     const markdown = '![shot](attachments/file.png)'
 
     expect(portableImageUrls(resolveImageUrls(markdown, '/vault'), '/vault')).toBe(markdown)
+  })
+
+  it('keeps attachment markdown stable for a subfolder note', () => {
+    tauriMode = true
+    const markdown = '![image.png](./attachments/1790746165167-image.png)'
+    const notePath = '/vault/okr/ork.md'
+
+    expect(
+      portableImageUrls(resolveImageUrls(markdown, '/vault', notePath), '/vault', notePath),
+    ).toBe(markdown)
   })
 
   it('keeps note-relative markdown stable', () => {

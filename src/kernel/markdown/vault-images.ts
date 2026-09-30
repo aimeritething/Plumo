@@ -252,7 +252,7 @@ function isExplicitWikilinkImagePath(path: string): boolean {
 
 function portableWikilinkImageUrl(path: string): MarkdownImageUrl {
   if (isExplicitWikilinkImagePath(path)) return path
-  return path.includes('/') || path.includes('\\') ? path : `attachments/${path}`
+  return path.includes('/') || path.includes('\\') ? path : `/attachments/${path}`
 }
 
 function parseWikilinkImageEmbed(request: WikilinkImageRequest): WikilinkImageEmbed | null {
@@ -393,9 +393,32 @@ function relativePathFromNoteDirectory(request: NoteDirectoryRelativePathRequest
   return upSegments.length === 0 ? `./${relative}` : relative
 }
 
+/**
+ * An Attachment is saved beside its Document, so a relative `attachments/` link
+ * is read from the Document's directory; only `/attachments/` means the Folder's.
+ */
+function isFolderAttachmentUrl(request: ImageUrlRequest): boolean {
+  const { url, notePath } = request
+  if (!isPortableAttachmentPath({ path: url })) return false
+  return !notePath || url.startsWith('/')
+}
+
+function isNoteInVaultSubfolder(request: NotePathRequest & { vaultPath: VaultPath }): boolean {
+  const noteSegments = pathSegments({ path: noteDirectoryPath({ notePath: request.notePath }) })
+  const vaultSegments = pathSegments({ path: request.vaultPath })
+  const caseInsensitive = usesWindowsSeparators({ path: request.notePath })
+    || usesWindowsSeparators({ path: request.vaultPath })
+  return noteSegments.length > vaultSegments.length
+    && vaultSegments.every((right, index) => samePathSegment({
+      left: noteSegments[index],
+      right,
+      caseInsensitive,
+    }))
+}
+
 function resolvePortableAttachmentUrl(request: ImageUrlRequest): MarkdownImageUrl | null {
   const { url, vaultPath } = request
-  if (!isPortableAttachmentPath({ path: url })) return null
+  if (!isFolderAttachmentUrl(request)) return null
   const attachmentPath = decodePathUrl({ url })
   return resolveAssetUrl(() => vaultAttachmentAssetUrl({
     vaultPath,
@@ -473,6 +496,9 @@ export function normalizeBareImageUrls(markdown: Markdown): Markdown {
 }
 
 function portableCurrentAttachmentPath(request: ImageUrlRequest): MarkdownImageUrl | null {
+  // Written as `attachments/…`, it would be read beside a Document in a subfolder.
+  const { notePath, vaultPath } = request
+  if (notePath && isNoteInVaultSubfolder({ notePath, vaultPath })) return null
   return portableAttachmentPathFromCurrentVaultAssetUrl({
     url: request.url,
     vaultPath: request.vaultPath,
