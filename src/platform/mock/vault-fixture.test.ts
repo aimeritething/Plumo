@@ -191,6 +191,29 @@ describe('read-only paths', () => {
   })
 })
 
+describe('the Settings file in the fixture', () => {
+  it('answers read_settings with null until Settings are written, then with the last write, apart from the Session', async () => {
+    const vault = createMockVault(seed)
+
+    await expect(vault.invoke('read_settings')).resolves.toBeNull()
+    await vault.invoke('update_settings', { settings: { version: 1, theme: 'dark' } })
+
+    await expect(vault.invoke('read_settings')).resolves.toEqual({ version: 1, theme: 'dark' })
+    await expect(vault.invoke('read_session')).resolves.toBeNull()
+  })
+
+  it('keeps the Settings across fixtures until reset clears them, and lets a spec seed them', async () => {
+    const first = createMockVault(seed)
+    first.seedSettings({ version: 1, theme: 'system' })
+
+    const relaunched = createMockVault(seed)
+    await expect(relaunched.invoke('read_settings')).resolves.toEqual({ version: 1, theme: 'system' })
+
+    relaunched.reset()
+    await expect(relaunched.invoke('read_settings')).resolves.toBeNull()
+  })
+})
+
 describe('the Session file in the fixture', () => {
   it('answers read_session with null until a Session is written, then with the last write', async () => {
     const vault = createMockVault(seed)

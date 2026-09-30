@@ -35,6 +35,19 @@ describe('handleAppKeyboardEvent', () => {
     expect(event.defaultPrevented).toBe(true)
   })
 
+  it('⌘, opens the Settings, and ⌘⇧, stays Copy Path', () => {
+    const handlers = actions({ onOpenSettings: vi.fn(), onCopyPath: vi.fn() })
+
+    const settings = press(',', { code: 'Comma' })
+    handleAppKeyboardEvent(handlers, settings)
+    expect(handlers.onOpenSettings).toHaveBeenCalledTimes(1)
+    expect(settings.defaultPrevented).toBe(true)
+
+    handleAppKeyboardEvent(handlers, press('<', { code: 'Comma', shiftKey: true }))
+    expect(handlers.onCopyPath).toHaveBeenCalledTimes(1)
+    expect(handlers.onOpenSettings).toHaveBeenCalledTimes(1)
+  })
+
   it('⌘K with text selected in Rich mode goes to the editor\'s link command, not the Command Menu', () => {
     document.body.innerHTML = `
       <div class="bn-editor" contenteditable="true" tabindex="0"><p>Some text</p></div>
@@ -258,6 +271,30 @@ describe('handleAppKeyboardEvent', () => {
 
       expect(handlers.onCommandPalette).toHaveBeenCalledTimes(1)
       expect(handlers.onQuickOpen).toHaveBeenCalledTimes(1)
+    })
+
+    it('lets ⌘W and ⌘, through to the Settings dialog, which routes them to itself, and nothing else', () => {
+      document.body.innerHTML = '<div data-slot="dialog-content" data-state="open" data-settings-dialog="true"></div>'
+      const handlers = actions({ onCloseTab: vi.fn(), onOpenSettings: vi.fn() })
+
+      handleAppKeyboardEvent(handlers, press('w'))
+      handleAppKeyboardEvent(handlers, press(',', { code: 'Comma' }))
+      const newDocument = press('n')
+      handleAppKeyboardEvent(handlers, newDocument)
+
+      expect(handlers.onCloseTab).toHaveBeenCalledTimes(1)
+      expect(handlers.onOpenSettings).toHaveBeenCalledTimes(1)
+      expect(handlers.onCreateNote).not.toHaveBeenCalled()
+      expect(newDocument.defaultPrevented).toBe(true)
+    })
+
+    it('keeps ⌘W off the Tabs when a menu is open over the Settings dialog', () => {
+      document.body.innerHTML = '<div data-slot="dialog-content" data-state="open" data-settings-dialog="true"></div><div data-slot="dropdown-menu-content" data-state="open"></div>'
+      const handlers = actions({ onCloseTab: vi.fn() })
+
+      handleAppKeyboardEvent(handlers, press('w'))
+
+      expect(handlers.onCloseTab).not.toHaveBeenCalled()
     })
 
     it('stops counting once it is closing', () => {

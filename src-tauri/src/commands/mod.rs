@@ -4,6 +4,7 @@ mod list_files;
 mod menu_state;
 mod quit;
 mod session_file;
+mod settings_file;
 mod vault;
 
 use std::borrow::Cow;
@@ -14,6 +15,7 @@ pub use list_files::*;
 pub use menu_state::*;
 pub use quit::*;
 pub use session_file::*;
+pub use settings_file::*;
 pub use vault::*;
 
 /// Expand a leading `~` or `~/` in a path string to the user's home directory.

@@ -3,6 +3,7 @@ mod commands;
 pub mod menu;
 pub mod open_files;
 pub mod session;
+pub mod settings;
 pub mod vault;
 pub mod vault_watcher;
 
@@ -71,6 +72,9 @@ fn show_debug_main_window(_app: &mut tauri::App, _has_saved_frame: bool) {}
 fn setup_session(app: &mut tauri::App) -> Result<bool, Box<dyn std::error::Error>> {
     let path = session::session_path(app.handle())?;
     app.manage(session::SessionState::load(path));
+    app.manage(settings::SettingsState::new(settings::settings_path(
+        app.handle(),
+    )?));
     let has_saved_frame = app.state::<session::SessionState>().window().is_some();
     session::apply_saved_frame(app.handle());
     Ok(has_saved_frame)
@@ -168,6 +172,8 @@ pub fn run() {
             commands::list_files,
             commands::read_session,
             commands::update_session,
+            commands::read_settings,
+            commands::update_settings,
             commands::get_note_content,
             commands::save_note_content,
             commands::create_note_content,

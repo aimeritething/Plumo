@@ -4,12 +4,13 @@ import type { MockVault } from '../../src/platform/mock/vault-fixture'
 import { MOCK_FOLDER, openDocumentThroughDialog, openWelcome, watchForErrors } from './harness'
 
 // Light on first launch, View → Appearance switches and the choice lives in
-// the Session; `system` follows the OS live. The native menu is the
+// the Settings file, apart from the Session; `system` follows the OS live. The native menu is the
 // Rust side's; here the manifest command arrives as the app-command event the
 // renderer also listens for, and is dispatched to the same handler.
 
 const APP_COMMAND_EVENT_NAME = 'plumo:dispatch-command' // src/shell/app-command-dispatcher.ts
 
+const storedSettings = (page: Page) => page.evaluate(() => window.__plumoMockVault?.invoke('read_settings'))
 const storedSession = (page: Page) => page.evaluate(() => window.__plumoMockVault?.invoke('read_session'))
 const documentTheme = (page: Page) => page.locator('html').getAttribute('data-theme')
 
@@ -85,7 +86,7 @@ test('a sample Document measures at the specified typography', async ({ page }) 
   expect(errors.consoleErrors).toEqual([])
 })
 
-test('View → Appearance → Dark switches the document, persists in the Session and survives a relaunch', async ({ page }) => {
+test('View → Appearance → Dark switches the document, persists in the Settings and survives a relaunch', async ({ page }) => {
   const errors = watchForErrors(page)
   await openWelcome(page)
 
@@ -96,22 +97,23 @@ test('View → Appearance → Dark switches the document, persists in the Sessio
   await expect(page.getByTestId('editor-pane')).toHaveCSS('background-color', 'rgb(23, 23, 23)')
   await expect(page.locator('.bn-editor')).toHaveCSS('color', 'rgb(229, 229, 229)')
   await expect(page.locator('.bn-editor h1')).toHaveCSS('color', 'rgb(250, 250, 250)')
-  await expect.poll(() => storedSession(page)).toMatchObject({ version: 1, theme: 'dark' })
+  await expect.poll(() => storedSettings(page)).toEqual({ version: 1, theme: 'dark' })
+  expect(await storedSession(page)).not.toHaveProperty('theme')
 
   await page.reload()
 
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
   await expect(page.locator('.bn-editor h1')).toHaveText('Welcome')
-  await expect.poll(() => storedSession(page)).toMatchObject({ theme: 'dark' })
+  await expect.poll(() => storedSettings(page)).toMatchObject({ theme: 'dark' })
 
   await chooseAppearance(page, 'light')
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
-  await expect.poll(() => storedSession(page)).toMatchObject({ theme: 'light' })
+  await expect.poll(() => storedSettings(page)).toMatchObject({ theme: 'light' })
   expect(errors.pageErrors).toEqual([])
   expect(errors.consoleErrors).toEqual([])
 })
 
-test('System follows a live OS appearance change and is what the Session remembers', async ({ page }) => {
+test('System follows a live OS appearance change and is what the Settings remember', async ({ page }) => {
   const errors = watchForErrors(page)
   await page.emulateMedia({ colorScheme: 'dark' })
   await openWelcome(page)
@@ -120,14 +122,14 @@ test('System follows a live OS appearance change and is what the Session remembe
   await chooseAppearance(page, 'system')
 
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
-  await expect.poll(() => storedSession(page)).toMatchObject({ theme: 'system' })
+  await expect.poll(() => storedSettings(page)).toMatchObject({ theme: 'system' })
 
   await page.emulateMedia({ colorScheme: 'light' })
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
 
   await page.reload()
   expect(await documentTheme(page)).toBe('light')
-  await expect.poll(() => storedSession(page)).toMatchObject({ theme: 'system' })
+  await expect.poll(() => storedSettings(page)).toMatchObject({ theme: 'system' })
   expect(errors.pageErrors).toEqual([])
   expect(errors.consoleErrors).toEqual([])
 })

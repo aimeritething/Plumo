@@ -1,5 +1,4 @@
 import { useEffect, useEffectEvent, useState } from 'react'
-import type { ThemeMode } from '@/shell/theme-mode'
 import type { Tab } from '@/types'
 import { readSessionFile, updateSessionFile } from './session-file'
 import { parseSession, sessionForOpenEditors, type OpenEditorInput, type SessionEditor, type SessionSidebar } from './session-schema'
@@ -11,12 +10,8 @@ interface UseSessionOptions {
   restoreFolder?: (folder: string | null) => Promise<string | null>
   tabs: Tab[]
   activeTabPath: string | null
-  /** The View → Appearance choice. */
-  theme: ThemeMode
   /** Reopens the Session's Documents, dropping the ones that no longer exist. */
   restoreOpenEditors: (editors: SessionEditor[], activePath: string | null, folder?: string | null) => Promise<void> | void
-  /** Puts the Session's appearance back. */
-  restoreTheme: (theme: ThemeMode) => void
   /** Whether the sidebar is collapsed, and its width when shown. */
   sidebar: SessionSidebar
   restoreSidebar: (sidebar: SessionSidebar) => void
@@ -39,21 +34,20 @@ function openEditorsKey(tabs: Tab[]): string {
 
 /**
  * Restores the Session once at launch and hands every later change of the
- * Folder, open Tabs (each Document with its mode), appearance, sidebar,
+ * Folder, open Tabs (each Document with its mode), sidebar,
  * Pinned lists, Recent Folders and the other Folders' Tabs to the Session file. Nothing is written before
  * the restore has settled, so a launch never overwrites the file with the
  * empty initial state. A file with an unknown version restores nothing and
  * is rewritten in the current schema by the first write.
  */
 export function useSession({
-  folder = null, restoreFolder, tabs, activeTabPath, theme, restoreOpenEditors, restoreTheme, sidebar, restoreSidebar,
+  folder = null, restoreFolder, tabs, activeTabPath, restoreOpenEditors, sidebar, restoreSidebar,
   pinned = NO_PINNED_LISTS, restorePinned, recent = NO_RECENT_FOLDERS, restoreRecent,
 }: UseSessionOptions) {
   const [restored, setRestored] = useState(false)
   const restore = useEffectEvent(async () => {
     const session = parseSession(await readSessionFile())
     if (!session) return
-    restoreTheme(session.theme)
     restoreSidebar(session.sidebar)
     // Before the Folder, so its listing is the one the pins are checked against.
     restorePinned?.(session.pinned)
@@ -82,7 +76,7 @@ export function useSession({
     }
   }, [])
 
-  // Folder, Tab order, each Tab's mode, active Tab, appearance, sidebar, the
+  // Folder, Tab order, each Tab's mode, active Tab, sidebar, the
   // Pinned lists and the Recent Folders with their Tabs are what the file
   // holds; a content change inside a Tab does not touch it.
   const editorsKey = openEditorsKey(tabs)
@@ -94,11 +88,11 @@ export function useSession({
     if (!restored) return
     const openEditors = JSON.parse(editorsKey) as OpenEditorInput[]
     const collapsedSections = sectionsKey === '' ? [] : (sectionsKey.split(',') as SessionSidebar['collapsedSections'])
-    const session = sessionForOpenEditors(openEditors, activeTabPath, theme, folder, { collapsed, width, collapsedSections }, JSON.parse(pinnedKey) as PinnedLists, JSON.parse(recentKey) as RecentFolders)
+    const session = sessionForOpenEditors(openEditors, activeTabPath, folder, { collapsed, width, collapsedSections }, JSON.parse(pinnedKey) as PinnedLists, JSON.parse(recentKey) as RecentFolders)
     updateSessionFile(session).catch((error: unknown) => {
       console.warn('[session] Failed to hand the Session to the file:', error)
     })
-  }, [activeTabPath, collapsed, editorsKey, folder, pinnedKey, recentKey, restored, sectionsKey, theme, width])
+  }, [activeTabPath, collapsed, editorsKey, folder, pinnedKey, recentKey, restored, sectionsKey, width])
 
   return { restored }
 }

@@ -81,7 +81,6 @@ test('a launch by document inside the open Folder leaves the sidebar as it was a
     folder: MOCK_FOLDER,
     openEditors: [],
     activePath: null,
-    theme: 'dark',
     sidebar: { collapsed: false, width: 260 },
   }, [PLUMO_PATH])
 
@@ -105,7 +104,6 @@ test('a launch by document restores the Session first, then the Finder Document 
     folder: null,
     openEditors: [{ path: WELCOME_PATH, mode: 'rich' }],
     activePath: WELCOME_PATH,
-    theme: 'dark',
     sidebar: { collapsed: false, width: 260 },
   }, [READING_LIST_PATH])
 

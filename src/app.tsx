@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useMemo, useRef } from 'react'
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { Tab } from './types'
 import { CommandMenu } from '@/command-menu/command-menu'
 import { Editor, type TabCommands } from '@/editor/editor'
@@ -28,6 +28,8 @@ import { useFinderOpen } from '@/tabs/use-finder-open'
 import { useMenuEvents, type MenuEventHandlers } from '@/shell/use-menu-events'
 import { useNoteTabs } from '@/tabs/use-note-tabs'
 import { useSession } from '@/session/use-session'
+import { SettingsDialog } from '@/settings/settings-dialog'
+import { useSettings } from '@/settings/use-settings'
 import { FolderSwitcher } from '@/recent-folders/folder-switcher'
 import { RecentFolderList } from '@/recent-folders/recent-folder-list'
 import { useRecentFolders } from '@/recent-folders/use-recent-folders'
@@ -117,9 +119,7 @@ export default function App() {
     restoreFolder: folderState.restoreFolder,
     tabs,
     activeTabPath,
-    theme: appearance.themeMode,
     restoreOpenEditors,
-    restoreTheme: appearance.restoreTheme,
     sidebar,
     restoreSidebar,
     pinned: pinned.lists,
@@ -127,7 +127,8 @@ export default function App() {
     recent,
     restoreRecent: recent.restore,
   })
-  useThemeMode(appearance.themeMode, restored)
+  const { restored: settingsRestored } = useSettings({ theme: appearance.themeMode, restoreTheme: appearance.restoreTheme })
+  useThemeMode(appearance.themeMode, settingsRestored)
   const flushPendingEditorContentRef = useRef<((path: string) => void) | null>(null)
   const flushPendingRawContentRef = useRef<((path: string) => void) | null>(null)
   const hasPendingEditorContentRef = useRef<((path: string) => boolean) | null>(null)
@@ -513,6 +514,12 @@ export default function App() {
   const { open: commandMenuOpen, mode: commandMenuMode, openCommands: openCommandMenu, openFiles: openQuickOpen, close: closeCommandMenu } = useCommandMenu()
   const hasFolder = folder !== null
   const hasTab = activeTabPath !== null
+  // Settings (⌘,, the Plumo menu, the Folder switcher) opens the dialog; a
+  // second ⌘, while it is open changes nothing. ⌘W closes it and leaves the
+  // Tabs alone, as ⌘W closes a macOS Settings window.
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const openSettings = useCallback(() => setSettingsOpen(true), [])
+  const closeSettings = useCallback(() => setSettingsOpen(false), [])
 
   // ⌘[ toggles the sidebar in both states; in Raw mode it shadows CodeMirror's
   // indent-less (⌘] stays the editor's).
@@ -537,11 +544,13 @@ export default function App() {
     ...tabFileCommands,
     ...tabCommands.handlers,
     ...appearance.handlers,
+    onOpenSettings: openSettings,
+    ...(settingsOpen ? { onCloseTab: closeSettings } : {}),
     onCreateNote: createDocumentFromShell,
     onQuickOpen: hasFolder ? openQuickOpen : undefined,
     onCommandPalette: openCommandMenu,
     onPastePlainText,
-  }), [activeDocumentPath, appearance.handlers, canPinActiveTab, createDocumentFromShell, hasFolder, hasRichDocument, hasTab, onCloseFolder, onCopyPath, onDuplicateBlock, onFindInNote, onOpenFolder, onOpenNote, onPastePlainText, onRedo, onSave, onToggleRawEditor, onUndo, openCommandMenu, openQuickOpen, quit, tabCommands, tabFileCommands, toggleSidebar])
+  }), [activeDocumentPath, appearance.handlers, canPinActiveTab, createDocumentFromShell, hasFolder, hasRichDocument, hasTab, onCloseFolder, onCopyPath, onDuplicateBlock, onFindInNote, onOpenFolder, onOpenNote, onPastePlainText, onRedo, onSave, onToggleRawEditor, onUndo, openCommandMenu, openQuickOpen, openSettings, closeSettings, quit, settingsOpen, tabCommands, tabFileCommands, toggleSidebar])
   useAppKeyboard(handlers)
   useMenuEvents(handlers)
 
@@ -574,15 +583,15 @@ export default function App() {
   // unpainted until the launch Document is in place.
   const { settled: finderOpenSettled } = useFinderOpen({ openNote: openLoneNote, settleActiveNote: settleAndRecord, ready: restored })
 
-  // Nothing is painted until the Session is back and any Finder launch
-  // Document is open, so a launch never shows the expanded sidebar, or the
+  // Nothing is painted until the Session and the Settings are back and any
+  // Finder launch Document is open, so a launch never shows the expanded sidebar, or the
   // Session's Tab, for a frame before the right state (the window's own
   // background colour is the canvas until then).
   return (
     <div
       className="relative flex h-full w-full bg-surface-app text-text-primary data-restoring:invisible"
       data-testid="shell"
-      data-restoring={!(restored && finderOpenSettled) || undefined}
+      data-restoring={!(restored && settingsRestored && finderOpenSettled) || undefined}
       data-sidebar-slides={sidebarSlides || undefined}
     >
       <Sidebar collapsed={sidebar.collapsed} slides={sidebarSlides} width={sidebar.width} onWidthChange={setSidebarWidth}>
@@ -623,6 +632,7 @@ export default function App() {
             onOpenRecent={onOpenRecentFolder}
             onOpenFolder={onOpenFolder}
             onCloseFolder={onCloseFolder}
+            onOpenSettings={openSettings}
           />
         )}
       </Sidebar>
@@ -668,6 +678,12 @@ export default function App() {
         onClose={closeCommandMenu}
         onRunCommand={runCommandMenuCommand}
         onOpenFile={openCommandMenuFile}
+      />
+      <SettingsDialog
+        open={settingsOpen}
+        onClose={closeSettings}
+        theme={appearance.themeMode}
+        onThemeChange={appearance.setThemeMode}
       />
     </div>
   )

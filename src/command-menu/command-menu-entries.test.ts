@@ -16,6 +16,7 @@ describe('commandMenuCommandEntries', () => {
       'Undo', 'Redo', 'Paste without Formatting', 'Duplicate Block', 'Find', 'Copy Path',
       'Toggle Sidebar', 'Toggle Rich/Raw', 'Appearance: System', 'Appearance: Dark', 'Appearance: Light',
       'Previous Tab', 'Next Tab',
+      'Settings',
       // The platform label: `Quit Plumo` on macOS, `Quit` elsewhere (jsdom is elsewhere).
       expect.stringMatching(/^Quit/),
     ])
@@ -32,6 +33,8 @@ describe('commandMenuCommandEntries', () => {
     expect(entries.get('file-save')).toMatchObject({ detail: 'File', shortcut: expect.stringMatching(/S$/) })
     expect(entries.get('view-appearance-dark')).toMatchObject({ detail: 'View', shortcut: undefined })
     expect(entries.get('app-quit')).toMatchObject({ detail: 'Plumo', shortcut: expect.stringMatching(/Q$/) })
+    expect(entries.get('app-settings')).toMatchObject({ detail: 'Plumo', shortcut: expect.stringMatching(/,$/), enabled: true })
+    expect(byId(NOTHING).get('app-settings')?.enabled).toBe(true)
     expect(entries.get('file-close-vault')?.shortcut).toBeUndefined()
   })
 

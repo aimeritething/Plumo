@@ -120,7 +120,6 @@ fn default_session() -> Value {
         "folder": null,
         "openEditors": [],
         "activePath": null,
-        "theme": "light",
         "sidebar": { "collapsed": false, "width": 260 },
         "pinned": {},
     })
@@ -170,11 +169,12 @@ pub fn read_session_file(path: &Path) -> Option<Value> {
 }
 
 /// Write `session` through a temp file beside `path` and rename it into place,
-/// so a crash mid-write leaves the previous Session intact.
+/// so a crash mid-write leaves the previous file intact. The Settings file is
+/// written the same way.
 pub fn write_atomically(path: &Path, session: &Value) -> io::Result<()> {
     let parent = path
         .parent()
-        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "session path has no parent"))?;
+        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "path has no parent"))?;
     fs::create_dir_all(parent)?;
     let file_name = path
         .file_name()
@@ -336,7 +336,6 @@ mod tests {
             "folder": null,
             "openEditors": [{ "path": "/Users/x/notes/a.md", "mode": "rich" }],
             "activePath": "/Users/x/notes/a.md",
-            "theme": "dark",
             "sidebar": { "collapsed": false, "width": 260 },
         })
     }
@@ -375,7 +374,6 @@ mod tests {
                 "folder": null,
                 "openEditors": [],
                 "activePath": null,
-                "theme": "light",
                 "sidebar": { "collapsed": false, "width": 260 },
                 "pinned": {},
                 "window": { "x": 0, "y": 0, "width": 1200, "height": 800 },

@@ -13,6 +13,19 @@
         "requiresManualNativeAcceleratorQa": true
       }
     },
+    "appSettings": {
+      "id": "app-settings",
+      "route": { "kind": "handler", "handler": "onOpenSettings" },
+      "menuOwned": true,
+      "shortcut": {
+        "combo": "command-or-ctrl",
+        "key": ",",
+        "code": "Comma",
+        "display": "⌘,",
+        "accelerator": "CmdOrCtrl+,",
+        "requiresManualNativeAcceleratorQa": true
+      }
+    },
     "fileNewNote": {
       "id": "file-new-note",
       "route": { "kind": "handler", "handler": "onCreateNote" },
@@ -457,6 +470,8 @@
     }
   ],
   "appMenu": [
+    { "kind": "command", "command": "appSettings", "label": "Settings" },
+    { "kind": "separator" },
     { "kind": "command", "command": "appQuit", "label": { "macos": "Quit Plumo", "default": "Quit" } }
   ],
   "menuStateGroups": {

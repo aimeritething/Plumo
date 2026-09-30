@@ -26,6 +26,8 @@ type SuppressedShortcutSource = Extract<AppCommandDispatchSource, 'renderer-keyb
 export interface AppCommandHandlers {
   /** ⌘Q: write every pending edit, then exit. */
   onQuit?: () => void
+  /** Settings (Plumo menu, ⌘,, the Folder switcher): opens the Settings dialog; while it is open, nothing. */
+  onOpenSettings?: () => void
   onCreateNote: () => void
   onOpenVault?: () => void
   onOpenNote?: () => void
@@ -73,6 +75,7 @@ export interface AppCommandHandlers {
 type SimpleHandlerKey = keyof Pick<
   AppCommandHandlers,
   | 'onQuit'
+  | 'onOpenSettings'
   | 'onCreateNote'
   | 'onOpenVault'
   | 'onOpenNote'
@@ -113,6 +116,7 @@ type SimpleHandlerExecutor = (handlers: AppCommandHandlers) => void
 
 const SIMPLE_HANDLER_EXECUTORS: readonly [SimpleHandlerKey, SimpleHandlerExecutor][] = [
   ['onQuit', (handlers) => handlers.onQuit?.()],
+  ['onOpenSettings', (handlers) => handlers.onOpenSettings?.()],
   ['onCreateNote', (handlers) => handlers.onCreateNote()],
   ['onOpenVault', (handlers) => handlers.onOpenVault?.()],
   ['onOpenNote', (handlers) => handlers.onOpenNote?.()],

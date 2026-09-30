@@ -77,6 +77,8 @@ export interface MockVaultCommands {
   take_pending_open: { args?: undefined; result: string[] }
   read_session: { args?: undefined; result: unknown }
   update_session: { args: { session: unknown }; result: void }
+  read_settings: { args?: undefined; result: unknown }
+  update_settings: { args: { settings: unknown }; result: void }
   quit_app: { args?: undefined; result: void }
   create_note_content: { args: { path: string; content: string; vaultPath?: string }; result: void }
   duplicate_vault_file: { args: { path: string; newPath: string; vaultPath?: string }; result: void }
@@ -126,7 +128,9 @@ export interface MockVault {
   markReadOnly(paths: string[]): void
   /** Plant the Session file the next launch (page load) reads; null removes it. */
   seedSession(session: unknown): void
-  /** Restore the seed (or a new one), clear the watcher, the pending opens, the dialog queue, the read-only marks, the Session file and the call log. */
+  /** Plant the Settings file the next launch (page load) reads; null removes it. */
+  seedSettings(settings: unknown): void
+  /** Restore the seed (or a new one), clear the watcher, the pending opens, the dialog queue, the read-only marks, the Session and Settings files and the call log. */
   reset(seed?: MockVaultFile[]): void
 }
 
@@ -146,6 +150,7 @@ const FILE_EXISTS_ERROR = 'File already exists'
 const NAME_TAKEN_ERROR = 'A file with that name already exists'
 const READ_ONLY_ERROR = 'Failed to write file: Permission denied (os error 13)'
 const SESSION_STORAGE_KEY = 'plumo:mock-session'
+const SETTINGS_STORAGE_KEY = 'plumo:mock-settings'
 const PENDING_OPEN_STORAGE_KEY = 'plumo:mock-pending-open'
 /** The stand-in for the Rust side's poke; `listenForOpenRequests` hears it outside Tauri. */
 const OPEN_FILES_EVENT = 'plumo:open-files'
@@ -211,10 +216,10 @@ function ancestorFolders(path: string, vaultPath: string): string[] {
   return segments.map((_, index) => `${vaultPath}/${segments.slice(0, index + 1).join('/')}`)
 }
 
-/** The mock Session file lives in localStorage so a reload restores it like a relaunch. */
-function readStoredSession(): unknown {
+/** The mock Session and Settings files live in localStorage so a reload restores them like a relaunch. */
+function readStoredFile(key: string): unknown {
   try {
-    const raw = globalThis.localStorage?.getItem(SESSION_STORAGE_KEY)
+    const raw = globalThis.localStorage?.getItem(key)
     return raw === null || raw === undefined ? null : JSON.parse(raw)
   } catch {
     return null
@@ -241,13 +246,21 @@ function writeStoredPendingOpen(paths: string[]): void {
   }
 }
 
-function writeStoredSession(session: unknown): void {
+function writeStoredFile(key: string, contents: unknown): void {
   try {
-    if (session === null || session === undefined) globalThis.localStorage?.removeItem(SESSION_STORAGE_KEY)
-    else globalThis.localStorage?.setItem(SESSION_STORAGE_KEY, JSON.stringify(session))
+    if (contents === null || contents === undefined) globalThis.localStorage?.removeItem(key)
+    else globalThis.localStorage?.setItem(key, JSON.stringify(contents))
   } catch {
-    // Storage can be unavailable in restricted contexts; the Session is then per page.
+    // Storage can be unavailable in restricted contexts; the file then lasts the page.
   }
+}
+
+function writeStoredSession(session: unknown): void {
+  writeStoredFile(SESSION_STORAGE_KEY, session)
+}
+
+function writeStoredSettings(settings: unknown): void {
+  writeStoredFile(SETTINGS_STORAGE_KEY, settings)
 }
 
 export function createMockVault(seed: MockVaultFile[] = DEFAULT_MOCK_VAULT_FILES): MockVault {
@@ -290,6 +303,7 @@ export function createMockVault(seed: MockVaultFile[] = DEFAULT_MOCK_VAULT_FILES
   function reset(nextSeed: MockVaultFile[] = seedFiles): void {
     load(nextSeed)
     writeStoredSession(null)
+    writeStoredSettings(null)
   }
 
   function requireRoot(candidate: unknown): void {
@@ -379,9 +393,15 @@ export function createMockVault(seed: MockVaultFile[] = DEFAULT_MOCK_VAULT_FILES
         return drained
       }
       case 'read_session':
-        return readStoredSession()
+        return readStoredFile(SESSION_STORAGE_KEY)
       case 'update_session': {
         writeStoredSession(args?.session ?? null)
+        return undefined
+      }
+      case 'read_settings':
+        return readStoredFile(SETTINGS_STORAGE_KEY)
+      case 'update_settings': {
+        writeStoredSettings(args?.settings ?? null)
         return undefined
       }
       // The renderer's last step of ⌘Q; in a browser there is nothing to exit,
@@ -527,6 +547,7 @@ export function createMockVault(seed: MockVaultFile[] = DEFAULT_MOCK_VAULT_FILES
       readOnlyPaths = new Set(paths)
     },
     seedSession: writeStoredSession,
+    seedSettings: writeStoredSettings,
     reset,
   }
 }

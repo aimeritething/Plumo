@@ -78,7 +78,6 @@ test('a relaunch whose Folder is gone says so above the button, writes folder: n
       folder,
       openEditors: [{ path: welcome, mode: 'rich' }],
       activePath: welcome,
-      theme: 'dark',
       sidebar: { collapsed: false, width: 260 },
     })
   }, [GONE_FOLDER, WELCOME_PATH] as const)
