@@ -301,7 +301,7 @@ fn build_manifest_menu(app: &App, label: &str) -> MenuResult {
 }
 
 /// The app menu: About, the manifest's `appMenu` items up to its first
-/// separator (Settings…, where macOS puts it), the service and hide items,
+/// separator (Settings, where macOS puts it), the service and hide items,
 /// then the rest of `appMenu`. Quit is one of those rather than the predefined
 /// item: the predefined one terminates through `applicationWillTerminate`,
 /// which reaches the event loop as `Exit` with no way to hold it, while a
@@ -572,8 +572,8 @@ mod tests {
             [
                 (
                     Some("app-settings"),
-                    Some("Settings…"),
-                    Some("Settings…"),
+                    Some("Settings"),
+                    Some("Settings"),
                     Some("CmdOrCtrl+,")
                 ),
                 (

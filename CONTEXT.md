@@ -98,12 +98,12 @@ The Folders Plumo has opened, most recent first, at most ten. Only a directory o
 _Avoid_: Recent workspaces, history, vault list
 
 **Folder switcher**:
-The control at the bottom of the sidebar that names the current Folder. Choosing it lists the Recent Folders, then Open Folder… and Close Folder, then, set apart, Settings…. There is none while no Folder is open; the Recent Folders are then listed under Open Folder instead.
+The control at the bottom of the sidebar that names the current Folder. Choosing it lists the Recent Folders, then Open Folder… and Close Folder, then, set apart, Settings. There is none while no Folder is open; the Recent Folders are then listed under Open Folder instead.
 _Avoid_: Footer, workspace switcher, folder picker
 
 **Session**:
 The state Plumo restores on launch: the Folder, the open Tabs (with each Document's Rich or Raw mode), the active Tab, sidebar state (its width, and which sections are collapsed), and window geometry. It also keeps, for each Folder, its Pinned list and the Tabs that were open when the Folder was last shown, so a Folder opened again gets its pins and its Tabs back; a Tab belongs to the Folder that was open when it was opened, wherever its file lives. It also keeps the Recent Folders. Stored in the app's own config directory, never in the Folder.
 
 **Settings**:
-What the user chooses about how Plumo looks and behaves, the same whichever Folder is open; for now only the theme. Opened with Settings… (⌘,) from the app menu, the Command Menu or the Folder switcher, so it is reachable with no Folder open. Kept apart from the Session, in the app's own config directory, so starting the Session over keeps them.
+What the user chooses about how Plumo looks and behaves, the same whichever Folder is open; for now only the theme. Opened with Settings (⌘,) from the app menu, the Command Menu or the Folder switcher, so it is reachable with no Folder open. Kept apart from the Session, in the app's own config directory, so starting the Session over keeps them.
 _Avoid_: Preferences, options, config

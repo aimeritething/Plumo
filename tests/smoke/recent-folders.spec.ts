@@ -34,7 +34,7 @@ test('a Folder switched away from and back to gets its Tabs and its active Tab b
   await expect(page.getByTestId('folder-switcher-row')).toHaveText('Projects')
 
   const menu = await openSwitcherMenu(page)
-  await expect(menu.getByRole('menuitem')).toHaveText(['Projects~/Documents/Notes/Projects', 'Notes~/Documents/Notes', 'Open Folder…⌘O', 'Close Folder', 'Settings…⌘,'])
+  await expect(menu.getByRole('menuitem')).toHaveText(['Projects~/Documents/Notes/Projects', 'Notes~/Documents/Notes', 'Open Folder…⌘O', 'Close Folder', 'Settings⌘,'])
   await menu.getByTestId(`recent-folder:${MOCK_FOLDER}`).click()
 
   await expect(page.getByTestId('explorer-toggle')).toHaveAttribute('title', MOCK_FOLDER)

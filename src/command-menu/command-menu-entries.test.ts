@@ -16,7 +16,7 @@ describe('commandMenuCommandEntries', () => {
       'Undo', 'Redo', 'Paste without Formatting', 'Duplicate Block', 'Find', 'Copy Path',
       'Toggle Sidebar', 'Toggle Rich/Raw', 'Appearance: System', 'Appearance: Dark', 'Appearance: Light',
       'Previous Tab', 'Next Tab',
-      'Settings…',
+      'Settings',
       // The platform label: `Quit Plumo` on macOS, `Quit` elsewhere (jsdom is elsewhere).
       expect.stringMatching(/^Quit/),
     ])

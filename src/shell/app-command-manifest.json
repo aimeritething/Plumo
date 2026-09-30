@@ -470,7 +470,7 @@
     }
   ],
   "appMenu": [
-    { "kind": "command", "command": "appSettings", "label": "Settings…" },
+    { "kind": "command", "command": "appSettings", "label": "Settings" },
     { "kind": "separator" },
     { "kind": "command", "command": "appQuit", "label": { "macos": "Quit Plumo", "default": "Quit" } }
   ],

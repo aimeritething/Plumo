@@ -30,7 +30,7 @@ interface FolderSwitcherProps {
   onOpenRecent: (path: string) => void
   onOpenFolder: () => void
   onCloseFolder: () => void
-  /** Settings…, set apart at the menu's end. */
+  /** Settings, set apart at the menu's end. */
   onOpenSettings: () => void
 }
 
@@ -39,7 +39,7 @@ interface FolderSwitcherProps {
  * the top row's height, with one 30px row centred in it naming the current
  * Folder. Only the row reacts. Hovering it shows the Folder's path and what it
  * holds; clicking it opens the Recent Folders above it, the current one
- * ticked, then Open Folder… and Close Folder, then, set apart, Settings….
+ * ticked, then Open Folder… and Close Folder, then, set apart, Settings.
  * Not rendered with no Folder open; ⌘, and the Plumo menu reach Settings then.
  */
 export const FolderSwitcher = memo(function FolderSwitcher(props: FolderSwitcherProps) {
@@ -88,7 +88,7 @@ export const FolderSwitcher = memo(function FolderSwitcher(props: FolderSwitcher
           <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={onOpenSettings} data-testid="folder-switcher-settings">
             <span className="size-3 flex-none" />
-            Settings…
+            Settings
             <DropdownMenuShortcut>⌘,</DropdownMenuShortcut>
           </DropdownMenuItem>
         </DropdownMenuContent>

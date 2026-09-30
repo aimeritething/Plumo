@@ -46,14 +46,14 @@ test('⌘, opens the Settings with no Folder open, and a theme chosen there appl
   expect(errors.consoleErrors).toEqual([])
 })
 
-test('the Folder switcher\'s menu ends with Settings…, which opens the dialog', async ({ page }) => {
+test('the Folder switcher\'s menu ends with Settings, which opens the dialog', async ({ page }) => {
   const errors = watchForErrors(page)
   await page.goto('/')
   await openFolderThroughDialog(page, MOCK_FOLDER)
 
   await page.getByTestId('folder-switcher-row').click()
   const item = page.getByTestId('folder-switcher-menu').getByRole('menuitem').last()
-  await expect(item).toHaveText('Settings…⌘,')
+  await expect(item).toHaveText('Settings⌘,')
   await item.click()
 
   await expect(settingsDialog(page)).toBeVisible()

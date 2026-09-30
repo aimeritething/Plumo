@@ -139,7 +139,7 @@ describe('useMenuEvents', () => {
       expect(handlers.onQuit).toHaveBeenCalledTimes(1)
     })
 
-    it('the app menu\'s Settings… item reaches onOpenSettings', async () => {
+    it('the app menu\'s Settings item reaches onOpenSettings', async () => {
       const handlers = makeHandlers({ onOpenSettings: vi.fn() })
       renderHook(() => useMenuEvents(handlers))
       await flushMicrotasks()

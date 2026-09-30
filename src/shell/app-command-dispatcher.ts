@@ -26,7 +26,7 @@ type SuppressedShortcutSource = Extract<AppCommandDispatchSource, 'renderer-keyb
 export interface AppCommandHandlers {
   /** ⌘Q: write every pending edit, then exit. */
   onQuit?: () => void
-  /** Settings… (Plumo menu, ⌘,, the Folder switcher): opens the Settings dialog; while it is open, nothing. */
+  /** Settings (Plumo menu, ⌘,, the Folder switcher): opens the Settings dialog; while it is open, nothing. */
   onOpenSettings?: () => void
   onCreateNote: () => void
   onOpenVault?: () => void

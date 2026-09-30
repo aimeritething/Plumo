@@ -514,7 +514,7 @@ export default function App() {
   const { open: commandMenuOpen, mode: commandMenuMode, openCommands: openCommandMenu, openFiles: openQuickOpen, close: closeCommandMenu } = useCommandMenu()
   const hasFolder = folder !== null
   const hasTab = activeTabPath !== null
-  // Settings… (⌘,, the Plumo menu, the Folder switcher) opens the dialog; a
+  // Settings (⌘,, the Plumo menu, the Folder switcher) opens the dialog; a
   // second ⌘, while it is open changes nothing. ⌘W closes it and leaves the
   // Tabs alone, as ⌘W closes a macOS Settings window.
   const [settingsOpen, setSettingsOpen] = useState(false)
