@@ -24,7 +24,7 @@ patchedDependencies:
     hash: 1fd91be1b200529fa1468b9407d4e6678801634ac9ab66cee8b5ae913ef7c36f
     path: patches/@blocknote__react@0.46.2.patch
   '@blocknote/shadcn@0.46.2':
-    hash: 9684a1fd9a604d04dd670664d29e9e45e09d1d46b326bc223459827721660437
+    hash: 0d1f5926553dcacaafb37fb7e8364853b3ca245b21ec113658112da4b6cc226a
     path: patches/@blocknote__shadcn@0.46.2.patch
   '@tiptap/extension-code@3.19.0':
     hash: 915b1a348f6e75430f4759ce6f1f62837baaeebec3c110b7929e8fde97088d8b
@@ -51,7 +51,7 @@ importers:
         version: 0.46.2(patch_hash=1fd91be1b200529fa1468b9407d4e6678801634ac9ab66cee8b5ae913ef7c36f)(@floating-ui/dom@1.8.0)(@phosphor-icons/react@2.1.10(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@types/hast@3.0.5)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@blocknote/shadcn':
         specifier: 0.46.2
-        version: 0.46.2(patch_hash=9684a1fd9a604d04dd670664d29e9e45e09d1d46b326bc223459827721660437)(@floating-ui/dom@1.8.0)(@phosphor-icons/react@2.1.10(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@types/hast@3.0.5)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(postcss@8.5.28)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(tailwindcss@4.3.3)
+        version: 0.46.2(patch_hash=0d1f5926553dcacaafb37fb7e8364853b3ca245b21ec113658112da4b6cc226a)(@floating-ui/dom@1.8.0)(@phosphor-icons/react@2.1.10(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@types/hast@3.0.5)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(postcss@8.5.28)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(tailwindcss@4.3.3)
       '@codemirror/commands':
         specifier: ^6.10.2
         version: 6.11.0
@@ -4339,7 +4339,7 @@ snapshots:
       - sugar-high
       - supports-color
 
-  '@blocknote/shadcn@0.46.2(patch_hash=9684a1fd9a604d04dd670664d29e9e45e09d1d46b326bc223459827721660437)(@floating-ui/dom@1.8.0)(@phosphor-icons/react@2.1.10(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@types/hast@3.0.5)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(postcss@8.5.28)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(tailwindcss@4.3.3)':
+  '@blocknote/shadcn@0.46.2(patch_hash=0d1f5926553dcacaafb37fb7e8364853b3ca245b21ec113658112da4b6cc226a)(@floating-ui/dom@1.8.0)(@phosphor-icons/react@2.1.10(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@types/hast@3.0.5)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(postcss@8.5.28)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(tailwindcss@4.3.3)':
     dependencies:
       '@blocknote/core': 0.46.2(patch_hash=75936782cb149b4eea908c96496b777dafcb7942b876970704e7fd872c6e687d)(@types/hast@3.0.5)
       '@blocknote/react': 0.46.2(patch_hash=1fd91be1b200529fa1468b9407d4e6678801634ac9ab66cee8b5ae913ef7c36f)(@floating-ui/dom@1.8.0)(@phosphor-icons/react@2.1.10(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@types/hast@3.0.5)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)

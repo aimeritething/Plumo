@@ -1,7 +1,27 @@
 diff --git a/dist/blocknote-shadcn.js b/dist/blocknote-shadcn.js
-index 2e1ac4e99e225231dd22d7790aad3531acb1b71e..be73387cbafa17b490b9101295c78baa9cdd6a60 100644
+index 2e1ac4e99e225231dd22d7790aad3531acb1b71e..8bdf1109bf902578beb83751312ce58ce5ee9a02 100644
 --- a/dist/blocknote-shadcn.js
 +++ b/dist/blocknote-shadcn.js
+@@ -755,8 +755,8 @@ const nt = (e) => {
+     {
+       className: d(
+         n,
+-        "border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+-        "text-foreground items-center gap-2"
++        "flex h-7 w-full min-w-0 items-center gap-2 rounded-lg border border-input bg-transparent px-3 text-sm text-text-primary transition-[color,box-shadow] has-[input:focus-visible]:focus-ring has-[input:disabled]:opacity-50 dark:bg-input/30",
++        "[&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-text-tertiary"
+       ),
+       children: [
+         i,
+@@ -765,7 +765,7 @@ const nt = (e) => {
+           /* @__PURE__ */ o(
+             P.Input.Input,
+             {
+-              className: d(n, "h-auto border-none p-0"),
++              className: d(n, "h-auto rounded-none border-none bg-transparent p-0 focus-visible:ring-0! dark:bg-transparent"),
+               id: r,
+               name: a,
+               autoFocus: u,
 @@ -926,8 +926,8 @@ const nt = (e) => {
    return /* @__PURE__ */ v(
      b.Button.Button,
@@ -13,6 +33,15 @@ index 2e1ac4e99e225231dd22d7790aad3531acb1b71e..be73387cbafa17b490b9101295c78baa
        ref: t,
        "aria-label": l,
        onClick: s,
+@@ -1027,7 +1027,7 @@ const nt = (e) => {
+       className: d(
+         n,
+         "z-[10000] flex flex-col gap-2",
+-        a === "panel-popover" ? "w-fit max-w-none border-none p-0 shadow-none" : ""
++        a === "panel-popover" ? "w-fit max-w-none border-none p-0 shadow-none" : a === "form-popover" ? "p-2" : ""
+       ),
+       ref: t,
+       children: r
 @@ -1053,8 +1053,8 @@ const nt = (e) => {
    return /* @__PURE__ */ v(
      b.Button.Button,

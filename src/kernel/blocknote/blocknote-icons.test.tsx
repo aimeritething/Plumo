@@ -97,6 +97,18 @@ describe('BlockNote icons', () => {
     expect(dist).not.toContain('text-gray-400')
   })
 
+  // The form field BlockNote sets in a popover (caption, rename, link) takes
+  // ui/input.tsx's height, radius and focus ring, and sizes the icon beside
+  // it: a Phosphor glyph has no size of its own (react-icons drew at 1em), so
+  // unsized it fills the popover.
+  it('draws the @blocknote/shadcn form text input as Plumo input, its icon sized', () => {
+    const dist = readFileSync(join(packageDist('@blocknote/shadcn'), 'blocknote-shadcn.js'), 'utf8')
+    expect(dist).toContain('"flex h-7 w-full min-w-0 items-center gap-2 rounded-lg border')
+    expect(dist).toContain('has-[input:focus-visible]:focus-ring')
+    expect(dist).toContain('"[&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-text-tertiary"')
+    expect(dist).toContain('a === "form-popover" ? "p-2"')
+  })
+
   it('renders the patched glyphs as Phosphor icons that take the app icon line', async () => {
     const editor = BlockNoteEditor.create({
       schema,
