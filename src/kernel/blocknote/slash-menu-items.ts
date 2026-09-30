@@ -96,6 +96,31 @@ const UNSUPPORTED_SLASH_MENU_KEYS = new Set([
   'toggle_list',
 ])
 
+/**
+ * Aliases Plumo adds to BlockNote's own rows, after BlockNote's (which stay):
+ * the other words a writer reaches for, such as `separator` for Divider.
+ * Plumo's own rows carry theirs where they are made.
+ */
+const ADDED_SLASH_MENU_ALIASES: Partial<Record<string, readonly string[]>> = {
+  audio: ['music', 'voice'],
+  bullet_list: ['unordered', 'bullets'],
+  check_list: ['todo', 'task'],
+  code_block: ['snippet', 'fence', 'codeblock'],
+  divider: ['separator', 'rule'],
+  emoji: ['smiley', 'emoticon'],
+  file: ['attachment', 'pdf'],
+  heading: ['title', 'header'],
+  heading_2: ['header'],
+  heading_3: ['header'],
+  heading_4: ['header'],
+  image: ['photo', 'pic', 'screenshot'],
+  numbered_list: ['ordered', 'numbers'],
+  paragraph: ['text', 'plain', 'body'],
+  quote: ['citation'],
+  table: ['grid'],
+  video: ['movie', 'clip'],
+}
+
 const SLASH_MENU_ICONS: Partial<Record<string, PhosphorIcon>> = {
   audio: SpeakerHigh,
   bullet_list: ListBullets,
@@ -143,7 +168,7 @@ const DATE_TIME_SLASH_COMMANDS: ReadonlyArray<{
   {
     key: 'datetime',
     labelKey: 'datetimeTitle',
-    aliases: ['datetime', 'timestamp', 'date time'],
+    aliases: ['datetime', 'timestamp', 'date time', 'now'],
   },
 ]
 
@@ -239,7 +264,7 @@ function createWhiteboardSlashMenuItem(
   return createBlockSlashMenuItem(editor, {
     key: 'whiteboard',
     title: 'Whiteboard',
-    aliases: ['tldraw', 'drawing', 'canvas', 'sketch'],
+    aliases: ['tldraw', 'drawing', 'canvas', 'sketch', 'draw', 'board'],
     type: TLDRAW_BLOCK_TYPE,
     props: {
       boardId: createBoardId(),
@@ -256,7 +281,7 @@ function createMermaidSlashMenuItem(
   return createBlockSlashMenuItem(editor, {
     key: 'mermaid',
     title: 'Mermaid',
-    aliases: ['diagram', 'flowchart', 'graph', 'chart'],
+    aliases: ['diagram', 'flowchart', 'graph', 'chart', 'sequence', 'gantt'],
     type: MERMAID_BLOCK_TYPE,
     props: {
       diagram: MERMAID_SLASH_COMMAND_DIAGRAM,
@@ -272,7 +297,7 @@ export function createMathSlashMenuItem(
   return createBlockSlashMenuItem(editor, {
     key: 'math',
     title: labels.mathTitle,
-    aliases: ['equation', 'latex', 'formula', 'sqrt'],
+    aliases: ['equation', 'latex', 'formula', 'sqrt', 'katex', 'tex'],
     eventName: 'editor_math_slash_command_used',
     type: MATH_BLOCK_TYPE,
     props: {
@@ -290,7 +315,7 @@ export function createSandboxBlockSlashMenuItem(
   return createBlockSlashMenuItem(editor, {
     key: 'html',
     title: labels.sandboxBlockTitle,
-    aliases: ['embed', 'iframe', 'sandbox', 'html'],
+    aliases: ['embed', 'iframe', 'sandbox', 'html', 'svg', 'widget'],
     eventName: 'editor_html_block_slash_command_used',
     type: HTML_BLOCK_TYPE,
     props: {
@@ -328,7 +353,7 @@ export function createCalloutSlashMenuItem(
   } satisfies SlashMenuItem))
 
   return {
-    aliases: ['admonition', 'alert', 'aside'],
+    aliases: ['admonition', 'alert', 'aside', 'box', 'banner'],
     badge: '›',
     key: 'callout',
     onItemClick: () => {},
@@ -453,9 +478,11 @@ export function filterSlashMenuItems<T extends SlashMenuItem>(
     .filter((item) => !UNSUPPORTED_SLASH_MENU_KEYS.has(item.key))
     .map((item) => {
       const IconComponent = SLASH_MENU_ICONS[item.key]
+      const addedAliases = ADDED_SLASH_MENU_ALIASES[item.key] ?? []
 
       return {
         ...item,
+        aliases: [...(item.aliases ?? []), ...addedAliases],
         icon: IconComponent ? createSlashMenuIcon(IconComponent) : item.icon,
         subtext: undefined,
       }

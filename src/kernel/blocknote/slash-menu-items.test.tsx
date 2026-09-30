@@ -20,6 +20,7 @@ import {
   createSandboxBlockSlashMenuItem,
   createMathSlashMenuItem,
   filterSlashMenuItems,
+  getSlashMenuItems,
   HTML_SLASH_COMMAND_SOURCE,
   MATH_SLASH_COMMAND_LATEX,
   MERMAID_SLASH_COMMAND_DIAGRAM,
@@ -127,10 +128,10 @@ describe('slash menu items', () => {
 
   it('keeps custom media slash-menu commands searchable', () => {
     const expectedCommands = [
-      { key: 'mermaid', title: 'Mermaid', aliases: ['diagram', 'flowchart', 'graph', 'chart'] },
-      { key: 'math', title: 'Math', aliases: ['equation', 'latex', 'formula', 'sqrt'] },
-      { key: 'html', title: 'HTML block', aliases: ['embed', 'iframe', 'sandbox', 'html'] },
-      { key: 'whiteboard', title: 'Whiteboard', aliases: ['tldraw', 'drawing', 'canvas', 'sketch'] },
+      { key: 'mermaid', title: 'Mermaid', aliases: ['diagram', 'flowchart', 'graph', 'chart', 'sequence', 'gantt'] },
+      { key: 'math', title: 'Math', aliases: ['equation', 'latex', 'formula', 'sqrt', 'katex', 'tex'] },
+      { key: 'html', title: 'HTML block', aliases: ['embed', 'iframe', 'sandbox', 'html', 'svg', 'widget'] },
+      { key: 'whiteboard', title: 'Whiteboard', aliases: ['tldraw', 'drawing', 'canvas', 'sketch', 'draw', 'board'] },
     ]
     const items = filterSlashMenuItems(expectedCommands.map((item) => ({
       ...item,
@@ -231,7 +232,7 @@ describe('slash menu items', () => {
     expect(sandboxItem).toEqual(expect.objectContaining({
       key: 'html',
       title: 'HTML block',
-      aliases: ['embed', 'iframe', 'sandbox', 'html'],
+      aliases: ['embed', 'iframe', 'sandbox', 'html', 'svg', 'widget'],
     }))
 
     sandboxItem?.onItemClick()
@@ -254,7 +255,7 @@ describe('slash menu items', () => {
     expect(mathItem).toEqual(expect.objectContaining({
       key: 'math',
       title: 'Math',
-      aliases: ['equation', 'latex', 'formula', 'sqrt'],
+      aliases: ['equation', 'latex', 'formula', 'sqrt', 'katex', 'tex'],
     }))
 
     mathItem?.onItemClick()
@@ -315,7 +316,7 @@ describe('slash menu items', () => {
     expect(calloutItem).toEqual(expect.objectContaining({
       key: 'callout',
       title: 'Callout',
-      aliases: ['admonition', 'alert', 'aside'],
+      aliases: ['admonition', 'alert', 'aside', 'box', 'banner'],
     }))
     expect(calloutItem.submenuItems?.map(item => item.key)).toEqual(
       Object.keys(calloutTypeTitles).map(type => `callout_${type}`),
@@ -329,6 +330,57 @@ describe('slash menu items', () => {
     }))
     expect(trackEvent).toHaveBeenCalledWith('editor_callout_slash_command_used', {
       type: 'tip',
+    })
+  })
+
+  describe('searching by an Alias', () => {
+    const editor = createEditorAtEndOf('')
+    const keysFor = (query: string) => getSlashMenuItems(editor, query).map(item => item.key)
+
+    it.each([
+      ['separator', 'divider'],
+      ['rule', 'divider'],
+      ['hr', 'divider'],
+      ['title', 'heading'],
+      ['header', 'heading_2'],
+      ['text', 'paragraph'],
+      ['unordered', 'bullet_list'],
+      ['ordered', 'numbered_list'],
+      ['task', 'check_list'],
+      ['citation', 'quote'],
+      ['snippet', 'code_block'],
+      ['grid', 'table'],
+      ['photo', 'image'],
+      ['movie', 'video'],
+      ['music', 'audio'],
+      ['attachment', 'file'],
+      ['smiley', 'emoji'],
+      ['gantt', 'mermaid'],
+      ['katex', 'math'],
+      ['svg', 'html'],
+      ['draw', 'whiteboard'],
+      ['now', 'datetime'],
+      ['banner', 'callout'],
+    ])('/%s finds %s', (query, key) => {
+      expect(keysFor(query)).toContain(key)
+    })
+
+    it('matches anywhere in an Alias, whatever the case', () => {
+      expect(keysFor('SEPAR')).toContain('divider')
+      expect(keysFor('arat')).toContain('divider')
+    })
+
+    it('keeps BlockNote\'s own Aliases beside the added ones', () => {
+      expect(keysFor('horizontal rule')).toContain('divider')
+      expect(keysFor('blockquote')).toContain('quote')
+    })
+
+    it('forgives no misspelling', () => {
+      expect(keysFor('seperator')).not.toContain('divider')
+    })
+
+    it('still lists a callout style only for the start of its name or Alias', () => {
+      expect(keysFor('in').filter(key => key.startsWith('callout_'))).toEqual(['callout_info'])
     })
   })
 
@@ -410,7 +462,7 @@ describe('slash menu items', () => {
       expect.objectContaining({
         key: 'datetime',
         title: 'Date and time',
-        aliases: ['datetime', 'timestamp', 'date time'],
+        aliases: ['datetime', 'timestamp', 'date time', 'now'],
       }),
     ])
 

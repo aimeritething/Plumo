@@ -49,6 +49,14 @@ _Avoid_: Node, element, paragraph (when you mean any kind of Block)
 A heading Block and every Block after it up to the next heading of the same or a higher level. A folded heading hides its Section; moving, deleting or duplicating a folded heading acts on the whole Section.
 _Avoid_: Chapter, group
 
+**Slash menu**:
+The menu that typing `/` opens in Rich mode, listing items that insert a Block or act on the current one. Its rows are items, not commands: the commands are the native menu bar's, listed in the Command Menu. Typing after the `/` keeps the items whose title or one of whose Aliases contains what was typed, in their usual order. A callout style gets a row of its own only when what was typed is the start of its name or of one of its Aliases.
+_Avoid_: Slash commands, insert menu
+
+**Alias**:
+Another word a Slash menu item answers to besides its title, such as `separator` or `hr` for Divider.
+_Avoid_: Keyword, tag, synonym
+
 **Duplicate**:
 To make a copy of something right beside it. A duplicated Block is inserted right after the original. Any file Plumo shows or opens can be duplicated, even one outside the Folder; its copy is a new file in the same directory, named `<name> copy`, then `<name> copy 2`, and so on. The copy has the content the user sees, is not pinned, and becomes the active Tab. A folder cannot be duplicated.
 _Avoid_: Copy, clone, make a copy
