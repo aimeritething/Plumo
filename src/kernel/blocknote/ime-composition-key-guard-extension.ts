@@ -125,6 +125,22 @@ export function shouldStopComposingParagraphInput(
   return elapsed >= 0 && elapsed < COMPOSITION_SETTLE_WINDOW_MS
 }
 
+type ProseMirrorCompositionInput = {
+  input?: { compositionEndedAt?: number }
+}
+
+/**
+ * On Safari ProseMirror drops the first key within 500 ms of compositionend,
+ * taking it for the Enter that commits the composition. In WKWebView that key
+ * carries keyCode 229 and this guard stops it, so a key ProseMirror would drop
+ * here is the writer's own, such as an Enter typed straight after a pinyin
+ * commit. Forgetting when the composition ended lets ProseMirror take it.
+ */
+function releaseProseMirrorCompositionEnd(view: unknown): void {
+  const input = (view as ProseMirrorCompositionInput | undefined)?.input
+  if (typeof input?.compositionEndedAt === 'number') input.compositionEndedAt = -2e8
+}
+
 export const createImeCompositionKeyGuardExtension = createExtension(({ editor }) => {
   const readView = () => activeRichEditorView(editor)
   let compositionActive = false
@@ -148,8 +164,12 @@ export const createImeCompositionKeyGuardExtension = createExtension(({ editor }
   }
 
   const handleKeyDown = (event: KeyboardEvent) => {
-    if (!shouldStopComposingEditorShortcutKey(event, readView(), compositionActive)) {
+    const view = readView()
+    if (!shouldStopComposingEditorShortcutKey(event, view, compositionActive)) {
       composingEnterAt = null
+      if (!compositionActive && !isComposingKeyboardEvent(event, view)) {
+        releaseProseMirrorCompositionEnd(view)
+      }
       return
     }
 

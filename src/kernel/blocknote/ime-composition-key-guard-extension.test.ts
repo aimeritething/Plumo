@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, onTestFinished, vi } from 'vitest'
+import { BlockNoteEditor } from '@blocknote/core'
 import { Schema } from '@tiptap/pm/model'
 import { EditorState } from '@tiptap/pm/state'
 import { EditorView } from '@tiptap/pm/view'
@@ -320,6 +321,52 @@ describe('createImeCompositionKeyGuardExtension', () => {
 
     expect(event.stopImmediatePropagation).not.toHaveBeenCalled()
     expect(event.preventDefault).not.toHaveBeenCalled()
+  })
+})
+
+describe('createImeCompositionKeyGuardExtension in a mounted editor', () => {
+  function mountEditor() {
+    const mount = document.createElement('div')
+    document.body.appendChild(mount)
+    const editor = BlockNoteEditor.create({
+      initialContent: [{ id: 'para', type: 'paragraph', content: '你好' }],
+      extensions: [createImeCompositionKeyGuardExtension()],
+    })
+    editor.mount(mount)
+    onTestFinished(() => {
+      editor.unmount()
+      mount.remove()
+    })
+    editor.setTextCursorPosition('para', 'end')
+    return editor
+  }
+
+  function commitComposition(dom: HTMLElement) {
+    dom.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }))
+    dom.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true, data: '你好' }))
+  }
+
+  // jsdom's navigator.vendor is Apple's, so ProseMirror takes its Safari path here
+  // as it does in WKWebView.
+  it('splits the block on a plain Enter pressed right after the input method commits', () => {
+    const editor = mountEditor()
+    const dom = editor.prosemirrorView!.dom as HTMLElement
+
+    commitComposition(dom)
+    dom.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'Enter', keyCode: 13 }))
+
+    expect(editor.document).toHaveLength(2)
+    expect(editor.getTextCursorPosition().block.id).toBe(editor.document[1].id)
+  })
+
+  it('still leaves the Enter that commits the composition to the input method', () => {
+    const editor = mountEditor()
+    const dom = editor.prosemirrorView!.dom as HTMLElement
+
+    commitComposition(dom)
+    dom.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'Enter', keyCode: 229 }))
+
+    expect(editor.document).toHaveLength(1)
   })
 })
 
