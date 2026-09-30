@@ -26,7 +26,7 @@ export const TABLE_HANDLE_TINT_ATTRIBUTE = 'data-table-handle-tint'
 
 export const tableHandleTintPluginKey = new PluginKey<TableHandleTint | null>('plumoTableHandleTint')
 
-function tablePositionById(doc: ProsemirrorNode, blockId: string): { table: ProsemirrorNode; pos: number } | null {
+export function tablePositionById(doc: ProsemirrorNode, blockId: string): { table: ProsemirrorNode; pos: number } | null {
   let match: { table: ProsemirrorNode; pos: number } | null = null
   doc.descendants((node, pos) => {
     if (match) return false

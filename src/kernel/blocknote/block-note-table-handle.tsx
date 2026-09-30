@@ -11,7 +11,8 @@ import {
 } from '@blocknote/react'
 import { useMemo, useRef, useState } from 'react'
 import { cn } from '@/lib/cn'
-import { setTableHandleTint } from './table-handle-tint'
+import { placeCaretForClosedTableHandle } from './table-handle-caret'
+import { setTableHandleTint, type TableHandleTint } from './table-handle-tint'
 
 /**
  * A Table handle, drawn the way AIM-521 settled it: at rest a dash on the
@@ -34,6 +35,8 @@ export function TableHandle({ orientation, hideOtherElements }: TableHandleProps
   // is open or it is being dragged.
   const holdsFocusRef = useRef(false)
   const buttonRef = useRef<HTMLButtonElement>(null)
+  // The column or row the open menu acts on, for the caret when it closes.
+  const openHandleRef = useRef<TableHandleTint | null>(null)
 
   const isDraggable = useMemo(() => {
     if (!state?.block || state.block.type !== 'table') return false
@@ -56,14 +59,15 @@ export function TableHandle({ orientation, hideOtherElements }: TableHandleProps
         if (open) {
           tableHandles.freezeHandles()
           hideOtherElements(true)
-          if (index !== undefined) {
-            setTableHandleTint(editor.prosemirrorView, { blockId: state.block.id, orientation, index })
-          }
+          openHandleRef.current = index === undefined ? null : { blockId: state.block.id, orientation, index }
+          if (openHandleRef.current) setTableHandleTint(editor.prosemirrorView, openHandleRef.current)
         } else {
           tableHandles.unfreezeHandles()
           // Closed with Esc, the pointer can still be on this handle.
           hideOtherElements(buttonRef.current?.matches(':hover') ?? false)
           setTableHandleTint(editor.prosemirrorView, null)
+          if (openHandleRef.current) placeCaretForClosedTableHandle(editor.prosemirrorView, openHandleRef.current)
+          openHandleRef.current = null
           editor.focus()
         }
       }}
