@@ -27,6 +27,7 @@ import { RawEditorView } from './raw-editor-view'
 import type { RawEditorFindRequest } from './raw-editor-find-types'
 import { RichEditorFindBar } from './rich-editor-find-bar'
 import { createRichEditorFindExtension } from '@/kernel/blocknote/rich-editor-find'
+import { createTableHandleTintExtension } from '@/kernel/blocknote/table-handle-tint'
 import { EditorToaster } from './editor-toaster'
 import { showImageImportErrorToast } from './toasts'
 import { TabBar } from '@/tabs/tab-bar'
@@ -189,6 +190,7 @@ function useRichEditor(options: { activeTabPath: string | null; vaultPath?: stri
       createRichEditorTextDirectionExtension(),
       createRichEditorBlockSelectionExtension(),
       createRichEditorFindExtension(),
+      createTableHandleTintExtension(),
     ],
   })
   installRichEditorMarkdownSerializer(editor)

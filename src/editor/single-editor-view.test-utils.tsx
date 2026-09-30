@@ -55,6 +55,7 @@ vi.mock('@blocknote/react', () => ({
     return <div data-testid="link-toolbar-controller" />
   },
   FilePanelController: () => null,
+  TableHandlesController: () => null,
   LinkToolbar: ({ children }: { children?: ReactNode }) => (
     <div className="bn-link-toolbar">{children}</div>
   ),

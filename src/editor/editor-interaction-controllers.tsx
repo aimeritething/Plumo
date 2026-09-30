@@ -3,6 +3,7 @@ import {
   LinkToolbarController,
   SideMenuController,
   SuggestionMenuController,
+  TableHandlesController,
   type FormattingToolbarProps,
   type SideMenuProps,
 } from '@blocknote/react'
@@ -11,6 +12,7 @@ import { FilePanelController } from './file-panel'
 import { LinkToolbar } from '@/kernel/blocknote/link-toolbar'
 import { SlashMenu } from '@/kernel/blocknote/slash-menu'
 import { CollapsedHeadingsController, SideMenu } from '@/kernel/blocknote/block-note-side-menu'
+import { TableHandle } from '@/kernel/blocknote/block-note-table-handle'
 import { FormattingToolbar } from '@/kernel/blocknote/formatting-toolbar'
 import { FormattingToolbarController } from '@/kernel/blocknote/formatting-toolbar-controller'
 import type { SuggestionAction, useSuggestionMenuItems } from '@/kernel/blocknote/use-slash-menu-items'
@@ -54,6 +56,7 @@ function EditorToolbarControllers({
       />
       <LinkToolbarController linkToolbar={linkToolbar} floatingUIOptions={floatingUIOptions} />
       <FilePanelController />
+      <TableHandlesController tableHandle={TableHandle} />
     </>
   )
 }

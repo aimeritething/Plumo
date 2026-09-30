@@ -374,6 +374,7 @@ export function SingleEditorView(options: {
             slashMenu={false}
             sideMenu={false}
             filePanel={false}
+            tableHandles={false}
           >
             <EditorInteractionControllers
               {...suggestionMenuItems}

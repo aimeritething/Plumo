@@ -511,6 +511,15 @@
     border-start-end-radius: var(--radius-md);
   }
 
+  /* The bottom corners too, so a shaded cell stays inside the table's. */
+  [data-content-type="table"] tr:last-child :is(th, td):first-child {
+    border-end-start-radius: var(--radius-md);
+  }
+
+  [data-content-type="table"] tr:last-child :is(th, td):last-child {
+    border-end-end-radius: var(--radius-md);
+  }
+
   [data-content-type="table"] th {
     background: var(--surface-shade);
     font-weight: var(--inline-bold-font-weight);
@@ -533,6 +542,52 @@
   [data-content-type="table"] .selectedCell::after {
     inset: var(--hairline);
     background: var(--accent-bg);
+  }
+
+  /* A Table handle's open menu marks its column or row without selecting it
+     (table-handle-tint.ts): body cells take the hover grey, header cells keep
+     theirs, and an accent hairline replaces the grid line around the whole
+     column or row. Each cell's ::after lies over its own grid lines and
+     draws the sides the attribute names. */
+  [data-content-type="table"] td[data-table-handle-tint] {
+    background: var(--state-hover);
+  }
+
+  /* prosemirror-tables clips the table to its padding box, which would cut
+     the frame where it lies over the table's own border. The corner cells'
+     radii keep the shaded cells inside. */
+  [data-content-type="table"] table:has([data-table-handle-tint]) {
+    overflow: visible;
+  }
+
+  [data-content-type="table"] [data-table-handle-tint] {
+    position: relative;
+  }
+
+  [data-content-type="table"] [data-table-handle-tint]::after {
+    content: "";
+    position: absolute;
+    inset: calc(var(--hairline) * -1);
+    z-index: 2;
+    border: 0 solid var(--accent-base);
+    border-radius: inherit;
+    pointer-events: none;
+  }
+
+  [data-content-type="table"] [data-table-handle-tint~="top"]::after {
+    border-top-width: var(--hairline);
+  }
+
+  [data-content-type="table"] [data-table-handle-tint~="bottom"]::after {
+    border-bottom-width: var(--hairline);
+  }
+
+  [data-content-type="table"] [data-table-handle-tint~="start"]::after {
+    border-inline-start-width: var(--hairline);
+  }
+
+  [data-content-type="table"] [data-table-handle-tint~="end"]::after {
+    border-inline-end-width: var(--hairline);
   }
 
   /* Horizontal rule */
@@ -800,15 +855,10 @@
     padding: var(--spacing);
   }
 
-  /* BlockNote's table handles: its own icons inside Plumo's Button. The drag
-     handle keeps its 24px glyph against the Button's 16px svg rule; the cell
-     handle keeps the package's 12px height (its own correction sits in
-     vendor and loses to the Button's classes). */
-  .bn-shadcn .bn-table-handle svg {
-    width: calc(var(--spacing) * 6);
-    height: calc(var(--spacing) * 6);
-  }
-
+  /* BlockNote's table cell handle: its own icon inside Plumo's Button, at
+     the package's 12px height (its own correction sits in vendor and loses
+     to the Button's classes). The Table handles are Plumo's own
+     (block-note-table-handle.tsx). */
   .bn-shadcn .bn-table-cell-handle {
     height: calc(var(--spacing) * 3);
     padding: 0 var(--spacing);

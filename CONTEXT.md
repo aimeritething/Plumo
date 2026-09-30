@@ -49,6 +49,10 @@ _Avoid_: Node, element, paragraph (when you mean any kind of Block)
 A heading Block and every Block after it up to the next heading of the same or a higher level. A folded heading hides its Section; moving, deleting or duplicating a folded heading acts on the whole Section.
 _Avoid_: Chapter, group
 
+**Table handle**:
+The control that appears on a table Block's edge when the pointer is over the table: one on the top edge for a column, one on the left edge for a row. Dragging it moves that column or row; clicking it opens that column's or row's menu.
+_Avoid_: Toolbar, table toolbar, grip
+
 **Slash menu**:
 The menu that typing `/` opens in Rich mode, listing items that insert a Block or act on the current one. Its rows are items, not commands: the commands are the native menu bar's, listed in the Command Menu. Typing after the `/` keeps the items whose title or one of whose Aliases contains what was typed, in their usual order. A callout style gets a row of its own only when what was typed is the start of its name or of one of its Aliases.
 _Avoid_: Slash commands, insert menu
