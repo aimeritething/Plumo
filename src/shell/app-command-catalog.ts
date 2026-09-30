@@ -51,6 +51,7 @@ type SimpleHandlerKey =
   | 'onRedo'
   | 'onPastePlainText'
   | 'onDuplicateBlock'
+  | 'onAddProperty'
   | 'onFindInNote'
   | 'onCommandPalette'
   | 'onToggleSidebar'

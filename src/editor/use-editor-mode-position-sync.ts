@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import type { useCreateBlockNote } from '@blocknote/react'
 import {
+  focusPropertyAtLine,
   restoreBlockNoteView,
   restoreCodeMirrorView,
   type CodeMirrorRestoreState,
@@ -101,7 +102,10 @@ function useBlockNoteRestoreEffect({
         restoreFrame = 0
         if (canceled) return
 
-        restoreBlockNoteView(editor, pendingSnapshot, document)
+        const { frontmatterLine } = pendingSnapshot
+        if (frontmatterLine === undefined || !focusPropertyAtLine(document, frontmatterLine)) {
+          restoreBlockNoteView(editor, pendingSnapshot, document)
+        }
         restoreTransitionRef.current.roundTripRawRestore = null
         restoreTransitionRef.current.richRestore = null
       })
