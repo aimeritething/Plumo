@@ -227,9 +227,11 @@ export function SingleEditorView(options: {
   const previousThemeModeRef = useRef(themeMode)
   const containerRef = useRef<HTMLDivElement>(null)
   const suppressNextContainerClickRef = useRef(false)
+  const pressTargetRef = useRef<EventTarget | null>(null)
   const handleContainerClick = useEditorContainerClickHandler({
     editable,
     editor,
+    pressTargetRef,
     suppressNextContainerClickRef,
     vaultPath,
   })
@@ -315,6 +317,7 @@ export function SingleEditorView(options: {
   )
   const handleMouseDownCapture = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
+    if (event.button === 0) pressTargetRef.current = event.target
     activatePlainTextPaste()
     handleWhitespaceMouseSelection(event)
     },

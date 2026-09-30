@@ -52,6 +52,8 @@ type EditorContainerClickOptions = {
   editable: boolean
   editor: ReturnType<typeof useCreateBlockNote>
   event: React.MouseEvent<HTMLDivElement>
+  /** Where the last primary press in the container began, so a click the browser moved to a common ancestor is known. */
+  pressTargetRef: React.MutableRefObject<EventTarget | null>
   suppressNextContainerClickRef: React.MutableRefObject<boolean>
   vaultPath?: string
 }
@@ -282,8 +284,22 @@ function focusEditorAtDocumentEnd(editor: ReturnType<typeof useCreateBlockNote>)
   editor.focus()
 }
 
+/**
+ * A press released on another element (a Table's extend button dragged down
+ * as rows appear under it) fires its click on their common ancestor. That
+ * click did not start there, so it is not a click below the text.
+ */
+function clickStartedElsewhere(
+  event: React.MouseEvent<HTMLDivElement>,
+  pressTargetRef: React.MutableRefObject<EventTarget | null>,
+): boolean {
+  const pressTarget = pressTargetRef.current
+  pressTargetRef.current = null
+  return pressTarget !== null && pressTarget !== event.target
+}
+
 function handleEditorContainerClick(options: EditorContainerClickOptions): void {
-  const { editable, editor, event, suppressNextContainerClickRef, vaultPath } = options
+  const { editable, editor, event, pressTargetRef, suppressNextContainerClickRef, vaultPath } = options
   if (!editable) return
   if (suppressNextContainerClickRef.current) {
     suppressNextContainerClickRef.current = false
@@ -303,23 +319,25 @@ function handleEditorContainerClick(options: EditorContainerClickOptions): void 
     })
     return
   }
+  if (clickStartedElsewhere(event, pressTargetRef)) return
   focusEditorAtDocumentEnd(editor)
 }
 
 export function useEditorContainerClickHandler(
   options: Omit<EditorContainerClickOptions, 'event'>,
 ) {
-  const { editable, editor, suppressNextContainerClickRef, vaultPath } = options
+  const { editable, editor, pressTargetRef, suppressNextContainerClickRef, vaultPath } = options
   return useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
       handleEditorContainerClick({
         editable,
         editor,
         event,
+        pressTargetRef,
         suppressNextContainerClickRef,
         vaultPath,
       })
     },
-    [editable, editor, suppressNextContainerClickRef, vaultPath],
+    [editable, editor, pressTargetRef, suppressNextContainerClickRef, vaultPath],
   )
 }

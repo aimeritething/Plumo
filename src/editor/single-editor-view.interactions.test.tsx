@@ -344,6 +344,20 @@ describe('SingleEditorView interactions', () => {
     expect(editor.focus).not.toHaveBeenCalled()
   })
 
+  it('leaves the caret alone when a press on a control is released elsewhere and the click lands on the container', () => {
+    // Dragging a Table's extend button down adds rows under the pointer, so the
+    // release is on another element and the browser fires the click on their
+    // common ancestor: the container, which reads as a click below the text.
+    const { container, editor } = renderEditorHarness()
+    const extendButton = appendToolbarButton(container, 'bn-extend-button', 'Add row')
+
+    fireEvent.mouseDown(extendButton, { button: 0 })
+    fireEvent.click(container, { button: 0 })
+
+    expect(editor.setTextCursorPosition).not.toHaveBeenCalled()
+    expect(editor.focus).not.toHaveBeenCalled()
+  })
+
   it('falls back to the nearest editable block when the trailing block has no inline content', () => {
     const editor = createEditor()
     editor.document = [
