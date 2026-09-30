@@ -2,6 +2,7 @@ import type { MutableRefObject } from 'react'
 import type { useCreateBlockNote } from '@blocknote/react'
 import type { Transaction } from '@tiptap/pm/state'
 import { trackEvent } from '@/lib/telemetry'
+import { RICH_FRONTMATTER_RESET_META } from '@/kernel/blocknote/rich-editor-frontmatter'
 import { classifyRichEditorRecoveryError } from '@/kernel/blocknote/rich-editor-recovery-classifier'
 import { blankParagraphBlocks } from './editor-tab-content'
 import { editorScrollArea } from './editor-dom-selection'
@@ -94,6 +95,7 @@ function mutateEditorWithoutHistory(
   }
   editor.transact((transaction: Transaction | undefined) => {
     transaction?.setMeta('addToHistory', false)
+    transaction?.setMeta(RICH_FRONTMATTER_RESET_META, true)
     mutate()
   })
 }
@@ -127,6 +129,7 @@ function setContentWithoutHistory(
   chain.call(editor._tiptapEditor)
     .setContent(markup)
     .setMeta('addToHistory', false)
+    .setMeta(RICH_FRONTMATTER_RESET_META, true)
     .run()
 }
 

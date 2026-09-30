@@ -1,3 +1,4 @@
+import { richEditorFrontmatter } from '@/kernel/blocknote/rich-editor-frontmatter'
 import { compactMarkdown } from './compact-markdown'
 import { injectCalloutBlocks } from './callout-markdown'
 import {
@@ -450,6 +451,7 @@ export function serializeRichEditorDocumentToMarkdown({
       vaultPath,
     )
     : rawBodyMarkdown
-  const [frontmatter] = splitFrontmatter(tabContent)
+  // A Property edit's Frontmatter, when there is one; the Tab's own bytes otherwise.
+  const frontmatter = richEditorFrontmatter(editor, notePath) ?? splitFrontmatter(tabContent)[0]
   return `${frontmatter}${bodyMarkdown}`
 }

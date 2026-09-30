@@ -152,6 +152,11 @@
         "requiresManualNativeAcceleratorQa": true
       }
     },
+    "editAddProperty": {
+      "id": "edit-add-property",
+      "route": { "kind": "handler", "handler": "onAddProperty" },
+      "menuOwned": true
+    },
     "editDuplicateBlock": {
       "id": "edit-duplicate-block",
       "route": { "kind": "handler", "handler": "onDuplicateBlock" },
@@ -418,6 +423,7 @@
         { "kind": "command", "command": "editPastePlainText", "label": "Paste without Formatting" },
         { "kind": "separator" },
         { "kind": "command", "command": "editDuplicateBlock", "label": "Duplicate Block" },
+        { "kind": "command", "command": "editAddProperty", "label": "Add Property" },
         { "kind": "separator" },
         { "kind": "command", "command": "editFindInNote", "label": "Find" },
         { "kind": "separator" },
@@ -476,7 +482,8 @@
       { "command": "fileTogglePin" }
     ],
     "richNoteDependent": [
-      { "command": "editDuplicateBlock" }
+      { "command": "editDuplicateBlock" },
+      { "command": "editAddProperty" }
     ]
   }
 }

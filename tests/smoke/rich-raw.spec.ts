@@ -178,13 +178,14 @@ test('two Tabs keep different modes at once, and a relaunch restores each Tab\'s
   expect(errors.consoleErrors).toEqual([])
 })
 
-test('a Document with Frontmatter renders none of it in Rich and keeps the bytes through a save', async ({ page }) => {
+test('a Document with Frontmatter shows it as Properties, not as blocks, and keeps the bytes through a body save', async ({ page }) => {
   const errors = watchForErrors(page)
   await page.goto('/')
   await openDocumentThroughDialog(page, PLUMO_PATH)
   await expect(page.locator('.bn-editor h1')).toHaveText('Plumo')
 
   await expect(page.locator('.bn-editor')).not.toContainText('title')
+  await expect(page.getByRole('group', { name: 'Properties' }).getByRole('textbox', { name: 'title' })).toHaveValue('Plumo')
 
   await typeAtEnd(page, ' Body edit.')
   await page.keyboard.press('Meta+s')

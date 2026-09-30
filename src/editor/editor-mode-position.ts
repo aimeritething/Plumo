@@ -84,6 +84,8 @@ export interface RawEditorPositionSnapshot {
   body: string
   anchorLine: number
   headLine: number
+  /** The caret's line when it sits in the Frontmatter, 0 being the opening `---`: Rich mode puts it in that Property. */
+  frontmatterLine?: number
 }
 
 export interface CodeMirrorRestoreState {
@@ -386,11 +388,42 @@ export function captureRawEditorPositionSnapshot(documentObject: Document): RawE
   const bodyLength = body.length
   const anchorOffset = clamp(view.state.selection.main.anchor - frontmatter.length, 0, bodyLength)
   const headOffset = clamp(view.state.selection.main.head - frontmatter.length, 0, bodyLength)
+  const head = view.state.selection.main.head
   return {
     body,
     anchorLine: getLineIndexForOffset({ text: body, offset: anchorOffset }),
     headLine: getLineIndexForOffset({ text: body, offset: headOffset }),
+    ...(head < frontmatter.length ? { frontmatterLine: getLineIndexForOffset({ text: content, offset: head }) } : {}),
   }
+}
+
+const PROPERTY_LINE_ATTRIBUTE = 'data-property-line'
+
+/** The Frontmatter line of the Property whose row holds the focus, when Properties has it. */
+export function focusedPropertyLine(documentObject: Document): number | null {
+  const row = documentObject.activeElement?.closest(`[${PROPERTY_LINE_ATTRIBUTE}]`)
+  const line = Number(row?.getAttribute(PROPERTY_LINE_ATTRIBUTE))
+  return row && Number.isInteger(line) ? line : null
+}
+
+/** Raw mode's caret for a Property that had the focus in Rich mode: the end of the Property's first line. */
+export function propertyCodeMirrorRestoreState(content: string, line: number): CodeMirrorRestoreState {
+  const offset = getLineEndOffset({ text: content, lineIndex: line })
+  return { anchor: offset, head: offset }
+}
+
+/**
+ * Rich mode's side of a Raw caret in the Frontmatter: the value of the
+ * Property whose lines hold it takes the focus. False when no Property does
+ * (the caret on a `---` or a comment above the first one).
+ */
+export function focusPropertyAtLine(documentObject: Document, line: number): boolean {
+  const rows = [...documentObject.querySelectorAll<HTMLElement>(`[${PROPERTY_LINE_ATTRIBUTE}]`)]
+  const row = rows.filter((candidate) => Number(candidate.getAttribute(PROPERTY_LINE_ATTRIBUTE)) <= line).at(-1)
+  const control = row?.querySelector<HTMLElement>('[data-property-value]')
+  if (!control) return false
+  control.focus()
+  return true
 }
 
 export function captureRawCodeMirrorRestoreState(documentObject: Document): CodeMirrorRestoreState | null {

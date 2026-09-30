@@ -56,7 +56,7 @@ interface DocumentTabActionsProps {
 /**
  * A Document Tab's controls at the tab bar's right end: Copy path, the
  * `Rich | Raw` control and "…". A landed write shows nothing here, and neither
- * does Frontmatter: Raw mode is where it is seen.
+ * does Frontmatter: Properties shows it above the body.
  */
 export function DocumentTabActions({ mode, onCopyPath, menu }: DocumentTabActionsProps) {
   return (

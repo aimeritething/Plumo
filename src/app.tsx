@@ -137,6 +137,8 @@ export default function App() {
   const historyRef = useRef<EditorHistory | null>(null)
   // Duplicate Block the same way, registered by the editor in Rich mode only.
   const duplicateBlockRef = useRef<(() => void) | null>(null)
+  // Add property too: Properties show in Rich mode only.
+  const addPropertyRef = useRef<(() => void) | null>(null)
   /** Push whichever surface is showing the Document's fresh keystrokes into the save buffer. */
   const flushEditorBuffers = useCallback((path: string) => {
     flushPendingEditorContentRef.current?.(path)
@@ -433,6 +435,10 @@ export default function App() {
   const onDuplicateBlock = useCallback(() => {
     if (!nativeTextFieldHasFocus()) duplicateBlockRef.current?.()
   }, [])
+  // Add property (Edit menu, the Command Menu), also Rich mode only.
+  const onAddProperty = useCallback(() => {
+    addPropertyRef.current?.()
+  }, [])
   // Copy path (⌘⇧,, Edit menu, the tab bar's link button) works on any Tab,
   // an Image Tab included, so it goes with no Tab rather than no Document.
   const onCopyPath = useCallback(() => {
@@ -498,6 +504,7 @@ export default function App() {
     onUndo: activeDocumentPath ? onUndo : undefined,
     onRedo: activeDocumentPath ? onRedo : undefined,
     onDuplicateBlock: hasRichDocument ? onDuplicateBlock : undefined,
+    onAddProperty: hasRichDocument ? onAddProperty : undefined,
     onCopyPath: hasTab ? onCopyPath : undefined,
     ...tabFileCommands,
     ...tabCommands.handlers,
@@ -506,7 +513,7 @@ export default function App() {
     onQuickOpen: hasFolder ? openQuickOpen : undefined,
     onCommandPalette: openCommandMenu,
     onPastePlainText,
-  }), [activeDocumentPath, appearance.handlers, canPinActiveTab, createDocumentFromShell, hasFolder, hasRichDocument, hasTab, onCloseFolder, onCopyPath, onDuplicateBlock, onFindInNote, onOpenFolder, onOpenNote, onPastePlainText, onRedo, onSave, onToggleRawEditor, onUndo, openCommandMenu, openQuickOpen, quit, tabCommands, tabFileCommands, toggleSidebar])
+  }), [activeDocumentPath, appearance.handlers, canPinActiveTab, createDocumentFromShell, hasFolder, hasRichDocument, hasTab, onAddProperty, onCloseFolder, onCopyPath, onDuplicateBlock, onFindInNote, onOpenFolder, onOpenNote, onPastePlainText, onRedo, onSave, onToggleRawEditor, onUndo, openCommandMenu, openQuickOpen, quit, tabCommands, tabFileCommands, toggleSidebar])
   useAppKeyboard(handlers)
   useMenuEvents(handlers)
 
@@ -605,6 +612,7 @@ export default function App() {
         findRef={findRef}
         historyRef={historyRef}
         duplicateBlockRef={duplicateBlockRef}
+        addPropertyRef={addPropertyRef}
         onSetTabMode={setTabMode}
         onActivateTab={tabCommands.activateTabSettled}
         onCloseTab={tabCommands.closeTabSettled}

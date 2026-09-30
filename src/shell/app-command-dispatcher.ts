@@ -40,6 +40,8 @@ export interface AppCommandHandlers {
   onPastePlainText: () => void
   /** ⌘D: copies the selected Blocks, or the caret's; disabled unless a Document is in Rich mode. */
   onDuplicateBlock?: () => void
+  /** Add property: a new row in Properties, the Frontmatter created if there is none; disabled unless a Document is in Rich mode. */
+  onAddProperty?: () => void
   onFindInNote?: () => void
   onCommandPalette: () => void
   onToggleSidebar?: () => void
@@ -82,6 +84,7 @@ type SimpleHandlerKey = keyof Pick<
   | 'onRedo'
   | 'onPastePlainText'
   | 'onDuplicateBlock'
+  | 'onAddProperty'
   | 'onFindInNote'
   | 'onCommandPalette'
   | 'onToggleSidebar'
@@ -121,6 +124,7 @@ const SIMPLE_HANDLER_EXECUTORS: readonly [SimpleHandlerKey, SimpleHandlerExecuto
   ['onRedo', (handlers) => handlers.onRedo?.()],
   ['onPastePlainText', (handlers) => handlers.onPastePlainText()],
   ['onDuplicateBlock', (handlers) => handlers.onDuplicateBlock?.()],
+  ['onAddProperty', (handlers) => handlers.onAddProperty?.()],
   ['onFindInNote', (handlers) => handlers.onFindInNote?.()],
   ['onCommandPalette', (handlers) => handlers.onCommandPalette()],
   ['onToggleSidebar', (handlers) => handlers.onToggleSidebar?.()],

@@ -21,7 +21,15 @@ An image pasted or dropped into a Document, stored in an `attachments/` director
 _Avoid_: Asset, upload
 
 **Frontmatter**:
-The YAML block at the top of a Document. Preserved byte-for-byte across saves; visible and editable only in Raw mode.
+The YAML block at the top of a Document, as bytes on disk. Raw mode shows it as text; Rich mode shows it as Properties. A save changes only the lines of the Property that was edited; every other byte stays as it was.
+
+**Property**:
+One top-level key of the Frontmatter and its value.
+_Avoid_: Metadata, attribute, field
+
+**Properties**:
+The area above the body in Rich mode that shows every Property, in the order they have on disk.
+_Avoid_: Frontmatter panel, metadata panel, header
 
 **Image file**:
 A file in the Folder whose extension is one of apng, avif, bmp, gif, ico, jpeg, jpg, png, svg, tif, tiff, webp. Plumo shows it and never edits it. An Attachment is an Image file that a Document links to; an Image file need not be an Attachment.

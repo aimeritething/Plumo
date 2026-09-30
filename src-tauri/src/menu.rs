@@ -639,7 +639,7 @@ mod tests {
         );
         assert_eq!(
             menu_state_group_ids(RICH_NOTE_DEPENDENT_GROUP),
-            ["edit-duplicate-block"]
+            ["edit-duplicate-block", "edit-add-property"]
         );
     }
 
@@ -713,6 +713,7 @@ mod tests {
                 Some("edit-paste-plain-text"),
                 None,
                 Some("edit-duplicate-block"),
+                Some("edit-add-property"),
                 None,
                 Some("edit-find-in-note"),
                 None,

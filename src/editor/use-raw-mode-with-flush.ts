@@ -9,6 +9,8 @@ import {
   captureRawCodeMirrorRestoreState,
   captureRawEditorPositionSnapshot,
   captureRichEditorPositionSnapshot,
+  focusedPropertyLine,
+  propertyCodeMirrorRestoreState,
   type CodeMirrorRestoreState,
 } from './editor-mode-position'
 import {
@@ -57,6 +59,11 @@ function buildPendingRawRestore({
   restoreTransition: EditorModeRestoreTransition
   syncedContent: string | null
 }) {
+  // A Property holding the focus: Raw's caret goes to that Property's line.
+  const propertyLine = focusedPropertyLine(document)
+  const propertyContent = syncedContent ?? activeTabContent
+  if (propertyLine !== null && propertyContent) return propertyCodeMirrorRestoreState(propertyContent, propertyLine)
+
   const roundTripRestore = getRoundTripRawRestore({
     activeTabPath,
     restoreTransition,
