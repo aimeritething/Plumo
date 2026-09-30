@@ -300,14 +300,27 @@ fn build_manifest_menu(app: &App, label: &str) -> MenuResult {
     build_manifest_submenu(app, section.label.as_str(), &section.items)
 }
 
-/// The app menu: About, the macOS service and hide items, then the manifest's
-/// `appMenu` items. Quit is one of those rather than the predefined item: the
-/// predefined one terminates through `applicationWillTerminate`, which reaches
-/// the event loop as `Exit` with no way to hold it, while a manifest command
-/// lets the renderer write every pending edit first (ADR-0005).
+/// The app menu: About, the manifest's `appMenu` items up to its first
+/// separator (Settings…, where macOS puts it), the service and hide items,
+/// then the rest of `appMenu`. Quit is one of those rather than the predefined
+/// item: the predefined one terminates through `applicationWillTerminate`,
+/// which reaches the event loop as `Exit` with no way to hold it, while a
+/// manifest command lets the renderer write every pending edit first
+/// (ADR-0005).
 fn build_app_menu(app: &App) -> MenuResult {
+    let mut items = manifest().app_menu.iter();
     let mut builder = SubmenuBuilder::new(app, APP_NAME)
         .about_with_text(format!("About {APP_NAME}"), None)
+        .separator();
+
+    for item in items.by_ref() {
+        if matches!(item, ManifestMenuItem::Separator) {
+            break;
+        }
+        builder = append_manifest_item(app, builder, item)?;
+    }
+
+    builder = builder
         .separator()
         .services()
         .separator()
@@ -316,7 +329,7 @@ fn build_app_menu(app: &App) -> MenuResult {
         .show_all()
         .separator();
 
-    for item in &manifest().app_menu {
+    for item in items {
         builder = append_manifest_item(app, builder, item)?;
     }
 
@@ -539,10 +552,11 @@ mod tests {
     }
 
     #[test]
-    fn app_menu_holds_the_quit_item_with_its_accelerator() {
+    fn app_menu_holds_settings_then_quit_with_their_accelerators() {
         let items: Vec<_> = manifest()
             .app_menu
             .iter()
+            .filter(|item| !matches!(item, ManifestMenuItem::Separator))
             .map(|item| {
                 (
                     item.menu_item_id(manifest()),
@@ -555,15 +569,29 @@ mod tests {
 
         assert_eq!(
             items,
-            [(
-                Some("app-quit"),
-                Some("Quit Plumo"),
-                Some("Quit"),
-                Some("CmdOrCtrl+Q")
-            )]
+            [
+                (
+                    Some("app-settings"),
+                    Some("Settings…"),
+                    Some("Settings…"),
+                    Some("CmdOrCtrl+,")
+                ),
+                (
+                    Some("app-quit"),
+                    Some("Quit Plumo"),
+                    Some("Quit"),
+                    Some("CmdOrCtrl+Q")
+                )
+            ]
         );
-        assert!(custom_menu_ids().contains("app-quit"));
-        assert_eq!(emitted_menu_event_id("app-quit"), Some("app-quit"));
+        assert!(matches!(
+            manifest().app_menu[1],
+            ManifestMenuItem::Separator
+        ));
+        for id in ["app-settings", "app-quit"] {
+            assert!(custom_menu_ids().contains(id));
+            assert_eq!(emitted_menu_event_id(id), Some(id));
+        }
     }
 
     #[test]

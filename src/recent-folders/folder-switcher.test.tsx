@@ -20,6 +20,7 @@ function renderSwitcher() {
     onOpenRecent: vi.fn(),
     onOpenFolder: vi.fn(),
     onCloseFolder: vi.fn(),
+    onOpenSettings: vi.fn(),
   }
   render(<FolderSwitcher {...props} />, { wrapper: TooltipProvider })
   return props
@@ -45,7 +46,7 @@ describe('FolderSwitcher', () => {
     expect(tooltip).toHaveTextContent('1 Document, 1 folder')
   })
 
-  it('lists the Recent Folders by name and path, the current one ticked, then Open Folder… and Close Folder', async () => {
+  it('lists the Recent Folders by name and path, the current one ticked, then Open Folder… and Close Folder, then Settings… set apart', async () => {
     renderSwitcher()
     const menu = await openMenu()
 
@@ -56,7 +57,10 @@ describe('FolderSwitcher', () => {
       'notes~/personal/notes',
       'Open Folder…⌘O',
       'Close Folder',
+      'Settings…⌘,',
     ])
+    expect(within(menu).getAllByRole('separator')).toHaveLength(2)
+    expect(items.at(-1)?.previousElementSibling).toHaveAttribute('role', 'separator')
     expect(items[0]).toHaveAttribute('aria-current', 'true')
     expect(items[1]).not.toHaveAttribute('aria-current')
   })
@@ -71,7 +75,7 @@ describe('FolderSwitcher', () => {
     expect(props.onOpenRecent).toHaveBeenCalledWith(PERSONAL_NOTES)
   })
 
-  it('runs Open Folder… and Close Folder from the menu', async () => {
+  it('runs Open Folder…, Close Folder and Settings… from the menu', async () => {
     const props = renderSwitcher()
 
     fireEvent.click(within(await openMenu()).getByRole('menuitem', { name: /Open Folder/ }))
@@ -79,6 +83,9 @@ describe('FolderSwitcher', () => {
 
     fireEvent.click(within(await openMenu()).getByRole('menuitem', { name: 'Close Folder' }))
     expect(props.onCloseFolder).toHaveBeenCalledOnce()
+
+    fireEvent.click(within(await openMenu()).getByRole('menuitem', { name: /Settings/ }))
+    expect(props.onOpenSettings).toHaveBeenCalledOnce()
   })
 })
 

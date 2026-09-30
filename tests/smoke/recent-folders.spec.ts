@@ -34,7 +34,7 @@ test('a Folder switched away from and back to gets its Tabs and its active Tab b
   await expect(page.getByTestId('folder-switcher-row')).toHaveText('Projects')
 
   const menu = await openSwitcherMenu(page)
-  await expect(menu.getByRole('menuitem')).toHaveText(['Projects~/Documents/Notes/Projects', 'Notes~/Documents/Notes', 'Open Folder…⌘O', 'Close Folder'])
+  await expect(menu.getByRole('menuitem')).toHaveText(['Projects~/Documents/Notes/Projects', 'Notes~/Documents/Notes', 'Open Folder…⌘O', 'Close Folder', 'Settings…⌘,'])
   await menu.getByTestId(`recent-folder:${MOCK_FOLDER}`).click()
 
   await expect(page.getByTestId('explorer-toggle')).toHaveAttribute('title', MOCK_FOLDER)
@@ -67,7 +67,7 @@ test('with no Folder open the Recent Folders sit under Open Folder, and one that
     const vault: MockVault | undefined = window.__plumoMockVault
     if (!vault) throw new Error('The Folder fixture is not installed')
     vault.seedSession(seed)
-  }, { version: 1, folder: null, openEditors: [], activePath: null, theme: 'light', sidebar: { collapsed: false, width: 260 }, recentFolders: [GONE, MOCK_FOLDER] })
+  }, { version: 1, folder: null, openEditors: [], activePath: null, sidebar: { collapsed: false, width: 260 }, recentFolders: [GONE, MOCK_FOLDER] })
   await page.reload()
 
   const recent = page.getByTestId('recent-folders')

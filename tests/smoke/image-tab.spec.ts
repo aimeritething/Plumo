@@ -179,7 +179,6 @@ test('relaunch restores an Image Tab from an entry with no mode, and tolerates a
     folder: MOCK_FOLDER,
     openEditors: [{ path: LAKE, mode: 'raw' }],
     activePath: LAKE,
-    theme: 'dark',
     sidebar: { collapsed: false, width: 260 },
   })
   await page.reload()
@@ -198,7 +197,6 @@ test('an Image file in the Session that is no longer in the Folder is dropped', 
     folder: MOCK_FOLDER,
     openEditors: [{ path: `${MOCK_FOLDER}/Attachments/gone.png` }, { path: WELCOME, mode: 'rich' }],
     activePath: `${MOCK_FOLDER}/Attachments/gone.png`,
-    theme: 'dark',
     sidebar: { collapsed: false, width: 260 },
   })
 

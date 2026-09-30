@@ -10,6 +10,7 @@ import {
 export type KeyboardActions = Pick<
   AppCommandHandlers,
   | 'onQuit'
+  | 'onOpenSettings'
   | 'onQuickOpen'
   | 'onCommandPalette'
   | 'onCreateNote'
@@ -154,6 +155,14 @@ const MODAL_LAYER_SELECTOR = ['dialog-content', 'context-menu-content', 'dropdow
 const MODAL_LAYER_PASSTHROUGH = new Set<AppCommandId>([APP_COMMAND_IDS.appQuit])
 
 /**
+ * What the Settings dialog also lets through, when it is the only layer open:
+ * ⌘W, which closes it as ⌘W closes a macOS Settings window, and ⌘,, which
+ * leaves it open. The shell routes both to the dialog, not to the Tabs.
+ */
+const SETTINGS_DIALOG_SELECTOR = '[data-settings-dialog="true"]'
+const SETTINGS_DIALOG_PASSTHROUGH = new Set<AppCommandId>([APP_COMMAND_IDS.fileCloseTab, APP_COMMAND_IDS.appSettings])
+
+/**
  * A dialog or a menu owns the keyboard while it is open, as a native one
  * would: ⌘W must not close the Tab behind a Write failure, ⌘N must not create
  * a Document behind a context menu. The key is claimed and recorded as
@@ -162,7 +171,9 @@ const MODAL_LAYER_PASSTHROUGH = new Set<AppCommandId>([APP_COMMAND_IDS.appQuit])
 function handleModalLayerCommand(event: KeyboardEvent, commandId: AppCommandId): boolean {
   // The Command Menu is a dialog too, with a rule of its own just above: its two chords switch or close it.
   if (isCommandMenuFocused() || MODAL_LAYER_PASSTHROUGH.has(commandId)) return false
-  if (document.querySelector(MODAL_LAYER_SELECTOR) === null) return false
+  const layers = Array.from(document.querySelectorAll(MODAL_LAYER_SELECTOR))
+  if (layers.length === 0) return false
+  if (SETTINGS_DIALOG_PASSTHROUGH.has(commandId) && layers.every((layer) => layer.matches(SETTINGS_DIALOG_SELECTOR))) return false
   event.preventDefault()
   recordSuppressedShortcutCommand(commandId, 'renderer-keyboard')
   return true

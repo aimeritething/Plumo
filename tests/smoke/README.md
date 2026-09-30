@@ -13,6 +13,7 @@ Outside Tauri every command goes to the in-memory Folder fixture in
 `rename_vault_file`, `rename_vault_folder`, `move_note_to_folder`, `delete_note`,
 `delete_vault_folder`), the watcher (`start_vault_watcher`, `stop_vault_watcher`), the
 Finder-open buffer (`take_pending_open`), the Session (`read_session`, `update_session`),
+the Settings (`read_settings`, `update_settings`),
 `reveal_path_in_file_manager`, `open_vault_file_external`, `copy_text_to_clipboard` and
 `quit_app` from memory, and
 rejects anything else. Argument and result shapes follow the Rust commands. Add a case to the
@@ -31,7 +32,7 @@ Document's pictures outside Tauri.
 A spec reaches the fixture as `window.__plumoMockVault`:
 
 - `reset(seed)` restores the seed (or a new one) and clears the watcher, the pending opens,
-  the dialog queue, the read-only marks, the Session file and the call log.
+  the dialog queue, the read-only marks, the Session and Settings files and the call log.
 - `writeNote(path, content)` and `writeImage(path, image)` add a file without going through
   a command, as another program would; `removeFile(path)` and `movePath(path, newPath)` are
   Finder's stand-ins, and `emitExternalChange(paths)` is the watcher's report.
@@ -44,8 +45,9 @@ A spec reaches the fixture as `window.__plumoMockVault`:
   stands in for it too.
 - `markReadOnly(paths)` makes `save_note_content` refuse those paths, as a read-only file
   would; an empty list lifts it.
-- `seedSession(session)` plants the Session file the next page load restores. The fixture
-  keeps it in localStorage, so a reload stands in for a relaunch.
+- `seedSession(session)` plants the Session file the next page load restores, and
+  `seedSettings(settings)` the Settings file. The fixture keeps both in localStorage, so a
+  reload stands in for a relaunch.
 - `calls` is the log of every command the app invoked, with its arguments; `revealedPath()`,
   `openedExternallyPath()` and `clipboardText()` are what Reveal in Finder, Open in Default
   App and Copy last received; `assetUrl(path)` is

@@ -6,7 +6,7 @@ const B = '/Users/x/notes/b.md'
 const C = '/Users/x/notes/c.md'
 
 describe('parseSession', () => {
-  it('reads the documented schema', () => {
+  it('reads the documented schema, ignoring a theme an older Session still holds', () => {
     const raw = {
       version: 1,
       folder: '/Users/x/notes',
@@ -25,7 +25,6 @@ describe('parseSession', () => {
       folder: '/Users/x/notes',
       openEditors: [{ path: A, mode: 'rich' }, { path: '/Users/x/notes/cover.png' }],
       activePath: A,
-      theme: 'dark',
       sidebar: { collapsed: false, width: 260, collapsedSections: ['pinned', 'explorer'] },
       pinned: { '/Users/x/notes': [C, A, '/Users/x/notes/cover.png'], '/Users/x/work': ['/Users/x/work/plan.md'] },
       recentFolders: ['/Users/x/notes', '/Users/x/work'],
@@ -82,7 +81,6 @@ describe('parseSession', () => {
       version: 1,
       openEditors: [{ path: A, mode: 'sideways' }, { mode: 'rich' }, 'b.md', { path: B, mode: 'raw' }],
       activePath: 42,
-      theme: 'sepia',
       sidebar: { collapsed: 'yes' },
     })
 
@@ -91,7 +89,6 @@ describe('parseSession', () => {
       folder: null,
       openEditors: [{ path: A }, { path: B, mode: 'raw' }],
       activePath: null,
-      theme: 'light',
       sidebar: { collapsed: false, width: 260 },
       pinned: {},
       recentFolders: [],
@@ -147,13 +144,12 @@ describe('restoreOpenEditors', () => {
 })
 
 describe('sessionForOpenEditors', () => {
-  it('writes the Tabs in order as Rich Documents and the chosen theme, the other fields at their defaults', () => {
-    expect(sessionForOpenEditors([{ path: B }, { path: A }], A, 'light')).toEqual({
+  it('writes the Tabs in order as Rich Documents, the other fields at their defaults and no theme', () => {
+    expect(sessionForOpenEditors([{ path: B }, { path: A }], A)).toEqual({
       version: 1,
       folder: null,
       openEditors: [{ path: B, mode: 'rich' }, { path: A, mode: 'rich' }],
       activePath: A,
-      theme: 'light',
       sidebar: { collapsed: false, width: 260 },
       pinned: {},
       recentFolders: [],
@@ -162,23 +158,19 @@ describe('sessionForOpenEditors', () => {
   })
 
   it('writes each Document with its own mode', () => {
-    const session = sessionForOpenEditors([{ path: A, mode: 'raw' }, { path: B, mode: 'rich' }], A, 'dark')
+    const session = sessionForOpenEditors([{ path: A, mode: 'raw' }, { path: B, mode: 'rich' }], A)
 
     expect(session.openEditors).toEqual([{ path: A, mode: 'raw' }, { path: B, mode: 'rich' }])
   })
 
   it('leaves an Image file entry without a mode, its kind being the extension', () => {
-    const session = sessionForOpenEditors([{ path: A }, { path: '/Users/x/notes/cover.png', mode: 'raw' }], A, 'dark')
+    const session = sessionForOpenEditors([{ path: A }, { path: '/Users/x/notes/cover.png', mode: 'raw' }], A)
 
     expect(session.openEditors).toEqual([{ path: A, mode: 'rich' }, { path: '/Users/x/notes/cover.png' }])
   })
 
-  it('writes system when the appearance follows the OS', () => {
-    expect(sessionForOpenEditors([], null, 'system').theme).toBe('system')
-  })
-
   it('writes the sidebar state it is given', () => {
-    const session = sessionForOpenEditors([{ path: A }], A, 'dark', '/Users/x/notes', { collapsed: true, width: 320 })
+    const session = sessionForOpenEditors([{ path: A }], A, '/Users/x/notes', { collapsed: true, width: 320 })
 
     expect(session.folder).toBe('/Users/x/notes')
     expect(session.sidebar).toEqual({ collapsed: true, width: 320 })
@@ -186,7 +178,7 @@ describe('sessionForOpenEditors', () => {
 
   it('writes the folded sections and every Folder\'s Pinned list it is given', () => {
     const pinned = { '/Users/x/notes': [B, A], '/Users/x/work': ['/Users/x/work/plan.md'] }
-    const session = sessionForOpenEditors([], null, 'dark', '/Users/x/notes', { collapsed: false, width: 260, collapsedSections: ['pinned'] }, pinned)
+    const session = sessionForOpenEditors([], null, '/Users/x/notes', { collapsed: false, width: 260, collapsedSections: ['pinned'] }, pinned)
 
     expect(session.sidebar).toEqual({ collapsed: false, width: 260, collapsedSections: ['pinned'] })
     expect(session.pinned).toEqual(pinned)
@@ -195,7 +187,7 @@ describe('sessionForOpenEditors', () => {
 
   it('writes the Recent Folders and the other Folders\' Tabs it is given', () => {
     const tabsByFolder = { '/Users/x/work': { openEditors: [{ path: '/Users/x/work/plan.md', mode: 'rich' as const }], activePath: null } }
-    const session = sessionForOpenEditors([], null, 'dark', '/Users/x/notes', undefined, {}, { paths: ['/Users/x/notes', '/Users/x/work'], tabsByFolder })
+    const session = sessionForOpenEditors([], null, '/Users/x/notes', undefined, {}, { paths: ['/Users/x/notes', '/Users/x/work'], tabsByFolder })
 
     expect(session.recentFolders).toEqual(['/Users/x/notes', '/Users/x/work'])
     expect(session.tabsByFolder).toEqual(tabsByFolder)

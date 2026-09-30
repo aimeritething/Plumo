@@ -139,6 +139,18 @@ describe('useMenuEvents', () => {
       expect(handlers.onQuit).toHaveBeenCalledTimes(1)
     })
 
+    it('the app menu\'s Settings… item reaches onOpenSettings', async () => {
+      const handlers = makeHandlers({ onOpenSettings: vi.fn() })
+      renderHook(() => useMenuEvents(handlers))
+      await flushMicrotasks()
+
+      act(() => {
+        runtime.listeners.get('menu-event')?.({ payload: 'app-settings' })
+      })
+
+      expect(handlers.onOpenSettings).toHaveBeenCalledTimes(1)
+    })
+
     it('keeps the Document-dependent menu items in step with the active Document', async () => {
       const { rerender } = renderHook(
         ({ activeDocumentPath }: { activeDocumentPath: string | null }) => useMenuEvents(makeHandlers({ activeDocumentPath })),

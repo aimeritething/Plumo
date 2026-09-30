@@ -1,4 +1,3 @@
-import { DEFAULT_THEME_MODE, normalizeThemeMode, type ThemeMode } from '@/shell/theme-mode'
 import type { EditorMode } from '@/types'
 import { isImageFilePath } from '@/tabs/image-file'
 import { parsePinnedLists, type PinnedLists } from '@/pinned/pinned-list'
@@ -11,9 +10,11 @@ import { MAX_RECENT_FOLDERS, type RecentFolders } from '@/recent-folders/recent-
  * writes; the renderer sends everything else and never reads `window` back.
  *
  * `folder` roots the Explorer; `sidebar` is whether it is collapsed, how
- * wide it is when shown and which of its sections are folded away; `theme` is
- * the View → Appearance choice; `pinned` is each Folder's Pinned list, keyed by
- * the Folder's path, so a Folder opened again gets its pins back.
+ * wide it is when shown and which of its sections are folded away; `pinned` is
+ * each Folder's Pinned list, keyed by the Folder's path, so a Folder opened
+ * again gets its pins back. The theme is not here: it is a Setting, in the
+ * Settings file (`@/settings/settings-schema`); a `theme` left in an older
+ * Session is ignored.
  * `openEditors` and `activePath` are the current Folder's Tabs; `tabsByFolder`
  * holds every other Folder's, as they were when it was last shown, and
  * `recentFolders` is the Recent Folders, most recent first.
@@ -54,7 +55,6 @@ export interface Session {
   /** Tab order. */
   openEditors: SessionEditor[]
   activePath: string | null
-  theme: ThemeMode
   sidebar: SessionSidebar
   /** Each Folder's pinned paths, in order; a Folder with none has no key. */
   pinned: PinnedLists
@@ -147,7 +147,6 @@ export function parseSession(raw: unknown): Session | null {
     folder: parseNullableString(raw.folder),
     openEditors: parseEditors(raw.openEditors),
     activePath: parseNullableString(raw.activePath),
-    theme: normalizeThemeMode(raw.theme) ?? DEFAULT_THEME_MODE,
     sidebar: parseSidebar(raw.sidebar),
     pinned: parsePinnedLists(raw.pinned),
     recentFolders: parseRecentFolders(raw.recentFolders),
@@ -200,7 +199,7 @@ const NO_RECENT_FOLDERS: RecentFolders = { paths: [], tabsByFolder: {} }
 
 /**
  * The Session for the open Tabs, each Document with its Rich or Raw mode,
- * the chosen appearance, the sidebar state, every Folder's Pinned list, the
+ * the sidebar state, every Folder's Pinned list, the
  * Recent Folders and the other Folders' Tabs. An Image file entry
  * carries no `mode`: its kind comes from the extension. A Document with no
  * mode named is written as Rich, the default for a freshly opened one.
@@ -208,7 +207,6 @@ const NO_RECENT_FOLDERS: RecentFolders = { paths: [], tabsByFolder: {} }
 export function sessionForOpenEditors(
   openEditors: readonly OpenEditorInput[],
   activePath: string | null,
-  theme: ThemeMode,
   folder: string | null = null,
   sidebar: SessionSidebar = DEFAULT_SESSION_SIDEBAR,
   pinned: PinnedLists = {},
@@ -220,7 +218,6 @@ export function sessionForOpenEditors(
     folder,
     openEditors: sessionEditors(openEditors),
     activePath,
-    theme,
     sidebar: collapsedSections.length > 0 ? { collapsed, width, collapsedSections } : { collapsed, width },
     pinned,
     recentFolders: [...recent.paths],
