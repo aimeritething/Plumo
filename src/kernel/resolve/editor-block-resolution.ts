@@ -15,6 +15,7 @@ import {
   type EditorBlocks,
 } from './editor-parsed-block-cache'
 import { tryParseFastMarkdownBlocksOffThread } from './editor-fast-markdown-blocks'
+import type { EditorSelectionSnapshot } from './editor-tiptap-selection'
 import { logEditorBlockResolutionTrace } from './editor-performance-trace'
 import {
   injectRichEditorMarkdownBlocks,
@@ -48,6 +49,8 @@ interface BlockResolutionContext {
 export type CachedTabState = {
   blocks: EditorBlocks
   scrollTop: number
+  /** The caret the Tab was left with, restored with its scroll position. */
+  selection?: EditorSelectionSnapshot
   sourceContent: NoteContent
 }
 
@@ -102,6 +105,7 @@ export function cacheParsedEditorState(path: NotePath, nextState: CachedTabState
     path,
     blocks: nextState.blocks,
     scrollTop: nextState.scrollTop,
+    selection: nextState.selection,
     sourceContent: nextState.sourceContent,
     vaultPath,
   })
@@ -237,6 +241,7 @@ function parsedCacheResolution(context: BlockResolutionContext): CachedTabState 
   const resolved = cacheResolvedEditorState(context.cache, context.targetPath, {
     blocks: parsedCache.blocks,
     scrollTop: parsedCache.scrollTop,
+    selection: parsedCache.selection,
     sourceContent: context.content,
   }, context.vaultPath)
   return traceResolvedState(context, resolved, 'parsed-cache')

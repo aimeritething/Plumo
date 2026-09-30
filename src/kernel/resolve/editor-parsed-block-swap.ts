@@ -50,12 +50,13 @@ export function scheduleParsedBlockSwap(options: {
 
   const shouldAbort = () => shouldAbortSwap({ prevActivePathRef, suppressChangeRef, swapSeqRef, tabsRef, token })
   void resolveBlocksForTarget({ editor, cache, targetPath, content, vaultPath })
-    .then(async ({ blocks, scrollTop }) => {
+    .then(async ({ blocks, scrollTop, selection }) => {
       if (shouldAbort()) return
       const applied = await applyBlocksToEditorProgressively({
         editor,
         blocks,
         scrollTop,
+        selection,
         suppressChangeRef,
         editorContentPathRef,
         targetPath,

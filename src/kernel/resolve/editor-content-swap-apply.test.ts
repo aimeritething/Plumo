@@ -10,6 +10,7 @@ import {
   PROGRESSIVE_BLOCK_APPLY_THRESHOLD,
   PROGRESSIVE_INITIAL_BLOCK_APPLY_CHUNK_SIZE,
 } from './editor-content-swap-apply'
+import { readEditorSelection } from './editor-tiptap-selection'
 
 vi.mock('@/lib/telemetry', () => ({
   trackEvent: vi.fn(),
@@ -279,5 +280,98 @@ describe('applyBlocksToEditor', () => {
     expect(editor.document).toHaveLength(PROGRESSIVE_INITIAL_BLOCK_APPLY_CHUNK_SIZE)
     expect(editor.isEditable).toBe(true)
     expect(editorContentPathRef.current).toBeNull()
+  })
+})
+
+// A Tab's caret goes with its scroll position: the caret it was left with
+// comes back when the Tab is shown again, and a Document shown for the first
+// time starts with the caret at its start, where its scroll position starts.
+describe('the caret after a content swap', () => {
+  const mounted: Array<{ editor: ReturnType<typeof createRealEditor>; mount: HTMLElement }> = []
+
+  function createRealEditor() {
+    return BlockNoteEditor.create({
+      initialContent: [{ id: 'previous', type: 'paragraph', content: 'Previous note' }],
+      schema,
+    })
+  }
+
+  function openRealEditor() {
+    const mount = document.createElement('div')
+    document.body.appendChild(mount)
+    const editor = createRealEditor()
+    editor.mount(mount)
+    mounted.push({ editor, mount })
+    return editor
+  }
+
+  function caretBlockText(editor: ReturnType<typeof createRealEditor>) {
+    return editor._tiptapEditor.state.selection.$head.parent.textContent
+  }
+
+  function applyOptions(editor: ReturnType<typeof createRealEditor>, blocks: unknown[]) {
+    return {
+      blocks,
+      editor,
+      editorContentPathRef: makeFrameRef<string | null>(null),
+      scrollTop: 0,
+      suppressChangeRef: makeFrameRef(false),
+      targetPath: 'note.md',
+    }
+  }
+
+  afterEach(() => {
+    for (const { editor, mount } of mounted.splice(0)) {
+      editor.unmount()
+      mount.remove()
+    }
+  })
+
+  it('puts the caret at the start of a Document shown for the first time, not at its end', () => {
+    const editor = openRealEditor()
+
+    applyBlocksToEditor(applyOptions(editor, makeBlocks(5)))
+
+    expect(caretBlockText(editor)).toBe('Block 0')
+    expect(editor._tiptapEditor.state.selection.$head.parentOffset).toBe(0)
+  })
+
+  it('brings back the caret the Tab was left with', () => {
+    const editor = openRealEditor()
+    applyBlocksToEditor(applyOptions(editor, makeBlocks(5)))
+    const blockThree = editor.document[3]
+    if (!blockThree) throw new Error('Expected a fourth block')
+    editor.setTextCursorPosition(blockThree, 'end')
+    const selection = readEditorSelection(editor)
+    applyBlocksToEditor(applyOptions(editor, [{ id: 'other', type: 'paragraph', content: 'Another note' }]))
+
+    applyBlocksToEditor({ ...applyOptions(editor, makeBlocks(5)), selection })
+
+    expect(caretBlockText(editor)).toBe('Block 3')
+    expect(editor._tiptapEditor.state.selection.$head.parentOffset).toBe('Block 3'.length)
+  })
+
+  it('puts the caret at the start when the Block the Tab was left with is gone', () => {
+    const editor = openRealEditor()
+    const gone = { blockId: 'gone-block', offset: 3 }
+
+    applyBlocksToEditor({ ...applyOptions(editor, makeBlocks(2)), selection: { anchor: gone, head: gone } })
+
+    expect(caretBlockText(editor)).toBe('Block 0')
+  })
+
+  it('brings back the caret after a large Document is mounted in chunks', async () => {
+    const editor = openRealEditor()
+    const blocks = makeBlocks(PROGRESSIVE_BLOCK_APPLY_THRESHOLD + 10)
+    await applyBlocksToEditorProgressively(applyOptions(editor, blocks))
+    const lateBlock = editor.document.find(block => block.id === `block-${PROGRESSIVE_BLOCK_APPLY_THRESHOLD}`)
+    if (!lateBlock) throw new Error('Expected a late block')
+    editor.setTextCursorPosition(lateBlock, 'start')
+    const selection = readEditorSelection(editor)
+    applyBlocksToEditor(applyOptions(editor, [{ id: 'other', type: 'paragraph', content: 'Another note' }]))
+
+    await applyBlocksToEditorProgressively({ ...applyOptions(editor, blocks), selection })
+
+    expect(caretBlockText(editor)).toBe(`Block ${PROGRESSIVE_BLOCK_APPLY_THRESHOLD}`)
   })
 })

@@ -1,9 +1,12 @@
+import type { EditorSelectionSnapshot } from './editor-tiptap-selection'
+
 export type EditorBlocks = unknown[]
 
 export interface ParsedNoteBlockCacheEntry {
   blocks: EditorBlocks
   path: string
   scrollTop: number
+  selection?: EditorSelectionSnapshot
   sourceContent: string
   sourceBytes: number
   vaultPath?: string
@@ -67,7 +70,7 @@ export function readParsedNoteBlocks(options: {
   content: string
   path: string
   vaultPath?: string
-}): { blocks: EditorBlocks; scrollTop: number } | null {
+}): { blocks: EditorBlocks; scrollTop: number; selection?: EditorSelectionSnapshot } | null {
   const key = cacheKey(options.path, options.vaultPath)
   const entry = parsedBlockCache.get(key)
   if (!entry || entry.sourceContent !== options.content) return null
@@ -77,6 +80,7 @@ export function readParsedNoteBlocks(options: {
   return {
     blocks: cloneBlocks(entry.blocks),
     scrollTop: entry.scrollTop,
+    selection: entry.selection,
   }
 }
 

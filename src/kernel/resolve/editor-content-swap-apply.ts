@@ -5,7 +5,11 @@ import { trackEvent } from '@/lib/telemetry'
 import { classifyRichEditorRecoveryError } from '@/kernel/blocknote/rich-editor-recovery-classifier'
 import { blankParagraphBlocks } from './editor-tab-content'
 import { editorScrollArea } from './editor-dom-selection'
-import { resetTextSelectionBeforeContentSwap } from './editor-tiptap-selection'
+import {
+  placeSelectionAfterContentSwap,
+  resetTextSelectionBeforeContentSwap,
+  type EditorSelectionSnapshot,
+} from './editor-tiptap-selection'
 import { repairMalformedEditorBlocks } from './editor-block-repair'
 import { logEditorBlockApplyTrace } from './editor-performance-trace'
 
@@ -27,6 +31,8 @@ interface AppliedEditorContentCommit {
 interface ApplyBlocksToEditorOptions extends AppliedEditorContentCommit {
   editor: ReturnType<typeof useCreateBlockNote>
   blocks: EditorBlocks
+  /** The caret the Tab was left with; a Document shown for the first time has none. */
+  selection?: EditorSelectionSnapshot
 }
 
 interface ApplyBlocksToEditorProgressivelyOptions extends ApplyBlocksToEditorOptions {
@@ -178,6 +184,7 @@ function applyPreparedBlocksToEditor(
       return false
     }
   }
+  placeSelectionAfterContentSwap(editor, options.selection)
 
   logEditorBlockApplyTrace({
     blockCount: safeBlocks.length,
@@ -300,6 +307,7 @@ export async function applyBlocksToEditorProgressively(
   }
 
   if (shouldAbort?.()) return abortProgressiveApply(editor, previousEditable)
+  placeSelectionAfterContentSwap(editor, options.selection)
 
   logEditorBlockApplyTrace({
     blockCount: safeBlocks.length,
@@ -328,6 +336,7 @@ export function applyHtmlStateToEditor(options: ApplyMarkupStateToEditorOptions)
   try {
     resetTextSelectionBeforeContentSwap(editor)
     setContentWithoutHistory(editor, markup)
+    placeSelectionAfterContentSwap(editor)
   } catch (err) {
     console.error('applyHtmlStateToEditor failed:', err)
     suppressChangeRef.current = false

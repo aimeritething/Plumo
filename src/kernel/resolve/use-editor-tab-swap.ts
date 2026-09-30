@@ -32,6 +32,7 @@ import {
   slugifyPathStem,
 } from './editor-tab-content'
 import { clearEditorDomSelection, editorScrollArea } from './editor-dom-selection'
+import { readEditorSelection } from './editor-tiptap-selection'
 import { editorDocumentSignature, isBlankEditorDocument } from './editor-document-state'
 import {
   cacheEditorState,
@@ -310,6 +311,7 @@ function useEditorChangeHandler(options: {
     cacheResolvedEditorState(tabCacheRef.current, path, {
       blocks: next.blocks,
       scrollTop: readEditorScrollTop(),
+      selection: readEditorSelection(editor),
       sourceContent: next.content,
     }, vaultPathRef.current)
     onContentChangeRef.current?.(path, next.content)
@@ -333,6 +335,7 @@ function cachePreviousTabOnPathChange(options: {
   cacheEditorState(cache, prevPath, {
     blocks: editor.document,
     scrollTop: readEditorScrollTop(),
+    selection: readEditorSelection(editor),
     sourceContent: previousTab.content,
   })
 }
@@ -646,6 +649,7 @@ function cacheStableActivePath(options: {
   cacheEditorState(cache, activeTabPath, {
     blocks: editor.document,
     scrollTop: readEditorScrollTop(),
+    selection: readEditorSelection(editor),
     sourceContent: activeTab.content,
   })
 }
