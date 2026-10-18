@@ -317,7 +317,9 @@ export function usePointerBlockReorder(
   block: SideMenuBlock | undefined,
 ) {
   const reorderStateRef = useRef<PointerReorderState | null>(null)
-  const suppressNextClickRef = useRef(false)
+  // A drag never opens the handle's menu, wherever it was dropped. BlockNote's
+  // shadcn menu trigger opens on the pointerup, and a click follows it.
+  const suppressMenuOpenRef = useRef(false)
 
   const clearReorderState = useCallback(() => {
     const state = reorderStateRef.current
@@ -337,7 +339,6 @@ export function usePointerBlockReorder(
     if (!state.hasMoved) return
 
     event.preventDefault()
-    suppressNextClickRef.current = true
     const dropTarget = state.lastDropTarget ?? validDropTarget({
       editor,
       state,
@@ -346,14 +347,12 @@ export function usePointerBlockReorder(
     })
     if (!dropTarget) return
 
-    const moved = moveBlockByPointerDrop({
+    moveBlockByPointerDrop({
       editor,
       draggedBlockId: state.draggedBlockId,
       targetBlockId: dropTarget.blockId,
       placement: dropTarget.placement,
     })
-
-    if (!moved) suppressNextClickRef.current = false
   }, [clearReorderState, editor])
 
   const onPointerDown = useCallback((event: ReactPointerEvent<HTMLElement>) => {
@@ -364,6 +363,7 @@ export function usePointerBlockReorder(
     // would outlive the click and paint the drag preview on the next move.
     if (event.buttons === 0) return
 
+    suppressMenuOpenRef.current = false
     runSideMenuAction(() => {
       const liveBlock = liveSideMenuBlock(editor, block)
       const editorElement = editorBlockElement(editor)
@@ -388,7 +388,7 @@ export function usePointerBlockReorder(
         if (!movementStarted) return
 
         state.hasMoved = true
-        suppressNextClickRef.current = true
+        suppressMenuOpenRef.current = true
         state.affordances ??= createReorderAffordances(state)
         if (!state.affordances) return
 
@@ -411,7 +411,7 @@ export function usePointerBlockReorder(
         if (state?.affordances) refreshDropTarget(editor, state)
       }
       // Escape drops nothing; the pointerup that follows finds no gesture, and
-      // the click it may raise on the handle stays suppressed.
+      // the menu it would open on the handle stays suppressed.
       const handleKeyDown = (nativeEvent: KeyboardEvent) => {
         if (nativeEvent.key !== 'Escape' || !reorderStateRef.current?.hasMoved) return
 
@@ -455,13 +455,19 @@ export function usePointerBlockReorder(
     })
   }, [block, clearReorderState, editor, finishPointerReorder])
 
-  const onClickCapture = useCallback((event: ReactMouseEvent<HTMLElement>) => {
-    if (!suppressNextClickRef.current) return
+  // Pointer capture sends the pointerup to the handle wherever the drag ended;
+  // stopping it here keeps it from the menu trigger around the handle.
+  const onPointerUpCapture = useCallback((event: ReactPointerEvent<HTMLElement>) => {
+    if (suppressMenuOpenRef.current) event.stopPropagation()
+  }, [])
 
-    suppressNextClickRef.current = false
+  const onClickCapture = useCallback((event: ReactMouseEvent<HTMLElement>) => {
+    if (!suppressMenuOpenRef.current) return
+
+    suppressMenuOpenRef.current = false
     event.preventDefault()
     event.stopPropagation()
   }, [])
 
-  return { onClickCapture, onPointerDown }
+  return { onClickCapture, onPointerDown, onPointerUpCapture }
 }

@@ -439,6 +439,46 @@ describe('SideMenu', () => {
     expect(mockSideMenu.freezeMenu).not.toHaveBeenCalled()
   })
 
+  it('keeps the menu closed on the pointerup that ends a drag on the handle', () => {
+    const { draggedBlock, dragHandle, targetBlock } = renderPointerReorderFixture()
+    const handle = requireParentElement(dragHandle)
+
+    dispatchPointerEvent(handle, 'pointerdown', { button: 0, clientX: 80, clientY: 90 })
+    dispatchPointerEvent(document, 'pointermove', { clientX: 130, clientY: 122 })
+    dispatchPointerEvent(handle, 'pointerup', { clientX: 130, clientY: 122 })
+    fireEvent.click(dragHandle)
+
+    expect(mockEditor.insertBlocks).toHaveBeenCalledWith([draggedBlock], targetBlock.id, 'before')
+    expect(mockSideMenu.freezeMenu).not.toHaveBeenCalled()
+  })
+
+  it('keeps the menu closed after a drag dropped where no block takes it', () => {
+    const { dragHandle } = renderPointerReorderFixture()
+    const handle = requireParentElement(dragHandle)
+    document.elementsFromPoint = vi.fn(() => [])
+
+    dispatchPointerEvent(handle, 'pointerdown', { button: 0, clientX: 80, clientY: 90 })
+    dispatchPointerEvent(document, 'pointermove', { clientX: 130, clientY: 122 })
+    dispatchPointerEvent(handle, 'pointerup', { clientX: 130, clientY: 122 })
+    fireEvent.click(dragHandle)
+
+    expect(mockEditor.insertBlocks).not.toHaveBeenCalled()
+    expect(mockSideMenu.freezeMenu).not.toHaveBeenCalled()
+  })
+
+  it('opens the menu on the next press of the handle after a drag', () => {
+    const { dragHandle } = renderPointerReorderFixture()
+    const handle = requireParentElement(dragHandle)
+
+    dispatchPointerEvent(handle, 'pointerdown', { button: 0, clientX: 80, clientY: 90 })
+    dispatchPointerEvent(document, 'pointermove', { clientX: 130, clientY: 122 })
+    dispatchPointerEvent(handle, 'pointerup', { clientX: 130, clientY: 122 })
+    dispatchPointerEvent(handle, 'pointerdown', { button: 0, clientX: 80, clientY: 90 })
+    dispatchPointerEvent(handle, 'pointerup', { clientX: 80, clientY: 90 })
+
+    expect(mockSideMenu.freezeMenu).toHaveBeenCalled()
+  })
+
   it('renders the heading collapse toggle before the drag handle', () => {
     const heading = headingBlock('heading-block', 2)
     mockEditor.document = [heading]

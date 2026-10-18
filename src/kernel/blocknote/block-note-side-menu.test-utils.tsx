@@ -138,6 +138,7 @@ function mockMenuItem({ children, className, icon, onClick, subTrigger }: MenuIt
   )
 }
 
+// Opens on pointerup as BlockNote's shadcn menu trigger does, and on click.
 function mockMenuRoot({
   children,
   onOpenChange,
@@ -147,6 +148,7 @@ function mockMenuRoot({
     <div
       data-testid={sub ? 'menu-sub-root' : 'menu-root'}
       onClick={() => onOpenChange?.(true)}
+      onPointerUp={() => onOpenChange?.(true)}
       onKeyDown={(event) => {
         if (event.key === 'Enter') onOpenChange?.(true)
       }}

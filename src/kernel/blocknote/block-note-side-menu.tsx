@@ -310,7 +310,7 @@ function DragHandleButton({
   const sideMenu = useExtension(SideMenuExtension)
   const { block, editor } = useSideMenuBlock()
   const MenuComponent: ComponentType<{ children?: ReactNode }> = dragHandleMenu ?? BlockNoteDragHandleMenu
-  const { onClickCapture, onPointerDown } = usePointerBlockReorder(editor, block)
+  const { onClickCapture, onPointerDown, onPointerUpCapture } = usePointerBlockReorder(editor, block)
 
   if (!block) return null
 
@@ -326,6 +326,7 @@ function DragHandleButton({
         <span
           className="inline-flex items-center justify-center"
           onPointerDown={onPointerDown}
+          onPointerUpCapture={onPointerUpCapture}
           onClickCapture={onClickCapture}
         >
           <SideMenuTooltip label={dict.side_menu.drag_handle_label}>
