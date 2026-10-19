@@ -49,6 +49,10 @@ _Avoid_: Node, element, paragraph (when you mean any kind of Block)
 A heading Block and every Block after it up to the next heading of the same or a higher level. A folded heading hides its Section; moving, deleting or duplicating a folded heading acts on the whole Section.
 _Avoid_: Chapter, group
 
+**Outline**:
+The list of a Document's headings shown at the left of Rich mode, used to jump to a Section. Every non-empty heading Block is in it, nested or not, indented by its level; the Document's title, a first-level heading that is its first Block, is not. A Document with fewer than two such headings has no Outline. Raw mode and an Image file's Tab have none.
+_Avoid_: Table of contents, TOC, minimap, navigator
+
 **Table handle**:
 The control that appears on a table Block's edge when the pointer is over the table: one on the top edge for a column, one on the left edge for a row. Dragging it moves that column or row; clicking it opens that column's or row's menu.
 _Avoid_: Toolbar, table toolbar, grip

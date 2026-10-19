@@ -61,6 +61,7 @@ export const EN_TRANSLATIONS = {
   "editor.htmlBlock.resizeHeight": "Resize height",
   "editor.htmlBlock.toolbar": "HTML block actions",
   "editor.imageLightbox.title": "Image preview",
+  "editor.outline.label": "Outline",
   "editor.sideMenu.collapseItem": "Collapse item",
   "editor.sideMenu.collapseSection": "Collapse section",
   "editor.sideMenu.duplicate": "Duplicate",

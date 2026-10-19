@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject, type ReactNode } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject, type ReactNode, type Ref } from 'react'
 import { useCreateBlockNote } from '@blocknote/react'
 import { useEditorTabSwap } from '@/kernel/resolve/use-editor-tab-swap'
 import { useEditorFocus } from './use-editor-focus'
@@ -47,6 +47,7 @@ import { createRichEditorPasteHandler } from '@/kernel/blocknote/rich-editor-pas
 import { createRichEditorTextDirectionExtension } from '@/kernel/blocknote/rich-editor-text-direction'
 import { createRichEditorTransformErrorRecoveryExtension } from '@/kernel/blocknote/rich-editor-transform-error-recovery-extension'
 import { SingleEditorView } from './single-editor-view'
+import { Outline } from './outline'
 import { createTodoBlockShortcutExtension } from '@/kernel/blocknote/todo-block-shortcut-extension'
 import { useRawModeWithFlush } from './use-raw-mode-with-flush'
 import { useRawEditorSnapshots } from './use-raw-editor-snapshots'
@@ -88,6 +89,8 @@ const PANE_CLASS = 'relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidde
  * Kernel's side menu and the mode-position sync select on.
  */
 const RICH_SCROLL_AREA_CLASS = 'editor-scroll-area flex min-h-0 flex-1 flex-col overflow-y-auto [overflow-anchor:none]'
+/** Holds the Rich scroll area and, over its left edge, the Outline. */
+const RICH_SURFACE_CLASS = 'relative flex min-h-0 flex-1 flex-col'
 /** Raw mode: CodeMirror scrolls itself below the carried find bar, so the scope clips instead. */
 const RAW_SCOPE_CLASS = 'editor-scroll-area flex min-h-0 flex-1 flex-col overflow-hidden'
 
@@ -358,14 +361,17 @@ function useImageNaturalSize(shownPicture: string) {
 function EditorFindScope({
   children,
   className,
+  ref,
   style,
 }: {
   children: ReactNode
   className?: string
+  ref?: Ref<HTMLDivElement>
   style?: React.CSSProperties
 }) {
   return (
     <div
+      ref={ref}
       className={className}
       data-editor-find-scope="true"
       style={style}
@@ -416,6 +422,7 @@ export const Editor = memo(function Editor(props: EditorProps) {
     tabs, activeTabPath, vaultPath, onActivateTab, onCloseTab, writeFailure, onRetryWrite, onDiscardWrite,
     sidebarCollapsed, tabCommands,
   } = props
+  const richScrollAreaRef = useRef<HTMLDivElement>(null)
   const openTab = tabs.find((tab) => tab.entry.path === activeTabPath) ?? null
   const imageTab = useImageTab({
     path: imageTabPath,
@@ -492,21 +499,25 @@ export const Editor = memo(function Editor(props: EditorProps) {
               />
             </EditorFindScope>
           ) : (
-            <EditorFindScope className={RICH_SCROLL_AREA_CLASS}>
-              <RichEditorFindBar key={activeTab.entry.path} editor={editor} path={activeTab.entry.path} request={findRequest} find={find} />
-              {/* The prose column: the Kernel's .bn-editor centres itself at --editor-max-width, so no padding here. */}
-              <div className="mx-auto flex min-h-0 w-full max-w-(--editor-max-width) flex-1 flex-col">
-                <SingleEditorView
-                  editor={editor}
-                  onNavigateWikilink={NO_WIKILINK_NAVIGATION}
-                  onChange={handleEditorChange}
-                  onImageImportError={showImageImportErrorToast}
-                  sourceEntry={activeTab.entry}
-                  attachmentVaultPath={noteRootForPath(activeTab.entry.path)}
-                  vaultPath={vaultPath}
-                />
-              </div>
-            </EditorFindScope>
+            // The Outline sits beside the scroll area, so it stays put while the Document scrolls.
+            <div className={RICH_SURFACE_CLASS}>
+              <EditorFindScope ref={richScrollAreaRef} className={RICH_SCROLL_AREA_CLASS}>
+                <RichEditorFindBar key={activeTab.entry.path} editor={editor} path={activeTab.entry.path} request={findRequest} find={find} />
+                {/* The prose column: the Kernel's .bn-editor centres itself at --editor-max-width, so no padding here. */}
+                <div className="mx-auto flex min-h-0 w-full max-w-(--editor-max-width) flex-1 flex-col">
+                  <SingleEditorView
+                    editor={editor}
+                    onNavigateWikilink={NO_WIKILINK_NAVIGATION}
+                    onChange={handleEditorChange}
+                    onImageImportError={showImageImportErrorToast}
+                    sourceEntry={activeTab.entry}
+                    attachmentVaultPath={noteRootForPath(activeTab.entry.path)}
+                    vaultPath={vaultPath}
+                  />
+                </div>
+              </EditorFindScope>
+              <Outline key={activeTab.entry.path} editor={editor as unknown as RichEditor} scrollAreaRef={richScrollAreaRef} />
+            </div>
           )}
         </>
       )}

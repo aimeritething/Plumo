@@ -3,6 +3,7 @@ import { useEffect, type RefObject } from 'react'
 type RectLike = Pick<DOMRect, 'left' | 'right' | 'top' | 'bottom'>
 
 const HOVER_BRIDGE_PADDING_X = 8
+const SIDE_MENU_INERT_SELECTOR = '[data-side-menu-inert]'
 const HOVER_BRIDGE_PADDING_Y = 6
 
 function isVisibleRect(rect: RectLike) {
@@ -38,6 +39,9 @@ export function shouldSuppressBlockNoteHandleHoverUpdate({
   hasPressedButton?: boolean
 }) {
   if (hasPressedButton) return false
+  // A control over the pane's margin, such as the Outline, says so: the side
+  // menu would otherwise follow the pointer onto it, block by block.
+  if (eventTarget instanceof Element && eventTarget.closest(SIDE_MENU_INERT_SELECTOR)) return true
   if (!container) return false
 
   const editor = container.querySelector('.bn-editor')

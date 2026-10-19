@@ -90,6 +90,17 @@ describe('blockNoteSideMenuHoverGuard', () => {
     })
   })
 
+  it('suppresses hover updates over a control that marks itself inert to the side menu, such as the Outline', () => {
+    const outline = document.createElement('nav')
+    outline.setAttribute('data-side-menu-inert', '')
+    const row = document.createElement('button')
+    outline.appendChild(row)
+    document.body.appendChild(outline)
+
+    expectHoverSuppression({ eventTarget: row, point: { x: 40, y: 400 }, expected: true })
+    outline.remove()
+  })
+
   it('leaves unrelated pointer movement alone', () => {
     expectHoverSuppression({
       eventTarget: document.body,
