@@ -69,25 +69,20 @@ export const FolderSwitcher = memo(function FolderSwitcher(props: FolderSwitcher
                 if (path !== folder) onOpenRecent(path)
               }}
             >
-              <span className="flex size-3 flex-none items-center justify-center">
-                {path === folder && <Check aria-hidden="true" className="size-3 text-text-primary" />}
-              </span>
               <FolderNameAndPath path={path} home={home} />
+              {path === folder && <Check aria-hidden="true" className="ms-auto size-3" />}
             </DropdownMenuItem>
           ))}
           {recentFolders.length > 0 && <DropdownMenuSeparator />}
           <DropdownMenuItem onSelect={onOpenFolder}>
-            <span className="size-3 flex-none" />
             Open Folder…
             <DropdownMenuShortcut>⌘O</DropdownMenuShortcut>
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={onCloseFolder}>
-            <span className="size-3 flex-none" />
             Close Folder
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={onOpenSettings} data-testid="folder-switcher-settings">
-            <span className="size-3 flex-none" />
             Settings
             <DropdownMenuShortcut>⌘,</DropdownMenuShortcut>
           </DropdownMenuItem>
