@@ -15,7 +15,7 @@ import { ExplorerHeader } from './explorer-header'
 import { useFolderDropTarget, type FolderDropProps, type FolderDropTarget } from './use-folder-drop-target'
 import { ExplorerNameInput } from './explorer-name-input'
 import { EXPLORER_ROW_ICONS, explorerRowIndent } from './explorer-row'
-import { ExplorerDisclosure, ExplorerDisclosureSlot } from './explorer-disclosure'
+import { ExplorerDisclosure } from './explorer-disclosure'
 import type { ExplorerMenuAction, ExplorerMenuTargetKind } from './explorer-menu-items'
 import { Button } from '@/ui/button'
 import { Kbd } from '@/ui/kbd'
@@ -439,8 +439,9 @@ function ExplorerRow(props: RowProps) {
                 event.preventDefault(); onToggle(relative)
               }
             }}>
-            {isFolder ? <ExplorerDisclosure name={node.name} expanded={isExpanded} onToggle={() => onToggle(relative)} /> : <ExplorerDisclosureSlot />}
-            <SidebarRowIcon icon={Icon} className="[[aria-selected=true]>*>&]:text-text-primary" />
+            {isFolder
+              ? <ExplorerDisclosure name={node.name} expanded={isExpanded} onToggle={() => onToggle(relative)} />
+              : <SidebarRowIcon icon={Icon} className="[[aria-selected=true]>*>&]:text-text-primary" />}
             <SidebarRowName>{node.name}</SidebarRowName>
           </SidebarRow>
         </ContextMenuTrigger>

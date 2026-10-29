@@ -9,12 +9,12 @@ export const EXPLORER_ROW_ICONS: Record<ExplorerRowKind, typeof FileText> = {
   folder: Folder,
 }
 
-/** 14px per level, from the row's own 8px inset. */
+/** 12px per level, from the row's own 8px inset. */
 export function explorerRowIndent(depth: number): number {
-  return 8 + depth * 14
+  return 8 + depth * 12
 }
 
-/** Where a row's name starts: past the disclosure chevron and the icon, both with their gap. */
+/** Where a row's name starts: past the icon (a folder's caret on hover) and its gap. */
 export function explorerNameIndent(depth: number): number {
-  return explorerRowIndent(depth) + 38
+  return explorerRowIndent(depth) + 20
 }

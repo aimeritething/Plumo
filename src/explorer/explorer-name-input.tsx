@@ -1,7 +1,6 @@
 import { useSidebarInlineRenameInput } from '@/shell/sidebar-hooks'
 import { stripBlockedNameCharacters, type ExplorerRowKind } from '@/folder/explorer-names'
 import { EXPLORER_ROW_ICONS, explorerNameIndent, explorerRowIndent } from './explorer-row'
-import { ExplorerDisclosureSlot } from './explorer-disclosure'
 import { SidebarRow, SidebarRowIcon } from '@/shell/sidebar-row'
 
 /**
@@ -46,7 +45,6 @@ export function ExplorerNameInput(props: ExplorerNameInputProps) {
   return (
     <div>
       <SidebarRow className="mb-0.5" style={{ paddingLeft: explorerRowIndent(depth) }}>
-        <ExplorerDisclosureSlot />
         <SidebarRowIcon icon={Icon} />
         <input
           ref={inputRef}
