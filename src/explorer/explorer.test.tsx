@@ -492,7 +492,7 @@ describe('the header', () => {
     expect(screen.getByTestId(`explorer-row:${FOLDER}/Projects`)).toHaveStyle({ paddingLeft: '8px' })
     expect(isExpanded('Projects')).toBe(false)
     fireEvent.click(screen.getByLabelText('Expand Projects'))
-    expect(screen.getByTestId(`explorer-row:${FOLDER}/Projects/Plumo.md`)).toHaveStyle({ paddingLeft: '22px' })
+    expect(screen.getByTestId(`explorer-row:${FOLDER}/Projects/Plumo.md`)).toHaveStyle({ paddingLeft: '20px' })
   })
 
   it('folds the whole tree away from the name, and shows only the header while folded', () => {
