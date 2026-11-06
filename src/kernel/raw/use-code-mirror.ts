@@ -17,6 +17,7 @@ import { RUNTIME_STYLE_NONCE } from '@/platform/runtime-style-nonce'
 import { resolveArrowLigatureInput } from '@/kernel/markdown/arrow-ligatures'
 import { zoomCursorFix } from './zoom-cursor-fix'
 import { rawFindHighlights } from './raw-editor-find'
+import { rawScrollbar } from './raw-scrollbar'
 import { rawEditorTextInputAttributes } from '@/platform/native-text-assistance'
 import { isInsideMarkdownFence } from '@/kernel/markdown/markdown-fences'
 import { isWindows } from '@/platform/os'
@@ -426,6 +427,7 @@ export function useCodeMirror(
       rawEditorLanguageExtensionsForPath(sourcePath),
       zoomCursorFix(),
       rawFindHighlights(),
+      rawScrollbar(),
       EditorView.updateListener.of((update) => {
         if (update.docChanged && !externalSyncRef.current) {
           callbacksRef.current.onDocChange(update.state.doc.toString())

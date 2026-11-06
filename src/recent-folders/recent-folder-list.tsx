@@ -1,6 +1,7 @@
 import { memo } from 'react'
 import { Folder } from '@phosphor-icons/react'
 import { cn } from '@/lib/cn'
+import { ScrollArea } from '@/ui/scroll-area'
 import { SIDEBAR_ROW_CLASSES, SidebarLabel, SidebarRowIcon } from '@/shell/sidebar-row'
 import { FolderNameAndPath } from './folder-name-and-path'
 
@@ -19,20 +20,22 @@ interface RecentFolderListProps {
 export const RecentFolderList = memo(function RecentFolderList({ paths, home, onOpen }: RecentFolderListProps) {
   if (paths.length === 0) return null
   return (
-    <section className="flex min-h-0 flex-col gap-0.5 overflow-y-auto pt-6" aria-label="Recent Folders" data-testid="recent-folders">
+    <section className="flex min-h-0 flex-col gap-0.5 pt-6" aria-label="Recent Folders" data-testid="recent-folders">
       <SidebarLabel>Recent</SidebarLabel>
-      {paths.map((path) => (
-        <button
-          key={path}
-          type="button"
-          className={cn(SIDEBAR_ROW_CLASSES, 'h-10 w-full flex-none gap-2')}
-          data-testid={`recent-folder:${path}`}
-          onClick={() => onOpen(path)}
-        >
-          <SidebarRowIcon icon={Folder} />
-          <FolderNameAndPath path={path} home={home} />
-        </button>
-      ))}
+      <ScrollArea className="-mr-3 min-h-0" viewportClassName="pr-3 [&>div]:flex! [&>div]:flex-col [&>div]:gap-0.5">
+        {paths.map((path) => (
+          <button
+            key={path}
+            type="button"
+            className={cn(SIDEBAR_ROW_CLASSES, 'h-10 w-full flex-none gap-2')}
+            data-testid={`recent-folder:${path}`}
+            onClick={() => onOpen(path)}
+          >
+            <SidebarRowIcon icon={Folder} />
+            <FolderNameAndPath path={path} home={home} />
+          </button>
+        ))}
+      </ScrollArea>
     </section>
   )
 })

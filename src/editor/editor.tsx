@@ -48,6 +48,7 @@ import { createRichEditorTextDirectionExtension } from '@/kernel/blocknote/rich-
 import { createRichEditorTransformErrorRecoveryExtension } from '@/kernel/blocknote/rich-editor-transform-error-recovery-extension'
 import { SingleEditorView } from './single-editor-view'
 import { Outline } from './outline'
+import { ScrollArea } from '@/ui/scroll-area'
 import { createTodoBlockShortcutExtension } from '@/kernel/blocknote/todo-block-shortcut-extension'
 import { useRawModeWithFlush } from './use-raw-mode-with-flush'
 import { useRawEditorSnapshots } from './use-raw-editor-snapshots'
@@ -83,12 +84,16 @@ type FlushPendingContentRef = MutableRefObject<((path: string) => void) | null>
  */
 const PANE_CLASS = 'relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-surface-card'
 /**
- * The scroll context around the Rich surface, the find bar sticky at its top.
+ * The scroll context around the Rich surface, the find bar sticky at its top:
+ * the viewport of a `ScrollArea`, so the Document scrolls with Plumo's bar.
  * `overflow-anchor` is off so a side menu appearing near the viewport edge
  * does not shift a long Document; the `editor-scroll-area` name is what the
- * Kernel's side menu and the mode-position sync select on.
+ * Kernel's side menu and the mode-position sync select on. Radix's content
+ * wrapper is the flex column, at least as tall as the viewport, so the prose
+ * column below the find bar fills the pane.
  */
-const RICH_SCROLL_AREA_CLASS = 'editor-scroll-area flex min-h-0 flex-1 flex-col overflow-y-auto [overflow-anchor:none]'
+const RICH_SCROLL_AREA_CLASS = 'editor-scroll-area [overflow-anchor:none] [&>div]:flex! [&>div]:min-h-full [&>div]:flex-col'
+const RICH_SCROLL_AREA_PROPS = { 'data-editor-find-scope': 'true' }
 /** Holds the Rich scroll area and, over its left edge, the Outline. */
 const RICH_SURFACE_CLASS = 'relative flex min-h-0 flex-1 flex-col'
 /** Raw mode: CodeMirror scrolls itself below the carried find bar, so the scope clips instead. */
@@ -501,7 +506,7 @@ export const Editor = memo(function Editor(props: EditorProps) {
           ) : (
             // The Outline sits beside the scroll area, so it stays put while the Document scrolls.
             <div className={RICH_SURFACE_CLASS}>
-              <EditorFindScope ref={richScrollAreaRef} className={RICH_SCROLL_AREA_CLASS}>
+              <ScrollArea className="min-h-0 flex-1" viewportRef={richScrollAreaRef} viewportClassName={RICH_SCROLL_AREA_CLASS} viewportProps={RICH_SCROLL_AREA_PROPS}>
                 <RichEditorFindBar key={activeTab.entry.path} editor={editor} path={activeTab.entry.path} request={findRequest} find={find} />
                 {/* The prose column: the Kernel's .bn-editor centres itself at --editor-max-width, so no padding here. */}
                 <div className="mx-auto flex min-h-0 w-full max-w-(--editor-max-width) flex-1 flex-col">
@@ -515,7 +520,7 @@ export const Editor = memo(function Editor(props: EditorProps) {
                     vaultPath={vaultPath}
                   />
                 </div>
-              </EditorFindScope>
+              </ScrollArea>
               <Outline key={activeTab.entry.path} editor={editor as unknown as RichEditor} scrollAreaRef={richScrollAreaRef} />
             </div>
           )}

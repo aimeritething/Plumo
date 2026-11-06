@@ -3,6 +3,7 @@ import { CaretDown, CaretRight, FileText, Image } from '@phosphor-icons/react'
 import { notePathFilename } from '@/lib/note-path-identity'
 import { isImageFilePath } from '@/tabs/image-file'
 import { tabParentHints } from '@/tabs/tab-labels'
+import { ScrollArea } from '@/ui/scroll-area'
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from '@/ui/context-menu'
 import { SidebarLabel, SidebarRow, SidebarRowIcon, SidebarRowName } from '@/shell/sidebar-row'
 
@@ -45,7 +46,9 @@ export const Pinned = memo(function Pinned({ paths, activeTabPath, collapsed, on
 
   const Caret = collapsed ? CaretRight : CaretDown
   return (
-    <section className="group/pinned flex flex-none flex-col gap-0.5 pt-0.5" data-testid="pinned">
+    // At most half the sidebar, its rows scrolling past that, so a long Pinned
+    // list leaves the Explorer and the Folder switcher their room.
+    <section className="group/pinned flex max-h-1/2 min-h-0 flex-none flex-col gap-0.5 pt-0.5" data-testid="pinned">
       <SidebarLabel>
         <button
           type="button"
@@ -64,28 +67,30 @@ export const Pinned = memo(function Pinned({ paths, activeTabPath, collapsed, on
         </button>
       </SidebarLabel>
       {!collapsed && (
-        <div className="flex flex-col gap-0.5" role="listbox" aria-label={LABEL} {...listDropProps}>
-          {paths.map((path, index) => (
-            <PinnedRow
-              key={path}
-              path={path}
-              parentHint={hints.get(path)}
-              active={path === activeTabPath}
-              dragging={path === dragging}
-              dropMark={dropMarkFor(dropSpot, path, index === paths.length - 1)}
-              dragProps={rowDragProps(path)}
-              onOpen={onOpen}
-              onUnpin={onUnpin}
-              onDuplicate={onDuplicate}
-              onKeyboardMove={(offset) => {
-                const target = index + offset
-                if (target < 0 || target >= paths.length) return
-                // Moving down one place is moving before the row two further on.
-                onMove(path, offset < 0 ? paths[target] : paths[target + 1] ?? null)
-              }}
-            />
-          ))}
-        </div>
+        <ScrollArea className="-mr-3 min-h-0" viewportClassName="pr-3">
+          <div className="flex flex-col gap-0.5" role="listbox" aria-label={LABEL} {...listDropProps}>
+            {paths.map((path, index) => (
+              <PinnedRow
+                key={path}
+                path={path}
+                parentHint={hints.get(path)}
+                active={path === activeTabPath}
+                dragging={path === dragging}
+                dropMark={dropMarkFor(dropSpot, path, index === paths.length - 1)}
+                dragProps={rowDragProps(path)}
+                onOpen={onOpen}
+                onUnpin={onUnpin}
+                onDuplicate={onDuplicate}
+                onKeyboardMove={(offset) => {
+                  const target = index + offset
+                  if (target < 0 || target >= paths.length) return
+                  // Moving down one place is moving before the row two further on.
+                  onMove(path, offset < 0 ? paths[target] : paths[target + 1] ?? null)
+                }}
+              />
+            ))}
+          </div>
+        </ScrollArea>
       )}
     </section>
   )

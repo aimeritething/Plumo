@@ -2,6 +2,7 @@
 
 import type * as React from "react"
 import { cn } from "@/lib/cn"
+import { ScrollArea } from "./scroll-area"
 import { CaretRight as ChevronRightIcon, Check as CheckIcon, Circle as CircleIcon } from "@phosphor-icons/react"
 import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui"
 
@@ -33,6 +34,7 @@ function DropdownMenuTrigger({
 function DropdownMenuContent({
   className,
   sideOffset = 4,
+  children,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Content>) {
   return (
@@ -41,11 +43,16 @@ function DropdownMenuContent({
         data-slot="dropdown-menu-content"
         sideOffset={sideOffset}
         className={cn(
-          "z-popover max-h-(--radix-dropdown-menu-content-available-height) min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-xl border-hairline border-border-popover bg-surface-popover p-1.5 text-text-primary shadow-menu data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
+          "z-popover flex max-h-(--radix-dropdown-menu-content-available-height) min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) flex-col overflow-hidden rounded-xl border-hairline border-border-popover bg-surface-popover text-text-primary shadow-menu data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
           className
         )}
         {...props}
-      />
+      >
+        {/* A menu taller than the window scrolls with Plumo's bar; the inset is the viewport's. */}
+        <ScrollArea className="min-h-0" viewportClassName="p-1.5">
+          {children}
+        </ScrollArea>
+      </DropdownMenuPrimitive.Content>
     </DropdownMenuPrimitive.Portal>
   )
 }
