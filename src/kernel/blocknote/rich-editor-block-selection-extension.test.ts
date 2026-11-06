@@ -1,6 +1,7 @@
 import { BlockNoteEditor, type PartialBlock } from '@blocknote/core'
+import { SuggestionMenu } from '@blocknote/core/extensions'
 import type { Node as ProsemirrorNode } from '@tiptap/pm/model'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { schema } from './editor-schema'
 import {
   blockSelectionAfterArrow,
@@ -95,6 +96,18 @@ function dispatchEditorKey(editor: MountedEditor['editor'], key: string, options
   return { event, handled: handled === true }
 }
 
+/** Type `/` the way a keystroke reaches BlockNote, with the trigger registered as the Slash menu's controller does. */
+function typeSlashMenuTrigger(editor: MountedEditor['editor']) {
+  // jsdom's DOMRect has no toJSON, which the menu reads its anchor with.
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(
+    () => ({ x: 0, y: 0, width: 0, height: 0, top: 0, left: 0, right: 0, bottom: 0, toJSON: () => ({}) }) as DOMRect,
+  )
+  editor.getExtension(SuggestionMenu)?.addTriggerCharacter('/')
+  const view = editor._tiptapEditor.view
+  const at = view.state.selection.from
+  view.someProp('handleTextInput', (handler) => handler(view, at, at, '/', () => view.state.tr.insertText('/', at, at)))
+}
+
 function dispatchEditorClipboardEvent(
   editor: MountedEditor['editor'],
   type: 'copy' | 'cut' | 'paste',
@@ -187,6 +200,7 @@ describe('rich editor block selection extension', () => {
   const mountedEditors: MountedEditor[] = []
 
   afterEach(() => {
+    vi.restoreAllMocks()
     while (mountedEditors.length > 0) {
       mountedEditors.pop()?.cleanup()
     }
@@ -270,6 +284,21 @@ describe('rich editor block selection extension', () => {
 
     expect(result.event.defaultPrevented).toBe(false)
     expect(selectedBlockIds(editor)).toEqual([])
+  })
+
+  it('leaves the Escape that closes an open Slash menu to the menu, without selecting the block', () => {
+    const editor = mountEditor()
+    editor.setTextCursorPosition('two', 'end')
+    typeSlashMenuTrigger(editor)
+    expect(editor.getExtension(SuggestionMenu)?.shown()).toBe(true)
+    const caret = editor._tiptapEditor.state.selection.from
+
+    const result = dispatchEditorKey(editor, 'Escape')
+
+    expect(result.handled).toBe(false)
+    expect(result.event.defaultPrevented).toBe(false)
+    expect(selectedBlockIds(editor)).toEqual([])
+    expect(editor._tiptapEditor.state.selection.from).toBe(caret)
   })
 
   it('deletes the selected block and keeps the next block selected', () => {
