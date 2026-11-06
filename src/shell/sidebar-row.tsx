@@ -61,13 +61,3 @@ export function SidebarRowIcon({ icon: Icon, className, ...props }: { icon: Comp
 export function SidebarRowName({ className, ...props }: ComponentProps<'span'>) {
   return <span className={cn('min-w-0 flex-1 truncate', className)} {...props} />
 }
-
-/**
- * On a control whose click opens something: a Tab, or an Explorer folder. The
- * sidebar drops the second click of a double-click that starts on one, so a
- * double-click is one open: one Tab, one new Document from the Explorer's "+",
- * or one folder opened (not opened and shut again), however the sidebar has
- * shifted under the pointer in between (a folder opening to show the new row).
- * A plain button inside one, a folder's caret, keeps its second click.
- */
-export const ONE_OPEN_PER_DOUBLE_CLICK_PROPS = { 'data-one-open': '' } as const

@@ -2,7 +2,6 @@ import type { ComponentProps } from 'react'
 import { DotsThree, Plus } from '@phosphor-icons/react'
 import { Button } from '@/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
-import { ONE_OPEN_PER_DOUBLE_CLICK_PROPS } from '@/shell/sidebar-row'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,11 +10,11 @@ import {
 } from '@/ui/dropdown-menu'
 
 /**
- * The Explorer header's hover-only actions: "+" makes a new
- * Document where the selection points, and "…" holds exactly New Folder,
- * Collapse All, Reveal in Finder and Close Folder. They show while the
- * pointer is over the Explorer (its section is the `explorer` group), while
- * one of them has focus, and while the menu is open.
+ * The Explorer header's hover-only actions: "+" makes a new Document where
+ * the selection points, one per double-click (the second click is dropped),
+ * and "…" holds exactly New Folder, Collapse All, Reveal in Finder and Close
+ * Folder. They show while the pointer is over the Explorer (its section is the
+ * `explorer` group), while one of them has focus, and while the menu is open.
  */
 
 interface ExplorerHeaderActionsProps {
@@ -47,7 +46,7 @@ export function ExplorerHeaderActions(props: ExplorerHeaderActionsProps) {
 
   return (
     <div className="flex flex-none items-center gap-0.5 opacity-0 transition-opacity duration-150 ease-out group-hover/explorer:opacity-100 focus-within:opacity-100 has-data-[state=open]:opacity-100">
-      <HeaderAction data-testid="explorer-new-document" label="New Document" onClick={onNewDocument} {...ONE_OPEN_PER_DOUBLE_CLICK_PROPS}>
+      <HeaderAction data-testid="explorer-new-document" label="New Document" onClick={(event) => { if (event.detail <= 1) onNewDocument() }}>
         <Plus aria-hidden="true" />
       </HeaderAction>
       <DropdownMenu>

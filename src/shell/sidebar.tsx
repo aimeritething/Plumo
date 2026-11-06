@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent, type ReactNode, type TransitionEvent } from 'react'
+import { useCallback, useState, type KeyboardEvent, type PointerEvent, type ReactNode, type TransitionEvent } from 'react'
 import { clampSidebarWidth } from '@/session/session-schema'
 
 const KEYBOARD_RESIZE_STEP = 16
@@ -29,7 +29,6 @@ interface SidebarProps {
 export function Sidebar({ collapsed, slides, width, onWidthChange, children }: SidebarProps) {
   const { liveWidth, resizerProps } = useEdgeResize(width, onWidthChange)
   const { mounted, onTransitionEnd } = useSlideOut(collapsed, slides)
-  const onClickCapture = useOneOpenPerDoubleClick()
   const shownWidth = liveWidth ?? width
   const resizing = liveWidth !== null || undefined
 
@@ -48,7 +47,6 @@ export function Sidebar({ collapsed, slides, width, onWidthChange, children }: S
           data-resizing={resizing}
           inert={collapsed}
           style={{ width: shownWidth }}
-          onClickCapture={onClickCapture}
         >
           {/* The traffic lights' row; the whole row drags the window. */}
           <div className="-mx-3 mb-1 h-13 flex-none" data-testid="sidebar-top" data-tauri-drag-region />
@@ -84,28 +82,6 @@ function useSlideOut(collapsed: boolean, slides: boolean) {
   }, [collapsed])
 
   return { mounted: !collapsed || (slides && !shut), onTransitionEnd }
-}
-
-/**
- * A double-click that opens a Tab or a folder is one open. By the second
- * click the sidebar may have moved under the pointer (a new Document's row
- * appearing, its folder opening), so that click could land on another row,
- * make a second Document from the Explorer's "+", or shut the folder it just
- * opened. It is dropped, wherever it lands. A second click after anything
- * else (a folder's caret) goes through.
- */
-function useOneOpenPerDoubleClick() {
-  const opened = useRef(false)
-
-  return useCallback((event: MouseEvent<HTMLElement>) => {
-    if (event.detail <= 1) {
-      // The nearest button or marked control decides, so a caret inside a marked row is not one.
-      const control = event.target instanceof Element ? event.target.closest('button, [data-one-open]') : null
-      opened.current = control?.hasAttribute('data-one-open') ?? false
-      return
-    }
-    if (opened.current) event.stopPropagation()
-  }, [])
 }
 
 /**
