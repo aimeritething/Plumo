@@ -17,7 +17,10 @@ Documents in a Folder on disk. Names follow the glossary in `CONTEXT.md`; read t
   imports `folder/`, never the reverse.
 - `shell/` — sidebar, theme, shortcuts, menu events. `app-command-manifest.json` is also
   read by `src-tauri/src/menu.rs`.
-- `ui/` — shadcn primitives regenerated from the templates with Plumo's values.
+- `ui/` — Plumo's generic parts: nothing here knows of Documents, Blocks, the editor or
+  Tauri. Any source (shadcn templates, Radix, hand-written); a part shadcn also has keeps
+  shadcn's name and API. A control that needs a shared part to look different changes that
+  part or adds a variant to it, never overrides it with its own classes.
 - `platform/` — `tauri.ts` and `mock/`, the in-memory Folder fixture that stands in for
   Rust outside Tauri (so `pnpm dev` and the smoke specs run without it).
 - `src-tauri/` — the Rust side: commands, the Folder watcher, the Session file, the menu.
