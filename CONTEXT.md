@@ -82,6 +82,10 @@ _Avoid_: Upload dialog, embed popover
 The buttons in an Image block's top-right corner, shown when the pointer is over the Block or the Block is selected. On a picture too narrow to hold them, they sit just above that corner instead.
 _Avoid_: Formatting toolbar (the toolbar for text, a different thing)
 
+**File toolbar**:
+The Image toolbar's counterpart on an Audio, Video or File Block: Caption, Open and `⋯` (Replace, Rename, the preview toggle, Delete), in the corner of a video, just above an audio player, or at the right end of a file's name; shown when the pointer is over the Block or the Block is selected.
+_Avoid_: Formatting toolbar, media toolbar
+
 **Image preview**:
 The view that shows an Image block's picture over the whole window, opened by double-clicking the picture or from the Image toolbar. It is for looking only; it is not an Image file's Tab.
 _Avoid_: Lightbox

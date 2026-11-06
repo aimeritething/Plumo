@@ -161,11 +161,13 @@ describe('BlockNote icons', () => {
     expect(editLinkIcons).toHaveLength(2)
     editLinkIcons.forEach(expectPhosphorIcon)
 
+    // The file Blocks' own icons (the empty slot, a file's line) are Plumo's
+    // (add-file-button.tsx, media-blocks.tsx), drawn with Phosphor too.
     await waitFor(() => {
-      expect(container.querySelector('[data-content-type="audio"] .bn-add-file-button-icon svg')).toBeTruthy()
+      expect(container.querySelector('[data-content-type="audio"] [data-add-file-button] svg')).toBeTruthy()
     })
-    expectPhosphorIcon(container.querySelector('[data-content-type="audio"] .bn-add-file-button-icon svg'))
-    expectPhosphorIcon(container.querySelector('[data-content-type="image"] .bn-add-file-button-icon svg'))
-    expectPhosphorIcon(container.querySelector('[data-content-type="file"] .bn-file-icon svg'))
+    expectPhosphorIcon(container.querySelector('[data-content-type="audio"] [data-add-file-button] svg'))
+    expectPhosphorIcon(container.querySelector('[data-content-type="image"] [data-add-file-button] svg'))
+    expectPhosphorIcon(container.querySelector('[data-content-type="file"] [data-file-block-frame] svg'))
   })
 })

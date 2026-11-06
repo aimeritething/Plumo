@@ -35,14 +35,14 @@ function getSelectedFileBlockBridgeElement(
 
   if (!selectedBlock) return null
 
+  // The picture (image-block.tsx), the player or the file's name line
+  // (media-blocks.tsx), the empty slot (add-file-button.tsx), else the Block.
   return (
     selectedBlock.querySelector<HTMLElement>(
       '[data-file-block] .bn-visual-media-wrapper',
     ) ??
-    selectedBlock.querySelector<HTMLElement>(
-      '[data-file-block] .bn-file-name-with-icon',
-    ) ??
-    selectedBlock.querySelector<HTMLElement>('[data-file-block] .bn-add-file-button') ??
+    selectedBlock.querySelector<HTMLElement>('[data-file-block-frame]') ??
+    selectedBlock.querySelector<HTMLElement>('[data-add-file-button]') ??
     selectedBlock.querySelector<HTMLElement>('[data-file-block]')
   )
 }

@@ -10,7 +10,7 @@ import { createCodeBlockOptions } from './code-block-options'
 import { HtmlBlockSpec } from './html-block'
 import { ImageBlockSpec } from './image-block'
 import { MathBlockSpec, MathInlineSpec } from './math-block'
-import { AudioBlockSpec, VideoBlockSpec } from './media-blocks'
+import { AudioBlockSpec, FileBlockSpec, VideoBlockSpec } from './media-blocks'
 import { MermaidBlockSpec } from './mermaid-block'
 import { TldrawBlockSpec } from './tldraw-block'
 import { WikiLinkInlineSpec } from './wikilink-inline'
@@ -50,6 +50,7 @@ export const schema = BlockNoteSchema.create({
   blockSpecs: {
     audio: AudioBlockSpec(),
     calloutBlock: CalloutBlockSpec(),
+    file: FileBlockSpec(),
     htmlBlock: HtmlBlockSpec(),
     image: ImageBlockSpec(),
     mathBlock: MathBlockSpec(),

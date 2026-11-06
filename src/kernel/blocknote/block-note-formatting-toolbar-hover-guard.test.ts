@@ -17,11 +17,11 @@ function setRect(element: HTMLElement, nextRect: DOMRect) {
 function appendFileBlock({
   container,
   blockId,
-  innerClass,
+  innerAttribute,
 }: {
   container: HTMLElement
   blockId: string
-  innerClass: string
+  innerAttribute: string
 }) {
   const block = document.createElement('div')
   block.className = 'bn-block'
@@ -31,7 +31,7 @@ function appendFileBlock({
   fileBlock.dataset.fileBlock = 'true'
 
   const inner = document.createElement('div')
-  inner.className = innerClass
+  inner.setAttribute(innerAttribute, '')
   fileBlock.appendChild(inner)
   block.appendChild(fileBlock)
   container.appendChild(block)
@@ -154,13 +154,13 @@ describe('blockNoteFormattingToolbarHoverGuard', () => {
     ).toBe(expected)
   })
 
-  it('uses the filename bridge fallback and restores the last selected file block while the toolbar stays open', () => {
+  it('uses the file name line bridge fallback and restores the last selected file block while the toolbar stays open', () => {
     const container = document.createElement('div')
     document.body.appendChild(container)
     const bridge = appendFileBlock({
       container,
       blockId: 'image-block',
-      innerClass: 'bn-file-name-with-icon',
+      innerAttribute: 'data-file-block-frame',
     })
 
     const toolbar = document.createElement('div')
@@ -238,7 +238,7 @@ describe('blockNoteFormattingToolbarHoverGuard', () => {
     const bridge = appendFileBlock({
       container,
       blockId: 'image-block',
-      innerClass: 'bn-add-file-button',
+      innerAttribute: 'data-add-file-button',
     })
 
     const toolbar = document.createElement('div')
@@ -284,7 +284,7 @@ describe('blockNoteFormattingToolbarHoverGuard', () => {
     const bridge = appendFileBlock({
       container,
       blockId: 'image-block',
-      innerClass: 'bn-file-name-with-icon',
+      innerAttribute: 'data-file-block-frame',
     })
 
     const toolbar = document.createElement('div')

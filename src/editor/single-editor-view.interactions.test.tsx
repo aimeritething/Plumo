@@ -499,7 +499,7 @@ describe('SingleEditorView interactions', () => {
     expect(mockOpenExternalUrl).not.toHaveBeenCalled()
   })
 
-  it('opens BlockNote file block names through the active vault path', () => {
+  it('opens a File block\'s name through the active vault path', () => {
     const editor = createEditor()
     editor.getBlock.mockReturnValue({
       type: 'file',
@@ -513,7 +513,7 @@ describe('SingleEditorView interactions', () => {
     const fileBlock = document.createElement('div')
     fileBlock.setAttribute('data-file-block', '')
     const fileName = document.createElement('span')
-    fileName.className = 'bn-file-name-with-icon'
+    fileName.setAttribute('data-file-name', '')
     fileName.textContent = 'report.pdf'
     fileBlock.appendChild(fileName)
     blockContainer.appendChild(fileBlock)

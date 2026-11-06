@@ -399,7 +399,6 @@ export function SingleEditorView(options: {
               onOpenLink={openLink}
               onToolbarMouseDown={handleToolbarMouseDownCapture}
               runEditorAction={runEditorAction}
-              vaultPath={vaultPath}
             />
           </BlockNoteView>
         )}

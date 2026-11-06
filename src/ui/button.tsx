@@ -13,7 +13,9 @@ const ICON_BUTTON_STATES =
 // focus ring. default is Linear's primary, secondary its filled secondary,
 // outline the same with a hairline edge, ghost the tertiary button, icon the
 // icon-only one. Icon sizes: icon-2xs (18px, 12px glyph) inline in a row,
-// icon-xs (24px, 16px glyph) everywhere else.
+// icon-xs (24px, 16px glyph) everywhere else. `placeholder` with the `row`
+// size is Notion's empty slot: a full-width muted row, an icon and what to
+// add, on the hover fill, a step darker on hover or when `data-selected`.
 const buttonVariants = cva(
   "inline-flex shrink-0 items-center justify-center gap-2 rounded-sm text-sm font-medium whitespace-nowrap transition-colors outline-none focus-visible:focus-ring disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
@@ -31,6 +33,8 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         icon: `text-text-tertiary ${ICON_BUTTON_STATES}`,
         "icon-quiet": `text-text-muted ${ICON_BUTTON_STATES}`,
+        placeholder:
+          "bg-state-hover font-normal text-text-tertiary hover:bg-control-tertiary-hover hover:text-text-secondary data-[selected=true]:bg-control-tertiary-hover",
       },
       size: {
         default: "h-7 px-3 py-1 has-[>svg]:px-2.5",
@@ -42,6 +46,7 @@ const buttonVariants = cva(
         "icon-xs": "size-6 rounded-md",
         "icon-sm": "size-8",
         "icon-lg": "size-10",
+        row: "h-11 w-full justify-start gap-2.5 px-3 [&_svg:not([class*='size-'])]:size-5",
       },
     },
     defaultVariants: {

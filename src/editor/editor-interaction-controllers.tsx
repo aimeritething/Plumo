@@ -22,21 +22,19 @@ type EditorInteractionControllersProps = ReturnType<typeof useSuggestionMenuItem
   onOpenLink: (href: string) => void
   onToolbarMouseDown: (event: Pick<React.MouseEvent<HTMLElement>, 'target' | 'preventDefault'>) => void
   runEditorAction: (action: SuggestionAction) => void
-  vaultPath?: string
 }
 
 function EditorToolbarControllers({
   locale,
   onOpenLink,
   onToolbarMouseDown,
-  vaultPath,
-}: Pick<EditorInteractionControllersProps, 'locale' | 'onOpenLink' | 'onToolbarMouseDown' | 'vaultPath'>) {
+}: Pick<EditorInteractionControllersProps, 'locale' | 'onOpenLink' | 'onToolbarMouseDown'>) {
   const sideMenu = useCallback((props: SideMenuProps) => <SideMenu {...props} locale={locale} />, [locale])
   const formattingToolbar = useCallback(
     (props: FormattingToolbarProps) => (
-      <FormattingToolbar {...props} locale={locale} vaultPath={vaultPath} />
+      <FormattingToolbar {...props} locale={locale} />
     ),
-    [locale, vaultPath],
+    [locale],
   )
   const linkToolbar = useCallback(
     (props: Omit<React.ComponentProps<typeof LinkToolbar>, 'onOpenLink'>) => (

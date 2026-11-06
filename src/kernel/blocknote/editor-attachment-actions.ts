@@ -5,8 +5,9 @@ import {
   resolveVaultAttachmentPath,
 } from '@/kernel/markdown/vault-attachments'
 
+// A file's name on its line (media-blocks.tsx), and a link inside a file Block.
 const FILE_BLOCK_ACTION_SELECTOR = [
-  '[data-file-block] .bn-file-name-with-icon',
+  '[data-file-name]',
   '[data-file-block] a[href]',
 ].join(', ')
 const FILE_BLOCK_CONTAINER_SELECTOR = '[data-node-type="blockContainer"][data-id]'

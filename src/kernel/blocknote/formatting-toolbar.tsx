@@ -1,16 +1,8 @@
-import {
-  FileCaptionButton,
-  FileDeleteButton,
-  FilePreviewButton,
-  FileRenameButton,
-  FileReplaceButton,
-} from '@blocknote/react'
 import { translate, type AppLocale } from '@/lib/i18n'
 import { MARKDOWN_HIGHLIGHT_STYLE } from '@/kernel/markdown/markdown-highlight-markdown'
 import { Toolbar, ToolbarGroup } from '@/ui/toolbar'
 import { BlockTypeSelect } from './block-type-select'
 import { CreateLinkButton } from './create-link-button'
-import { FileDownloadButton } from './file-download-button'
 import { NestBlockButton, UnnestBlockButton } from './nest-block-buttons'
 import { TextStyleToggle } from './text-style-toggle'
 
@@ -19,23 +11,17 @@ import { TextStyleToggle } from './text-style-toggle'
 //
 //   [Block type ▾] | [Link] | [B I S <> Highlight▾] | [Nest Unnest]
 //
-// and, for a selected Audio, Video or File block, the file's own group alone
-// (the text controls all hide for a Block with no text). Only what Markdown
-// keeps is offered: no underline, alignment or text colour. Each control
-// decides by itself whether it shows for the selection (it renders nothing
-// otherwise); a group with nothing in it takes no room (ui/toolbar's
-// ToolbarGroup).
-//
-// The file group's caption, replace, rename, delete and preview buttons are
-// still BlockNote's (rendered through the shadcn components,
-// shadcn-components.tsx); the Image block has its own Image toolbar.
+// Only what Markdown keeps is offered: no underline, alignment or text
+// colour. Each control decides by itself whether it shows for the selection
+// (it renders nothing otherwise); a group with nothing in it takes no room
+// (ui/toolbar's ToolbarGroup). A selected Image, Audio, Video or File block
+// opens no Formatting toolbar: each has its own toolbar in its corner (the
+// Image toolbar, the File toolbar).
 
 export function FormattingToolbar({
   locale = 'en',
-  vaultPath,
 }: {
   locale?: AppLocale
-  vaultPath?: string
 } = {}) {
   return (
     <Toolbar
@@ -45,14 +31,6 @@ export function FormattingToolbar({
     >
       <ToolbarGroup>
         <BlockTypeSelect />
-      </ToolbarGroup>
-      <ToolbarGroup>
-        <FileCaptionButton />
-        <FileReplaceButton />
-        <FileRenameButton />
-        <FileDeleteButton />
-        <FileDownloadButton vaultPath={vaultPath} />
-        <FilePreviewButton />
       </ToolbarGroup>
       <ToolbarGroup>
         <CreateLinkButton />
