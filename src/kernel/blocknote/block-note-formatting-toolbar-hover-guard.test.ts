@@ -208,6 +208,30 @@ describe('blockNoteFormattingToolbarHoverGuard', () => {
     expect(editor.setTextCursorPosition).not.toHaveBeenCalled()
   })
 
+  it('lets a drag through the bridge reach window listeners, so a resize handle can shrink the picture', () => {
+    const { container } = createToolbarHoverScenario()
+    const editor = makeEditor()
+    const resizeListener = vi.fn()
+    window.addEventListener('mousemove', resizeListener)
+
+    renderHook(() =>
+      useBlockNoteFormattingToolbarHoverGuard({
+        editor: editor as never,
+        container,
+        selectedFileBlockId: 'image-block',
+        isOpen: true,
+      }),
+    )
+
+    window.dispatchEvent(new MouseEvent('mousemove', { clientX: 368, clientY: 160, buttons: 1, bubbles: true }))
+    expect(resizeListener).toHaveBeenCalledTimes(1)
+
+    window.dispatchEvent(new MouseEvent('mousemove', { clientX: 368, clientY: 160, buttons: 0, bubbles: true }))
+    expect(resizeListener).toHaveBeenCalledTimes(1)
+
+    window.removeEventListener('mousemove', resizeListener)
+  })
+
   it('uses the add-file-button fallback and swallows restore errors when the block disappears', () => {
     const container = document.createElement('div')
     document.body.appendChild(container)

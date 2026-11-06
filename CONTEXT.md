@@ -27,6 +27,10 @@ The YAML block at the top of a Document. Preserved byte-for-byte across saves; v
 A file in the Folder whose extension is one of apng, avif, bmp, gif, ico, jpeg, jpg, png, svg, tif, tiff, webp. Plumo shows it and never edits it. An Attachment is an Image file that a Document links to; an Image file need not be an Attachment.
 _Avoid_: Image (alone, when you mean the file rather than the picture inside a Document), asset, media
 
+**Image block**:
+A Block that shows a picture inside a Document, usually an Attachment. Its width and caption are part of the Document's Markdown.
+_Avoid_: Picture, image node, media block
+
 ### Editing
 
 **Kernel**:
