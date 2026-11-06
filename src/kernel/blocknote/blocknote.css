@@ -682,6 +682,32 @@
     font-size: var(--text-sm);
   }
 
+  /* A file block is not text. BlockNote says so on its wrapper, but the
+     `.bn-editor *` rule above puts it back on everything inside; a picture
+     left selectable sits in the DOM range of its own node selection, and
+     WebKit then highlights the Live Text it finds inside the picture. */
+  .bn-editor [data-file-block] .bn-file-block-content-wrapper,
+  .bn-editor [data-file-block] .bn-file-block-content-wrapper * {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* A selected Image block takes the block selection's tint over the
+     picture, in place of BlockNote's 4px outline. The tint is a ::before so
+     the resize handles, positioned after it, stay above it. */
+  :is(.bn-block-content.ProseMirror-selectednode, .ProseMirror-selectednode > .bn-block-content)[data-content-type="image"] > * {
+    outline: none;
+  }
+
+  :is(.bn-block-content.ProseMirror-selectednode, .ProseMirror-selectednode > .bn-block-content)[data-content-type="image"] .bn-visual-media-wrapper::before {
+    background: color-mix(in srgb, var(--state-selection) var(--_block-selection-mix), transparent);
+    border-radius: var(--radius-sm);
+    content: "";
+    inset: 0;
+    pointer-events: none;
+    position: absolute;
+  }
+
   /* ---------------------------------------------------------------
      Inline marks
      --------------------------------------------------------------- */

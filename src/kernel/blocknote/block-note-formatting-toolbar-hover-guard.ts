@@ -185,6 +185,11 @@ function createFormattingToolbarHoverGuardHandler({
   selectedFileBlockIdRef: RefObject<string | null>
 }) {
   return (event: MouseEvent) => {
+    // A move with a button held is a drag, not a hover: dragging a resize
+    // handle inward stays inside the bridge, and its window listener must
+    // hear every move or the picture never shrinks.
+    if (event.buttons !== 0) return
+
     if (
       !shouldSuppressFormattingToolbarHoverUpdate({
         eventTarget: event.target,
