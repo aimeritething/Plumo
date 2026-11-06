@@ -20,7 +20,7 @@ import type { ExplorerMenuAction, ExplorerMenuTargetKind } from './explorer-menu
 import { Button } from '@/ui/button'
 import { Kbd } from '@/ui/kbd'
 import { ScrollArea } from '@/ui/scroll-area'
-import { ONE_OPEN_PER_DOUBLE_CLICK_PROPS, SidebarRow, SidebarRowIcon, SidebarRowName } from '@/shell/sidebar-row'
+import { SidebarRow, SidebarRowIcon, SidebarRowName } from '@/shell/sidebar-row'
 
 const NO_FOLDER_SELECTION: SidebarSelection = { kind: 'filter', filter: 'all' }
 
@@ -432,7 +432,6 @@ function ExplorerRow(props: RowProps) {
             style={{ paddingLeft: explorerRowIndent(depth) }}
             data-drop-target={isDropTarget || undefined}
             data-testid={`explorer-row:${node.path}`} tabIndex={0} title={node.path}
-            {...ONE_OPEN_PER_DOUBLE_CLICK_PROPS}
             {...dragProps} {...dropProps}
             onClick={select} onKeyDown={(event) => {
               if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); select() }

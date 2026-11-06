@@ -577,6 +577,16 @@ describe('the header actions', () => {
     expect(actions.createDocument).toHaveBeenCalled()
   })
 
+  it('makes one Document on a double-click of "+"', () => {
+    const actions = stubActions()
+    renderExplorer(actions)
+
+    fireEvent.click(screen.getByTestId('explorer-new-document'), { detail: 1 })
+    fireEvent.click(screen.getByTestId('explorer-new-document'), { detail: 2 })
+
+    expect(actions.createDocument).toHaveBeenCalledTimes(1)
+  })
+
   it('holds exactly New Folder, Collapse All, Reveal in Finder and Close Folder', async () => {
     renderExplorer(stubActions())
 
