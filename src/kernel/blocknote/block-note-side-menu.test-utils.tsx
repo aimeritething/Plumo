@@ -1,9 +1,5 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { TooltipProvider } from '@/ui/tooltip'
-import type {
-  PropsWithChildren,
-  ReactNode,
-} from 'react'
 import { expect, vi, type Mock } from 'vitest'
 import type { AppLocale } from '@/lib/i18n'
 import {
@@ -18,19 +14,6 @@ export type MockBlock = {
   type: string
   content?: unknown
 }
-
-export type MenuItemProps = PropsWithChildren<{
-  checked?: boolean
-  className?: string
-  icon?: ReactNode
-  onClick?: () => void
-  subTrigger?: boolean
-}>
-
-export type MenuDropdownProps = PropsWithChildren<{
-  className?: string
-  sub?: boolean
-}>
 
 export type RenderSideMenuOptions = {
   locale?: AppLocale
@@ -119,121 +102,13 @@ export function requireLiveBlock(block: MockBlock | string) {
   return liveBlock
 }
 
-function mockMenuDropdown({ children, className, sub }: MenuDropdownProps) {
-  return <div className={className} data-testid={sub ? 'menu-sub-dropdown' : 'menu-dropdown'}>{children}</div>
-}
-
-function mockMenuItem({ children, className, icon, onClick, subTrigger }: MenuItemProps) {
-  return (
-    <button
-      aria-haspopup={subTrigger ? 'menu' : undefined}
-      className={className}
-      data-sub-trigger={subTrigger ? 'true' : undefined}
-      type="button"
-      onClick={onClick}
-    >
-      {icon ? <span data-testid={`menu-item-icon-${String(children)}`}>{icon}</span> : null}
-      {children}
-    </button>
-  )
-}
-
-// Opens on pointerup as BlockNote's shadcn menu trigger does, and on click.
-function mockMenuRoot({
-  children,
-  onOpenChange,
-  sub,
-}: PropsWithChildren<{ onOpenChange?: (open: boolean) => void; sub?: boolean }>) {
-  return (
-    <div
-      data-testid={sub ? 'menu-sub-root' : 'menu-root'}
-      onClick={() => onOpenChange?.(true)}
-      onPointerUp={() => onOpenChange?.(true)}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter') onOpenChange?.(true)
-      }}
-      role="menu"
-      tabIndex={0}
-    >
-      {children}
-    </div>
-  )
-}
-
-function mockMenuDivider() {
-  return <hr data-testid="menu-divider" />
-}
-
-function mockMenuTrigger({ children, sub }: PropsWithChildren<{ sub?: boolean }>) {
-  return <div data-testid={sub ? 'menu-sub-trigger' : 'menu-trigger'}>{children}</div>
-}
-
 vi.mock('@blocknote/core/extensions', () => ({
   SideMenuExtension: { key: 'side-menu' },
   SuggestionMenu: { key: 'suggestion-menu' },
 }))
 
 vi.mock('@blocknote/react', () => ({
-  AddBlockButton: () => (
-    <button
-      type="button"
-      onClick={() => {
-        if (!sideMenuBlock) return
-
-        const blockContent = sideMenuBlock.content
-        const isBlockEmpty = Array.isArray(blockContent) && blockContent.length === 0
-        if (isBlockEmpty) {
-          mockEditor.setTextCursorPosition(sideMenuBlock)
-          mockSuggestionMenu.openSuggestionMenu('/')
-        } else {
-          const insertedBlock = mockEditor.insertBlocks([{ type: 'paragraph' }], sideMenuBlock, 'after')[0]
-          mockEditor.setTextCursorPosition(insertedBlock)
-          mockSuggestionMenu.openSuggestionMenu('/')
-        }
-      }}
-    >
-      Add block
-    </button>
-  ),
-  DragHandleMenu: ({ children }: PropsWithChildren) => (
-    <div data-testid="drag-handle-menu">{children}</div>
-  ),
-  DragHandleButton: () => {
-    return (
-      <button
-        type="button"
-        draggable
-        onDragStart={() => {
-          if (sideMenuBlock) mockSideMenu.blockDragStart({ dataTransfer: null, clientY: 10 }, sideMenuBlock)
-        }}
-      >
-        Drag block
-      </button>
-    )
-  },
-  RemoveBlockItem: ({ children }: PropsWithChildren) => (
-    <button
-      type="button"
-      onClick={() => {
-        if (sideMenuBlock) mockEditor.removeBlocks([sideMenuBlock])
-      }}
-    >
-      {children}
-    </button>
-  ),
-  SideMenu: ({ children }: PropsWithChildren) => <div data-testid="side-menu">{children}</div>,
   useBlockNoteEditor: () => mockEditor,
-  useComponentsContext: () => ({
-    Generic: {
-      Menu: {
-        Divider: mockMenuDivider,
-        Dropdown: mockMenuDropdown,
-        Item: mockMenuItem,
-        Root: mockMenuRoot,
-        Trigger: mockMenuTrigger,
-      },
-    },
-  }),
   useDictionary: () => ({
     drag_handle: {
       delete_menuitem: 'Delete',
@@ -390,21 +265,37 @@ export function requireParentElement(element: HTMLElement) {
   return parent
 }
 
-export function rootSideMenuButtonText() {
-  const sideMenu = screen.getByTestId('side-menu')
-  return screen.getAllByRole('button')
-    .filter((button) => button.closest('[data-testid="side-menu"]') === sideMenu)
-    .filter((button) => !button.closest('[data-testid="menu-sub-dropdown"]'))
-    .map((button) => button.getAttribute('aria-label') ?? button.textContent)
+export function sideMenuElement() {
+  const sideMenu = document.querySelector('.bn-side-menu')
+  if (!(sideMenu instanceof HTMLElement)) throw new Error('Expected the Block handle to render')
+  return sideMenu
 }
 
-/** The drag handle menu's top level in order: each item's text, a separator as `---`. */
+/** The Block handle's own buttons in order, by their labels. */
+export function rootSideMenuButtonText() {
+  return Array.from(sideMenuElement().querySelectorAll('button'), (button) => button.getAttribute('aria-label') ?? button.textContent)
+}
+
+/** Opens the Block's menu as a click on the grip does. */
+export function openBlockMenu() {
+  fireEvent.click(screen.getByRole('button', { name: 'Drag block' }))
+  return screen.getByRole('menu')
+}
+
+/** Opens the Block's menu and its Turn into submenu, as → on the row does. */
+export function openTurnIntoMenu() {
+  if (!screen.queryByRole('menu')) openBlockMenu()
+  fireEvent.keyDown(screen.getByRole('menuitem', { name: 'Turn into…' }), { key: 'ArrowRight' })
+  return screen.getAllByRole('menu').at(-1)!
+}
+
+/** The Block's menu's top level in order: each item's text, a separator as `---`. Opens the menu first. */
 export function dragHandleMenuEntries() {
-  return Array.from(screen.getByTestId('drag-handle-menu').children, (child) => {
-    if (child.matches('[data-testid="menu-divider"]')) return '---'
-    const subTrigger = child.querySelector(':scope > [data-testid="menu-sub-trigger"]')
-    return (subTrigger ?? child).textContent
-  })
+  const menu = screen.queryByRole('menu') ?? openBlockMenu()
+  return Array.from(
+    menu.querySelectorAll('[role="menuitem"], [role="menuitemcheckbox"], [role="separator"]'),
+    (entry) => (entry.getAttribute('role') === 'separator' ? '---' : entry.textContent),
+  )
 }
 
 export function renderPointerReorderFixture() {

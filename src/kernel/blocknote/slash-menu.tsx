@@ -1,10 +1,25 @@
-import { useBlockNoteEditor, useComponentsContext, useDictionary, type SuggestionMenuProps } from '@blocknote/react'
-import { useCallback, useLayoutEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react'
+import { useBlockNoteEditor, useDictionary, type SuggestionMenuProps } from '@blocknote/react'
+import { CaretRight, CircleNotch } from '@phosphor-icons/react'
+import { Fragment, useCallback, useLayoutEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react'
 import { createPortal } from 'react-dom'
 import { isImeKeyEvent } from '@/lib/ime-key-event'
-import { Button } from '@/ui/button'
-import { ScrollArea } from '@/ui/scroll-area'
+import {
+  MenuList,
+  MenuListEmpty,
+  MenuListItem,
+  MenuListLabel,
+  MenuListSeparator,
+  MenuListShortcut,
+} from '@/ui/menu-list'
 import type { SlashMenuItem } from './slash-menu-items'
+
+// The Slash menu (CONTEXT.md), laid out like Notion's: the rows under small
+// grey group labels with a hairline between the groups, each row an icon, the
+// title and, at its right end, the Block's shortcut or the caret of a row that
+// opens a submenu. BlockNote's SuggestionMenuController places it and owns the
+// selection (the arrow keys and Enter in the editor); the rows never take the
+// focus. The ids are the ones BlockNote's wrapper names in the editor's
+// `aria-controls` and `aria-activedescendant`.
 
 interface OpenSubmenu {
   key: string
@@ -123,7 +138,6 @@ export function SlashMenu({
   onItemClick,
   selectedIndex,
 }: SuggestionMenuProps<SlashMenuItem>) {
-  const Components = useComponentsContext()
   const dictionary = useDictionary()
   const editor = useBlockNoteEditor()
   const itemElements = useRef(new Map<string, Element>())
@@ -188,99 +202,79 @@ export function SlashMenu({
     return () => root?.removeEventListener('keydown', handleKeyDown, true)
   }, [editor.domElement, items, onItemClick, openItemSubmenu, openSubmenu, selectedIndex, submenuIndex, submenuItems])
 
-  if (!Components) return null
-
-  const renderedItems = items.flatMap((item, index) => {
-    const nodes = []
-    if (item.group !== items[index - 1]?.group) {
-      nodes.push(
-        <Components.SuggestionMenu.Label className="bn-suggestion-menu-label" key={`group-${item.group}`}>
-          {item.group}
-        </Components.SuggestionMenu.Label>,
-      )
-    }
-    nodes.push(
-      <div
-        key={item.key}
-        onMouseEnter={() => {
-          openItemSubmenu(item)
-        }}
-        ref={(element) => {
-          if (element) itemElements.current.set(item.key, element)
-          else itemElements.current.delete(item.key)
-        }}
-        role="menuitem"
-        tabIndex={-1}
-      >
-        <Components.SuggestionMenu.Item
-          className="bn-suggestion-menu-item group"
+  const rows = items.map((item, index) => {
+    const startsGroup = item.group !== items[index - 1]?.group
+    const hasSubmenu = Boolean(item.submenuItems?.length)
+    return (
+      <Fragment key={item.key}>
+        {startsGroup && index > 0 && <MenuListSeparator />}
+        {startsGroup && item.group && <MenuListLabel>{item.group}</MenuListLabel>}
+        <MenuListItem
+          aria-haspopup={hasSubmenu ? 'menu' : undefined}
           id={`bn-suggestion-menu-item-${index}`}
-          isSelected={index === selectedIndex}
-          item={item}
           onClick={() => {
-            if (item.submenuItems?.length) openItemSubmenu(item)
+            if (hasSubmenu) openItemSubmenu(item)
             else onItemClick?.(item)
           }}
-        />
-      </div>,
+          onMouseEnter={() => {
+            openItemSubmenu(item)
+          }}
+          ref={(element) => {
+            if (element) itemElements.current.set(item.key, element)
+            else itemElements.current.delete(item.key)
+          }}
+          selected={index === selectedIndex}
+        >
+          {item.icon}
+          <span className="min-w-0 flex-1 truncate">{item.title}</span>
+          {hasSubmenu
+            ? <CaretRight aria-hidden="true" className="size-3" />
+            : item.badge && <MenuListShortcut>{item.badge}</MenuListShortcut>}
+        </MenuListItem>
+      </Fragment>
     )
-    return nodes
   })
-
-  const loader =
-    loadingState === 'loaded' ? null : <Components.SuggestionMenu.Loader className="bn-suggestion-menu-loader" />
 
   return (
     <>
-      {/* The adapter's root keeps its size and material and stops scrolling; the
-          rows scroll in Plumo's ScrollArea inside it, the root's inset its viewport's. */}
-      <Components.SuggestionMenu.Root id="bn-suggestion-menu" className="bn-suggestion-menu flex flex-col overflow-hidden p-0">
-        <ScrollArea className="min-h-0" viewportClassName="p-1">
-          {renderedItems}
-          {renderedItems.length === 0 && loadingState !== 'loading-initial' && (
-            <Components.SuggestionMenu.EmptyItem className="bn-suggestion-menu-item">
-              {dictionary.suggestion_menu.no_items_title}
-            </Components.SuggestionMenu.EmptyItem>
-          )}
-          {loader}
-        </ScrollArea>
-      </Components.SuggestionMenu.Root>
+      <MenuList className="w-72 max-h-104" data-slash-menu="" id="bn-suggestion-menu">
+        {rows}
+        {rows.length === 0 && loadingState !== 'loading-initial' && (
+          <MenuListEmpty>{dictionary.suggestion_menu.no_items_title}</MenuListEmpty>
+        )}
+        {loadingState !== 'loaded' && (
+          <MenuListEmpty aria-busy="true">
+            <CircleNotch aria-hidden="true" className="animate-spin" />
+          </MenuListEmpty>
+        )}
+      </MenuList>
       {openSubmenu &&
         submenuItems.length > 0 &&
         createPortal(
-          <div
+          <MenuList
             aria-label={items.find((item) => item.key === openSubmenu.key)?.title}
-            className="fixed z-popover flex max-h-[min(26rem,calc(100vh-1rem))] min-w-40 flex-col overflow-hidden rounded-xl bg-surface-popover text-text-primary border-hairline border-border-popover shadow-menu"
+            className="fixed z-popover max-h-[min(26rem,calc(100vh-1rem))] min-w-40"
             ref={submenuElement}
             role="menu"
             style={{ left: openSubmenu.left, top: openSubmenu.top }}
           >
-            <ScrollArea className="min-h-0" viewportClassName="p-1 [&>div]:flex! [&>div]:flex-col [&>div]:gap-0.5">
-              {submenuItems.map((item, index) => (
-                <Button
-                  aria-selected={index === submenuIndex}
-                  className="w-full justify-start gap-2 font-normal hover:bg-menu-item-hover hover:text-text-heading aria-selected:bg-menu-item-hover aria-selected:text-text-heading"
-                  key={item.key}
-                  onClick={() => onItemClick?.(item)}
-                  onMouseDown={(event) => {
-                    event.preventDefault()
-                  }}
-                  onMouseEnter={() => {
-                    setSubmenuIndex(index)
-                  }}
-                  role="menuitem"
-                  size="sm"
-                  type="button"
-                  variant="ghost"
-                >
-                  {item.icon}
-                  <span>{item.title}</span>
-                </Button>
-              ))}
-            </ScrollArea>
-          </div>,
-        document.body,
-      )}
+            {submenuItems.map((item, index) => (
+              <MenuListItem
+                key={item.key}
+                onClick={() => onItemClick?.(item)}
+                onMouseEnter={() => {
+                  setSubmenuIndex(index)
+                }}
+                role="menuitem"
+                selected={index === submenuIndex}
+              >
+                {item.icon}
+                <span>{item.title}</span>
+              </MenuListItem>
+            ))}
+          </MenuList>,
+          document.body,
+        )}
     </>
   )
 }

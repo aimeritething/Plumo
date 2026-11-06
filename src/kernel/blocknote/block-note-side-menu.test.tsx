@@ -1,4 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react'
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   appendBlockOuters,
@@ -16,6 +16,8 @@ import {
   mockEditor,
   mockSideMenu,
   mockSuggestionMenu,
+  openBlockMenu,
+  openTurnIntoMenu,
   placeEditorInScrollArea,
   rect,
   renderPointerReorderFixture,
@@ -40,24 +42,16 @@ describe('SideMenu', () => {
     mockEditor.getBlock.mockReturnValue(sideMenuBlock)
     renderSideMenuWithBlock(sideMenuBlock)
 
-    expect(screen.getByTestId('side-menu')).toBeInTheDocument()
-    expect(rootSideMenuButtonText()).toEqual([
-      'Add block',
-      'Drag block',
-      'Turn into…',
-      'Duplicate',
-      'Delete',
-    ])
-    expect(dragHandleMenuEntries()).toEqual(['Turn into…', 'Duplicate', '---', 'Delete'])
-    expect(screen.getByText('Delete')).toHaveClass('text-chroma-red')
-
-    expect(screen.getByText('Delete')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Turn into…' })).toHaveAttribute('aria-haspopup', 'menu')
-    expect(screen.getByTestId('menu-sub-dropdown')).toHaveClass('min-w-0')
-    for (const label of turnIntoButtonLabels) {
-      expect(screen.getByTestId(`menu-item-icon-${label}`)).toBeInTheDocument()
-    }
+    expect(rootSideMenuButtonText()).toEqual(['Add block', 'Drag block'])
+    expect(dragHandleMenuEntries()).toEqual(['Turn into…', 'Duplicate⌘D', '---', 'Delete'])
+    expect(screen.getByRole('menuitem', { name: 'Delete' })).toHaveAttribute('data-variant', 'destructive')
+    expect(screen.getByRole('menuitem', { name: 'Turn into…' })).toHaveAttribute('aria-haspopup', 'menu')
     expect(screen.queryByText('Colors')).not.toBeInTheDocument()
+
+    const turnInto = openTurnIntoMenu()
+    const turnIntoItems = within(turnInto).getAllByRole('menuitem')
+    expect(turnIntoItems.map((item) => item.textContent)).toEqual(turnIntoButtonLabels)
+    for (const item of turnIntoItems) expect(item.querySelector('svg')).toBeInTheDocument()
   })
 
   it('ignores add-block clicks when reload churn leaves the side menu with a stale block', () => {
@@ -109,8 +103,9 @@ describe('SideMenu', () => {
 
   it('ignores delete clicks when the side-menu block disappeared during a reload', () => {
     renderSideMenuWithBlock(sideMenuBlock)
+    openBlockMenu()
 
-    expect(() => fireEvent.click(screen.getByText('Delete'))).not.toThrow()
+    expect(() => fireEvent.click(screen.getByRole('menuitem', { name: 'Delete' }))).not.toThrow()
     expect(mockEditor.removeBlocks).not.toHaveBeenCalled()
   })
 
@@ -128,8 +123,8 @@ describe('SideMenu', () => {
     mockEditor.getBlock.mockReturnValue(liveTable)
 
     renderSideMenuWithBlock(staleTable)
-    expect(dragHandleMenuEntries()).toEqual(['Turn into…', 'Duplicate', '---', 'Header row', 'Header column', '---', 'Delete'])
-    fireEvent.click(screen.getByText('Header row'))
+    expect(dragHandleMenuEntries()).toEqual(['Turn into…', 'Duplicate⌘D', '---', 'Header row', 'Header column', '---', 'Delete'])
+    fireEvent.click(screen.getByRole('menuitemcheckbox', { name: 'Header row' }))
 
     expect(mockEditor.updateBlock).toHaveBeenCalledWith(liveTable.id, {
       content: { ...liveTable.content, headerRows: 1 },
@@ -147,7 +142,7 @@ describe('SideMenu', () => {
     mockEditor.getBlock.mockReturnValue(liveBlock)
 
     renderSideMenuWithBlock(liveBlock)
-    fireEvent.click(screen.getByRole('button', { name: 'Heading 2' }))
+    fireEvent.click(within(openTurnIntoMenu()).getByRole('menuitem', { name: 'Heading 2' }))
 
     expect(mockEditor.focus).toHaveBeenCalledOnce()
     expect(mockEditor.updateBlock).toHaveBeenCalledWith(liveBlock.id, {
@@ -158,8 +153,9 @@ describe('SideMenu', () => {
 
   it('ignores turn-into clicks when reload churn leaves a stale side-menu block', () => {
     renderSideMenuWithBlock(sideMenuBlock)
+    const turnInto = openTurnIntoMenu()
 
-    expect(() => fireEvent.click(screen.getByRole('button', { name: 'Heading 2' }))).not.toThrow()
+    expect(() => fireEvent.click(within(turnInto).getByRole('menuitem', { name: 'Heading 2' }))).not.toThrow()
     expect(mockEditor.updateBlock).not.toHaveBeenCalled()
   })
 
@@ -415,6 +411,44 @@ describe('SideMenu', () => {
     expect(mockSideMenu.freezeMenu).toHaveBeenCalled()
   })
 
+  it('closes the menu on a second press of the grip and lets the Block handle follow the pointer again', () => {
+    mockEditor.getBlock.mockReturnValue(sideMenuBlock)
+    renderSideMenuWithBlock(sideMenuBlock)
+    const handle = requireParentElement(screen.getByRole('button', { name: 'Drag block' }))
+
+    act(() => {
+      dispatchPointerEvent(handle, 'pointerdown', { button: 0, clientX: 80, clientY: 90 })
+      dispatchPointerEvent(handle, 'pointerup', { button: 0, clientX: 80, clientY: 90 })
+    })
+    fireEvent.click(handle)
+    expect(screen.getByRole('menu')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Drag block' })).toHaveAttribute('aria-expanded', 'true')
+
+    act(() => {
+      dispatchPointerEvent(handle, 'pointerdown', { button: 0, clientX: 80, clientY: 90 })
+      dispatchPointerEvent(handle, 'pointerup', { button: 0, clientX: 80, clientY: 90 })
+    })
+    fireEvent.click(handle)
+
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+    expect(mockSideMenu.freezeMenu).toHaveBeenCalledOnce()
+    expect(mockSideMenu.unfreezeMenu).toHaveBeenCalled()
+  })
+
+  it('opens the menu from the keyboard and hands the focus back to the grip on Escape', async () => {
+    mockEditor.getBlock.mockReturnValue(sideMenuBlock)
+    renderSideMenuWithBlock(sideMenuBlock)
+    const grip = screen.getByRole('button', { name: 'Drag block' })
+    grip.focus()
+
+    fireEvent.keyDown(grip, { key: 'ArrowDown' })
+    fireEvent.keyDown(screen.getByRole('menu'), { key: 'Escape' })
+
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+    expect(mockSideMenu.unfreezeMenu).toHaveBeenCalled()
+    await waitFor(() => expect(grip).toHaveFocus())
+  })
+
   it('ignores the button-less pointerdown the menu trigger dispatches on pointer up', () => {
     // BlockNote's shadcn menu trigger opens on pointer up by re-dispatching the
     // pointerup as a pointerdown; a gesture armed on it never sees a pointerup.
@@ -486,13 +520,7 @@ describe('SideMenu', () => {
 
     renderSideMenuWithBlock(heading)
 
-    expect(rootSideMenuButtonText()).toEqual([
-      'Collapse section',
-      'Drag block',
-      'Turn into…',
-      'Duplicate',
-      'Delete',
-    ])
+    expect(rootSideMenuButtonText()).toEqual(['Collapse section', 'Drag block'])
   })
 
   it('swaps the heading collapse label for the expand label once collapsed', () => {
@@ -526,13 +554,7 @@ describe('SideMenu', () => {
 
     renderSideMenuWithBlock(parentListItem)
 
-    expect(rootSideMenuButtonText()).toEqual([
-      'Collapse item',
-      'Drag block',
-      'Turn into…',
-      'Duplicate',
-      'Delete',
-    ])
+    expect(rootSideMenuButtonText()).toEqual(['Collapse item', 'Drag block'])
   })
 
   it('swaps the list item collapse label for the expand label once collapsed', () => {

@@ -6,6 +6,33 @@ import { ScrollArea } from "./scroll-area"
 import { CaretRight as ChevronRightIcon, Check as CheckIcon, Circle as CircleIcon } from "@phosphor-icons/react"
 import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui"
 
+// The menu look, shared with ui/menu-list.tsx (the list a text field drives,
+// such as an editor's `/` menu), so the two kinds of menu read as one: Notion's
+// rows, an icon then the label, a hint at the right end, small grey labels
+// over the groups, hairlines between them.
+
+/** The menu card: the popover surface, the popover hairline, the menu shadow. */
+const menuSurfaceClassName =
+  "rounded-xl border-hairline border-border-popover bg-surface-popover text-text-primary shadow-menu"
+
+/**
+ * A row: 32px, an icon then the label, the icon in the secondary colour unless
+ * it brings its own. The row is the `menu-item` group, so an icon can change
+ * with the row's state (`group-hover/menu-item:`, `group-data-highlighted/menu-item:`,
+ * `group-aria-selected/menu-item:`).
+ */
+const menuItemClassName =
+  "group/menu-item relative flex h-8 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-hidden select-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground"
+
+/** A group's label: small, grey, above its rows. */
+const menuLabelClassName = "px-2 pt-2 pb-1 text-2xs font-medium text-text-tertiary"
+
+/** The hint at a row's right end (a shortcut): plain text, Inter 11/500. */
+const menuShortcutClassName = "ml-auto text-2xs font-medium text-menu-shortcut"
+
+/** The hairline between two groups, edge to edge across the card's inset. */
+const menuSeparatorClassName = "-mx-1.5 my-1.5 h-(--hairline) shrink-0 bg-border-popover"
+
 function DropdownMenu({
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Root>) {
@@ -43,7 +70,8 @@ function DropdownMenuContent({
         data-slot="dropdown-menu-content"
         sideOffset={sideOffset}
         className={cn(
-          "z-popover flex max-h-(--radix-dropdown-menu-content-available-height) min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) flex-col overflow-hidden rounded-xl border-hairline border-border-popover bg-surface-popover text-text-primary shadow-menu data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
+          menuSurfaceClassName,
+          "z-popover flex max-h-(--radix-dropdown-menu-content-available-height) min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) flex-col overflow-hidden data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
           className
         )}
         {...props}
@@ -80,7 +108,8 @@ function DropdownMenuItem({
       data-inset={inset}
       data-variant={variant}
       className={cn(
-        "relative flex h-8 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-hidden select-none focus:bg-menu-item-hover focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[inset]:pl-8 data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 data-[variant=destructive]:focus:text-destructive dark:data-[variant=destructive]:focus:bg-destructive/20 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground data-[variant=destructive]:*:[svg]:text-destructive!",
+        menuItemClassName,
+        "focus:bg-menu-item-hover focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[inset]:pl-8 data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 data-[variant=destructive]:focus:text-destructive dark:data-[variant=destructive]:focus:bg-destructive/20 data-[variant=destructive]:*:[svg]:text-destructive!",
         className
       )}
       {...props}
@@ -161,7 +190,8 @@ function DropdownMenuLabel({
       data-slot="dropdown-menu-label"
       data-inset={inset}
       className={cn(
-        "px-2 py-1.5 text-sm font-medium data-[inset]:pl-8",
+        menuLabelClassName,
+        "data-[inset]:pl-8",
         className
       )}
       {...props}
@@ -176,13 +206,13 @@ function DropdownMenuSeparator({
   return (
     <DropdownMenuPrimitive.Separator
       data-slot="dropdown-menu-separator"
-      className={cn("-mx-1.5 my-1.5 h-(--hairline) bg-border-popover", className)}
+      className={cn(menuSeparatorClassName, className)}
       {...props}
     />
   )
 }
 
-// The one way a menu writes its shortcut: plain text, Inter 11/500.
+// The one way a menu writes its shortcut.
 function DropdownMenuShortcut({
   className,
   ...props
@@ -190,10 +220,7 @@ function DropdownMenuShortcut({
   return (
     <span
       data-slot="dropdown-menu-shortcut"
-      className={cn(
-        "ml-auto text-2xs font-medium text-menu-shortcut",
-        className
-      )}
+      className={cn(menuShortcutClassName, className)}
       {...props}
     />
   )
@@ -218,7 +245,8 @@ function DropdownMenuSubTrigger({
       data-slot="dropdown-menu-sub-trigger"
       data-inset={inset}
       className={cn(
-        "flex h-8 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-hidden select-none focus:bg-menu-item-hover focus:text-accent-foreground data-[inset]:pl-8 data-[state=open]:bg-menu-item-hover data-[state=open]:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground",
+        menuItemClassName,
+        "focus:bg-menu-item-hover focus:text-accent-foreground data-[inset]:pl-8 data-[state=open]:bg-menu-item-hover data-[state=open]:text-accent-foreground",
         className
       )}
       {...props}
@@ -237,13 +265,17 @@ function DropdownMenuSubContent({
     <DropdownMenuPrimitive.SubContent
       data-slot="dropdown-menu-sub-content"
       className={cn(
-        "z-popover min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-hidden rounded-xl border-hairline border-border-popover bg-surface-popover p-1.5 text-text-primary shadow-menu data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
+        menuSurfaceClassName,
+        "z-popover min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-hidden p-1.5 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
         className
       )}
       {...props}
     />
   )
 }
+
+// eslint-disable-next-line react-refresh/only-export-components -- the menu look, shared with menu-list.tsx
+export { menuItemClassName, menuLabelClassName, menuSeparatorClassName, menuShortcutClassName, menuSurfaceClassName }
 
 export {
   DropdownMenu,

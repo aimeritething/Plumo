@@ -22,7 +22,7 @@ const CONTAINER_CLICK_IGNORE_SELECTOR = [
   '[data-link-toolbar]',
   '.bn-panel',
   '.bn-side-menu',
-  '.bn-suggestion-menu',
+  '[data-slash-menu]',
   '.bn-grid-suggestion-menu',
   '[data-slot="popover-content"]',
   '[data-editor-code-copy]',

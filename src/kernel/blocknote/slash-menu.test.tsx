@@ -1,29 +1,11 @@
-import { fireEvent, render, screen } from '@testing-library/react'
-import type { ReactNode } from 'react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it, onTestFinished, vi } from 'vitest'
 
 const editorElement = document.createElement('div')
 document.body.appendChild(editorElement)
-const mocks = vi.hoisted(() => ({ suggestionMenuItemProps: vi.fn() }))
 
 vi.mock('@blocknote/react', () => ({
   useBlockNoteEditor: () => ({ domElement: editorElement }),
-  useComponentsContext: () => ({
-    SuggestionMenu: {
-      EmptyItem: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
-      Item: (props: {
-        item: { title: string }
-        onClick: () => void
-      }) => {
-        mocks.suggestionMenuItemProps(props)
-        const { item, onClick } = props
-        return <button type="button" onClick={onClick}>{item.title}</button>
-      },
-      Label: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
-      Loader: () => <div>Loading</div>,
-      Root: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
-    },
-  }),
   useDictionary: () => ({ suggestion_menu: { no_items_title: 'No items' } }),
 }))
 
@@ -44,17 +26,71 @@ function calloutItem(): SlashMenuItem {
 }
 
 describe('SlashMenu', () => {
-  it('passes only supported props to the BlockNote suggestion item', () => {
+  // BlockNote's wrapper names the list and the selected row in the editor's
+  // aria-controls and aria-activedescendant, by these ids.
+  it('lists the rows under one label per group, each with the id the editor points at', () => {
     render(<SlashMenu
-      items={[calloutItem()]}
+      items={[
+        { key: 'heading', group: 'Headings', title: 'Heading 1', badge: '⌘⌥1', onItemClick: vi.fn() },
+        { key: 'heading_2', group: 'Headings', title: 'Heading 2', onItemClick: vi.fn() },
+        { ...calloutItem(), group: 'Basic blocks' },
+      ]}
+      loadingState="loaded"
+      selectedIndex={1}
+      onItemClick={vi.fn()}
+    />)
+
+    const list = screen.getByRole('listbox')
+    expect(list).toHaveAttribute('id', 'bn-suggestion-menu')
+    expect(within(list).getAllByText(/^(Headings|Basic blocks)$/).map((label) => label.textContent)).toEqual(['Headings', 'Basic blocks'])
+    const rows = within(list).getAllByRole('option')
+    expect(rows.map((row) => row.id)).toEqual(['bn-suggestion-menu-item-0', 'bn-suggestion-menu-item-1', 'bn-suggestion-menu-item-2'])
+    expect(rows.map((row) => row.getAttribute('aria-selected'))).toEqual([null, 'true', null])
+    expect(rows[0]).toHaveTextContent('Heading 1⌘⌥1')
+    expect(rows[2]).toHaveAttribute('aria-haspopup', 'menu')
+  })
+
+  // The adapter's row used to repeat its class on the icon cell, the title and
+  // the subtitle, and the titles overflowed into the rows below.
+  it('draws each row one line tall: the icon, the title and the hint, no subtitle', () => {
+    render(<SlashMenu
+      items={[{ key: 'paragraph', title: 'Paragraph', subtext: 'Plain text', onItemClick: vi.fn() }]}
       loadingState="loaded"
       selectedIndex={0}
       onItemClick={vi.fn()}
     />)
 
-    expect(mocks.suggestionMenuItemProps).toHaveBeenCalledWith(
-      expect.not.objectContaining({ onMouseEnter: expect.anything() }),
-    )
+    const row = screen.getByRole('option', { name: 'Paragraph' })
+    expect(row).toHaveClass('h-8')
+    expect(row.children).toHaveLength(1)
+    expect(row).not.toHaveTextContent('Plain text')
+  })
+
+  it('scrolls the selected row into view as the keys move the selection', () => {
+    const items: SlashMenuItem[] = [
+      { key: 'a', title: 'A', onItemClick: vi.fn() },
+      { key: 'b', title: 'B', onItemClick: vi.fn() },
+    ]
+    const { rerender } = render(<SlashMenu items={items} loadingState="loaded" selectedIndex={0} onItemClick={vi.fn()} />)
+    const scrollIntoView = vi.mocked(Element.prototype.scrollIntoView)
+    scrollIntoView.mockClear()
+
+    rerender(<SlashMenu items={items} loadingState="loaded" selectedIndex={1} onItemClick={vi.fn()} />)
+
+    expect(scrollIntoView).toHaveBeenCalledOnce()
+    expect(scrollIntoView.mock.contexts[0]).toBe(screen.getByRole('option', { name: 'B' }))
+  })
+
+  it('keeps the editor focused when a row is pressed', () => {
+    render(<SlashMenu items={[calloutItem()]} loadingState="loaded" selectedIndex={0} onItemClick={vi.fn()} />)
+
+    expect(fireEvent.mouseDown(screen.getByRole('option', { name: 'Callout' }))).toBe(false)
+  })
+
+  it('says so when nothing matches', () => {
+    render(<SlashMenu items={[]} loadingState="loaded" selectedIndex={undefined} onItemClick={vi.fn()} />)
+
+    expect(screen.getByText('No items')).toBeInTheDocument()
   })
 
   it('opens the callout type submenu on the right and selects a clicked style', () => {
@@ -67,7 +103,7 @@ describe('SlashMenu', () => {
       onItemClick={onItemClick}
     />)
 
-    fireEvent.mouseEnter(screen.getByRole('button', { name: 'Callout' }))
+    fireEvent.mouseEnter(screen.getByRole('option', { name: 'Callout' }))
 
     const submenu = screen.getByRole('menu', { name: 'Callout' })
     expect(submenu).toHaveClass('fixed', 'rounded-xl', 'shadow-menu')
@@ -86,7 +122,7 @@ describe('SlashMenu', () => {
     Object.defineProperty(window, 'innerHeight', { configurable: true, value: 800 })
 
     render(<SlashMenu items={[calloutItem()]} loadingState="loaded" selectedIndex={0} onItemClick={vi.fn()} />)
-    fireEvent.mouseEnter(screen.getByRole('button', { name: 'Callout' }))
+    fireEvent.mouseEnter(screen.getByRole('option', { name: 'Callout' }))
 
     expect(screen.getByRole('menu', { name: 'Callout' })).toHaveStyle({ left: '304px', top: '392px' })
 
