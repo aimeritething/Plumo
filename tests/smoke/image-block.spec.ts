@@ -80,7 +80,7 @@ test('a selected picture shows the Image toolbar in its corner, and no formattin
 
   const toolbar = page.getByTestId('image-toolbar')
   await expect(toolbar).toHaveCSS('opacity', '1')
-  await expect(page.locator('.bn-formatting-toolbar')).toHaveCount(0)
+  await expect(page.locator('[data-formatting-toolbar]')).toHaveCount(0)
   const pictureBox = (await picture.boundingBox())!
   const toolbarBox = (await toolbar.boundingBox())!
   expect(toolbarBox.y).toBeGreaterThanOrEqual(pictureBox.y)

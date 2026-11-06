@@ -1,23 +1,22 @@
 import { isTableCellSelection } from '@blocknote/core'
 import { FormattingToolbarExtension, ShowSelectionExtension } from '@blocknote/core/extensions'
 import {
-  EditLinkMenuItems,
   useBlockNoteEditor,
-  useComponentsContext,
   useDictionary,
   useEditorState,
   useExtension,
 } from '@blocknote/react'
 import { LinkSimple } from '@phosphor-icons/react'
 import { useCallback, useEffect, useState } from 'react'
-import { Button } from '@/ui/button'
+import { Popover, PopoverContent, PopoverTrigger } from '@/ui/popover'
+import { ToolbarButton } from '@/ui/toolbar'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
 import { getSelectedBlocksSafely, type FormattingToolbarEditor } from './formatting-toolbar-selection'
+import { LinkForm } from './link-form'
 
-// The formatting toolbar's link button, Plumo's own in place of BlockNote's
-// so the tooltip is one row, label and shortcut chips, like the buttons beside
-// it. The popover and the link form inside it are BlockNote's
-// (EditLinkMenuItems through the shadcn components), as is the rest: the
+// The Formatting toolbar's link button, its tooltip one row, label and
+// shortcut chips, like the buttons beside it. It opens Plumo's link form
+// (link-form.tsx) on a ui/ popover below it, the URL alone, as Notion's. The
 // selection stays drawn while the popover is open, the popover closes when
 // the selection changes, and ⌘K in the editor opens it. The window's ⌘K
 // handler (shell/app-keyboard-shortcuts.ts) presses this button by its
@@ -48,9 +47,17 @@ function getCreateLinkState(editor: FormattingToolbarEditor) {
   }
 }
 
+// Compared by value: the selection state is rebuilt on every read.
+function isSameCreateLinkState(a: CreateLinkState, b: CreateLinkState) {
+  return a !== undefined && b !== undefined
+    && a.url === b.url
+    && a.text === b.text
+    && a.range.from === b.range.from
+    && a.range.to === b.range.to
+}
+
 export function CreateLinkButton() {
   const editor = useBlockNoteEditor() as FormattingToolbarEditor
-  const Components = useComponentsContext()
   const dict = useDictionary()
   const formattingToolbar = useExtension(FormattingToolbarExtension)
   const { showSelection } = useExtension(ShowSelectionExtension)
@@ -63,7 +70,7 @@ export function CreateLinkButton() {
   // Open for one selection state: a change of selection closes the popover
   // by leaving the state it was opened for behind (no effect needed).
   const [openedFor, setOpenedFor] = useState<CreateLinkState>(undefined)
-  const opened = state !== undefined && openedFor === state
+  const opened = state !== undefined && isSameCreateLinkState(openedFor, state)
   const setOpened = useCallback((open: boolean) => {
     setOpenedFor(open ? state : undefined)
   }, [state])
@@ -88,39 +95,37 @@ export function CreateLinkButton() {
 
   const toggle = useCallback(() => setOpened(!opened), [opened, setOpened])
 
-  if (state === undefined || !Components) return null
+  if (state === undefined) return null
 
   const label = dict.formatting_toolbar.link.tooltip
 
   // The tooltip trigger is the popover trigger's child, so the popover's open / closed data-state is the one the button keeps.
   return (
-    <Components.Generic.Popover.Root open={opened} onOpenChange={setOpened}>
+    <Popover open={opened} onOpenChange={setOpened}>
       <Tooltip>
-        <Components.Generic.Popover.Trigger>
+        <PopoverTrigger asChild>
           <TooltipTrigger asChild>
-            <Button
+            <ToolbarButton
               aria-label={label}
-              className="min-w-7 px-2"
               data-test="createLink"
               onClick={toggle}
-              size="default"
-              variant="ghost"
             >
               <LinkSimple aria-hidden="true" />
-            </Button>
+            </ToolbarButton>
           </TooltipTrigger>
-        </Components.Generic.Popover.Trigger>
+        </PopoverTrigger>
         <TooltipContent shortcut={CREATE_LINK_SHORTCUT}>{label}</TooltipContent>
       </Tooltip>
-      <Components.Generic.Popover.Content className="bn-popover-content bn-form-popover" variant="form-popover">
-        <EditLinkMenuItems
+      <PopoverContent align="start" variant="compact">
+        <LinkForm
+          key={`${state.range.from}:${state.range.to}`}
+          onDone={() => formattingToolbar.store.setState(false)}
           range={state.range}
-          setToolbarOpen={(open) => formattingToolbar.store.setState(open)}
           showTextField={false}
           text={state.text}
           url={state.url ?? ''}
         />
-      </Components.Generic.Popover.Content>
-    </Components.Generic.Popover.Root>
+      </PopoverContent>
+    </Popover>
   )
 }

@@ -8,6 +8,8 @@ import { useEffect, useRef, type RefObject } from 'react'
 
 type RectLike = Pick<DOMRect, 'left' | 'right' | 'top' | 'bottom'>
 
+// The Formatting toolbar's root (formatting-toolbar.tsx).
+const FORMATTING_TOOLBAR_SELECTOR = '[data-formatting-toolbar]'
 const HOVER_BRIDGE_PADDING_X = 8
 const HOVER_BRIDGE_PADDING_Y = 8
 const FORMATTING_TOOLBAR_FILE_BLOCK_TYPES = new Set([
@@ -33,14 +35,14 @@ function getSelectedFileBlockBridgeElement(
 
   if (!selectedBlock) return null
 
+  // The picture (image-block.tsx), the player or the file's name line
+  // (media-blocks.tsx), the empty slot (add-file-button.tsx), else the Block.
   return (
     selectedBlock.querySelector<HTMLElement>(
       '[data-file-block] .bn-visual-media-wrapper',
     ) ??
-    selectedBlock.querySelector<HTMLElement>(
-      '[data-file-block] .bn-file-name-with-icon',
-    ) ??
-    selectedBlock.querySelector<HTMLElement>('[data-file-block] .bn-add-file-button') ??
+    selectedBlock.querySelector<HTMLElement>('[data-file-block-frame]') ??
+    selectedBlock.querySelector<HTMLElement>('[data-add-file-button]') ??
     selectedBlock.querySelector<HTMLElement>('[data-file-block]')
   )
 }
@@ -84,7 +86,7 @@ export function shouldSuppressFormattingToolbarHoverUpdate({
 
   if (
     eventTarget instanceof Element &&
-    eventTarget.closest('.bn-formatting-toolbar')
+    eventTarget.closest(FORMATTING_TOOLBAR_SELECTOR)
   ) {
     return true
   }
@@ -93,7 +95,7 @@ export function shouldSuppressFormattingToolbarHoverUpdate({
     container,
     selectedFileBlockId,
   )
-  const toolbar = doc.querySelector<HTMLElement>('.bn-formatting-toolbar')
+  const toolbar = doc.querySelector<HTMLElement>(FORMATTING_TOOLBAR_SELECTOR)
 
   if (!selectedFileBlock || !toolbar) return false
 

@@ -1,7 +1,7 @@
 import { useBlockNoteEditor, useDictionary, useEditorState } from '@blocknote/react'
 import { TextIndent, TextOutdent } from '@phosphor-icons/react'
 import { useCallback } from 'react'
-import { Button } from '@/ui/button'
+import { ToolbarButton } from '@/ui/toolbar'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
 import { getSelectedBlocksSafely, type FormattingToolbarEditor } from './formatting-toolbar-selection'
 
@@ -35,17 +35,14 @@ function NestingButton({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button
+        <ToolbarButton
           aria-label={label}
-          className="min-w-7 px-2"
           data-test={testId}
           disabled={disabled}
           onClick={onClick}
-          size="default"
-          variant="ghost"
         >
           {icon}
-        </Button>
+        </ToolbarButton>
       </TooltipTrigger>
       <TooltipContent shortcut={shortcut}>{label}</TooltipContent>
     </Tooltip>

@@ -5,9 +5,8 @@ import { createTranslator } from '@/lib/i18n'
 import { trackEvent } from '@/lib/telemetry'
 import { writeClipboardText } from '@/platform/clipboard-text'
 import { codeBlockText } from './editor-rich-copy'
-import { Button } from '@/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
-import { FloatingIconGroup } from './floating-icon-group'
+import { Toolbar, ToolbarButton } from '@/ui/toolbar'
 import type { CodeBlockCopyTarget } from './use-code-block-copy-target'
 
 function stopCopyButtonEvent(event: React.MouseEvent<HTMLButtonElement>): void {
@@ -33,22 +32,20 @@ export function CodeBlockCopyButton({ copyTarget, locale }: { copyTarget: CodeBl
   const label = t('editor.codeBlock.copy')
   const handleCopy = useCodeBlockCopyAction(copyTarget)
   return (
-    <FloatingIconGroup className="absolute z-raised" contentEditable={false} data-editor-code-copy style={{ left: copyTarget.left, top: copyTarget.top }}>
+    <Toolbar aria-label={t('editor.codeBlock.toolbar')} className="absolute z-raised" contentEditable={false} data-editor-code-copy style={{ left: copyTarget.left, top: copyTarget.top }}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button
+          <ToolbarButton
             aria-label={label}
             onClick={handleCopy}
             onMouseDown={stopCopyButtonEvent}
-            size="icon-xs"
-            type="button"
-            variant="icon"
+            size="sm"
           >
             <Copy aria-hidden="true" />
-          </Button>
+          </ToolbarButton>
         </TooltipTrigger>
         <TooltipContent side="left" align="center">{label}</TooltipContent>
       </Tooltip>
-    </FloatingIconGroup>
+    </Toolbar>
   )
 }

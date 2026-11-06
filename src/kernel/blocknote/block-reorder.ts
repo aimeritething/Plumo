@@ -357,10 +357,11 @@ export function usePointerBlockReorder(
 
   const onPointerDown = useCallback((event: ReactPointerEvent<HTMLElement>) => {
     if ((typeof event.button === 'number' && event.button !== 0) || !event.isPrimary) return
-    // BlockNote's shadcn menu trigger opens on pointer up by dispatching a
-    // synthetic pointerdown built from the pointerup event, so it carries no
-    // pressed button. No pointerup ever follows it: a gesture armed on it
-    // would outlive the click and paint the drag preview on the next move.
+    // A synthetic pointerdown carries no pressed button (BlockNote's shadcn
+    // menu trigger, which the Block handle used to be, built one from the
+    // pointerup to open on release). No pointerup ever follows it: a gesture
+    // armed on it would outlive the click and paint the drag preview on the
+    // next move.
     if (event.buttons === 0) return
 
     suppressMenuOpenRef.current = false

@@ -2,56 +2,23 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { createRequire } from 'node:module'
 import { BlockNoteEditor } from '@blocknote/core'
-import { DeleteLinkButton, EditLinkMenuItems, ExtendButton } from '@blocknote/react'
-import { BlockNoteView } from '@blocknote/shadcn'
+import { BlockNoteViewRaw } from '@blocknote/react'
 import { IconContext, type IconProps } from '@phosphor-icons/react'
 import { cleanup, render, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { TooltipProvider } from '@/ui/tooltip'
 import { schema } from './editor-schema'
-import { blockNoteShadCNComponents } from './shadcn-components'
+import { TableExtendButton } from './table-extend-button'
 
-// The pnpm patches on @blocknote/react, core and shadcn swap BlockNote's own
-// react-icons glyphs for Phosphor and its `text-gray-400` for the icon button
-// (AIM-512). A BlockNote bump re-derives those patches; this guards the result.
+// The pnpm patch on @blocknote/core swaps its placeholder glyphs for Phosphor
+// (AIM-512); a BlockNote bump re-derives it, and this guards the result.
+// Every other icon over or inside a Document is Plumo's own control, drawn
+// with Phosphor: BlockNote's react-icons components are no longer rendered.
 
 const require = createRequire(import.meta.url)
 const packageDist = (name: string) => dirname(require.resolve(name))
 
-// Every react-icons glyph BlockNote draws in Plumo, by the file that draws it.
-const RENDERED_REACT_ICONS = {
-  ri: [
-    'RiIndentIncrease', // NestBlockButton
-    'RiIndentDecrease', // UnnestBlockButton
-    'RiLink', // CreateLinkButton, EditLinkMenuItems
-    'RiText', // EditLinkMenuItems
-    'RiMergeCellsHorizontal', // TableCellMergeButton
-    'RiMergeCellsVertical', // TableCellMergeButton
-    'RiInputField', // FileCaptionButton
-    'RiImageEditFill', // FileReplaceButton
-    'RiFontFamily', // FileRenameButton
-    'RiDeleteBin7Line', // FileDeleteButton
-    'RiImageAddFill', // FilePreviewButton
-    'RiLinkUnlink', // DeleteLinkButton
-    'RiAddFill', // ExtendButton
-    'RiFile2Line', // AddFileButton, FileNameWithIcon
-    'RiVolumeUpFill', // AudioBlock
-    'RiVideoFill', // VideoBlock
-  ],
-  md: [
-    'MdDragIndicator', // TableHandle
-    'MdArrowDropDown', // TableCellButton
-  ],
-}
-
 const ICON_DEFAULTS = { 'data-icon-stroke': '' } as IconProps
-
-function glyphPaths(sourceMap: { sources: string[]; sourcesContent: string[] }, set: string, name: string) {
-  const source = sourceMap.sourcesContent[sourceMap.sources.findIndex((path) => path.endsWith(`react-icons/${set}/index.mjs`))]
-  const start = source.indexOf(`export function ${name} (`)
-  const body = source.slice(start, source.indexOf('};', start))
-  return [...body.matchAll(/"d":"([^"]+)"/g)].map((match) => match[1]).filter((d) => !d.startsWith('M0 0h24v24H0'))
-}
 
 function expectPhosphorIcon(svg: SVGElement | null | undefined) {
   expect(svg).toBeTruthy()
@@ -62,23 +29,6 @@ function expectPhosphorIcon(svg: SVGElement | null | undefined) {
 afterEach(cleanup)
 
 describe('BlockNote icons', () => {
-  it('leaves none of the rendered react-icons glyphs in the @blocknote/react dist', () => {
-    const distFile = join(packageDist('@blocknote/react'), 'blocknote-react.js')
-    const dist = readFileSync(distFile, 'utf8')
-    const sourceMap = JSON.parse(readFileSync(`${distFile}.map`, 'utf8'))
-
-    const leftover = Object.entries(RENDERED_REACT_ICONS).flatMap(([set, names]) =>
-      names.filter((name) => {
-        const paths = glyphPaths(sourceMap, set, name)
-        expect(paths.length, name).toBeGreaterThan(0)
-        return paths.some((d) => dist.includes(`d: "${d}"`))
-      }),
-    )
-
-    expect(leftover).toEqual([])
-    expect(dist).toContain('from "@phosphor-icons/react"')
-  })
-
   it('draws every @blocknote/core placeholder icon as a Phosphor glyph', () => {
     const coreDist = packageDist('@blocknote/core')
     const svgs = readdirSync(coreDist)
@@ -92,24 +42,7 @@ describe('BlockNote icons', () => {
     }
   })
 
-  it('leaves no text-gray-400 on the @blocknote/shadcn buttons', () => {
-    const dist = readFileSync(join(packageDist('@blocknote/shadcn'), 'blocknote-shadcn.js'), 'utf8')
-    expect(dist).not.toContain('text-gray-400')
-  })
-
-  // The form field BlockNote sets in a popover (caption, rename, link) takes
-  // ui/input.tsx's height, radius and focus ring, and sizes the icon beside
-  // it: a Phosphor glyph has no size of its own (react-icons drew at 1em), so
-  // unsized it fills the popover.
-  it('draws the @blocknote/shadcn form text input as Plumo input, its icon sized', () => {
-    const dist = readFileSync(join(packageDist('@blocknote/shadcn'), 'blocknote-shadcn.js'), 'utf8')
-    expect(dist).toContain('"flex h-7 w-full min-w-0 items-center gap-2 rounded-lg border')
-    expect(dist).toContain('has-[input:focus-visible]:focus-ring')
-    expect(dist).toContain('"[&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-text-tertiary"')
-    expect(dist).toContain('a === "form-popover" ? "p-2"')
-  })
-
-  it('renders the patched glyphs as Phosphor icons that take the app icon line', async () => {
+  it('draws the controls in the editor as Phosphor icons that take the app icon line', async () => {
     const editor = BlockNoteEditor.create({
       schema,
       initialContent: [
@@ -119,14 +52,12 @@ describe('BlockNote icons', () => {
         { type: 'paragraph', content: 'Text' },
       ],
     })
-    const range = { from: 1, to: 1 }
 
     const { container } = render(
       <IconContext.Provider value={ICON_DEFAULTS}>
         <TooltipProvider>
-          <BlockNoteView
+          <BlockNoteViewRaw
             editor={editor}
-            shadCNComponents={blockNoteShadCNComponents}
             emojiPicker={false}
             formattingToolbar={false}
             linkToolbar={false}
@@ -136,36 +67,27 @@ describe('BlockNote icons', () => {
             tableHandles={false}
           >
             <div data-testid="extend-button">
-              <ExtendButton orientation="addOrRemoveRows" hideOtherElements={() => {}} />
+              <TableExtendButton orientation="addOrRemoveRows" hideOtherElements={() => {}} />
             </div>
-            <div data-testid="delete-link">
-              <DeleteLinkButton range={range} />
-            </div>
-            <div data-testid="edit-link">
-              <EditLinkMenuItems url="https://example.com" text="Example" range={range} />
-            </div>
-          </BlockNoteView>
+          </BlockNoteViewRaw>
         </TooltipProvider>
       </IconContext.Provider>,
     )
 
-    const extendButton = container.querySelector('[data-testid="extend-button"] button')
+    const extendButton = container.querySelector<HTMLElement>('[data-testid="extend-button"] button')
     expectPhosphorIcon(extendButton?.querySelector('svg'))
-    // At rest the extend button is the tertiary icon button, not the accent
-    // it wears while a drag adds rows (upstream marked it editing always).
-    expect(extendButton?.classList).not.toContain('bn-extend-button-editing')
-    expect(extendButton?.classList).toContain('text-text-tertiary')
-    expect(extendButton?.className).not.toContain('text-gray-400')
-    expectPhosphorIcon(container.querySelector('[data-testid="delete-link"] svg'))
-    const editLinkIcons = container.querySelectorAll<SVGElement>('[data-testid="edit-link"] svg')
-    expect(editLinkIcons).toHaveLength(2)
-    editLinkIcons.forEach(expectPhosphorIcon)
+    // At rest the Table's add-row bar is the muted strip, not the darker
+    // fill it wears while a drag adds rows.
+    expect(extendButton).not.toHaveAttribute('data-selected')
+    expect(extendButton).toHaveAttribute('data-variant', 'placeholder')
 
+    // The file Blocks' own icons (the empty slot, a file's line) are Plumo's
+    // (add-file-button.tsx, media-blocks.tsx), drawn with Phosphor too.
     await waitFor(() => {
-      expect(container.querySelector('[data-content-type="audio"] .bn-add-file-button-icon svg')).toBeTruthy()
+      expect(container.querySelector('[data-content-type="audio"] [data-add-file-button] svg')).toBeTruthy()
     })
-    expectPhosphorIcon(container.querySelector('[data-content-type="audio"] .bn-add-file-button-icon svg'))
-    expectPhosphorIcon(container.querySelector('[data-content-type="image"] .bn-add-file-button-icon svg'))
-    expectPhosphorIcon(container.querySelector('[data-content-type="file"] .bn-file-icon svg'))
+    expectPhosphorIcon(container.querySelector('[data-content-type="audio"] [data-add-file-button] svg'))
+    expectPhosphorIcon(container.querySelector('[data-content-type="image"] [data-add-file-button] svg'))
+    expectPhosphorIcon(container.querySelector('[data-content-type="file"] [data-file-block-frame] svg'))
   })
 })

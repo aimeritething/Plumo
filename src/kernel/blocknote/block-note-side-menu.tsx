@@ -1,8 +1,12 @@
 import {
+  ArrowsClockwise,
   CaretDown,
   CaretRight,
+  Check,
+  Copy,
   DotsSixVertical as GripVertical,
   Plus,
+  Trash,
 } from '@phosphor-icons/react'
 import { SideMenuExtension, SuggestionMenu } from '@blocknote/core/extensions'
 import type {
@@ -11,22 +15,34 @@ import type {
   StyleSchema,
 } from '@blocknote/core'
 import {
-  DragHandleMenu as BlockNoteDragHandleMenu,
-  SideMenu as BlockNoteSideMenu,
   useBlockNoteEditor,
-  useComponentsContext,
   useDictionary,
   useExtension,
   useExtensionState,
   type SideMenuProps,
 } from '@blocknote/react'
 import { translate, type AppLocale } from '@/lib/i18n'
+import { APP_COMMAND_DEFINITIONS, APP_COMMAND_IDS } from '@/shell/app-command-catalog'
 import { Button } from '@/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from '@/ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
 import { richEditorBlockTypeName } from './rich-editor-block-types'
 import {
   useCallback,
-  type ComponentType,
+  useMemo,
+  useRef,
+  useState,
   type MouseEvent as ReactMouseEvent,
   type ReactNode,
 } from 'react'
@@ -48,7 +64,7 @@ import {
 } from './side-menu-blocks'
 import { turnBlockIntoType } from './rich-editor-block-type-commands'
 import { duplicateBlocksAndSelect } from './rich-editor-duplicate-blocks'
-import { getBlockTypeSelectItems } from './block-type-select'
+import { getBlockTypeSelectItems, type BlockTypeSelectItem } from './block-type-select'
 import { createSlashMenuIcon } from './slash-menu-items'
 
 type TableHeaderContent = Record<string, unknown> & {
@@ -183,11 +199,8 @@ function runSideMenuActionPreservingScroll(
   })
 }
 
-function useRequiredComponentsContext() {
-  const components = useComponentsContext()
-  if (!components) throw new Error('BlockNote components context is unavailable')
-  return components
-}
+/** Duplicate Block's shortcut as the manifest writes it (`⌘D`), as the tab bar's menu writes its own. */
+const DUPLICATE_BLOCK_SHORTCUT = APP_COMMAND_DEFINITIONS[APP_COMMAND_IDS.editDuplicateBlock].shortcut?.display
 
 function AddBlockButton() {
   const dict = useDictionary()
@@ -300,80 +313,124 @@ function SectionControlButton({ locale }: { locale: AppLocale }) {
   return <AddBlockButton />
 }
 
-function DragHandleButton({
-  children,
-  dragHandleMenu,
-  locale = 'en',
-}: SideMenuProps & { children?: ReactNode; locale?: AppLocale }) {
-  const Components = useRequiredComponentsContext()
+/**
+ * The grip: a press that moves starts the pointer reorder (block-reorder.ts);
+ * a press that does not opens the Block's menu, on the pointer's release as
+ * BlockNote's menu did, so the reorder and the menu never start together. A
+ * second press closes it. Enter, Space and ↓ open it from the keyboard.
+ *
+ * The menu is anchored on a box laid over the grip, not on the grip: Radix's
+ * trigger would open on the press itself.
+ */
+function DragHandleButton({ locale = 'en' }: { locale?: AppLocale }) {
   const dict = useDictionary()
   const sideMenu = useExtension(SideMenuExtension)
   const { block, editor } = useSideMenuBlock()
-  const MenuComponent: ComponentType<{ children?: ReactNode }> = dragHandleMenu ?? BlockNoteDragHandleMenu
   const { onClickCapture, onPointerDown, onPointerUpCapture } = usePointerBlockReorder(editor, block)
+  const [open, setOpen] = useState(false)
+  const openRef = useRef(false)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  // Whether the menu was open when the press began, so its release toggles.
+  const openAtPressRef = useRef(false)
+  // The release opened or closed the menu; the click that follows does nothing.
+  const releaseHandledRef = useRef(false)
+
+  const setMenuOpen = useCallback((next: boolean) => {
+    if (next === openRef.current) return
+    openRef.current = next
+    setOpen(next)
+    if (next) sideMenu.freezeMenu()
+    else sideMenu.unfreezeMenu()
+  }, [sideMenu])
 
   if (!block) return null
 
   return (
-    <Components.Generic.Menu.Root
-      onOpenChange={(open: boolean) => {
-        if (open) sideMenu.freezeMenu()
-        else sideMenu.unfreezeMenu()
-      }}
-      position="left"
-    >
-      <Components.Generic.Menu.Trigger>
-        <span
-          className="inline-flex items-center justify-center"
-          onPointerDown={onPointerDown}
-          onPointerUpCapture={onPointerUpCapture}
-          onClickCapture={onClickCapture}
-        >
-          <SideMenuTooltip label={dict.side_menu.drag_handle_label}>
-            <Button
-              aria-label={dict.side_menu.drag_handle_label}
-              draggable={false}
-              onDragEnd={sideMenu.blockDragEnd}
-              onDragStart={(event) => event.preventDefault()}
-              size="icon-xs"
-              variant="icon-quiet"
-            >
-              <GripVertical data-test="dragHandle" />
-            </Button>
-          </SideMenuTooltip>
-        </span>
-      </Components.Generic.Menu.Trigger>
-      {dragHandleMenu
-        ? <MenuComponent>{children}</MenuComponent>
-        : <DragHandleMenu locale={locale}>{children}</DragHandleMenu>}
-    </Components.Generic.Menu.Root>
+    <DropdownMenu modal={false} open={open} onOpenChange={setMenuOpen}>
+      <span
+        className="relative inline-flex items-center justify-center"
+        onPointerDownCapture={() => {
+          openAtPressRef.current = openRef.current
+          releaseHandledRef.current = false
+        }}
+        onPointerDown={onPointerDown}
+        onPointerUpCapture={onPointerUpCapture}
+        onPointerUp={(event) => {
+          if (event.button !== 0) return
+          releaseHandledRef.current = true
+          setMenuOpen(!openAtPressRef.current)
+        }}
+        onClickCapture={onClickCapture}
+        onClick={() => {
+          if (releaseHandledRef.current) {
+            releaseHandledRef.current = false
+            return
+          }
+          setMenuOpen(!openRef.current)
+        }}
+      >
+        <SideMenuTooltip label={dict.side_menu.drag_handle_label}>
+          <Button
+            aria-expanded={open}
+            aria-haspopup="menu"
+            aria-label={dict.side_menu.drag_handle_label}
+            data-state={open ? 'open' : 'closed'}
+            draggable={false}
+            onDragEnd={sideMenu.blockDragEnd}
+            onDragStart={(event) => event.preventDefault()}
+            onKeyDown={(event) => {
+              if (event.key !== 'ArrowDown') return
+              event.preventDefault()
+              setMenuOpen(true)
+            }}
+            ref={buttonRef}
+            size="icon-xs"
+            variant="icon-quiet"
+          >
+            <GripVertical data-test="dragHandle" />
+          </Button>
+        </SideMenuTooltip>
+        <DropdownMenuTrigger asChild>
+          <span aria-hidden="true" className="pointer-events-none absolute inset-0" tabIndex={-1} />
+        </DropdownMenuTrigger>
+      </span>
+      <DropdownMenuContent
+        align="start"
+        side="left"
+        onCloseAutoFocus={(event) => {
+          // A choice that acts on the text focuses the editor; Escape or a
+          // click away hands the focus back to the grip, as a menu button does.
+          event.preventDefault()
+          const editorElement = editor.domElement
+          const active = editorElement?.ownerDocument.activeElement
+          if (editorElement && active && editorElement.contains(active)) return
+          buttonRef.current?.focus()
+        }}
+      >
+        <BlockMenuItems locale={locale} />
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 
-/**
- * The menu item's `destructive` variant, spelled in the red it aliases.
- * BlockNote's Menu.Item passes on a className and nothing else, so the
- * variant's classes come this way.
- */
-const DESTRUCTIVE_MENU_ITEM_CLASS = 'text-chroma-red focus:bg-chroma-red/10 focus:text-chroma-red dark:focus:bg-chroma-red/20'
-
+/** Delete, last and on its own, in the red of every menu's destructive row. */
 function RemoveBlockItem({ children }: { children: ReactNode }) {
-  const Components = useRequiredComponentsContext()
   const { block, editor } = useSideMenuBlock()
 
   if (!block) return null
 
   return (
-    <Components.Generic.Menu.Item
-      className={`bn-menu-item ${DESTRUCTIVE_MENU_ITEM_CLASS}`}
-      onClick={() => {
+    <DropdownMenuItem
+      onSelect={() => {
         runSideMenuAction(() => {
           removeSideMenuSection(editor, block)
         })
       }}
+      variant="destructive"
     >
+      <Trash aria-hidden="true" />
       {children}
-    </Components.Generic.Menu.Item>
+    </DropdownMenuItem>
   )
 }
 
@@ -383,15 +440,13 @@ function RemoveBlockItem({ children }: { children: ReactNode }) {
  * back once the menu has closed, so the keys that act on a selection reach it.
  */
 function DuplicateBlockItem({ locale }: { locale: AppLocale }) {
-  const Components = useRequiredComponentsContext()
   const { block, editor } = useSideMenuBlock()
 
   if (!block) return null
 
   return (
-    <Components.Generic.Menu.Item
-      className="bn-menu-item"
-      onClick={() => {
+    <DropdownMenuItem
+      onSelect={() => {
         runSideMenuAction(() => {
           const liveBlock = liveSideMenuBlock(editor, block)
           if (!liveBlock || !duplicateBlocksAndSelect(editor, [liveBlock.id])) return
@@ -399,14 +454,15 @@ function DuplicateBlockItem({ locale }: { locale: AppLocale }) {
         })
       }}
     >
+      <Copy aria-hidden="true" />
       {translate(locale, 'editor.sideMenu.duplicate')}
-    </Components.Generic.Menu.Item>
+      {DUPLICATE_BLOCK_SHORTCUT && <DropdownMenuShortcut>{DUPLICATE_BLOCK_SHORTCUT}</DropdownMenuShortcut>}
+    </DropdownMenuItem>
   )
 }
 
 /** Header row and Header column behind their separator, for a table whose headers can be set. */
 function TableHeaderItems() {
-  const Components = useRequiredComponentsContext()
   const dict = useDictionary()
   const { block, editor } = useSideMenuBlock()
 
@@ -414,7 +470,7 @@ function TableHeaderItems() {
 
   return (
     <>
-      <Components.Generic.Menu.Divider />
+      <DropdownMenuSeparator />
       <TableHeaderItem header="row">{dict.drag_handle.header_row_menuitem}</TableHeaderItem>
       <TableHeaderItem header="column">{dict.drag_handle.header_column_menuitem}</TableHeaderItem>
     </>
@@ -428,7 +484,6 @@ function TableHeaderItem({
   children: ReactNode
   header: 'column' | 'row'
 }) {
-  const Components = useRequiredComponentsContext()
   const { block, editor } = useSideMenuBlock()
   const liveBlock = liveSideMenuBlock(editor, block)
   const tableContent = tableHeaderContent(liveBlock)
@@ -440,10 +495,9 @@ function TableHeaderItem({
     : Boolean(tableContent.headerCols)
 
   return (
-    <Components.Generic.Menu.Item
-      className="bn-menu-item"
+    <DropdownMenuCheckboxItem
       checked={checked}
-      onClick={() => {
+      onSelect={() => {
         runSideMenuAction(() => {
           const currentBlock = liveSideMenuBlock(editor, block)
           const currentContent = tableHeaderContent(currentBlock)
@@ -459,76 +513,94 @@ function TableHeaderItem({
       }}
     >
       {children}
-    </Components.Generic.Menu.Item>
+    </DropdownMenuCheckboxItem>
   )
 }
 
+function isCurrentBlockType(block: SideMenuBlock, item: BlockTypeSelectItem) {
+  if (item.type !== block.type) return false
+  return Object.entries(item.props ?? {}).every(([name, value]) => block.props?.[name] === value)
+}
+
+/** The Block types a Block can turn into, the current one ticked, as the Formatting toolbar's block type menu lists them. */
 function TurnBlockIntoSubmenu({ locale }: { locale: AppLocale }) {
-  const Components = useRequiredComponentsContext()
   const { block, editor } = useSideMenuBlock()
 
   if (!block) return null
 
   return (
-    <Components.Generic.Menu.Root sub position="right">
-      <Components.Generic.Menu.Trigger sub>
-        <Components.Generic.Menu.Item className="bn-menu-item" subTrigger>
-          {translate(locale, 'editor.sideMenu.turnIntoMenu')}
-        </Components.Generic.Menu.Item>
-      </Components.Generic.Menu.Trigger>
-      {/* The submenu shrinks to its widest item instead of the menu's minimum width. */}
-      <Components.Generic.Menu.Dropdown className="min-w-0" sub>
+    <DropdownMenuSub>
+      <DropdownMenuSubTrigger>
+        <ArrowsClockwise aria-hidden="true" />
+        {translate(locale, 'editor.sideMenu.turnIntoMenu')}
+      </DropdownMenuSubTrigger>
+      <DropdownMenuSubContent>
         {getBlockTypeSelectItems().map((item) => (
-          <Components.Generic.Menu.Item
+          <DropdownMenuItem
             key={item.key}
-            className="bn-menu-item whitespace-nowrap"
-            icon={createSlashMenuIcon(item.icon)}
-            onClick={() => {
+            onSelect={() => {
               runSideMenuAction(() => {
                 turnBlockIntoType(editor, block.id, item, 'block_menu')
               })
             }}
           >
+            {createSlashMenuIcon(item.icon)}
             {richEditorBlockTypeName(locale, item)}
-          </Components.Generic.Menu.Item>
+            {isCurrentBlockType(block, item) && <Check aria-hidden="true" className="ms-auto size-3" />}
+          </DropdownMenuItem>
         ))}
-      </Components.Generic.Menu.Dropdown>
-    </Components.Generic.Menu.Root>
+      </DropdownMenuSubContent>
+    </DropdownMenuSub>
   )
 }
 
 /** Turn into and Duplicate, a table's header items, then Delete last on its own, as every menu puts what removes content. */
-function DragHandleMenu({
-  children,
-  locale = 'en',
-}: {
-  children?: ReactNode
-  locale?: AppLocale
-}) {
-  const Components = useRequiredComponentsContext()
+function BlockMenuItems({ locale = 'en' }: { locale?: AppLocale }) {
   const dict = useDictionary()
 
   return (
-    <BlockNoteDragHandleMenu>
-      {children}
+    <>
       <TurnBlockIntoSubmenu locale={locale} />
       <DuplicateBlockItem locale={locale} />
       <TableHeaderItems />
-      <Components.Generic.Menu.Divider />
+      <DropdownMenuSeparator />
       <RemoveBlockItem>{dict.drag_handle.delete_menuitem}</RemoveBlockItem>
-    </BlockNoteDragHandleMenu>
+    </>
   )
 }
 
-export function SideMenu({ locale = 'en', ...props }: BlockNoteSideMenuProps) {
+/**
+ * The Block handle's attributes, as BlockNote's side menu sets them: its
+ * stylesheet sizes the handle to the Block's first line by them (a heading's
+ * level, a file Block with or without its file).
+ */
+function useSideMenuDataAttributes(): Record<string, string> {
+  const editor = useBlockNoteEditor<BlockSchema, InlineContentSchema, StyleSchema>()
+  const block = useExtensionState(SideMenuExtension, { editor, selector: (state) => state?.block })
+
+  return useMemo(() => {
+    if (!block) return {}
+    const attributes: Record<string, string> = { 'data-block-type': block.type }
+    const props = block.props as Record<string, unknown> | undefined
+    if (block.type === 'heading') attributes['data-level'] = String(props?.level)
+    if (editor.schema?.blockSpecs[block.type]?.implementation.meta?.fileBlockAccept) {
+      attributes['data-url'] = props?.url ? 'true' : 'false'
+    }
+    return attributes
+  }, [block, editor.schema])
+}
+
+/** The Block handle (CONTEXT.md): the fold or add button, then the grip that drags the Block and opens its menu. */
+export function SideMenu({ locale = 'en' }: BlockNoteSideMenuProps) {
   const { block, editor } = useSideMenuBlock()
+  const dataAttributes = useSideMenuDataAttributes()
   useSideMenuTextAlignment(editor, block)
 
   return (
-    <BlockNoteSideMenu {...props}>
+    <div className="bn-side-menu" {...dataAttributes}>
       <SectionControlButton locale={locale} />
       <DragHandleButton locale={locale} />
-    </BlockNoteSideMenu>
+    </div>
   )
 }
 

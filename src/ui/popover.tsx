@@ -16,20 +16,27 @@ function PopoverTrigger({
   return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />
 }
 
+// `compact` is the inset of a popover that holds one small form (a link, an
+// alt text): the inputs sit 8px from the edge instead of 16px.
 function PopoverContent({
   className,
   align = "center",
   sideOffset = 4,
+  variant = "default",
   ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Content>) {
+}: React.ComponentProps<typeof PopoverPrimitive.Content> & {
+  variant?: "default" | "compact"
+}) {
   return (
     <PopoverPrimitive.Portal>
       <PopoverPrimitive.Content
         data-slot="popover-content"
         align={align}
         sideOffset={sideOffset}
+        data-variant={variant}
         className={cn(
-          "z-popover w-72 origin-(--radix-popover-content-transform-origin) rounded-xl border-hairline border-border-popover bg-surface-popover p-4 text-text-primary shadow-menu outline-hidden data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
+          "z-popover w-72 origin-(--radix-popover-content-transform-origin) rounded-xl border-hairline border-border-popover bg-surface-popover text-text-primary shadow-menu outline-hidden data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
+          variant === "compact" ? "p-2" : "p-4",
           className
         )}
         {...props}

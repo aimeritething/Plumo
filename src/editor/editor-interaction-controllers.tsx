@@ -13,6 +13,7 @@ import { LinkToolbar } from '@/kernel/blocknote/link-toolbar'
 import { SlashMenu } from '@/kernel/blocknote/slash-menu'
 import { CollapsedHeadingsController, SideMenu } from '@/kernel/blocknote/block-note-side-menu'
 import { TableHandle } from '@/kernel/blocknote/block-note-table-handle'
+import { TableCellHandle, TableExtendButton } from '@/kernel/blocknote/table-extend-button'
 import { FormattingToolbar } from '@/kernel/blocknote/formatting-toolbar'
 import { FormattingToolbarController } from '@/kernel/blocknote/formatting-toolbar-controller'
 import type { SuggestionAction, useSuggestionMenuItems } from '@/kernel/blocknote/use-slash-menu-items'
@@ -22,21 +23,19 @@ type EditorInteractionControllersProps = ReturnType<typeof useSuggestionMenuItem
   onOpenLink: (href: string) => void
   onToolbarMouseDown: (event: Pick<React.MouseEvent<HTMLElement>, 'target' | 'preventDefault'>) => void
   runEditorAction: (action: SuggestionAction) => void
-  vaultPath?: string
 }
 
 function EditorToolbarControllers({
   locale,
   onOpenLink,
   onToolbarMouseDown,
-  vaultPath,
-}: Pick<EditorInteractionControllersProps, 'locale' | 'onOpenLink' | 'onToolbarMouseDown' | 'vaultPath'>) {
+}: Pick<EditorInteractionControllersProps, 'locale' | 'onOpenLink' | 'onToolbarMouseDown'>) {
   const sideMenu = useCallback((props: SideMenuProps) => <SideMenu {...props} locale={locale} />, [locale])
   const formattingToolbar = useCallback(
     (props: FormattingToolbarProps) => (
-      <FormattingToolbar {...props} locale={locale} vaultPath={vaultPath} />
+      <FormattingToolbar {...props} locale={locale} />
     ),
-    [locale, vaultPath],
+    [locale],
   )
   const linkToolbar = useCallback(
     (props: Omit<React.ComponentProps<typeof LinkToolbar>, 'onOpenLink'>) => (
@@ -56,7 +55,11 @@ function EditorToolbarControllers({
       />
       <LinkToolbarController linkToolbar={linkToolbar} floatingUIOptions={floatingUIOptions} />
       <FilePanelController />
-      <TableHandlesController tableHandle={TableHandle} />
+      <TableHandlesController
+        tableHandle={TableHandle}
+        extendButton={TableExtendButton}
+        tableCellHandle={TableCellHandle}
+      />
     </>
   )
 }

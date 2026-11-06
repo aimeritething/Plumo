@@ -326,7 +326,8 @@ describe('SingleEditorView interactions', () => {
 
   it('ignores editor-container click handling for link toolbar interactions', () => {
     const { container, editor } = renderEditorHarness()
-    const linkAction = appendToolbarButton(container, 'bn-link-toolbar', 'Open in a new tab')
+    const linkAction = appendToolbarButton(container, '', 'Open in a new tab')
+    linkAction.parentElement?.setAttribute('data-link-toolbar', '')
 
     fireEvent.click(linkAction)
 
@@ -339,6 +340,20 @@ describe('SingleEditorView interactions', () => {
     const action = appendToolbarButton(container, 'bn-side-menu', 'Add block')
 
     fireEvent.click(action)
+
+    expect(editor.setTextCursorPosition).not.toHaveBeenCalled()
+    expect(editor.focus).not.toHaveBeenCalled()
+  })
+
+  it('ignores editor-container click handling on the File panel\'s own surface', () => {
+    const { container, editor } = renderEditorHarness()
+    const panel = document.createElement('div')
+    panel.setAttribute('data-file-panel', '')
+    const body = document.createElement('div')
+    panel.append(body)
+    container.querySelector('[data-testid="blocknote-view"]')?.append(panel)
+
+    fireEvent.click(body, { button: 0 })
 
     expect(editor.setTextCursorPosition).not.toHaveBeenCalled()
     expect(editor.focus).not.toHaveBeenCalled()
@@ -498,7 +513,7 @@ describe('SingleEditorView interactions', () => {
     expect(mockOpenExternalUrl).not.toHaveBeenCalled()
   })
 
-  it('opens BlockNote file block names through the active vault path', () => {
+  it('opens a File block\'s name through the active vault path', () => {
     const editor = createEditor()
     editor.getBlock.mockReturnValue({
       type: 'file',
@@ -512,7 +527,7 @@ describe('SingleEditorView interactions', () => {
     const fileBlock = document.createElement('div')
     fileBlock.setAttribute('data-file-block', '')
     const fileName = document.createElement('span')
-    fileName.className = 'bn-file-name-with-icon'
+    fileName.setAttribute('data-file-name', '')
     fileName.textContent = 'report.pdf'
     fileBlock.appendChild(fileName)
     blockContainer.appendChild(fileBlock)

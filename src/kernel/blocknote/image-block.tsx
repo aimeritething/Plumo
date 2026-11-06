@@ -1,14 +1,12 @@
-/* eslint-disable react-refresh/only-export-components -- the block spec and its selection helper sit next to the view */
+/* eslint-disable react-refresh/only-export-components -- the block spec and its helpers sit next to the view */
 import { createImageBlockConfig, imageParse } from '@blocknote/core'
 import { FilePanelExtension } from '@blocknote/core/extensions'
 import {
-  AddFileButton,
   createReactBlockSpec,
-  ImageBlock as BlockNoteImageBlock,
   ImageToExternalHTML,
-  useEditorState,
   useExtension,
   useUploadLoading,
+  type ReactCustomBlockRenderProps,
 } from '@blocknote/react'
 import { Image as ImageIcon, ImageBroken } from '@phosphor-icons/react'
 import {
@@ -16,15 +14,21 @@ import {
   useEffect,
   useRef,
   useState,
-  type ComponentProps,
   type MouseEvent as ReactMouseEvent,
   type RefObject,
 } from 'react'
 import { cn } from '@/lib/cn'
 import { subscribeFolderFilesChanged } from '@/lib/folder-file-changes'
 import { filesystemPathFromAssetUrl, isTauriAssetUrl } from '@/kernel/markdown/vault-attachments'
-import { dispatchRichEditorExternalChange } from './editor-external-change-events'
-import { ImageCaption, normalizeImageCaption, type CaptionEndReason } from './image-caption'
+import { AddFileButton, FileBlockLoading } from './add-file-button'
+import {
+  selectFileBlock,
+  updateFileBlockProps,
+  useFileBlockCaptionEdit,
+  useFileBlockSelected,
+  useHover,
+} from './file-block-edits'
+import { ImageCaption } from './image-caption'
 import { isRemoteImageUrl, requestImageOpen, requestImagePreview } from './image-block-requests'
 import {
   IMAGE_TOOLBAR_INSIDE_MIN_WIDTH,
@@ -34,62 +38,23 @@ import {
   type ImageResizeStart,
 } from './image-block-width'
 import { ImageToolbar } from './image-toolbar'
-import { registerOpenBlockEdit } from './open-block-edits'
-import { isStaleBlockReferenceError, reportRecoveredEditorTransformError } from './rich-editor-transform-error-recovery-extension'
 
 // Plumo's Image block, in place of BlockNote's (AIM-531): the picture centred,
 // resized from both edges at once, with the Image toolbar in its corner, the
 // caption typed in place under it, and a placeholder when it fails to load.
-// The empty block and its Upload / Embed panel stay BlockNote's.
+// The empty block is Plumo's empty slot (add-file-button.tsx), which opens
+// the File panel.
 
-type ImageBlockProps = ComponentProps<typeof BlockNoteImageBlock>
+type ImageBlockConfig = ReturnType<typeof createImageBlockConfig>
+type ImageBlockProps = Omit<
+  ReactCustomBlockRenderProps<ImageBlockConfig['type'], ImageBlockConfig['propSchema'], ImageBlockConfig['content']>,
+  'contentRef'
+>
 type ImageBlockEditor = ImageBlockProps['editor']
 type ImageBlockData = ImageBlockProps['block']
-type ImageProps = Partial<Pick<ImageBlockData['props'], 'caption' | 'name' | 'previewWidth'>>
 type LoadState = 'loading' | 'loaded' | 'error'
 
-interface SelectionLike {
-  node?: { attrs?: Record<string, unknown> }
-  $from?: { parent?: { attrs?: Record<string, unknown> } }
-}
-
-/** Whether the selection is a node selection of this Block (its container or its content). */
-export function isBlockNodeSelected(selection: unknown, blockId: string): boolean {
-  const candidate = selection as SelectionLike | null
-  if (!candidate?.node) return false
-  return candidate.node.attrs?.id === blockId || candidate.$from?.parent?.attrs?.id === blockId
-}
-
-function updateImageProps(editor: ImageBlockEditor, blockId: string, props: ImageProps): boolean {
-  try {
-    if (!editor.getBlock(blockId)) return false
-    editor.updateBlock(blockId, { props })
-  } catch (error) {
-    if (!isStaleBlockReferenceError(error)) throw error
-    reportRecoveredEditorTransformError('stale_block_reference', error)
-    return false
-  }
-  dispatchRichEditorExternalChange(editor, editor.domElement ?? undefined)
-  return true
-}
-
-/** Gives the editor its focus back with the picture selected, as after a click on it. */
-function selectImageBlock(editor: ImageBlockEditor, blockId: string) {
-  try {
-    if (!editor.getBlock(blockId)) return
-    editor.setTextCursorPosition(blockId)
-    editor.focus()
-  } catch (error) {
-    if (!isStaleBlockReferenceError(error)) throw error
-  }
-}
-
-function useImageBlockSelected(editor: ImageBlockEditor, blockId: string): boolean {
-  return useEditorState({
-    editor,
-    selector: ({ editor }) => isBlockNodeSelected(editor.prosemirrorState.selection, blockId),
-  })
-}
+export { isBlockNodeSelected } from './file-block-edits'
 
 /** The file name a placeholder shows: the last part of the URL's path, else the alt text. */
 export function imageFileName(url: string, name: string): string {
@@ -204,7 +169,7 @@ function useImageResize(options: {
       stop()
       setDragWidth(null)
       const stored = storedImageWidth(width, columnWidth(editor), imageRef.current?.naturalWidth ?? 0)
-      if (stored !== block.props.previewWidth) updateImageProps(editor, block.id, { previewWidth: stored })
+      if (stored !== block.props.previewWidth) updateFileBlockProps(editor, block.id, { previewWidth: stored })
     }
     window.addEventListener('mousemove', move)
     window.addEventListener('mouseup', release)
@@ -212,46 +177,6 @@ function useImageResize(options: {
   }, [block.id, block.props.previewWidth, editor, frameRef, imageRef])
 
   return { dragWidth, resizing: dragWidth !== null, startResize }
-}
-
-/** The caption edit: opened from the Image toolbar or by clicking the caption, written once when it ends. */
-function useCaptionEdit(editor: ImageBlockEditor, block: ImageBlockData) {
-  const caption = block.props.caption
-  const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState(caption)
-  const editingRef = useRef(false)
-  const draftRef = useRef(caption)
-
-  const end = useCallback((reason: CaptionEndReason | 'flush') => {
-    if (!editingRef.current) return
-    editingRef.current = false
-    setEditing(false)
-    const next = normalizeImageCaption(draftRef.current)
-    if (next !== caption) updateImageProps(editor, block.id, { caption: next })
-    if (reason === 'key') selectImageBlock(editor, block.id)
-  }, [block.id, caption, editor])
-
-  useEffect(() => {
-    if (!editing) return
-    return registerOpenBlockEdit(editor, () => end('flush'))
-  }, [editing, editor, end])
-
-  return {
-    draft,
-    editing,
-    end,
-    setDraft: (next: string) => {
-      draftRef.current = next
-      setDraft(next)
-    },
-    start: () => {
-      if (!editor.isEditable) return
-      draftRef.current = caption
-      setDraft(caption)
-      editingRef.current = true
-      setEditing(true)
-    },
-  }
 }
 
 function ResizeHandle({ shown, side, onMouseDown }: {
@@ -286,35 +211,26 @@ function ImagePlaceholder({ fileName }: { fileName: string }) {
   )
 }
 
-function useHover() {
-  const [hovered, setHovered] = useState(false)
-  return {
-    hovered,
-    onMouseEnter: () => setHovered(true),
-    onMouseLeave: () => setHovered(false),
-  }
-}
-
 function ImageFigure({ block, editor }: { block: ImageBlockData; editor: ImageBlockEditor }) {
   const url = block.props.url
   const frameRef = useRef<HTMLDivElement>(null)
   const imageRef = useRef<HTMLImageElement>(null)
   const filePanel = useExtension(FilePanelExtension)
   const editable = editor.isEditable
-  const selected = useImageBlockSelected(editor, block.id)
+  const selected = useFileBlockSelected(editor, block.id)
   const hover = useHover()
   const [popupOpen, setPopupOpen] = useState(false)
   const load = useImageLoad(url)
   const failed = load.state === 'error'
   const resize = useImageResize({ block, editor, frameRef, imageRef })
-  const caption = useCaptionEdit(editor, block)
+  const caption = useFileBlockCaptionEdit(editor, block.id, block.props.caption)
   const frameWidth = useElementWidth(frameRef)
   const shownWidth = resize.dragWidth ?? frameWidth
   const placement = shownWidth > 0 && shownWidth < IMAGE_TOOLBAR_INSIDE_MIN_WIDTH ? 'above' : 'inside'
   const width = resize.dragWidth ?? block.props.previewWidth
   const toolbarShown = editable && !resize.resizing && (hover.hovered || selected || popupOpen)
   const handlesShown = editable && !failed && (hover.hovered || resize.resizing)
-  const returnFocus = () => selectImageBlock(editor, block.id)
+  const returnFocus = () => selectFileBlock(editor, block.id)
 
   return (
     <div
@@ -348,7 +264,7 @@ function ImageFigure({ block, editor }: { block: ImageBlockData; editor: ImageBl
           previewDisabled={failed}
           remote={isRemoteImageUrl(url)}
           shown={toolbarShown}
-          onAltChange={(name) => updateImageProps(editor, block.id, { name })}
+          onAltChange={(name) => updateFileBlockProps(editor, block.id, { name })}
           onCaption={caption.start}
           onDelete={() => {
             editor.removeBlocks([block.id])
@@ -387,16 +303,15 @@ export function ImageBlock(props: ImageBlockProps) {
   if (uploading) {
     return (
       <div className="bn-file-block-content-wrapper">
-        <div className="bn-file-loading-preview">Loading...</div>
+        <FileBlockLoading />
       </div>
     )
   }
 
   if (!props.block.props.url) {
     return (
-      <div className="bn-file-block-content-wrapper">
-        {/* BlockNote's own button types itself for the file block; any file block's props fit it. */}
-        <AddFileButton {...(props as unknown as ComponentProps<typeof AddFileButton>)} buttonIcon={<ImageIcon size={24} />} />
+      <div className="bn-file-block-content-wrapper w-full">
+        <AddFileButton blockId={props.block.id} blockType="image" editor={props.editor} icon={<ImageIcon aria-hidden="true" />} />
       </div>
     )
   }

@@ -11,8 +11,6 @@ overrides:
   '@tiptap/extension-link': 3.19.0
   prosemirror-tables: 1.8.5
 
-packageExtensionsChecksum: sha256-LvxFlEGo3NiXHFW2TWbp6DyyhAu9YgavmbljHFiJz98=
-
 patchedDependencies:
   '@blocknote/code-block@0.46.2':
     hash: c006cad64c22a2efc10299d85bf72407150fd29a1f16d497b8db0faa071535f8
@@ -21,11 +19,8 @@ patchedDependencies:
     hash: ac5f67ebd3d5dab2857f07661fe996a2b9d0d2646dabab29e00047f466e044e9
     path: patches/@blocknote__core@0.46.2.patch
   '@blocknote/react@0.46.2':
-    hash: 1fd91be1b200529fa1468b9407d4e6678801634ac9ab66cee8b5ae913ef7c36f
+    hash: 9191bd334fc474d3d50fcccce505184d899c3235ed6d9e2177794dfd7ebb6f54
     path: patches/@blocknote__react@0.46.2.patch
-  '@blocknote/shadcn@0.46.2':
-    hash: 0d1f5926553dcacaafb37fb7e8364853b3ca245b21ec113658112da4b6cc226a
-    path: patches/@blocknote__shadcn@0.46.2.patch
   '@tiptap/extension-code@3.19.0':
     hash: 915b1a348f6e75430f4759ce6f1f62837baaeebec3c110b7929e8fde97088d8b
     path: patches/@tiptap__extension-code@3.19.0.patch
@@ -48,10 +43,7 @@ importers:
         version: 0.46.2(patch_hash=ac5f67ebd3d5dab2857f07661fe996a2b9d0d2646dabab29e00047f466e044e9)(@types/hast@3.0.5)
       '@blocknote/react':
         specifier: 0.46.2
-        version: 0.46.2(patch_hash=1fd91be1b200529fa1468b9407d4e6678801634ac9ab66cee8b5ae913ef7c36f)(@floating-ui/dom@1.8.0)(@phosphor-icons/react@2.1.10(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@types/hast@3.0.5)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
-      '@blocknote/shadcn':
-        specifier: 0.46.2
-        version: 0.46.2(patch_hash=0d1f5926553dcacaafb37fb7e8364853b3ca245b21ec113658112da4b6cc226a)(@floating-ui/dom@1.8.0)(@phosphor-icons/react@2.1.10(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@types/hast@3.0.5)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(postcss@8.5.28)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(tailwindcss@4.3.3)
+        version: 0.46.2(patch_hash=9191bd334fc474d3d50fcccce505184d899c3235ed6d9e2177794dfd7ebb6f54)(@floating-ui/dom@1.8.0)(@types/hast@3.0.5)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@codemirror/commands':
         specifier: ^6.10.2
         version: 6.11.0
@@ -341,16 +333,8 @@ packages:
   '@blocknote/react@0.46.2':
     resolution: {integrity: sha512-2cl7MkOSa6Wxun5LFTT0BCeYq3Qw9DCw6VZ9qdtflrnsefds0cDx/SHMVEQygYwF5MhlDmSbIt61hkQ4j2QWSw==}
     peerDependencies:
-      '@phosphor-icons/react': ^2.1.10
       react: ^18.0 || ^19.0 || >= 19.0.0-rc
       react-dom: ^18.0 || ^19.0 || >= 19.0.0-rc
-
-  '@blocknote/shadcn@0.46.2':
-    resolution: {integrity: sha512-rCmML5M814D/dcLrm5/6REQeEJKPNyygls4n751F0jBLpk8IuWsQYvGqnU6iPW2Cz+9IchA2ivg4Vltna83J1Q==}
-    peerDependencies:
-      react: ^18.0 || ^19.0 || >= 19.0.0-rc
-      react-dom: ^18.0 || ^19.0 || >= 19.0.0-rc
-      tailwindcss: ^4.1.12
 
   '@braintree/sanitize-url@7.1.2':
     resolution: {integrity: sha512-jigsZK+sMF/cuiB7sERuo9V7N9jx+dhmHHnQyDSVdpZwVutaBu7WvNYqMDLSgFgfB30n452TP3vjDAvFC973mA==}
@@ -2353,13 +2337,6 @@ packages:
     resolution: {integrity: sha512-Izi8RQcffqCeNVgFigKli1ssklIbpHnCYc6AknXGYoB6grJqyeby7jv12JUQgmTAnIDnbck1uxksT4dzN3PWBA==}
     engines: {node: '>=12'}
 
-  autoprefixer@10.5.5:
-    resolution: {integrity: sha512-uiRYvQYe/nNSzBJ7OUnd2/TZVsAdob3blml44teEpee9Cc1f4rGZFewO+JT3Wo8mgFOSzNqes4FHZn/Qz8WOuw==}
-    engines: {node: ^10 || ^12 || >=14}
-    hasBin: true
-    peerDependencies:
-      postcss: ^8.1.0
-
   bail@2.0.2:
     resolution: {integrity: sha512-0xO6mYd7JB2YesxDKplafRpsiOzPt9V02ddPCLbY1xYGPOX24NTyN50qnUxgCPcSoYMhKpAuBTjQoRZCAkUDRw==}
 
@@ -2837,9 +2814,6 @@ packages:
   flatted@3.4.4:
     resolution: {integrity: sha512-5+ybhBZANEJxaH3X5evAFatUxLfEHSr7n6kYJ+1Qd0mUqr4eu9gIf6GDbWHf8RJijHrjjO8G+la14SlL2SeS1Q==}
 
-  fraction.js@5.3.4:
-    resolution: {integrity: sha512-1X1NTtiJphryn/uLQz3whtY6jK3fTqoE3ohKs0tT+Ujr1W59oopxmoEh7Lu5p6vBaPbgoM0bzveAW4Qi5RyWDQ==}
-
   fractional-indexing@3.4.0:
     resolution: {integrity: sha512-8J3glhz2rrpKG6KmI7wmJo3zH1VjeOpN+vTJSw1fOyO+Viqq3zX6/5NGh6oaZB2qIAYdOYuu5Dz9xp4faOO0Pg==}
     engines: {node: ^14.13.1 || >=16.0.0}
@@ -3194,11 +3168,6 @@ packages:
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
 
-  lucide-react@0.525.0:
-    resolution: {integrity: sha512-Tm1txJ2OkymCGkvwoHt33Y2JpN5xucVq1slHcgE6Lk0WjDfjgKWor5CdVER8U6DvcfMwh4M8XxmpTiyzfmfDYQ==}
-    peerDependencies:
-      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
-
   lz-string@1.5.0:
     resolution: {integrity: sha512-h5bgJWpxJNswbU7qCrV0tIKQCaS3blPDrqKWx+QxzuzL1zGUzij9XCWLrSLsJPu5t+eWA/ycetzYAO5IOMcWAQ==}
     hasBin: true
@@ -3441,9 +3410,6 @@ packages:
   points-on-path@0.2.1:
     resolution: {integrity: sha512-25ClnWWuw7JbWZcgqY/gJ4FQWadKxGWk+3kR/7kD0tCaDtPPMj7oHu2ToLaVhfpnHrZzYby2w6tUA0eOIuUg8g==}
 
-  postcss-value-parser@4.2.0:
-    resolution: {integrity: sha512-1NNCs6uurfkVbeXG4S8JFT9t19m45ICnif8zWLd5oPSZ50QnwMfK+H3jv408d4jw/7Bttv5axS5IiHoLaVNHeQ==}
-
   postcss@8.5.28:
     resolution: {integrity: sha512-RRuzqDtt5Y9h3quz5hWhK+TPnsmVs6WwSU6LkJMeY4HstUEDuYTG8UJSdawMRzmzAtV+KEoG8N3Qg2qLy5vM/A==}
     engines: {node: ^10 || ^12 || >=14}
@@ -3560,12 +3526,6 @@ packages:
     resolution: {integrity: sha512-JDk8dgif51OjFoDE70+OT9ICyYr+69HlmihNwp1+Nsfbna3t5sIiCa9ZJktDmQ4/1b/rn26hIAR2uYXDMr5r0Q==}
     peerDependencies:
       react: ^19.3.0
-
-  react-hook-form@7.87.0:
-    resolution: {integrity: sha512-zhFzWvLxNHH+8839OnZcUxgMZw88ah2jZWDWvKWgF3Tpbnd0vKL+dlcuU3nZVWESZQjd81EW8K+wU+cYfYAc0w==}
-    engines: {node: '>=18.0.0'}
-    peerDependencies:
-      react: ^16.8.0 || ^17 || ^18 || ^19
 
   react-icons@5.7.0:
     resolution: {integrity: sha512-LBLy340Rzqy6+/yVhZKT3B/QpP1BZaesGqasf09HPOBzRarcDIFH0WwXlXQfE7q7ipxK4MSiC5DIBWURCny6fw==}
@@ -3768,9 +3728,6 @@ packages:
 
   tabbable@6.5.0:
     resolution: {integrity: sha512-wieBHXygIm7OyQOu5hQlkk62/WyCFYGlWg7L6/ZCUZwx0o398Zkn4pVmMyfYhfMG8kGrj/Krt8eIk6UKC6VzwA==}
-
-  tailwind-merge@2.6.1:
-    resolution: {integrity: sha512-Oo6tHdpZsGpkKG88HJ8RR1rg/RdnEkQEfMoEk2x1XRI3F1AxeU+ijRXpiVUF4UbLfcxxRGw6TbUINKYdWVsQTQ==}
 
   tailwind-merge@3.6.0:
     resolution: {integrity: sha512-uxL7qAVQriqRQPAyK3pj66VqskWqoZ37PW94jwOTwNfq/z9oyu1V+eqrZqtR2+fCiXdYOZe/Modt8GtvqNzu+w==}
@@ -4302,13 +4259,12 @@ snapshots:
       - sugar-high
       - supports-color
 
-  '@blocknote/react@0.46.2(patch_hash=1fd91be1b200529fa1468b9407d4e6678801634ac9ab66cee8b5ae913ef7c36f)(@floating-ui/dom@1.8.0)(@phosphor-icons/react@2.1.10(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@types/hast@3.0.5)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
+  '@blocknote/react@0.46.2(patch_hash=9191bd334fc474d3d50fcccce505184d899c3235ed6d9e2177794dfd7ebb6f54)(@floating-ui/dom@1.8.0)(@types/hast@3.0.5)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
     dependencies:
       '@blocknote/core': 0.46.2(patch_hash=ac5f67ebd3d5dab2857f07661fe996a2b9d0d2646dabab29e00047f466e044e9)(@types/hast@3.0.5)
       '@emoji-mart/data': 1.2.1
       '@floating-ui/react': 0.27.20(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@floating-ui/utils': 0.2.10
-      '@phosphor-icons/react': 2.1.10(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@tanstack/react-store': 0.7.7(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@tiptap/core': 3.31.3(@tiptap/pm@3.22.5)
       '@tiptap/pm': 3.22.5
@@ -4329,42 +4285,6 @@ snapshots:
       - '@types/react-dom'
       - highlight.js
       - lowlight
-      - refractor
-      - sugar-high
-      - supports-color
-
-  '@blocknote/shadcn@0.46.2(patch_hash=0d1f5926553dcacaafb37fb7e8364853b3ca245b21ec113658112da4b6cc226a)(@floating-ui/dom@1.8.0)(@phosphor-icons/react@2.1.10(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@types/hast@3.0.5)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(postcss@8.5.28)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(tailwindcss@4.3.3)':
-    dependencies:
-      '@blocknote/core': 0.46.2(patch_hash=ac5f67ebd3d5dab2857f07661fe996a2b9d0d2646dabab29e00047f466e044e9)(@types/hast@3.0.5)
-      '@blocknote/react': 0.46.2(patch_hash=1fd91be1b200529fa1468b9407d4e6678801634ac9ab66cee8b5ae913ef7c36f)(@floating-ui/dom@1.8.0)(@phosphor-icons/react@2.1.10(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@types/hast@3.0.5)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
-      '@radix-ui/react-avatar': 1.2.6(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
-      '@radix-ui/react-dropdown-menu': 2.1.24(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
-      '@radix-ui/react-label': 2.1.15(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
-      '@radix-ui/react-popover': 1.1.23(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
-      '@radix-ui/react-select': 2.3.7(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
-      '@radix-ui/react-slot': 1.3.3(@types/react@19.3.0)(react@19.3.0)
-      '@radix-ui/react-tabs': 1.1.21(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
-      '@radix-ui/react-toggle': 1.1.18(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
-      '@radix-ui/react-tooltip': 1.2.16(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
-      autoprefixer: 10.5.5(postcss@8.5.28)
-      class-variance-authority: 0.7.1
-      clsx: 2.1.1
-      lucide-react: 0.525.0(react@19.3.0)
-      react: 19.3.0
-      react-dom: 19.3.0(react@19.3.0)
-      react-hook-form: 7.87.0(react@19.3.0)
-      tailwind-merge: 2.6.1
-      tailwindcss: 4.3.3
-    transitivePeerDependencies:
-      - '@floating-ui/dom'
-      - '@hocuspocus/provider'
-      - '@phosphor-icons/react'
-      - '@types/hast'
-      - '@types/react'
-      - '@types/react-dom'
-      - highlight.js
-      - lowlight
-      - postcss
       - refractor
       - sugar-high
       - supports-color
@@ -6481,15 +6401,6 @@ snapshots:
 
   assertion-error@2.0.1: {}
 
-  autoprefixer@10.5.5(postcss@8.5.28):
-    dependencies:
-      browserslist: 4.28.9
-      caniuse-lite: 1.0.30001810
-      fraction.js: 5.3.4
-      picocolors: 1.1.1
-      postcss: 8.5.28
-      postcss-value-parser: 4.2.0
-
   bail@2.0.2: {}
 
   balanced-match@1.0.2: {}
@@ -7000,8 +6911,6 @@ snapshots:
 
   flatted@3.4.4: {}
 
-  fraction.js@5.3.4: {}
-
   fractional-indexing@3.4.0: {}
 
   fsevents@2.3.3:
@@ -7367,10 +7276,6 @@ snapshots:
   lru-cache@5.1.1:
     dependencies:
       yallist: 3.1.1
-
-  lucide-react@0.525.0(react@19.3.0):
-    dependencies:
-      react: 19.3.0
 
   lz-string@1.5.0: {}
 
@@ -7800,8 +7705,6 @@ snapshots:
       path-data-parser: 0.1.0
       points-on-curve: 0.2.0
 
-  postcss-value-parser@4.2.0: {}
-
   postcss@8.5.28:
     dependencies:
       nanoid: 3.3.18
@@ -7976,10 +7879,6 @@ snapshots:
     dependencies:
       react: 19.3.0
       scheduler: 0.28.0
-
-  react-hook-form@7.87.0(react@19.3.0):
-    dependencies:
-      react: 19.3.0
 
   react-icons@5.7.0(react@19.3.0):
     dependencies:
@@ -8211,8 +8110,6 @@ snapshots:
   symbol-tree@3.2.4: {}
 
   tabbable@6.5.0: {}
-
-  tailwind-merge@2.6.1: {}
 
   tailwind-merge@3.6.0: {}
 

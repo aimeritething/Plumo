@@ -29,7 +29,7 @@ function setupHoverDom() {
   document.body.appendChild(container)
 
   const toolbar = document.createElement('div')
-  toolbar.className = 'bn-formatting-toolbar'
+  toolbar.setAttribute('data-formatting-toolbar', '')
   document.body.appendChild(toolbar)
 
   setRect(wrapper, rect(300, 130, 140, 90))

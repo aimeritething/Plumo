@@ -1,3 +1,4 @@
+import { en } from '@blocknote/core/locales'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { ComponentProps } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -17,6 +18,7 @@ const filePanel = vi.hoisted(() => ({ showMenu: vi.fn() }))
 
 vi.mock('@blocknote/react', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@blocknote/react')>()),
+  useDictionary: () => en,
   useEditorState: ({ editor, selector }: { editor: unknown; selector: (context: { editor: unknown }) => unknown }) => selector({ editor }),
   useExtension: () => filePanel,
   useUploadLoading: () => false,
@@ -85,6 +87,20 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals()
+})
+
+describe('an Image block with no picture yet', () => {
+  it('offers to add one and opens the File panel on a click, keeping the editor focused', () => {
+    const { editor } = renderImageBlock({ url: '' })
+    const button = screen.getByRole('button', { name: 'Add image' })
+
+    expect(fireEvent.mouseDown(button)).toBe(false)
+    fireEvent.click(button)
+
+    expect(editor.transact).toHaveBeenCalledTimes(1)
+    expect(filePanel.showMenu).toHaveBeenCalledWith('image-block')
+    expect(screen.queryByTestId('image-toolbar')).not.toBeInTheDocument()
+  })
 })
 
 describe('the Image toolbar', () => {

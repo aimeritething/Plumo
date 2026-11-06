@@ -6,12 +6,12 @@ export type ImagePreviewTarget = {
 const MIN_VIEWABLE_DIMENSION = 16
 const IMAGE_WRAPPER_SELECTOR = '.bn-visual-media-wrapper'
 const IMAGE_INTERACTION_IGNORE_SELECTOR = [
-  '.bn-file-caption',
   '[data-image-caption]',
   '[data-image-toolbar]',
   '.bn-resize-handle',
-  '.bn-add-file-button',
-  '.bn-file-name-with-icon',
+  '[data-add-file-button]',
+  '[data-file-name]',
+  '[data-file-toolbar]',
   'button',
   '[role="button"]',
 ].join(', ')

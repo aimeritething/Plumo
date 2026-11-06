@@ -1,4 +1,5 @@
 import { createExtension } from '@blocknote/core'
+import { SuggestionMenu } from '@blocknote/core/extensions'
 import type { Node as ProsemirrorNode } from '@tiptap/pm/model'
 import { Plugin, PluginKey, Selection, type EditorState, type Transaction } from '@tiptap/pm/state'
 import { Decoration, DecorationSet, type EditorView } from '@tiptap/pm/view'
@@ -533,9 +534,16 @@ function handleInactiveBlockSelectionKey(
   editor: RichEditorBlockSelectionEditor,
   view: EditorView,
   event: KeyboardEvent,
+  isSlashMenuShown: () => boolean,
 ): boolean {
   if (!isPlainEscape(event)) return false
   if (editor.isEditable === false) return false
+  // An open Slash menu owns this Escape: its controller closes it on the
+  // document's keydown, which stopping the key here would never let it see.
+  // Selecting the block instead moved the caret before the `/` and left a
+  // block selection that swallowed the next keys and let Backspace delete
+  // block after block.
+  if (isSlashMenuShown()) return false
 
   const blockIds = blockIdsFromEditorSelection(editor, view.state)
   if (!dispatchBlockSelection(view, blockIds)) return false
@@ -601,6 +609,7 @@ function reduceBlockSelectionState(transaction: Transaction, previous: BlockSele
 
 export const createRichEditorBlockSelectionExtension = createExtension(({ editor }) => {
   const blockSelectionEditor = editor as unknown as RichEditorBlockSelectionEditor
+  const isSlashMenuShown = () => editor.getExtension(SuggestionMenu)?.shown() === true
 
   return {
     key: RICH_EDITOR_BLOCK_SELECTION_META,
@@ -632,7 +641,7 @@ export const createRichEditorBlockSelectionExtension = createExtension(({ editor
             const selection = readBlockSelection(view.state)
             return selection
               ? handleActiveBlockSelectionKey(blockSelectionEditor, view, event, selection)
-              : handleInactiveBlockSelectionKey(blockSelectionEditor, view, event)
+              : handleInactiveBlockSelectionKey(blockSelectionEditor, view, event, isSlashMenuShown)
           },
         },
         state: {

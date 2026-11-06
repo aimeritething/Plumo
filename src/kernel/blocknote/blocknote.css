@@ -8,10 +8,11 @@
    Layers. The overrides sit in `components`: above `vendor`, which holds
    BlockNote's, KaTeX's and tldraw's own CSS, and below `utilities`, so a
    Tailwind class in tsx beats a rule here and no rule needs an important flag.
-   Two blocks stand outside that layer, each with its reason written above
-   it: the `@layer utilities` block for the elements the BlockNote shadcn
-   adapters dress with Tailwind classes of their own, and the unlayered
-   Title placeholder at the end.
+   Three blocks stand outside that layer, each with its reason written
+   above it: the `@layer vendor` block that keeps two rules the BlockNote
+   shadcn stylesheet used to bring, the `@layer utilities` block for the
+   math block's selection outline, and the unlayered Title placeholder at
+   the end.
 
    Selectors: `.bn-editor` already scopes, so no container prefix; at most
    three segments; BlockNote's own attributes over class chains. Values:
@@ -42,7 +43,6 @@
     --_inline-code-line-height: 1.3;
     --_link-underline-offset: 2px;
     --_find-match-active-mix: 38%;
-    --_suggestion-row-padding-vertical: 3px;
   }
 
   /* ---------------------------------------------------------------
@@ -66,18 +66,12 @@
     background: var(--surface-card);
     color: var(--text-primary);
     font-size: var(--editor-font-size);
-    /* BlockNote's colour variables, pointed at Plumo's tokens. */
+    /* The BlockNote colour variables its editor CSS reads (the editor, the
+       nesting line, the placeholder), pointed at Plumo's tokens. Its menu
+       and tooltip colours dressed BlockNote's own UI, which Plumo does not
+       render. */
     --bn-colors-editor-background: var(--surface-card);
     --bn-colors-editor-text: var(--text-document);
-    --bn-colors-menu-background: var(--surface-popover);
-    --bn-colors-menu-text: var(--text-primary);
-    --bn-colors-tooltip-background: var(--surface-popover);
-    --bn-colors-tooltip-text: var(--text-primary);
-    --bn-colors-hovered-background: var(--menu-item-hover);
-    --bn-colors-hovered-text: var(--text-heading);
-    --bn-colors-selected-background: var(--state-selected);
-    --bn-colors-selected-text: var(--text-primary);
-    --bn-colors-border: var(--border-popover);
     --bn-colors-side-menu: var(--text-muted);
   }
 
@@ -677,31 +671,6 @@
     width: 100%;
   }
 
-  /* File block: the add-file label, pinned like the table cell. */
-  [data-file-block] .bn-add-file-button-text {
-    font-size: var(--text-sm);
-  }
-
-  /* The empty file block's button and the loading line, in Plumo's tokens
-     in place of BlockNote's hard-coded greys (AIM-531). */
-  [data-file-block] .bn-add-file-button {
-    background-color: var(--surface-card);
-    border-radius: var(--radius-sm);
-    color: var(--text-tertiary);
-  }
-
-  .bn-editor[contenteditable="true"] [data-file-block] .bn-add-file-button:hover,
-  .ProseMirror-selectednode [data-file-block] .bn-add-file-button,
-  .ProseMirror-selectednode[data-file-block] .bn-add-file-button {
-    background-color: var(--state-hover);
-  }
-
-  [data-file-block] .bn-file-loading-preview {
-    color: var(--text-tertiary);
-    font-size: var(--text-sm);
-    padding: calc(var(--spacing) * 3);
-  }
-
   /* An Image block is always centred (ADR 0011): there is no alignment to
      follow, whatever an older Document's block says. */
   .bn-block-content[data-content-type="image"] {
@@ -840,14 +809,6 @@
   }
 
   /* ---------------------------------------------------------------
-     Toolbars and menus (the material and the row geometry are in the
-     utilities block)
-     --------------------------------------------------------------- */
-  .bn-suggestion-menu-label {
-    color: var(--text-secondary);
-  }
-
-  /* ---------------------------------------------------------------
      KaTeX (the math nodes themselves are utility classes in math-block.tsx)
      --------------------------------------------------------------- */
   /* KaTeX writes the error colour inline; math-markdown.ts hands it the token
@@ -877,18 +838,28 @@
 }
 
 /* ==============================================================
-   The elements the BlockNote shadcn adapters dress themselves. The
-   adapters' Toolbar and SuggestionMenu roots and the suggestion rows carry
-   Tailwind classes of their own (rounded-lg / rounded-md, shadow-md, the
-   1px border, px-2 py-1.5 on a row), which Plumo's build generates from
-   the `@source` line in index.css into the `utilities` layer, and which no
-   `shadCNComponents` entry reaches. A rule in `components` cannot beat
-   them whatever its specificity, so the few rules that must sit in that
-   layer too, after Tailwind's (index.css imports this file after
-   tailwindcss), and win on specificity or, at equal specificity, on order.
-   The primitives inside (buttons, toggles, menus, inputs) are Plumo's own
-   ui/ components, handed over in shadcn-components.tsx, and need nothing
-   here.
+   In `vendor`, on purpose: two rules the @blocknote/shadcn stylesheet
+   applied to everything in the editor container (`.bn-shadcn`, the same
+   element as `.bn-container`) until Plumo dropped that package for
+   BlockNote's own view. Kept at the vendor layer so they weigh what they
+   did: an SVG without a `size-*` class takes its own width and height
+   attributes over any vendor rule (KaTeX's stretchy glyphs, tldraw's
+   canvas layers), and every SVG takes the pointer.
+   ============================================================== */
+@layer vendor {
+  .bn-container svg:not([class*="size-"]) {
+    width: revert;
+    height: revert;
+  }
+
+  .bn-container svg {
+    pointer-events: all;
+  }
+}
+
+/* ==============================================================
+   In `utilities`, on purpose: the one rule here must beat a utility class
+   on a Plumo component inside the editor, which no `components` rule can.
    ============================================================== */
 @layer utilities {
   /* BlockNote's outline on a selected node, restated for the math block:
@@ -898,72 +869,6 @@
   .ProseMirror-selectednode > [data-content-type="mathBlock"] > * {
     border-radius: var(--radius-sm);
     outline: var(--spacing) solid var(--state-focus-ring);
-  }
-
-  /* The formatting toolbar, the link toolbar, the slash menu and the file
-     panel: one rule for the popover material, the menu radius and the menu
-     shadow. The file panel's root is the adapter's Tabs, which carries a
-     background, radius and padding of its own; its padding comes down to
-     the menu inset here too. */
-  .bn-shadcn .bn-toolbar,
-  .bn-shadcn .bn-suggestion-menu,
-  .bn-shadcn .bn-panel {
-    background: var(--surface-popover);
-    color: var(--text-primary);
-    border: var(--hairline) solid var(--border-popover);
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-menu);
-  }
-
-  .bn-shadcn .bn-panel {
-    padding: var(--spacing);
-  }
-
-  /* BlockNote's table cell handle: its own icon inside Plumo's Button, at
-     the package's 12px height (its own correction sits in vendor and loses
-     to the Button's classes). The Table handles are Plumo's own
-     (block-note-table-handle.tsx). */
-  .bn-shadcn .bn-table-cell-handle {
-    height: calc(var(--spacing) * 3);
-    padding: 0 var(--spacing);
-  }
-
-  /* A slash menu row: 32px, 8px radius, 13px, the body colour under the
-     pointer and when selected too (the adapter's hover: / aria-selected:
-     classes turn it to the heading colour). The adapter repeats the row's
-     class on its icon cell, its title and its subtitle, so the row's
-     geometry is keyed on the row's role and taken back off the three
-     inner elements: without that the title and the (empty) subtitle each
-     take the row's 32px and the titles overflow into the rows below. */
-  .bn-suggestion-menu-item[role="option"],
-  .bn-suggestion-menu-item[role="option"]:is(:hover, [aria-selected="true"]) {
-    color: var(--text-primary);
-    height: calc(var(--spacing) * 8);
-    min-height: calc(var(--spacing) * 8);
-    padding: var(--_suggestion-row-padding-vertical) calc(var(--spacing) * 2);
-    border-radius: var(--radius-lg);
-    font-size: var(--text-sm);
-  }
-
-  .bn-suggestion-menu-item[role="option"] .bn-suggestion-menu-item {
-    height: auto;
-    min-height: 0;
-    padding: 0;
-    border-radius: 0;
-    font-size: var(--text-sm);
-  }
-
-  /* The icon cell: a fixed 28px column (the adapter pads it to 44px). */
-  .bn-suggestion-menu-item[role="option"] > [data-position="left"] {
-    display: flex;
-    width: calc(var(--spacing) * 7);
-    flex: none;
-    justify-content: center;
-  }
-
-  /* Plumo hands the adapter no subtext; the empty subtitle still renders. */
-  .bn-suggestion-menu-item[role="option"] .bn-suggestion-menu-item:empty {
-    display: none;
   }
 }
 

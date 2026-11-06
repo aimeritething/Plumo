@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
-import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { Toolbar } from '@/ui/toolbar'
 import { TooltipProvider } from '@/ui/tooltip'
 import { CreateLinkButton } from './create-link-button'
 import { NestBlockButton, UnnestBlockButton } from './nest-block-buttons'
@@ -41,17 +41,7 @@ const editor = {
 }
 
 vi.mock('@blocknote/react', () => ({
-  EditLinkMenuItems: () => null,
   useBlockNoteEditor: () => editor,
-  useComponentsContext: () => ({
-    Generic: {
-      Popover: {
-        Root: ({ children }: { children?: ReactNode }) => <>{children}</>,
-        Trigger: ({ children }: { children?: ReactNode }) => <>{children}</>,
-        Content: () => null,
-      },
-    },
-  }),
   useDictionary: () => ({
     formatting_toolbar: {
       link: { tooltip: 'Create link' },
@@ -101,7 +91,7 @@ describe('formatting toolbar tooltips', () => {
     ['Unnest block', <UnnestBlockButton key="unnest" />, ['⇧', '⇥']],
     ['Create link', <CreateLinkButton key="link" />, ['⌘', 'K']],
   ])('%s is the label and one chip per key', (label, button, chips) => {
-    render(<TooltipProvider>{button}</TooltipProvider>)
+    render(<TooltipProvider><Toolbar>{button}</Toolbar></TooltipProvider>)
 
     expect(tooltipAfterHover(label)).toEqual({ text: `${label} ${chips.join('')}`, chips })
   })

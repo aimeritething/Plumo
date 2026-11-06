@@ -19,7 +19,7 @@ import {
 } from '@phosphor-icons/react'
 import { useCallback, useMemo, useRef } from 'react'
 import type { BlockSchema, InlineContentSchema, StyleSchema } from '@blocknote/core'
-import { Button } from '@/ui/button'
+import { ToolbarButton } from '@/ui/toolbar'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -147,8 +147,6 @@ export function BlockTypeSelect() {
 
   if (!selectedItem || !editor.isEditable) return null
 
-  const SelectedIcon = selectedItem.icon
-
   return (
     <DropdownMenu
       modal={false}
@@ -156,18 +154,17 @@ export function BlockTypeSelect() {
       onOpenChange={handleMenuChange}
     >
       <DropdownMenuTrigger asChild>
-        <Button
+        <ToolbarButton
+          data-test="blockTypeSelect"
           onMouseDown={(event) => {
             captureSelectedBlockIds()
             event.preventDefault()
             event.currentTarget.focus()
           }}
-          variant="ghost"
         >
-          <SelectedIcon className="size-4" />
           {selectedItem.name}
-          <CaretDown className="size-4" />
-        </Button>
+          <CaretDown aria-hidden="true" className="size-3" />
+        </ToolbarButton>
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="start"

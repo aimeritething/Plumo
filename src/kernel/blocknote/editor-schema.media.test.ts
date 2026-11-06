@@ -8,6 +8,11 @@ describe('editor schema media blocks', () => {
     expect(schema.blockSpecs.video.config.type).toBe('video')
   })
 
+  it('draws the File block with Plumo\'s view, any file accepted as before', () => {
+    expect(schema.blockSpecs.file.config.type).toBe('file')
+    expect(schema.blockSpecs.file.implementation.meta?.fileBlockAccept).toEqual(['*/*'])
+  })
+
   it('turns embedded media previews into file-name fallbacks for unsafe runtimes', () => {
     const props = {
       block: {

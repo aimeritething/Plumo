@@ -23,7 +23,7 @@ function fileBlockClickTarget(blockId = 'file-block', actionTarget?: HTMLElement
 
   const fileName = actionTarget ?? document.createElement('span')
   if (!actionTarget) {
-    fileName.className = 'bn-file-name-with-icon'
+    fileName.setAttribute('data-file-name', '')
     fileName.textContent = 'report.pdf'
   }
 

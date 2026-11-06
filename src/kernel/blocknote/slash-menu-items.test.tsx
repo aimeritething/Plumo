@@ -117,8 +117,8 @@ describe('slash menu items', () => {
     >
     expect(icon.props.className).toBe('relative inline-flex size-5 items-center justify-center')
     expect(iconChildren.map((child) => child.props.className)).toEqual([
-      'size-4.5 group-hover:opacity-0 group-aria-selected:opacity-0',
-      'absolute inset-0 size-4.5 opacity-0 group-hover:opacity-100 group-aria-selected:opacity-100',
+      'size-4.5 group-hover/menu-item:opacity-0 group-aria-selected/menu-item:opacity-0 group-data-highlighted/menu-item:opacity-0',
+      'absolute inset-0 size-4.5 opacity-0 group-hover/menu-item:opacity-100 group-aria-selected/menu-item:opacity-100 group-data-highlighted/menu-item:opacity-100',
     ])
     expect(iconChildren.map((child) => child.props.weight)).toEqual([
       'regular',

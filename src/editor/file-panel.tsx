@@ -7,7 +7,9 @@ import * as BlockNoteReact from '@blocknote/react'
 import { filenameFromURL, type DefaultBlockSchema, type DefaultInlineContentSchema, type DefaultStyleSchema } from '@blocknote/core'
 import { UploadSimple } from '@phosphor-icons/react'
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react'
+import { cn } from '@/lib/cn'
 import { Button } from '@/ui/button'
+import { menuSurfaceClassName } from '@/ui/dropdown-menu'
 import { Input } from '@/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/ui/tabs'
 
@@ -183,8 +185,9 @@ function EmbedTab({ blockId, replacing }: FilePanelProps & { replacing: boolean 
 const UPLOAD_TAB = 'upload'
 const EMBED_TAB = 'embed'
 
-// The panel in Plumo's popover material: text tabs over one flat body, no
-// card inside the card.
+// The panel on the menus' card (ui/dropdown-menu's surface, as the Slash menu
+// and the toolbars' menus): text tabs over one flat body, no card inside the
+// card.
 export function FilePanel({ blockId }: FilePanelProps) {
   const dictionary = useDictionary()
   const editor = useBlockNoteEditor()
@@ -206,7 +209,7 @@ export function FilePanel({ blockId }: FilePanelProps) {
       onValueChange={setOpenTab}
       data-file-panel
       data-testid="file-panel"
-      className="w-[min(24rem,calc(100vw-2rem))] gap-0 rounded-xl border-hairline border-border-popover bg-surface-popover text-text-primary shadow-menu"
+      className={cn(menuSurfaceClassName, 'w-[min(24rem,calc(100vw-2rem))] gap-0')}
     >
       <TabsList variant="line" className="h-9 w-full justify-start gap-3 rounded-none border-b border-border-popover px-3">
         {canUpload && <TabsTrigger value={UPLOAD_TAB} className="flex-none px-0">{dictionary.file_panel.upload.title}</TabsTrigger>}

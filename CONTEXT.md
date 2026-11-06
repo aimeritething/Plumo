@@ -61,9 +61,30 @@ _Avoid_: Table of contents, TOC, minimap, navigator
 The control that appears on a table Block's edge when the pointer is over the table: one on the top edge for a column, one on the left edge for a row. Dragging it moves that column or row; clicking it opens that column's or row's menu.
 _Avoid_: Toolbar, table toolbar, grip
 
+**Block handle**:
+The control at the left of a Block, shown when the pointer is over the Block. Dragging its grip moves the Block; clicking the grip opens that Block's menu (Turn into, Duplicate, Delete). On a heading it also has the button that folds the heading's Section.
+_Avoid_: Side menu, drag handle, gutter
+_In code_: `SideMenu`, BlockNote's word.
+
+**Formatting toolbar**:
+The toolbar that appears above selected text in Rich mode, with buttons that style the text, change the Block's type, or add a link.
+_Avoid_: Text toolbar, bubble menu, toolbar (alone)
+
+**Link toolbar**:
+The toolbar that appears when the pointer or the cursor is on a link in Rich mode, with buttons that open, edit or remove the link.
+_Avoid_: Link popover, link menu
+
+**File panel**:
+The panel for choosing the file that an Audio, Video or File Block shows: a file from disk, or a link.
+_Avoid_: Upload dialog, embed popover
+
 **Image toolbar**:
 The buttons in an Image block's top-right corner, shown when the pointer is over the Block or the Block is selected. On a picture too narrow to hold them, they sit just above that corner instead.
 _Avoid_: Formatting toolbar (the toolbar for text, a different thing)
+
+**File toolbar**:
+The Image toolbar's counterpart on an Audio, Video or File Block: Caption, Open and `⋯` (Replace, Rename, the preview toggle, Delete), in the corner of a video, just above an audio player, or at the right end of a file's name; shown when the pointer is over the Block or the Block is selected.
+_Avoid_: Formatting toolbar, media toolbar
 
 **Image preview**:
 The view that shows an Image block's picture over the whole window, opened by double-clicking the picture or from the Image toolbar. It is for looking only; it is not an Image file's Tab.
