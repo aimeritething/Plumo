@@ -467,7 +467,7 @@ index 0f97dc48ddedfb9661b81c7469ce504dc974e284..3581ae65f49982a4a5bf28c7f55e5a96
  function kn(o, e) {
    const t = [
 diff --git a/dist/defaultBlocks-DE5GNdJH.js b/dist/defaultBlocks-DE5GNdJH.js
-index b2761001278486a8b2ac1d10c82420b4994e96d9..c918cf1536a2e3cb4ca149be41f1ab8abe7ea918 100644
+index b2761001278486a8b2ac1d10c82420b4994e96d9..c36f9541d4b206d2b15be3bb19f67b1912f0339d 100644
 --- a/dist/defaultBlocks-DE5GNdJH.js
 +++ b/dist/defaultBlocks-DE5GNdJH.js
 @@ -898,7 +898,7 @@ const T = {
@@ -534,7 +534,7 @@ index b2761001278486a8b2ac1d10c82420b4994e96d9..c918cf1536a2e3cb4ca149be41f1ab8a
    const i = (f) => f.preventDefault();
    s.addEventListener("mousedown", i);
    const c = () => {
-@@ -1481,11 +1487,18 @@ const jt = () => ({
+@@ -1481,11 +1487,27 @@ const jt = () => ({
    l.className = "bn-resize-handle", l.style.right = "4px";
    const u = document.createElement("div");
    u.style.position = "absolute", u.style.height = "100%", u.style.width = "100%";
@@ -546,6 +546,15 @@ index b2761001278486a8b2ac1d10c82420b4994e96d9..c918cf1536a2e3cb4ca149be41f1ab8a
 +  };
 +  Hide(), u.style.display = "none", o.appendChild(c), o.appendChild(l), i.appendChild(u);
    let d, p = e.props.previewWidth;
++  // Plumo: the width is kept as whole pixels, and a picture as wide as the text
++  // column keeps none, so its Markdown image carries no width (ADR 0011). One
++  // smaller than the column keeps its width, or it would shrink back on reopen.
++  const StoredWidth = (width) => {
++    var ee, te, ie;
++    const column = (te = (ee = t.domElement) == null ? void 0 : ee.firstElementChild) == null ? void 0 : te.clientWidth;
++    const natural = ((ie = i.querySelector("img")) == null ? void 0 : ie.naturalWidth) || 0;
++    return column && width >= column && natural >= column ? void 0 : Math.round(width);
++  };
    const m = (g) => {
      var ee, te;
      if (!d) {
@@ -554,14 +563,15 @@ index b2761001278486a8b2ac1d10c82420b4994e96d9..c918cf1536a2e3cb4ca149be41f1ab8a
        return;
      }
      let w;
-@@ -1495,17 +1508,17 @@ const jt = () => ({
+@@ -1495,17 +1517,17 @@ const jt = () => ({
        ((te = (ee = t.domElement) == null ? void 0 : ee.firstElementChild) == null ? void 0 : te.clientWidth) || Number.MAX_VALUE
      ), i.style.width = `${p}px`;
    }, f = (g) => {
 -    (!g.target || !i.contains(g.target) || !t.isEditable) && o.contains(c) && o.contains(l) && (o.removeChild(c), o.removeChild(l)), d && (d = void 0, i.contains(u) && i.removeChild(u), t.updateBlock(e, {
 +    (!g.target || !i.contains(g.target) || !t.isEditable) && Hide(), d && (d = void 0, u.style.display = "none", t.updateBlock(e, {
        props: {
-         previewWidth: p
+-        previewWidth: p
++        previewWidth: StoredWidth(p)
        }
      }));
    }, E = () => {
@@ -576,7 +586,7 @@ index b2761001278486a8b2ac1d10c82420b4994e96d9..c918cf1536a2e3cb4ca149be41f1ab8a
      const w = "touches" in g ? g.touches[0].clientX : g.clientX;
      d = {
        handleUsed: "left",
-@@ -1513,7 +1526,7 @@ const jt = () => ({
+@@ -1513,7 +1535,7 @@ const jt = () => ({
        initialClientX: w
      };
    }, P = (g) => {
@@ -585,7 +595,7 @@ index b2761001278486a8b2ac1d10c82420b4994e96d9..c918cf1536a2e3cb4ca149be41f1ab8a
      const w = "touches" in g ? g.touches[0].clientX : g.clientX;
      d = {
        handleUsed: "right",
-@@ -1554,7 +1567,7 @@ const jt = () => ({
+@@ -1554,7 +1576,7 @@ const jt = () => ({
  }, he = (e) => {
    const t = e.src || void 0, n = e.width || void 0, o = e.alt || void 0;
    return { url: t, previewWidth: n, name: o };
@@ -594,7 +604,7 @@ index b2761001278486a8b2ac1d10c82420b4994e96d9..c918cf1536a2e3cb4ca149be41f1ab8a
    type: "image",
    propSchema: {
      textAlignment: h.textAlignment,
-@@ -1801,7 +1814,15 @@ const sn = () => ({
+@@ -1801,7 +1823,15 @@ const sn = () => ({
      render(e, t) {
        const n = document.createDocumentFragment(), o = document.createElement("input");
        o.type = "checkbox", o.checked = e.props.checked, e.props.checked && o.setAttribute("checked", ""), o.addEventListener("change", () => {
@@ -611,7 +621,7 @@ index b2761001278486a8b2ac1d10c82420b4994e96d9..c918cf1536a2e3cb4ca149be41f1ab8a
        });
        const r = document.createElement("p"), a = document.createElement("div");
        return a.contentEditable = "false", a.appendChild(o), n.appendChild(a), n.appendChild(r), {
-@@ -2466,7 +2487,7 @@ const Tn = () => vt(
+@@ -2466,7 +2496,7 @@ const Tn = () => vt(
  ), ge = (e) => {
    const t = e.src || void 0, n = e.width || void 0;
    return { url: t, previewWidth: n };
@@ -620,7 +630,7 @@ index b2761001278486a8b2ac1d10c82420b4994e96d9..c918cf1536a2e3cb4ca149be41f1ab8a
    type: "video",
    propSchema: {
      textAlignment: h.textAlignment,
-@@ -2621,6 +2642,9 @@ class On {
+@@ -2621,6 +2651,9 @@ class On {
          this.state.referencePos = o.getBoundingClientRect().toJSON(), this.emitUpdate(this.pluginState.triggerCharacter);
        }
      });
@@ -630,7 +640,7 @@ index b2761001278486a8b2ac1d10c82420b4994e96d9..c918cf1536a2e3cb4ca149be41f1ab8a
      M(this, "closeMenu", () => {
        this.editor.transact((t) => t.setMeta(B, null));
      });
-@@ -2634,7 +2658,7 @@ class On {
+@@ -2634,7 +2667,7 @@ class On {
      this.editor = t, this.pluginState = void 0, this.emitUpdate = (a) => {
        var s;
        if (!this.state)
@@ -639,7 +649,7 @@ index b2761001278486a8b2ac1d10c82420b4994e96d9..c918cf1536a2e3cb4ca149be41f1ab8a
        n(a, {
          ...this.state,
          ignoreQueryLength: (s = this.pluginState) == null ? void 0 : s.ignoreQueryLength
-@@ -2649,17 +2673,21 @@ class On {
+@@ -2649,17 +2682,21 @@ class On {
      if (!a && !(o !== void 0 && r !== void 0) && !s)
        return;
      if (this.pluginState = s ? o : r, s || !this.editor.isEditable) {
@@ -664,7 +674,7 @@ index b2761001278486a8b2ac1d10c82420b4994e96d9..c918cf1536a2e3cb4ca149be41f1ab8a
    }
    destroy() {
      var t;
-@@ -2761,7 +2789,7 @@ const B = new Ze("SuggestionMenuPlugin"), _n = k(({ editor: e }) => {
+@@ -2761,7 +2798,7 @@ const B = new Ze("SuggestionMenuPlugin"), _n = k(({ editor: e }) => {
              if (a === s) {
                const c = r.state.doc;
                for (const l of t) {
@@ -750,7 +760,7 @@ index dbb7fc33a9add7a96488349876bc56ad60111a3f..299586cf484d5ba8a693478d7b3487ee
            select.addEventListener("change", handleLanguageChange);
            removeSelectChangeListener = () =>
 diff --git a/src/blocks/File/helpers/render/createResizableFileBlockWrapper.ts b/src/blocks/File/helpers/render/createResizableFileBlockWrapper.ts
-index 0ee0a18394e61cc6179704111ac4b00f74bda9e8..85fb4008d8567fb3525aee3b6e23702f3586bfc7 100644
+index 0ee0a18394e61cc6179704111ac4b00f74bda9e8..a8e8f7a9ea0cb5461d3e88cbaf3aefffe43f3344 100644
 --- a/src/blocks/File/helpers/render/createResizableFileBlockWrapper.ts
 +++ b/src/blocks/File/helpers/render/createResizableFileBlockWrapper.ts
 @@ -60,6 +60,21 @@ export const createResizableFileBlockWrapper = (
@@ -775,7 +785,22 @@ index 0ee0a18394e61cc6179704111ac4b00f74bda9e8..85fb4008d8567fb3525aee3b6e23702f
    // Temporary parameters set when the user begins resizing the element, used to
    // calculate the new width of the element.
    let resizeParams:
-@@ -75,13 +90,8 @@ export const createResizableFileBlockWrapper = (
+@@ -71,17 +86,23 @@ export const createResizableFileBlockWrapper = (
+     | undefined;
+   let width = block.props.previewWidth! as number;
+ 
++  // Plumo: the width is kept as whole pixels, and a picture as wide as the text
++  // column keeps none, so its Markdown image carries no width (ADR 0011). One
++  // smaller than the column keeps its width, or it would shrink back on reopen.
++  const storedWidth = (width: number): number | undefined => {
++    const column = editor.domElement?.firstElementChild?.clientWidth;
++    const natural = wrapper.querySelector("img")?.naturalWidth || 0;
++    return column && width >= column && natural >= column
++      ? undefined
++      : Math.round(width);
++  };
++
+   // Updates the element width with an updated width depending on the cursor X
    // offset from when the resize began, and which resize handle is being used.
    const windowMouseMoveHandler = (event: MouseEvent | TouchEvent) => {
      if (!resizeParams) {
@@ -791,7 +816,7 @@ index 0ee0a18394e61cc6179704111ac4b00f74bda9e8..85fb4008d8567fb3525aee3b6e23702f
        }
  
        return;
-@@ -128,14 +138,11 @@ export const createResizableFileBlockWrapper = (
+@@ -128,14 +149,11 @@ export const createResizableFileBlockWrapper = (
    const windowMouseUpHandler = (event: MouseEvent | TouchEvent) => {
      // Hides the drag handles if the cursor is no longer over the element.
      if (
@@ -810,7 +835,7 @@ index 0ee0a18394e61cc6179704111ac4b00f74bda9e8..85fb4008d8567fb3525aee3b6e23702f
      }
  
      if (!resizeParams) {
-@@ -144,9 +151,7 @@ export const createResizableFileBlockWrapper = (
+@@ -144,13 +162,11 @@ export const createResizableFileBlockWrapper = (
  
      resizeParams = undefined;
  
@@ -821,7 +846,12 @@ index 0ee0a18394e61cc6179704111ac4b00f74bda9e8..85fb4008d8567fb3525aee3b6e23702f
  
      editor.updateBlock(block, {
        props: {
-@@ -158,8 +163,8 @@ export const createResizableFileBlockWrapper = (
+-        previewWidth: width,
++        previewWidth: storedWidth(width),
+       },
+     });
+   };
+@@ -158,8 +174,8 @@ export const createResizableFileBlockWrapper = (
    // Shows the resize handles when hovering over the wrapper with the cursor.
    const wrapperMouseEnterHandler = () => {
      if (editor.isEditable) {
@@ -832,7 +862,7 @@ index 0ee0a18394e61cc6179704111ac4b00f74bda9e8..85fb4008d8567fb3525aee3b6e23702f
      }
    };
    // Hides the resize handles when the cursor leaves the wrapper, unless the
-@@ -176,14 +181,7 @@ export const createResizableFileBlockWrapper = (
+@@ -176,14 +192,7 @@ export const createResizableFileBlockWrapper = (
        return;
      }
  
@@ -848,7 +878,7 @@ index 0ee0a18394e61cc6179704111ac4b00f74bda9e8..85fb4008d8567fb3525aee3b6e23702f
    };
  
    // Sets the resize params, allowing the user to begin resizing the element by
-@@ -191,9 +189,7 @@ export const createResizableFileBlockWrapper = (
+@@ -191,9 +200,7 @@ export const createResizableFileBlockWrapper = (
    const leftResizeHandleMouseDownHandler = (event: MouseEvent | TouchEvent) => {
      event.preventDefault();
  
@@ -859,7 +889,7 @@ index 0ee0a18394e61cc6179704111ac4b00f74bda9e8..85fb4008d8567fb3525aee3b6e23702f
  
      const clientX =
        "touches" in event ? event.touches[0].clientX : event.clientX;
-@@ -209,9 +205,7 @@ export const createResizableFileBlockWrapper = (
+@@ -209,9 +216,7 @@ export const createResizableFileBlockWrapper = (
    ) => {
      event.preventDefault();
  

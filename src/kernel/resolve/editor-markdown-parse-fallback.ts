@@ -1,5 +1,3 @@
-import { normalizeParsedImageBlocks } from './editor-tab-content'
-
 type EditorBlocks = unknown[]
 type ParseMarkdownBlocks = (markdown: string) => EditorBlocks | Promise<EditorBlocks>
 
@@ -21,10 +19,9 @@ function buildMarkdownSourceBlocks(markdown: string): EditorBlocks {
 }
 
 function parsedBlocksOrSourceFallback(blocks: EditorBlocks, sourceMarkdown: string): MarkdownParseResult {
-  const normalizedBlocks = normalizeParsedImageBlocks(blocks)
-  if (normalizedBlocks.length > 0 || sourceMarkdown.trim().length === 0) {
+  if (blocks.length > 0 || sourceMarkdown.trim().length === 0) {
     return {
-      blocks: normalizedBlocks,
+      blocks,
       usedSourceFallback: false,
     }
   }

@@ -3,6 +3,7 @@ import {
   parseFastMarkdownInline as parseInline,
   type FastMarkdownInlineItem as InlineItem,
 } from './editor-fast-markdown-inline'
+import { unescapeMarkdownText } from '@/kernel/markdown/image-markdown'
 
 export interface FastMarkdownParseMetrics {
   blockCount: number
@@ -113,7 +114,7 @@ function imageBlock(line: MarkdownLine): BlockLike | null {
   return {
     type: 'image',
     props: {
-      name: match[1].replace(/\\([\]\\])/gu, '$1'),
+      name: unescapeMarkdownText(match[1]),
       url: target.startsWith('<') ? target.slice(1, -1) : target,
     },
     children: [],

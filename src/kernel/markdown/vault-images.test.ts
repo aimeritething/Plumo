@@ -35,6 +35,15 @@ describe('resolveImageUrls', () => {
     expect(resolveImageUrls(markdown, '')).toBe(markdown)
   })
 
+  it('keeps an Image block width and caption while resolving the URL', () => {
+    tauriMode = true
+    const markdown = '![shot|400](attachments/shot.png "A \\"quoted\\" caption")'
+
+    expect(resolveImageUrls(markdown, '/vault')).toBe(
+      `![shot|400](${assetUrl('/vault/attachments/shot.png')} "A \\"quoted\\" caption")`,
+    )
+  })
+
   it('converts relative attachment paths to asset URLs', () => {
     tauriMode = true
     const markdown = '![screenshot](attachments/1776369786040-CleanShot_2026-04-16.png)'
@@ -311,6 +320,14 @@ describe('portableImageUrls', () => {
 
     expect(portableImageUrls(markdown, '/vault')).toBe(
       '![screenshot](attachments/1776369786040-CleanShot.png)',
+    )
+  })
+
+  it('keeps an Image block width and caption while making the URL portable', () => {
+    const url = assetUrl('/vault/attachments/shot.png')
+
+    expect(portableImageUrls(`![shot|400](${url} "Caption")`, '/vault')).toBe(
+      '![shot|400](attachments/shot.png "Caption")',
     )
   })
 

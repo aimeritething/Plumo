@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { MOCK_FOLDER, openDocumentThroughDialog, watchForErrors } from './harness'
+import { MOCK_FOLDER, openDocumentThroughDialog, savedContent, watchForErrors } from './harness'
 
 // An Image block selected and resized with the pointer (AIM-529): the picture
 // is not selectable text, a selected one is tinted rather than outlined, a
@@ -123,5 +123,36 @@ test('dragging a handle inward shrinks a selected picture, and undo restores its
   await page.locator('.bn-editor p', { hasText: 'After the picture.' }).click()
   await page.keyboard.press('ControlOrMeta+z')
   await expect.poll(() => wrapperWidth(page)).toBe(before)
+  expect(errors.pageErrors).toEqual([])
+})
+
+test('a resize is saved as the width in the Markdown image, and none once it fills the text column', async ({ page }) => {
+  const errors = watchForErrors(page)
+  const picture = await openResize(page)
+  await picture.click()
+  const before = await wrapperWidth(page)
+
+  async function dragRightHandle(dx: number) {
+    await picture.hover()
+    const box = (await page.locator('[data-content-type="image"] .bn-resize-handle').last().boundingBox())!
+    const start = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
+    await page.mouse.move(start.x, start.y)
+    await page.mouse.down()
+    await page.mouse.move(start.x + dx, start.y, { steps: 5 })
+    await page.mouse.up()
+  }
+
+  await dragRightHandle(-150)
+  await expect.poll(() => wrapperWidth(page)).toBe(before - 150)
+  await page.keyboard.press('Meta+s')
+  await expect.poll(() => savedContent(page, PATH))
+    .toContain(`![Lake|${before - 150}](../images/cerknica-landscape.jpg)`)
+
+  // Dragged back out to the text column, the picture is as wide as it is with
+  // no width at all, so the Markdown carries none.
+  await dragRightHandle(400)
+  await expect.poll(() => wrapperWidth(page)).toBe(before)
+  await page.keyboard.press('Meta+s')
+  await expect.poll(() => savedContent(page, PATH)).toBe(CONTENT)
   expect(errors.pageErrors).toEqual([])
 })
