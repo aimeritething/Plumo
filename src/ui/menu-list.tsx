@@ -58,6 +58,21 @@ function MenuListSeparator({ className, ...props }: ComponentProps<"div">) {
   )
 }
 
+/**
+ * Scrolls the menu's own viewport, and nothing else, until `row` shows. A
+ * row's `scrollIntoView` also scrolls every scroller above the menu: the Slash
+ * menu's first row mounts before BlockNote places its floating wrapper, at the
+ * top of the Document, and the editor jumped there.
+ */
+function scrollRowIntoMenu(row: HTMLElement) {
+  const viewport = row.closest<HTMLElement>('[data-slot="scroll-area-viewport"]')
+  if (!viewport) return
+  const rowBox = row.getBoundingClientRect()
+  const viewportBox = viewport.getBoundingClientRect()
+  if (rowBox.top < viewportBox.top) viewport.scrollTop -= viewportBox.top - rowBox.top
+  else if (rowBox.bottom > viewportBox.bottom) viewport.scrollTop += rowBox.bottom - viewportBox.bottom
+}
+
 function assignRef<T>(ref: Ref<T> | undefined, value: T | null) {
   if (typeof ref === "function") ref(value)
   else if (ref) ref.current = value
@@ -65,8 +80,9 @@ function assignRef<T>(ref: Ref<T> | undefined, value: T | null) {
 
 /**
  * A row. `selected` is the row the keys would run, tinted like the row under
- * the pointer, and scrolled into view when it becomes the selected one. A
- * press keeps the focus where it is.
+ * the pointer, and scrolled into the menu's view when it becomes the selected
+ * one (the menu scrolls, never the page under it). A press keeps the focus
+ * where it is.
  */
 function MenuListItem({
   className,
@@ -83,7 +99,7 @@ function MenuListItem({
   }, [ref])
 
   useEffect(() => {
-    if (selected) elementRef.current?.scrollIntoView({ block: "nearest" })
+    if (selected && elementRef.current) scrollRowIntoMenu(elementRef.current)
   }, [selected])
 
   return (

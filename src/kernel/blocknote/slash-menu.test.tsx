@@ -66,19 +66,23 @@ describe('SlashMenu', () => {
     expect(row).not.toHaveTextContent('Plain text')
   })
 
-  it('scrolls the selected row into view as the keys move the selection', () => {
+  it('scrolls the selected row into the menu\'s view as the keys move the selection', () => {
     const items: SlashMenuItem[] = [
       { key: 'a', title: 'A', onItemClick: vi.fn() },
       { key: 'b', title: 'B', onItemClick: vi.fn() },
     ]
     const { rerender } = render(<SlashMenu items={items} loadingState="loaded" selectedIndex={0} onItemClick={vi.fn()} />)
-    const scrollIntoView = vi.mocked(Element.prototype.scrollIntoView)
-    scrollIntoView.mockClear()
+    const viewport = screen.getByRole('listbox').querySelector<HTMLElement>('[data-slot="scroll-area-viewport"]')!
+    const rect = (top: number) => ({ top, bottom: top + 32 }) as DOMRect
+    vi.spyOn(viewport, 'getBoundingClientRect').mockReturnValue(rect(0))
+    vi.spyOn(screen.getByRole('option', { name: 'B' }), 'getBoundingClientRect').mockReturnValue(rect(32))
+    onTestFinished(() => { vi.restoreAllMocks() })
+    vi.mocked(Element.prototype.scrollIntoView).mockClear()
 
     rerender(<SlashMenu items={items} loadingState="loaded" selectedIndex={1} onItemClick={vi.fn()} />)
 
-    expect(scrollIntoView).toHaveBeenCalledOnce()
-    expect(scrollIntoView.mock.contexts[0]).toBe(screen.getByRole('option', { name: 'B' }))
+    expect(viewport.scrollTop).toBe(32)
+    expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled()
   })
 
   it('keeps the editor focused when a row is pressed', () => {
