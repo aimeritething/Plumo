@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import {
   extractEditorBody,
   getH1TextFromBlocks,
-  normalizeParsedImageBlocks,
   replaceTitleInFrontmatter,
   slugifyPathStem,
 } from './editor-tab-content'
@@ -152,62 +151,6 @@ describe('replaceTitleInFrontmatter', () => {
 
   it('handles empty string as frontmatter', () => {
     expect(replaceTitleInFrontmatter('', 'Title')).toBe('')
-  })
-})
-
-describe('normalizeParsedImageBlocks', () => {
-  it('clears broken-image fallback widths from local asset image blocks', () => {
-    const blocks = normalizeParsedImageBlocks([{
-      type: 'image',
-      props: {
-        url: 'asset://localhost/%2Fvault%2Fattachments%2Fshot.png',
-        previewWidth: 16,
-      },
-    }])
-
-    expect(blocks).toEqual([{
-      type: 'image',
-      props: {
-        url: 'asset://localhost/%2Fvault%2Fattachments%2Fshot.png',
-        previewWidth: undefined,
-      },
-    }])
-  })
-
-  it('preserves explicit image widths and non-local image URLs', () => {
-    const blocks = normalizeParsedImageBlocks([
-      {
-        type: 'image',
-        props: {
-          url: 'asset://localhost/%2Fvault%2Fattachments%2Fresized.png',
-          previewWidth: 240,
-        },
-      },
-      {
-        type: 'image',
-        props: {
-          url: 'https://example.test/preview.png',
-          previewWidth: 16,
-        },
-      },
-    ])
-
-    expect(blocks).toEqual([
-      {
-        type: 'image',
-        props: {
-          url: 'asset://localhost/%2Fvault%2Fattachments%2Fresized.png',
-          previewWidth: 240,
-        },
-      },
-      {
-        type: 'image',
-        props: {
-          url: 'https://example.test/preview.png',
-          previewWidth: 16,
-        },
-      },
-    ])
   })
 })
 

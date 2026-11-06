@@ -1,6 +1,7 @@
 import { restoreWikilinksInBlocks } from './wikilinks'
 import { escapeInlineMarkdownText, wrapInlineMarkdown } from './block-note-markdown-inline'
 import { normalizeUnsafeTableCardinalities } from './block-note-table-cardinality'
+import { imageTitleMarkdown, imageWidthMarkdown } from './image-markdown'
 
 interface TextStyles {
   [style: string]: string | boolean | undefined
@@ -291,10 +292,16 @@ function mediaMarkdown(block: BlockLike): string {
   const url = mediaUrl(block)
   const name = typeof block.props?.name === 'string' ? block.props.name : ''
   if (!url) return name
-  const label = block.type === 'image' ? name : mediaLabel(name, url)
   return block.type === 'image'
-    ? `![${escapeText(label)}](${escapeLinkTarget(url)})`
-    : `[${escapeText(label)}](${escapeLinkTarget(url)})`
+    ? imageMarkdown(block, name, url)
+    : `[${escapeText(mediaLabel(name, url))}](${escapeLinkTarget(url)})`
+}
+
+/** `![alt|400](url "caption")`, per ADR 0011. */
+function imageMarkdown(block: BlockLike, name: string, url: string): string {
+  const width = imageWidthMarkdown(block.props?.previewWidth)
+  const title = imageTitleMarkdown(block.props?.caption)
+  return `![${escapeText(name)}${width}](${escapeLinkTarget(url)}${title})`
 }
 
 function quoteMarkdown(block: BlockLike): string {

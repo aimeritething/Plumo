@@ -18,7 +18,7 @@ patchedDependencies:
     hash: c006cad64c22a2efc10299d85bf72407150fd29a1f16d497b8db0faa071535f8
     path: patches/@blocknote__code-block@0.46.2.patch
   '@blocknote/core@0.46.2':
-    hash: 305cb3c01790cb0d2227105b1fa6e010bded93be7f3f1a61640af43819963488
+    hash: ac5f67ebd3d5dab2857f07661fe996a2b9d0d2646dabab29e00047f466e044e9
     path: patches/@blocknote__core@0.46.2.patch
   '@blocknote/react@0.46.2':
     hash: 1fd91be1b200529fa1468b9407d4e6678801634ac9ab66cee8b5ae913ef7c36f
@@ -42,10 +42,10 @@ importers:
     dependencies:
       '@blocknote/code-block':
         specifier: 0.46.2
-        version: 0.46.2(patch_hash=c006cad64c22a2efc10299d85bf72407150fd29a1f16d497b8db0faa071535f8)(@blocknote/core@0.46.2(patch_hash=305cb3c01790cb0d2227105b1fa6e010bded93be7f3f1a61640af43819963488)(@types/hast@3.0.5))
+        version: 0.46.2(patch_hash=c006cad64c22a2efc10299d85bf72407150fd29a1f16d497b8db0faa071535f8)(@blocknote/core@0.46.2(patch_hash=ac5f67ebd3d5dab2857f07661fe996a2b9d0d2646dabab29e00047f466e044e9)(@types/hast@3.0.5))
       '@blocknote/core':
         specifier: 0.46.2
-        version: 0.46.2(patch_hash=305cb3c01790cb0d2227105b1fa6e010bded93be7f3f1a61640af43819963488)(@types/hast@3.0.5)
+        version: 0.46.2(patch_hash=ac5f67ebd3d5dab2857f07661fe996a2b9d0d2646dabab29e00047f466e044e9)(@types/hast@3.0.5)
       '@blocknote/react':
         specifier: 0.46.2
         version: 0.46.2(patch_hash=1fd91be1b200529fa1468b9407d4e6678801634ac9ab66cee8b5ae913ef7c36f)(@floating-ui/dom@1.8.0)(@phosphor-icons/react@2.1.10(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@types/hast@3.0.5)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -4242,9 +4242,9 @@ snapshots:
       '@babel/helper-string-parser': 7.29.7
       '@babel/helper-validator-identifier': 7.29.7
 
-  '@blocknote/code-block@0.46.2(patch_hash=c006cad64c22a2efc10299d85bf72407150fd29a1f16d497b8db0faa071535f8)(@blocknote/core@0.46.2(patch_hash=305cb3c01790cb0d2227105b1fa6e010bded93be7f3f1a61640af43819963488)(@types/hast@3.0.5))':
+  '@blocknote/code-block@0.46.2(patch_hash=c006cad64c22a2efc10299d85bf72407150fd29a1f16d497b8db0faa071535f8)(@blocknote/core@0.46.2(patch_hash=ac5f67ebd3d5dab2857f07661fe996a2b9d0d2646dabab29e00047f466e044e9)(@types/hast@3.0.5))':
     dependencies:
-      '@blocknote/core': 0.46.2(patch_hash=305cb3c01790cb0d2227105b1fa6e010bded93be7f3f1a61640af43819963488)(@types/hast@3.0.5)
+      '@blocknote/core': 0.46.2(patch_hash=ac5f67ebd3d5dab2857f07661fe996a2b9d0d2646dabab29e00047f466e044e9)(@types/hast@3.0.5)
       '@shikijs/core': 3.23.0
       '@shikijs/engine-javascript': 3.23.0
       '@shikijs/langs': 3.23.0
@@ -4252,7 +4252,7 @@ snapshots:
       '@shikijs/themes': 3.23.0
       '@shikijs/types': 3.23.0
 
-  '@blocknote/core@0.46.2(patch_hash=305cb3c01790cb0d2227105b1fa6e010bded93be7f3f1a61640af43819963488)(@types/hast@3.0.5)':
+  '@blocknote/core@0.46.2(patch_hash=ac5f67ebd3d5dab2857f07661fe996a2b9d0d2646dabab29e00047f466e044e9)(@types/hast@3.0.5)':
     dependencies:
       '@emoji-mart/data': 1.2.1
       '@handlewithcare/prosemirror-inputrules': 0.1.4(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)
@@ -4304,7 +4304,7 @@ snapshots:
 
   '@blocknote/react@0.46.2(patch_hash=1fd91be1b200529fa1468b9407d4e6678801634ac9ab66cee8b5ae913ef7c36f)(@floating-ui/dom@1.8.0)(@phosphor-icons/react@2.1.10(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@types/hast@3.0.5)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
     dependencies:
-      '@blocknote/core': 0.46.2(patch_hash=305cb3c01790cb0d2227105b1fa6e010bded93be7f3f1a61640af43819963488)(@types/hast@3.0.5)
+      '@blocknote/core': 0.46.2(patch_hash=ac5f67ebd3d5dab2857f07661fe996a2b9d0d2646dabab29e00047f466e044e9)(@types/hast@3.0.5)
       '@emoji-mart/data': 1.2.1
       '@floating-ui/react': 0.27.20(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@floating-ui/utils': 0.2.10
@@ -4335,7 +4335,7 @@ snapshots:
 
   '@blocknote/shadcn@0.46.2(patch_hash=0d1f5926553dcacaafb37fb7e8364853b3ca245b21ec113658112da4b6cc226a)(@floating-ui/dom@1.8.0)(@phosphor-icons/react@2.1.10(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@types/hast@3.0.5)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(postcss@8.5.28)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(tailwindcss@4.3.3)':
     dependencies:
-      '@blocknote/core': 0.46.2(patch_hash=305cb3c01790cb0d2227105b1fa6e010bded93be7f3f1a61640af43819963488)(@types/hast@3.0.5)
+      '@blocknote/core': 0.46.2(patch_hash=ac5f67ebd3d5dab2857f07661fe996a2b9d0d2646dabab29e00047f466e044e9)(@types/hast@3.0.5)
       '@blocknote/react': 0.46.2(patch_hash=1fd91be1b200529fa1468b9407d4e6678801634ac9ab66cee8b5ae913ef7c36f)(@floating-ui/dom@1.8.0)(@phosphor-icons/react@2.1.10(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@types/hast@3.0.5)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@radix-ui/react-avatar': 1.2.6(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@radix-ui/react-dropdown-menu': 2.1.24(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)

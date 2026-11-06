@@ -1,6 +1,5 @@
 import { splitFrontmatter } from '@/kernel/markdown/wikilinks'
 import { slugifyNoteStem } from '@/kernel/markdown/note-slug'
-import { isTauriAssetUrl } from '@/kernel/markdown/vault-attachments'
 
 type MarkdownContent = string
 type FilePath = string
@@ -8,17 +7,6 @@ type Frontmatter = string
 type NoteTitle = string
 type PathStem = string
 type HeadingTextInline = { type?: string; text?: string }
-type ParsedBlock = {
-  type?: string
-  props?: {
-    url?: string
-    previewWidth?: number
-  }
-  children?: unknown[]
-}
-
-const BROKEN_IMAGE_FALLBACK_MAX_WIDTH = 32
-
 export function extractEditorBody(rawFileContent: MarkdownContent): MarkdownContent {
   const [, rawBody] = splitFrontmatter(rawFileContent)
   return rawBody.trimStart()
@@ -70,59 +58,4 @@ export function isUntitledPath(path: FilePath): boolean {
 
 export function blankParagraphBlocks(): unknown[] {
   return [{ type: 'paragraph', content: [], children: [] }]
-}
-
-function isParsedBlock(value: unknown): value is ParsedBlock {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
-
-function hasLocalFileUrl(block: ParsedBlock): boolean {
-  const url = block.props?.url
-  return typeof url === 'string' && isTauriAssetUrl({ url })
-}
-
-function hasSyntheticPreviewWidth(block: ParsedBlock): boolean {
-  const previewWidth = block.props?.previewWidth
-  return typeof previewWidth === 'number'
-    && previewWidth > 0
-    && previewWidth <= BROKEN_IMAGE_FALLBACK_MAX_WIDTH
-}
-
-function shouldClearLocalImagePreviewWidth(block: ParsedBlock): boolean {
-  return block.type === 'image'
-    && hasLocalFileUrl(block)
-    && hasSyntheticPreviewWidth(block)
-}
-
-function normalizeParsedBlockChildren(block: ParsedBlock): unknown[] | undefined {
-  if (!Array.isArray(block.children)) return block.children
-  return block.children.map(normalizeParsedImageBlock)
-}
-
-function withNormalizedImageProps(
-  block: ParsedBlock,
-  shouldClearPreviewWidth: boolean,
-): ParsedBlock['props'] {
-  if (!shouldClearPreviewWidth) return block.props
-  return { ...block.props, previewWidth: undefined }
-}
-
-function normalizeParsedImageBlock(block: unknown): unknown {
-  if (!isParsedBlock(block)) return block
-
-  const children = normalizeParsedBlockChildren(block)
-  const shouldClearPreviewWidth = shouldClearLocalImagePreviewWidth(block)
-  const props = withNormalizedImageProps(block, shouldClearPreviewWidth)
-
-  if (!shouldClearPreviewWidth && children === block.children) return block
-
-  return {
-    ...block,
-    ...(children === block.children ? {} : { children }),
-    ...(props === block.props ? {} : { props }),
-  }
-}
-
-export function normalizeParsedImageBlocks(blocks: unknown[]): unknown[] {
-  return blocks.map(normalizeParsedImageBlock)
 }
