@@ -44,7 +44,9 @@ export function useDocumentLocale(): AppLocale {
 type EditorViewport = { bottom: number; left: number; right: number; top: number }
 
 // What the editor's scroll area shows: its box, less anything stuck to its top
-// (the find bar). Without a scroll area, the window.
+// (the find bar). Without a scroll area, the window. The find bar is a child
+// of the scroll area's content, which is the scroll area itself or the one
+// wrapper a ScrollArea's viewport puts around it.
 function readEditorViewport(editor: HighlightEditor): EditorViewport {
   const scrollArea = editor.domElement?.closest(EDITOR_SCROLL_AREA_SELECTOR)
   if (!scrollArea) {
@@ -53,7 +55,7 @@ function readEditorViewport(editor: HighlightEditor): EditorViewport {
 
   const { bottom, left, right, top } = scrollArea.getBoundingClientRect()
   let visibleTop = top
-  for (const child of Array.from<Element>(scrollArea.children)) {
+  for (const child of Array.from<Element>(scrollArea.querySelectorAll(':scope > *, :scope > div > *'))) {
     if (getComputedStyle(child).position !== 'sticky') continue
     const bounds = child.getBoundingClientRect()
     if (bounds.top <= visibleTop) visibleTop = Math.max(visibleTop, bounds.bottom)

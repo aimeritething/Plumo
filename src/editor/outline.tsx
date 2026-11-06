@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObje
 import { cn } from '@/lib/cn'
 import { translate, type AppLocale } from '@/lib/i18n'
 import type { RichEditor } from '@/kernel/blocknote/block-note-dom'
+import { ScrollArea } from '@/ui/scroll-area'
 import { railLayout, type OutlineEntry } from './outline-entries'
 import { useOutline, type Outline as OutlineState } from './use-outline'
 
@@ -137,28 +138,29 @@ export function Outline({ editor, scrollAreaRef, locale = 'en' }: {
       </div>
       <nav
         {...hover}
-        ref={listRef}
         aria-label={translate(locale, 'editor.outline.label')}
         data-open={open || undefined}
         inert={!open}
         className={cn(
           // As wide as its longest heading, within bounds, so short headings leave the text beside it uncovered.
-          'absolute top-1/2 left-2 flex w-max max-w-64 min-w-40 origin-left -translate-y-1/2 flex-col gap-px overflow-y-auto',
-          'rounded-xl border-hairline border-border-popover bg-surface-popover p-1.5 shadow-menu',
+          'absolute top-1/2 left-2 flex w-max max-w-64 min-w-40 origin-left -translate-y-1/2 flex-col overflow-hidden',
+          'rounded-xl border-hairline border-border-popover bg-surface-popover shadow-menu',
           'pointer-events-none scale-95 opacity-0 transition-[opacity,scale] duration-150 ease-out motion-reduce:scale-100',
           'data-open:pointer-events-auto data-open:scale-100 data-open:opacity-100',
         )}
         style={{ maxHeight: outline.maxHeight }}
       >
-        {outline.entries.map((entry) => (
-          <OutlineRow
-            key={entry.id}
-            entry={entry}
-            active={entry.id === activeId}
-            hidden={outline.hiddenIds.has(entry.id)}
-            onPick={pick}
-          />
-        ))}
+        <ScrollArea className="min-h-0" viewportRef={listRef} viewportClassName="p-1.5 [&>div]:flex! [&>div]:flex-col [&>div]:gap-px">
+          {outline.entries.map((entry) => (
+            <OutlineRow
+              key={entry.id}
+              entry={entry}
+              active={entry.id === activeId}
+              hidden={outline.hiddenIds.has(entry.id)}
+              onPick={pick}
+            />
+          ))}
+        </ScrollArea>
       </nav>
     </div>
   )

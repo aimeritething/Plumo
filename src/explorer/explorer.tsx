@@ -267,7 +267,8 @@ function ExplorerBody(props: LoadedProps) {
         drop={drop}
       />
       {!collapsed && (
-        <ScrollArea ref={treeRef} id={treeId} className="min-h-0" role="tree" aria-label={tree.name}>
+        // The bar sits in the sidebar's right padding, beside the rows rather than over them.
+        <ScrollArea ref={treeRef} id={treeId} className="-mr-3 min-h-0" viewportClassName="pr-3" role="tree" aria-label={tree.name}>
           {tree.children.map((child) => (
             <ExplorerRow key={child.path} {...props} node={child} depth={0} expanded={expanded} onToggle={toggleFolder} expandFolder={expandFolder}
               drop={drop} onRenameKeyboardEnd={onRenameKeyboardEnd} />

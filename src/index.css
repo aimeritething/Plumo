@@ -168,6 +168,10 @@
   --menu-item-hover: #f2f2f2;
   --menu-shortcut: #737373;
 
+  /* scrollbar: the overlay thumb (ui/scroll-area.tsx), see-through so it reads on every surface */
+  --scrollbar-thumb: color-mix(in srgb, var(--text-primary) 28%, transparent);
+  --scrollbar-thumb-hover: color-mix(in srgb, var(--text-primary) 48%, transparent);
+
   /* chroma */
   --chroma-teal: #00b8cb;
   --chroma-teal-text: color-mix(in oklab, var(--chroma-teal) 72%, black);
@@ -282,6 +286,10 @@
   --tab-active: #262626;
   --menu-item-hover: #2a2a2a;
   --menu-shortcut: #a3a3a3;
+
+  /* scrollbar: the overlay thumb (ui/scroll-area.tsx), see-through so it reads on every surface */
+  --scrollbar-thumb: color-mix(in srgb, var(--text-primary) 30%, transparent);
+  --scrollbar-thumb-hover: color-mix(in srgb, var(--text-primary) 50%, transparent);
 
   /* chroma */
   --chroma-teal: #00b8cb;
@@ -417,6 +425,8 @@
   --color-tab-active: var(--tab-active);
   --color-menu-item-hover: var(--menu-item-hover);
   --color-menu-shortcut: var(--menu-shortcut);
+  --color-scrollbar-thumb: var(--scrollbar-thumb);
+  --color-scrollbar-thumb-hover: var(--scrollbar-thumb-hover);
   --color-chroma-teal: var(--chroma-teal);
   --color-chroma-teal-text: var(--chroma-teal-text);
   --color-chroma-teal-bg: var(--chroma-teal-bg);

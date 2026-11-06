@@ -3,6 +3,7 @@ import { useCallback, useLayoutEffect, useRef, useState, type Dispatch, type Set
 import { createPortal } from 'react-dom'
 import { isImeKeyEvent } from '@/lib/ime-key-event'
 import { Button } from '@/ui/button'
+import { ScrollArea } from '@/ui/scroll-area'
 import type { SlashMenuItem } from './slash-menu-items'
 
 interface OpenSubmenu {
@@ -231,46 +232,52 @@ export function SlashMenu({
 
   return (
     <>
-      <Components.SuggestionMenu.Root id="bn-suggestion-menu" className="bn-suggestion-menu">
-        {renderedItems}
-        {renderedItems.length === 0 && loadingState !== 'loading-initial' && (
-          <Components.SuggestionMenu.EmptyItem className="bn-suggestion-menu-item">
-            {dictionary.suggestion_menu.no_items_title}
-          </Components.SuggestionMenu.EmptyItem>
-        )}
-        {loader}
+      {/* The adapter's root keeps its size and material and stops scrolling; the
+          rows scroll in Plumo's ScrollArea inside it, the root's inset its viewport's. */}
+      <Components.SuggestionMenu.Root id="bn-suggestion-menu" className="bn-suggestion-menu flex flex-col overflow-hidden p-0">
+        <ScrollArea className="min-h-0" viewportClassName="p-1">
+          {renderedItems}
+          {renderedItems.length === 0 && loadingState !== 'loading-initial' && (
+            <Components.SuggestionMenu.EmptyItem className="bn-suggestion-menu-item">
+              {dictionary.suggestion_menu.no_items_title}
+            </Components.SuggestionMenu.EmptyItem>
+          )}
+          {loader}
+        </ScrollArea>
       </Components.SuggestionMenu.Root>
       {openSubmenu &&
         submenuItems.length > 0 &&
         createPortal(
           <div
             aria-label={items.find((item) => item.key === openSubmenu.key)?.title}
-            className="fixed z-popover flex max-h-[min(26rem,calc(100vh-1rem))] min-w-40 flex-col gap-0.5 overflow-y-auto rounded-xl bg-surface-popover text-text-primary border-hairline border-border-popover shadow-menu p-1"
+            className="fixed z-popover flex max-h-[min(26rem,calc(100vh-1rem))] min-w-40 flex-col overflow-hidden rounded-xl bg-surface-popover text-text-primary border-hairline border-border-popover shadow-menu"
             ref={submenuElement}
             role="menu"
             style={{ left: openSubmenu.left, top: openSubmenu.top }}
           >
-            {submenuItems.map((item, index) => (
-              <Button
-                aria-selected={index === submenuIndex}
-                className="w-full justify-start gap-2 font-normal hover:bg-menu-item-hover hover:text-text-heading aria-selected:bg-menu-item-hover aria-selected:text-text-heading"
-                key={item.key}
-                onClick={() => onItemClick?.(item)}
-                onMouseDown={(event) => {
-                  event.preventDefault()
-                }}
-                onMouseEnter={() => {
-                  setSubmenuIndex(index)
-                }}
-                role="menuitem"
-                size="sm"
-                type="button"
-                variant="ghost"
-              >
-                {item.icon}
-                <span>{item.title}</span>
-              </Button>
-            ))}
+            <ScrollArea className="min-h-0" viewportClassName="p-1 [&>div]:flex! [&>div]:flex-col [&>div]:gap-0.5">
+              {submenuItems.map((item, index) => (
+                <Button
+                  aria-selected={index === submenuIndex}
+                  className="w-full justify-start gap-2 font-normal hover:bg-menu-item-hover hover:text-text-heading aria-selected:bg-menu-item-hover aria-selected:text-text-heading"
+                  key={item.key}
+                  onClick={() => onItemClick?.(item)}
+                  onMouseDown={(event) => {
+                    event.preventDefault()
+                  }}
+                  onMouseEnter={() => {
+                    setSubmenuIndex(index)
+                  }}
+                  role="menuitem"
+                  size="sm"
+                  type="button"
+                  variant="ghost"
+                >
+                  {item.icon}
+                  <span>{item.title}</span>
+                </Button>
+              ))}
+            </ScrollArea>
           </div>,
         document.body,
       )}

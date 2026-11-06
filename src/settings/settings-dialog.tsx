@@ -5,6 +5,7 @@ import type { ThemeMode } from '@/shell/theme-mode'
 import { cn } from '@/lib/cn'
 import { Button } from '@/ui/button'
 import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/ui/dialog'
+import { ScrollArea } from '@/ui/scroll-area'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
 import { ThemePicker } from './theme-picker'
 
@@ -80,9 +81,9 @@ export function SettingsDialog({ open, onClose, theme, onThemeChange }: Settings
               <TooltipContent side="bottom">Close</TooltipContent>
             </Tooltip>
           </header>
-          <div className="min-h-0 flex-1 overflow-y-auto px-10 pt-1 pb-10 max-[760px]:px-6">
+          <ScrollArea className="min-h-0 flex-1" viewportClassName="px-10 pt-1 pb-10 max-[760px]:px-6">
             {section.id === 'appearance' && <ThemePicker theme={theme} onChange={onThemeChange} />}
-          </div>
+          </ScrollArea>
         </section>
       </DialogContent>
     </Dialog>
