@@ -7,6 +7,7 @@ const COVERAGE_SHARD_TEST_TIMEOUT_MS = 30_000
 const {
   blockHasTypeMock,
   editorHasBlockWithTypeMock,
+  editLinkMock,
   formattingToolbarStore,
   hoverGuardMock,
   showSelectionExtension,
@@ -17,6 +18,7 @@ const {
 } = vi.hoisted(() => ({
   blockHasTypeMock: vi.fn(() => true),
   editorHasBlockWithTypeMock: vi.fn(() => true),
+  editLinkMock: vi.fn(),
   formattingToolbarStore: { setState: vi.fn() },
   hoverGuardMock: vi.fn(),
   showSelectionExtension: Symbol('ShowSelectionExtension'),
@@ -31,29 +33,12 @@ function MockIcon() {
 }
 
 vi.mock('@blocknote/react', () => ({
-  FormattingToolbar: ({ children }: { children?: ReactNode }) => (
-    <div data-testid="mock-formatting-toolbar">{children}</div>
-  ),
-  getFormattingToolbarItems: () => [
-    <div key="blockTypeSelect" />,
-    <div key="boldStyleButton" />,
-    <div key="italicStyleButton" />,
-    <div key="strikeStyleButton" />,
-    <div key="fileDownloadButton" />,
-    <div key="nestBlockButton" />,
-    <div key="unnestBlockButton" />,
-    <div key="createLinkButton" />,
-  ],
-  EditLinkMenuItems: () => <div data-testid="mock-link-form" />,
-  useComponentsContext: () => ({
-    Generic: {
-      Popover: {
-        Root: ({ children, open }: { children?: ReactNode; open?: boolean }) => <div data-testid="mock-link-popover" data-open={open}>{children}</div>,
-        Trigger: ({ children }: { children?: ReactNode }) => <>{children}</>,
-        Content: ({ children }: { children?: ReactNode }) => <>{children}</>,
-      },
-    },
-  }),
+  // BlockNote's file block buttons, still BlockNote's: each shows for a selected file block.
+  FileCaptionButton: () => <button type="button">Edit caption</button>,
+  FileDeleteButton: () => <button type="button">Delete file</button>,
+  FilePreviewButton: () => null,
+  FileRenameButton: () => null,
+  FileReplaceButton: () => null,
   PositionPopover: (props: Record<string, unknown> & { children?: ReactNode }) => {
     positionPopoverState.lastProps = props
     return <div data-testid="mock-position-popover">{props.children}</div>
@@ -71,12 +56,15 @@ vi.mock('@blocknote/react', () => ({
       nest: { tooltip: 'Nest block' },
       unnest: { tooltip: 'Unnest block' },
     },
+    link_toolbar: {
+      form: { title_placeholder: 'Edit title', url_placeholder: 'Edit URL' },
+    },
   }),
   useEditorState: ({ editor, selector }: { editor: unknown; selector: (context: { editor: unknown }) => unknown }) => selector({ editor }),
   useExtension: (extension: unknown) => (
     extension === showSelectionExtension
       ? { showSelection: showSelectionMock }
-      : { store: formattingToolbarStore }
+      : { editLink: editLinkMock, store: formattingToolbarStore }
   ),
   useExtensionState: () => showState.value,
 }))
@@ -90,8 +78,11 @@ vi.mock('@blocknote/core', () => ({
 }))
 
 vi.mock('@blocknote/core/extensions', () => ({
+  DEFAULT_LINK_PROTOCOL: 'https',
   FormattingToolbarExtension: Symbol('FormattingToolbarExtension'),
+  LinkToolbarExtension: Symbol('LinkToolbarExtension'),
   ShowSelectionExtension: showSelectionExtension,
+  VALID_LINK_PROTOCOLS: ['http:', 'https:', 'mailto:'],
 }))
 
 vi.mock('@/ui/dropdown-menu', () => ({
@@ -232,6 +223,36 @@ describe('the formatting toolbar and its controller', () => {
       'file-block',
       { type: 'heading', props: { level: 1 } },
     )
+  })
+
+  it('offers the Markdown-safe controls in groups, and none for underline, alignment or colour', () => {
+    useBlockNoteEditorMock.mockReturnValue(createMockEditor('paragraph'))
+
+    render(<FormattingToolbar />)
+
+    const toolbar = screen.getByRole('toolbar', { name: 'Formatting' })
+    for (const name of ['Paragraph', 'Create link', 'Bold', 'Italic', 'Strikethrough', 'Inline code', 'Highlight', 'Nest block', 'Unnest block']) {
+      // The block type menu's own rows render here too (the menu is mocked open), so a name may repeat.
+      expect(screen.getAllByRole('button', { name }).length).toBeGreaterThan(0)
+    }
+    expect(screen.queryByRole('button', { name: /^(underline|align|colou?rs?\b)/i })).not.toBeInTheDocument()
+    expect(toolbar.querySelectorAll('[role="group"]')).toHaveLength(5)
+  })
+
+  it('writes a link from the link button\'s form on Enter, https added to a bare address', () => {
+    const editor = createMockEditor('paragraph')
+    useBlockNoteEditorMock.mockReturnValue(editor)
+
+    render(<FormattingToolbar />)
+    fireEvent.click(screen.getByRole('button', { name: 'Create link' }))
+    const input = screen.getByRole('textbox', { name: 'Edit URL' })
+    expect(screen.queryByRole('textbox', { name: 'Edit title' })).not.toBeInTheDocument()
+
+    fireEvent.change(input, { target: { value: 'example.com' } })
+    fireEvent.keyDown(input, { key: 'Enter' })
+
+    expect(editLinkMock).toHaveBeenCalledWith('https://example.com', 'Selected block', 1)
+    expect(formattingToolbarStore.setState).toHaveBeenCalledWith(false)
   })
 
   it('ignores stale block-type clicks when the selected block disappeared before the action', () => {

@@ -8,6 +8,8 @@ import { useEffect, useRef, type RefObject } from 'react'
 
 type RectLike = Pick<DOMRect, 'left' | 'right' | 'top' | 'bottom'>
 
+// The Formatting toolbar's root (formatting-toolbar.tsx).
+const FORMATTING_TOOLBAR_SELECTOR = '[data-formatting-toolbar]'
 const HOVER_BRIDGE_PADDING_X = 8
 const HOVER_BRIDGE_PADDING_Y = 8
 const FORMATTING_TOOLBAR_FILE_BLOCK_TYPES = new Set([
@@ -84,7 +86,7 @@ export function shouldSuppressFormattingToolbarHoverUpdate({
 
   if (
     eventTarget instanceof Element &&
-    eventTarget.closest('.bn-formatting-toolbar')
+    eventTarget.closest(FORMATTING_TOOLBAR_SELECTOR)
   ) {
     return true
   }
@@ -93,7 +95,7 @@ export function shouldSuppressFormattingToolbarHoverUpdate({
     container,
     selectedFileBlockId,
   )
-  const toolbar = doc.querySelector<HTMLElement>('.bn-formatting-toolbar')
+  const toolbar = doc.querySelector<HTMLElement>(FORMATTING_TOOLBAR_SELECTOR)
 
   if (!selectedFileBlock || !toolbar) return false
 

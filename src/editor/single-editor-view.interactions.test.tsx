@@ -326,7 +326,8 @@ describe('SingleEditorView interactions', () => {
 
   it('ignores editor-container click handling for link toolbar interactions', () => {
     const { container, editor } = renderEditorHarness()
-    const linkAction = appendToolbarButton(container, 'bn-link-toolbar', 'Open in a new tab')
+    const linkAction = appendToolbarButton(container, '', 'Open in a new tab')
+    linkAction.parentElement?.setAttribute('data-link-toolbar', '')
 
     fireEvent.click(linkAction)
 

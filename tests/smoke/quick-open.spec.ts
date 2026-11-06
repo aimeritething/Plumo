@@ -170,7 +170,7 @@ test('in Rich mode with text selected, ⌘K is the editor\'s link command, not t
   await expect.poll(() => page.evaluate(() => window.getSelection()?.isCollapsed)).toBe(false)
   // The chord goes to the editor only once the formatting toolbar's link button is mounted;
   // before that it falls through to the Command Menu by design, so wait for the toolbar.
-  await expect(page.locator('.bn-formatting-toolbar [data-test="createLink"]')).toBeVisible()
+  await expect(page.locator('[data-formatting-toolbar] [data-test="createLink"]')).toBeVisible()
 
   await page.keyboard.press('Meta+k')
 

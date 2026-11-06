@@ -56,11 +56,6 @@ vi.mock('@blocknote/react', () => ({
   },
   FilePanelController: () => null,
   TableHandlesController: () => null,
-  LinkToolbar: ({ children }: { children?: ReactNode }) => (
-    <div className="bn-link-toolbar">{children}</div>
-  ),
-  EditLinkButton: () => <button type="button">Edit Link</button>,
-  DeleteLinkButton: () => <button type="button">Remove Link</button>,
   SideMenuController: () => <div data-testid="side-menu-controller" />,
   SuggestionMenuController: (props: Record<string, unknown>) => {
     state.capturedSuggestionProps[String(props.triggerCharacter)] = props
@@ -70,33 +65,16 @@ vi.mock('@blocknote/react', () => ({
     state.capturedSuggestionProps[String(props.triggerCharacter)] = props
     return <div data-testid={`grid-suggestion-${String(props.triggerCharacter)}`} />
   },
-  useComponentsContext: () => ({
-    LinkToolbar: {
-      Button: ({
-        children,
-        icon,
-        label,
-        onClick,
-      }: {
-        children?: ReactNode
-        icon?: ReactNode
-        label?: string
-        onClick?: () => void
-      }) => (
-        <button onClick={onClick} type="button">
-          {icon}
-          {label}
-          {children}
-        </button>
-      ),
-    },
-  }),
   useCreateBlockNote: vi.fn(),
   useDictionary: () => ({
     link_toolbar: {
+      delete: { tooltip: 'Remove link' },
+      edit: { text: 'Edit link', tooltip: 'Edit' },
+      form: { title_placeholder: 'Edit title', url_placeholder: 'Edit URL' },
       open: { tooltip: 'Open in a new tab' },
     },
   }),
+  useExtension: () => ({ deleteLink: vi.fn(), editLink: vi.fn() }),
 }))
 
 vi.mock('@blocknote/shadcn', () => ({
@@ -412,5 +390,6 @@ export function renderLinkToolbarOpenButton(options: {
       text={options.text ?? 'Example'}
       range={{ from: 1, to: 8 }}
     />,
+    { wrapper: TooltipProvider },
   )
 }

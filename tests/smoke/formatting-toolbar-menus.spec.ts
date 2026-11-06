@@ -22,14 +22,14 @@ async function selectEndOfFirstParagraph(page: Page, text: string) {
   for (let index = 0; index < text.length; index += 1) await page.keyboard.press('ArrowLeft', { delay: 10 })
   await page.keyboard.up('Shift')
   await expect.poll(() => page.evaluate(() => String(window.getSelection()))).toBe(text)
-  await expect(page.locator('.bn-formatting-toolbar')).toBeVisible()
+  await expect(page.locator('[data-formatting-toolbar]')).toBeVisible()
 }
 
 test('the highlight colour caret opens its menu without closing the toolbar', async ({ page }) => {
   const errors = watchForErrors(page)
   await openWelcome(page)
   await selectEndOfFirstParagraph(page, 'the page.')
-  const toolbar = page.locator('.bn-formatting-toolbar')
+  const toolbar = page.locator('[data-formatting-toolbar]')
   const menu = page.getByRole('menu')
 
   await page.locator('[data-test="highlightColorMenu"]').click()
@@ -67,7 +67,7 @@ test('the highlight toggle clears a coloured highlight and sets a yellow one', a
 
   await page.locator('[data-test="highlight"]').click()
   await expect.poll(() => savedContent(page, WELCOME_PATH)).toContain('==the page.==')
-  await expect(page.locator('.bn-formatting-toolbar')).toBeVisible()
+  await expect(page.locator('[data-formatting-toolbar]')).toBeVisible()
 })
 
 test('a block type choice keeps the toolbar and the focus in the text', async ({ page }) => {
@@ -78,7 +78,7 @@ test('a block type choice keeps the toolbar and the focus in the text', async ({
   await page.getByRole('menuitem', { name: 'Heading 2' }).click()
 
   await expect(page.locator('.bn-editor h2')).toHaveText('This Folder lives in memory. Edits stay for the life of the page.')
-  await expect(page.locator('.bn-formatting-toolbar')).toBeVisible()
+  await expect(page.locator('[data-formatting-toolbar]')).toBeVisible()
   await expect(page.getByRole('button', { name: /Heading 2/ })).toBeVisible()
   expect(await activeElement(page)).toBe('editor')
 

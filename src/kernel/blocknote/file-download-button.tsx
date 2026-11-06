@@ -2,7 +2,7 @@ import { useBlockNoteEditor, useDictionary, useEditorState } from '@blocknote/re
 import type { BlockSchema, InlineContentSchema, StyleSchema } from '@blocknote/core'
 import { ArrowSquareOut } from '@phosphor-icons/react'
 import { useCallback } from 'react'
-import { Button } from '@/ui/button'
+import { ToolbarButton } from '@/ui/toolbar'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
 import { openEditorAttachmentOrUrl } from './editor-attachment-actions'
 import {
@@ -80,9 +80,9 @@ export function FileDownloadButton({ vaultPath }: { vaultPath?: string }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button aria-label={label} className="min-w-7 px-2 has-[>svg]:px-2" data-test="fileDownload" onClick={handleOpen} variant="ghost">
+        <ToolbarButton aria-label={label} data-test="fileDownload" onClick={handleOpen}>
           <ArrowSquareOut aria-hidden="true" />
-        </Button>
+        </ToolbarButton>
       </TooltipTrigger>
       <TooltipContent>{label}</TooltipContent>
     </Tooltip>

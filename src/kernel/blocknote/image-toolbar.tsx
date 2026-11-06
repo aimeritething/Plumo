@@ -11,7 +11,6 @@ import {
 import { useRef, useState, type KeyboardEvent, type ReactNode, type SyntheticEvent } from 'react'
 import { cn } from '@/lib/cn'
 import { translate, type TranslationKey } from '@/lib/i18n'
-import { Button } from '@/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,8 +20,8 @@ import {
 } from '@/ui/dropdown-menu'
 import { Input } from '@/ui/input'
 import { Popover, PopoverAnchor, PopoverContent } from '@/ui/popover'
+import { Toolbar, ToolbarButton } from '@/ui/toolbar'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
-import { FloatingIconGroup } from './floating-icon-group'
 
 // The Image toolbar (CONTEXT.md): Caption, Preview image and `⋯` in the
 // picture's top-right corner, or just above that corner when the picture is
@@ -58,6 +57,15 @@ type MenuAction = 'replace' | 'alt' | 'open' | 'delete'
 function holdSelection(event: SyntheticEvent) {
   event.preventDefault()
   event.stopPropagation()
+}
+
+/**
+ * While hidden the toolbar is out of the Tab order; shown, the toolbar's roving
+ * focus decides. The key is left out when shown: a `tabIndex` of undefined
+ * would still override the roving one.
+ */
+function hiddenFromTab(shown: boolean) {
+  return shown ? {} : { tabIndex: -1 }
 }
 
 function ToolbarTooltip({ label, children }: { label: string; children: ReactNode }) {
@@ -155,9 +163,9 @@ function ImageToolbarMenu(props: ImageToolbarProps & { onAltText: () => void }) 
     >
       <ToolbarTooltip label={t('editor.image.more')}>
         <DropdownMenuTrigger asChild>
-          <Button aria-label={t('editor.image.more')} data-testid="image-toolbar-more" size="icon-xs" type="button" variant="icon">
+          <ToolbarButton aria-label={t('editor.image.more')} data-testid="image-toolbar-more" size="sm" {...hiddenFromTab(props.shown)}>
             <DotsThree aria-hidden="true" weight="bold" />
-          </Button>
+          </ToolbarButton>
         </DropdownMenuTrigger>
       </ToolbarTooltip>
       <DropdownMenuContent
@@ -208,26 +216,26 @@ export function ImageToolbar(props: ImageToolbarProps) {
           onMouseDown={holdSelection}
           onDoubleClick={holdSelection}
         >
-          <FloatingIconGroup aria-hidden={!props.shown} aria-label={t('editor.image.toolbar')} role="toolbar">
+          <Toolbar aria-hidden={!props.shown} aria-label={t('editor.image.toolbar')} {...hiddenFromTab(props.shown)}>
             <ToolbarTooltip label={t('editor.image.caption')}>
-              <Button aria-label={t('editor.image.caption')} data-testid="image-toolbar-caption" onClick={props.onCaption}
-                size="icon-xs" tabIndex={props.shown ? 0 : -1} type="button" variant="icon">
+              <ToolbarButton aria-label={t('editor.image.caption')} data-testid="image-toolbar-caption" onClick={props.onCaption}
+                size="sm" {...hiddenFromTab(props.shown)}>
                 <Subtitles aria-hidden="true" />
-              </Button>
+              </ToolbarButton>
             </ToolbarTooltip>
             <ToolbarTooltip label={t('editor.image.preview')}>
-              <Button aria-label={t('editor.image.preview')} data-testid="image-toolbar-preview" disabled={props.previewDisabled}
-                onClick={props.onPreview} size="icon-xs" tabIndex={props.shown ? 0 : -1} type="button" variant="icon">
+              <ToolbarButton aria-label={t('editor.image.preview')} data-testid="image-toolbar-preview" disabled={props.previewDisabled}
+                onClick={props.onPreview} size="sm" {...hiddenFromTab(props.shown)}>
                 <ArrowsOut aria-hidden="true" />
-              </Button>
+              </ToolbarButton>
             </ToolbarTooltip>
             <ImageToolbarMenu {...props} onAltText={altText.show} />
-          </FloatingIconGroup>
+          </Toolbar>
         </div>
       </PopoverAnchor>
       <PopoverContent
         align="end"
-        className="w-64 p-2"
+        variant="compact"
         onCloseAutoFocus={(event) => event.preventDefault()}
         onEscapeKeyDown={(event) => {
           event.preventDefault()

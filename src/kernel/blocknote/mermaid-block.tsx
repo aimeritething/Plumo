@@ -2,9 +2,8 @@ import { createReactBlockSpec } from '@blocknote/react'
 import { ArrowsOut as Maximize2, PencilSimpleLine } from '@phosphor-icons/react'
 import { useEffect, useId, useMemo, useState, type SyntheticEvent } from 'react'
 import { MERMAID_BLOCK_TYPE, mermaidFenceSource } from '@/kernel/markdown/mermaid-markdown'
-import { Button } from '@/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
-import { FloatingIconGroup } from './floating-icon-group'
+import { Toolbar, ToolbarButton } from '@/ui/toolbar'
 import {
   Dialog,
   DialogContent,
@@ -66,6 +65,7 @@ const OPEN_RAW_EDITOR_LABEL = translate('en', 'editor.toolbar.rawOpen')
 
 // The floating buttons' card shows under the pointer or keyboard focus, and
 // always on a device with no pointer to hover with.
+const TOOLBAR_LABEL = 'Mermaid diagram actions'
 const FLOATING_GROUP_CLASS = 'absolute top-2 right-2 z-raised opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100'
 // The rendered SVG at its own size, centred; the box scrolls when it is wider.
 const SVG_CLASS = '[&_svg]:block [&_svg]:h-auto [&_svg]:max-w-none [&_svg]:min-w-min'
@@ -214,16 +214,14 @@ function MermaidRawEditorButton() {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button
+        <ToolbarButton
           aria-label={OPEN_RAW_EDITOR_LABEL}
           onClick={openRawEditorForMermaidSource}
           onMouseDown={stopMermaidViewportEvent}
-          size="icon-xs"
-          type="button"
-          variant="icon"
+          size="sm"
         >
           <PencilSimpleLine aria-hidden="true" />
-        </Button>
+        </ToolbarButton>
       </TooltipTrigger>
       <TooltipContent side="bottom">{OPEN_RAW_EDITOR_LABEL}</TooltipContent>
     </Tooltip>
@@ -236,14 +234,9 @@ function MermaidLightbox({ svg }: { svg: string }) {
       <Tooltip>
         <TooltipTrigger asChild>
           <DialogTrigger asChild>
-            <Button
-              aria-label="Open Mermaid diagram"
-              size="icon-xs"
-              type="button"
-              variant="icon"
-            >
+            <ToolbarButton aria-label="Open Mermaid diagram" size="sm">
               <Maximize2 aria-hidden="true" />
-            </Button>
+            </ToolbarButton>
           </DialogTrigger>
         </TooltipTrigger>
         <TooltipContent side="bottom">Open diagram</TooltipContent>
@@ -305,9 +298,9 @@ export function MermaidDiagram({ diagram, source }: MermaidDiagramProps) {
         className={`${FIGURE_CLASS} rounded-lg border-hairline border-chroma-red bg-chroma-red/8 p-3`}
         data-testid="mermaid-diagram-error"
       >
-        <FloatingIconGroup className={FLOATING_GROUP_CLASS} contentEditable={false}>
+        <Toolbar aria-label={TOOLBAR_LABEL} className={FLOATING_GROUP_CLASS} contentEditable={false}>
           <MermaidRawEditorButton />
-        </FloatingIconGroup>
+        </Toolbar>
         <figcaption className="mb-2 text-xs leading-normal font-semibold text-chroma-red">Mermaid diagram unavailable</figcaption>
         <MermaidSourceFallback source={source} />
       </figure>
@@ -316,10 +309,10 @@ export function MermaidDiagram({ diagram, source }: MermaidDiagramProps) {
 
   return (
     <figure className={FIGURE_CLASS} data-testid="mermaid-diagram">
-      <FloatingIconGroup className={FLOATING_GROUP_CLASS} contentEditable={false}>
+      <Toolbar aria-label={TOOLBAR_LABEL} className={FLOATING_GROUP_CLASS} contentEditable={false}>
         <MermaidRawEditorButton />
         <MermaidLightbox svg={currentState.svg} />
-      </FloatingIconGroup>
+      </Toolbar>
       <MermaidSvgViewport
         ariaLabel="Mermaid diagram"
         className={`${SVG_CLASS} max-w-full overflow-auto rounded-lg border-hairline border-border-default bg-surface-card p-3.5 focus-visible:focus-ring [&_svg]:mx-auto`}

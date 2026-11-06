@@ -16,6 +16,7 @@ import {
 } from './markdown-highlight-controls'
 import { HighlightBoundaryColorControl } from './markdown-highlight-boundary-control'
 import { ToolbarHighlightColorControl } from './markdown-highlight-toolbar-control'
+import { Toolbar } from '@/ui/toolbar'
 
 const { trackEventMock } = vi.hoisted(() => ({
   trackEventMock: vi.fn(),
@@ -198,7 +199,7 @@ describe('Markdown highlight color controls', () => {
     const marked = textRange(editor, 'marked')
     selectText(editor, marked.from, marked.to)
 
-    render(<ToolbarHighlightColorControl editor={editor} locale="en" />, { wrapper: TooltipProvider })
+    render(<Toolbar><ToolbarHighlightColorControl editor={editor} locale="en" /></Toolbar>, { wrapper: TooltipProvider })
 
     const caret = screen.getByRole('button', { name: 'Choose highlight color' })
     fireEvent.pointerDown(caret)

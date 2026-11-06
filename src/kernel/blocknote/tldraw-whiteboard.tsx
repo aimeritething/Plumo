@@ -22,8 +22,7 @@ import {
   isWhiteboardPlatformPermissionRejection,
   retainWhiteboardPlatformPermissionGuard,
 } from './whiteboard-platform-permission-rejection'
-import { Button } from '@/ui/button'
-import { FloatingIconGroup } from './floating-icon-group'
+import { Toolbar, ToolbarButton } from '@/ui/toolbar'
 import { Dialog } from '@/ui/dialog'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
 import { installTldrawTextMeasurementGuard } from './tldraw-text-measurement-guard'
@@ -682,24 +681,22 @@ export function TldrawWhiteboard({
           <span>{translate(locale, 'editor.whiteboard.permissionDeniedBody')}</span>
         </div>
       ) : null}
-      <FloatingIconGroup className="absolute top-2 right-2 z-sticky group-data-fullscreen:top-3 group-data-fullscreen:right-3">
+      <Toolbar aria-label={translate(locale, 'editor.whiteboard.toolbar')} className="absolute top-2 right-2 z-sticky group-data-fullscreen:top-3 group-data-fullscreen:right-3">
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              type="button"
-              variant="icon"
-              size="icon-xs"
+            <ToolbarButton
+              size="sm"
               aria-label={fullscreenLabel}
               aria-pressed={fullscreen}
               data-testid="tldraw-whiteboard-fullscreen-toggle"
               onClick={toggleFullscreen}
             >
               {fullscreen ? <ArrowsIn aria-hidden="true" /> : <ArrowsOut aria-hidden="true" />}
-            </Button>
+            </ToolbarButton>
           </TooltipTrigger>
           <TooltipContent side="left">{fullscreenLabel}</TooltipContent>
         </Tooltip>
-      </FloatingIconGroup>
+      </Toolbar>
       <button
         type="button"
         aria-label="Resize whiteboard width"

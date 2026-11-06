@@ -52,7 +52,7 @@ function createToolbarHoverScenario(withToolbarButton = false) {
   document.body.appendChild(container)
 
   const toolbar = document.createElement('div')
-  toolbar.className = 'bn-formatting-toolbar'
+  toolbar.setAttribute('data-formatting-toolbar', '')
   const toolbarButton = withToolbarButton ? document.createElement('button') : null
   if (toolbarButton) toolbar.appendChild(toolbarButton)
   document.body.appendChild(toolbar)
@@ -164,7 +164,7 @@ describe('blockNoteFormattingToolbarHoverGuard', () => {
     })
 
     const toolbar = document.createElement('div')
-    toolbar.className = 'bn-formatting-toolbar'
+    toolbar.setAttribute('data-formatting-toolbar', '')
     document.body.appendChild(toolbar)
 
     setRect(bridge, rect(300, 130, 140, 90))
@@ -242,7 +242,7 @@ describe('blockNoteFormattingToolbarHoverGuard', () => {
     })
 
     const toolbar = document.createElement('div')
-    toolbar.className = 'bn-formatting-toolbar'
+    toolbar.setAttribute('data-formatting-toolbar', '')
     document.body.appendChild(toolbar)
 
     setRect(bridge, rect(300, 130, 140, 90))
@@ -288,7 +288,7 @@ describe('blockNoteFormattingToolbarHoverGuard', () => {
     })
 
     const toolbar = document.createElement('div')
-    toolbar.className = 'bn-formatting-toolbar'
+    toolbar.setAttribute('data-formatting-toolbar', '')
     document.body.appendChild(toolbar)
 
     setRect(bridge, rect(300, 130, 140, 90))

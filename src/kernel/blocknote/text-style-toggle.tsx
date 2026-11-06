@@ -9,18 +9,17 @@ import {
   type Icon as PhosphorIcon,
 } from '@phosphor-icons/react'
 import { useCallback } from 'react'
-import { cn } from '@/lib/cn'
 import { translate, type AppLocale } from '@/lib/i18n'
 import { MARKDOWN_HIGHLIGHT_STYLE } from '@/kernel/markdown/markdown-highlight-markdown'
 import { toggleDefaultMarkdownHighlight } from './markdown-highlight-model'
 import { ToolbarHighlightColorControl } from './markdown-highlight-toolbar-control'
-import { Toggle } from '@/ui/toggle'
+import { ToolbarButton } from '@/ui/toolbar'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
 import { getSelectedBlocksSafely, type FormattingToolbarEditor } from './formatting-toolbar-selection'
 
 // The five text style toggles of the formatting toolbar: bold, italic,
-// strikethrough, inline code and the Markdown highlight. Each is a ui/Toggle
-// pressed while the style is active at the selection. The highlight toggle
+// strikethrough, inline code and the Markdown highlight. Each is a pressed
+// toolbar button (ui/toolbar) while the style is active at the selection. The highlight toggle
 // goes through the highlight model (it extends or clears a whole highlight,
 // colour mark included) and carries the colour caret after it.
 
@@ -119,18 +118,16 @@ export function TextStyleToggle({
   const toggle = (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Toggle
+        <ToolbarButton
           aria-label={copy.label}
-          // The highlight toggle and its colour caret read as one control.
-          className={cn(isHighlight && 'rounded-e-none')}
-          // Restated: the tooltip trigger writes its own open / closed data-state over the toggle's.
-          data-state={toggleState.active ? 'on' : 'off'}
           data-test={textStyle}
           onClick={toggleStyle}
           pressed={toggleState.active}
+          // The highlight toggle and its colour caret read as one control.
+          segment={isHighlight ? 'start' : 'none'}
         >
           <Icon aria-hidden="true" />
-        </Toggle>
+        </ToolbarButton>
       </TooltipTrigger>
       <TooltipContent shortcut={copy.shortcut}>{copy.label}</TooltipContent>
     </Tooltip>

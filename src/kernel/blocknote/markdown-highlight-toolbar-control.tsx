@@ -9,7 +9,7 @@ import { MarkdownHighlightColorMenu } from './markdown-highlight-color-menu'
 import type { HighlightEditor } from './markdown-highlight-model'
 import { selectionOrHighlightRange } from './markdown-highlight-range'
 import { useToolbarMenu } from './toolbar-menu-state'
-import { Button } from '@/ui/button'
+import { ToolbarButton } from '@/ui/toolbar'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
 
 // The colour caret after the formatting toolbar's highlight toggle. It sits in
@@ -43,9 +43,8 @@ export function ToolbarHighlightColorControl({
         source="toolbar"
         trigger={(
           <TooltipTrigger asChild>
-            <Button
+            <ToolbarButton
               aria-label={label}
-              className="h-7 w-4.5 min-w-4.5 rounded-s-none p-0 text-text-primary"
               data-test="highlightColorMenu"
               // As the block type trigger: keep the editor's selection, take the
               // focus so the toolbar counts as focused while the menu is open.
@@ -53,11 +52,10 @@ export function ToolbarHighlightColorControl({
                 event.preventDefault()
                 event.currentTarget.focus()
               }}
-              size="icon-xs"
-              variant="ghost"
+              segment="end"
             >
-              <CaretDown aria-hidden="true" className="size-3" />
-            </Button>
+              <CaretDown aria-hidden="true" />
+            </ToolbarButton>
           </TooltipTrigger>
         )}
       />
