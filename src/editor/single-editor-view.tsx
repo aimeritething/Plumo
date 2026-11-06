@@ -1,6 +1,5 @@
 import { Component, useCallback, useEffect, useRef, type ReactNode, type RefObject } from 'react'
-import type { useCreateBlockNote } from '@blocknote/react'
-import { BlockNoteView } from '@blocknote/shadcn'
+import { BlockNoteViewRaw, type useCreateBlockNote } from '@blocknote/react'
 import { trackEvent } from '@/lib/telemetry'
 import { useDocumentThemeMode } from '@/shell/use-document-theme-mode'
 import { useImageDrop, type ImageImportError } from './use-image-drop'
@@ -48,7 +47,6 @@ import { useSeedBlockNoteTableBridge } from '@/kernel/blocknote/use-seed-block-n
 import { EditorInteractionControllers } from './editor-interaction-controllers'
 import { handleEditorCopy } from '@/kernel/blocknote/editor-copy-handlers'
 import { CodeBlockCopyButton } from '@/kernel/blocknote/code-block-copy-controls'
-import { blockNoteShadCNComponents } from '@/kernel/blocknote/shadcn-components'
 import { useCodeBlockCopyTarget } from '@/kernel/blocknote/use-code-block-copy-target'
 
 const TOOLBAR_MOUSE_DOWN_ALLOW_SELECTOR = [
@@ -378,10 +376,11 @@ export function SingleEditorView(options: {
       {isDragOver && <ImageDropAffordance />}
       <BlockNoteRenderRecoveryBoundary onRecover={(_, reason) => repairEditorDocumentForRenderRecovery(editor, reason)}>
         {(recoveryKey) => (
-          <BlockNoteView
+          // BlockNote's own view, none of its UI: every control over the
+          // Document is Plumo's, mounted below through BlockNote's controllers.
+          <BlockNoteViewRaw
             key={recoveryKey}
             editor={editor}
-            shadCNComponents={blockNoteShadCNComponents}
             theme={themeMode}
             onChange={handleEditorChange}
             editable={editable}
@@ -400,7 +399,7 @@ export function SingleEditorView(options: {
               onToolbarMouseDown={handleToolbarMouseDownCapture}
               runEditorAction={runEditorAction}
             />
-          </BlockNoteView>
+          </BlockNoteViewRaw>
         )}
       </BlockNoteRenderRecoveryBoundary>
       {copyTarget && <CodeBlockCopyButton copyTarget={copyTarget} locale={locale} />}

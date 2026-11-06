@@ -16,6 +16,8 @@ const ICON_BUTTON_STATES =
 // icon-xs (24px, 16px glyph) everywhere else. `placeholder` with the `row`
 // size is Notion's empty slot: a full-width muted row, an icon and what to
 // add, on the hover fill, a step darker on hover or when `data-selected`.
+// `fill` takes its slot's whole box and its cursor: the slot is laid out (and
+// says what a press does, e.g. a resize cursor) by whoever places it.
 const buttonVariants = cva(
   "inline-flex shrink-0 items-center justify-center gap-2 rounded-sm text-sm font-medium whitespace-nowrap transition-colors outline-none focus-visible:focus-ring disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
@@ -47,6 +49,7 @@ const buttonVariants = cva(
         "icon-sm": "size-8",
         "icon-lg": "size-10",
         row: "h-11 w-full justify-start gap-2.5 px-3 [&_svg:not([class*='size-'])]:size-5",
+        fill: "size-full cursor-[inherit] p-0",
       },
     },
     defaultVariants: {

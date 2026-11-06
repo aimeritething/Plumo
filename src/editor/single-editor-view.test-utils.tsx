@@ -31,7 +31,6 @@ interface BlockNoteViewProps {
   slashMenu?: boolean
   sideMenu?: boolean
   onChange?: () => void
-  shadCNComponents?: unknown
   theme?: string
 }
 
@@ -50,6 +49,39 @@ function takeBlockNoteViewError() {
 }
 
 vi.mock('@blocknote/react', () => ({
+  BlockNoteViewRaw: (props: BlockNoteViewProps) => {
+    const error = takeBlockNoteViewError()
+    if (error) throw error
+
+    const {
+      children,
+      editable,
+      className,
+      emojiPicker,
+      formattingToolbar,
+      linkToolbar,
+      slashMenu,
+      sideMenu,
+      ...restProps
+    } = props
+    state.capturedBlockNoteOnChange = props.onChange ?? null
+    void emojiPicker
+    void formattingToolbar
+    void slashMenu
+    void sideMenu
+
+    return (
+      <div
+        data-testid="blocknote-view"
+        data-editable={enabledDataAttribute(editable)}
+        data-link-toolbar={enabledDataAttribute(linkToolbar)}
+        className={className}
+        {...restProps}
+      >
+        {children}
+      </div>
+    )
+  },
   LinkToolbarController: (props: Record<string, unknown>) => {
     state.capturedLinkToolbarProps = props
     return <div data-testid="link-toolbar-controller" />
@@ -77,43 +109,6 @@ vi.mock('@blocknote/react', () => ({
   useExtension: () => ({ deleteLink: vi.fn(), editLink: vi.fn() }),
 }))
 
-vi.mock('@blocknote/shadcn', () => ({
-  BlockNoteView: (props: BlockNoteViewProps) => {
-    const error = takeBlockNoteViewError()
-    if (error) throw error
-
-    const {
-      children,
-      editable,
-      className,
-      emojiPicker,
-      formattingToolbar,
-      linkToolbar,
-      slashMenu,
-      sideMenu,
-      shadCNComponents,
-      ...restProps
-    } = props
-    state.capturedBlockNoteOnChange = props.onChange ?? null
-    void emojiPicker
-    void formattingToolbar
-    void slashMenu
-    void sideMenu
-    void shadCNComponents
-
-    return (
-      <div
-        data-testid="blocknote-view"
-        data-editable={enabledDataAttribute(editable)}
-        data-link-toolbar={enabledDataAttribute(linkToolbar)}
-        className={className}
-        {...restProps}
-      >
-        {children}
-      </div>
-    )
-  },
-}))
 
 vi.mock('./use-image-drop', () => ({
   useImageDrop: (args: Record<string, unknown>) => {

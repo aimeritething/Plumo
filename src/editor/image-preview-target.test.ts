@@ -54,8 +54,8 @@ describe('getDoubleClickedImageTarget', () => {
     wrapper.className = 'bn-visual-media-wrapper'
     const img = document.createElement('img')
     img.src = 'https://example.com/wrapped.png'
-    const caption = document.createElement('figcaption')
-    caption.className = 'bn-file-caption'
+    const caption = document.createElement('div')
+    caption.setAttribute('data-image-caption', 'text')
     const resizeHandle = document.createElement('div')
     resizeHandle.className = 'bn-resize-handle'
     wrapper.append(img, caption, resizeHandle)

@@ -7,11 +7,10 @@
 @layer theme, base, vendor, components, utilities;
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "@blocknote/shadcn/style.css" layer(vendor);
+@import "@blocknote/react/style.css" layer(vendor);
 @import "katex/dist/katex.min.css" layer(vendor);
 @import "tldraw/tldraw.css" layer(vendor);
 @import "./kernel/blocknote/blocknote.css";
-@source "../node_modules/@blocknote/shadcn";
 
 /* `data-theme` on <html> is the only theme switch. Tailwind's `dark:` follows
    it, not the OS. BlockNote keeps its own `data-color-scheme`. */

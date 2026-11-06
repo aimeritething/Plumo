@@ -450,8 +450,9 @@ describe('SideMenu', () => {
   })
 
   it('ignores the button-less pointerdown the menu trigger dispatches on pointer up', () => {
-    // BlockNote's shadcn menu trigger opens on pointer up by re-dispatching the
-    // pointerup as a pointerdown; a gesture armed on it never sees a pointerup.
+    // A synthetic pointerdown (BlockNote's shadcn menu trigger re-dispatched
+    // the pointerup as one) has no pointerup after it; a gesture armed on it
+    // would never end.
     const { dragHandle } = renderPointerReorderFixture()
     const handle = requireParentElement(dragHandle)
 

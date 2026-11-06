@@ -23,7 +23,6 @@
     "@blocknote/code-block": "0.46.2",
     "@blocknote/core": "0.46.2",
     "@blocknote/react": "0.46.2",
-    "@blocknote/shadcn": "0.46.2",
     "@codemirror/commands": "^6.10.2",
     "@codemirror/lang-html": "^6.4.11",
     "@codemirror/lang-javascript": "^6.2.5",
