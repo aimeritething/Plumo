@@ -36,9 +36,9 @@ function dataTransfer() {
   }
 }
 
-/** A drag event at `clientY`, over a row whose box is 0–30px tall. */
+/** A drag event at `clientY`, over a row whose box is 0–32px tall. */
 function dragAt(target: Element, type: 'dragOver' | 'drop', clientY: number, transfer: ReturnType<typeof dataTransfer>) {
-  vi.spyOn(target, 'getBoundingClientRect').mockReturnValue({ top: 0, height: 30, bottom: 30, left: 0, right: 200, width: 200, x: 0, y: 0, toJSON: () => ({}) })
+  vi.spyOn(target, 'getBoundingClientRect').mockReturnValue({ top: 0, height: 32, bottom: 32, left: 0, right: 200, width: 200, x: 0, y: 0, toJSON: () => ({}) })
   const event = createEvent[type](target, { dataTransfer: transfer })
   Object.defineProperty(event, 'clientY', { value: clientY })
   fireEvent(target, event)

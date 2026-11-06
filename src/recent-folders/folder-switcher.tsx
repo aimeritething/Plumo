@@ -36,7 +36,7 @@ interface FolderSwitcherProps {
 
 /**
  * The Folder switcher (CONTEXT.md, Folder switcher): the sidebar's last 52px,
- * the top row's height, with one 30px row centred in it naming the current
+ * the top row's height, with one 32px row centred in it naming the current
  * Folder. Only the row reacts. Hovering it shows the Folder's path and what it
  * holds; clicking it opens the Recent Folders above it, the current one
  * ticked, then Open Folder… and Close Folder, then, set apart, Settings.
@@ -47,7 +47,7 @@ export const FolderSwitcher = memo(function FolderSwitcher(props: FolderSwitcher
   const summary = useMemo(() => folderContentsSummary(files), [files])
 
   return (
-    <div className="flex flex-none flex-col pt-2.75 pb-0.75" data-testid="folder-switcher">
+    <div className="flex flex-none flex-col pt-2.5 pb-0.5" data-testid="folder-switcher">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <SwitcherRow name={folderName(folder)} path={tildePath(folder, home)} summary={summary} />
