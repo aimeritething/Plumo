@@ -115,11 +115,11 @@ describe('the neutral theme', () => {
     expect(blue).toEqual(['--text-link'])
   })
 
-  it('sets both the UI and the Document in the system face, with JetBrains Mono for code and no Inter', () => {
+  it('sets the UI, the Document and code in the system faces, with no bundled font', () => {
     const bridge = declarations(bridgeBlock.body)
     expect(bridge['--font-sans']).toMatch(/^system-ui,/)
-    expect(bridge['--font-mono']).toMatch(/^'JetBrains Mono Variable'/)
+    expect(bridge['--font-mono']).toMatch(/^ui-monospace,/)
     expect(appCss).toMatch(/--editor-font-family:\s*var\(--font-sans\);/)
-    expect(appCss).not.toMatch(/'Inter|fontsource-variable\/inter/)
+    expect(appCss).not.toMatch(/'Inter|JetBrains|@fontsource/)
   })
 })

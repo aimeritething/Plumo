@@ -26,7 +26,7 @@ test('a fresh install shows the No-Folder state: the near-black button, the one 
   await expect(page.getByTestId('editor-empty-state')).toContainText('Plumo')
   expect(await hints(page)).toEqual(['⌘OOpen Folder'])
   await expect(page.getByTestId('empty-hint')).toHaveCSS('font-family', /^system-ui/)
-  await expect(page.getByTestId('empty-hint').locator('kbd')).toHaveCSS('font-family', /JetBrains Mono/)
+  await expect(page.getByTestId('empty-hint').locator('kbd')).toHaveCSS('font-family', /^ui-monospace,/)
   await expect(page.getByTestId('tab-bar')).toHaveCount(0)
   await expect(page.getByTestId('pinned')).toHaveCount(0)
   expect(errors.pageErrors).toEqual([])

@@ -58,7 +58,7 @@ test('⌘[ toggles; collapsed, the editor is flush and the sidebar icon follows 
   const tooltip = page.getByRole('tooltip')
   await expect(tooltip).toHaveText('Show sidebar ⌘[')
   await expect(tooltip.locator('kbd')).toHaveText(['⌘', '['])
-  await expect(tooltip.locator('kbd').first()).toHaveCSS('font-family', /JetBrains Mono/)
+  await expect(tooltip.locator('kbd').first()).toHaveCSS('font-family', /^ui-monospace,/)
 
   await page.keyboard.press('Meta+BracketLeft')
   await expectExpanded(page)

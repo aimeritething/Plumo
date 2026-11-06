@@ -44,7 +44,7 @@ test('Quick Open finds a Document by name, shows files only, and ↵ opens it', 
   await expect(row.getByTestId('command-menu-row-detail')).toHaveText('Notes › Projects')
   await expect(row.getByTestId('command-menu-row-type')).toHaveText('Document')
   await expect(page.getByTestId('command-menu-footer')).toHaveText('↵ open · ⌘↵ open in Raw · esc close')
-  await expect(page.getByTestId('command-menu-footer')).toHaveCSS('font-family', /JetBrains Mono/)
+  await expect(page.getByTestId('command-menu-footer')).toHaveCSS('font-family', /^ui-monospace,/)
 
   await page.keyboard.press('Enter')
 

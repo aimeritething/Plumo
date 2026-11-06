@@ -125,7 +125,7 @@ test('the control carries a tooltip naming the shortcut as a mono chip', async (
   const tip = page.getByRole('tooltip')
   await expect(tip).toHaveText('Raw ⌘\\')
   await expect(tip.locator('kbd')).toHaveText('⌘\\')
-  await expect(tip.locator('kbd')).toHaveCSS('font-family', /JetBrains Mono/)
+  await expect(tip.locator('kbd')).toHaveCSS('font-family', /^ui-monospace,/)
 })
 
 test('Raw edits reach disk with the exact bytes, and ⌘S writes them at once', async ({ page }) => {

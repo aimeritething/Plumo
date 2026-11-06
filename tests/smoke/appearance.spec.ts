@@ -71,7 +71,7 @@ test('a sample Document measures at the specified typography', async ({ page }) 
   await expect(editor.locator('h2')).toHaveCSS('font-weight', '600')
   const inlineCode = editor.locator('.bn-inline-content code').first()
   await expect(inlineCode).toHaveCSS('font-size', '14px')
-  await expect(inlineCode).toHaveCSS('font-family', /JetBrains Mono/)
+  await expect(inlineCode).toHaveCSS('font-family', /^ui-monospace,/)
   await expect(inlineCode).toHaveCSS('background-color', 'rgb(245, 245, 245)')
   await expect(editor.locator('[data-content-type="codeBlock"]')).toHaveCSS('font-size', '13px')
   await expect(editor.locator('[data-content-type="codeBlock"]')).toHaveCSS('background-color', 'rgb(250, 250, 250)')
@@ -151,7 +151,7 @@ test('the light theme draws nothing in the old indigo', async ({ page }) => {
   expect(indigo).toEqual([])
 })
 
-test('only JetBrains Mono is fetched: the sans face is the system\'s', async ({ page }) => {
+test('no text face is fetched: the sans and mono faces are the system\'s', async ({ page }) => {
   const fontRequests: string[] = []
   page.on('request', (request) => {
     if (request.resourceType() === 'font') fontRequests.push(request.url())
@@ -159,7 +159,5 @@ test('only JetBrains Mono is fetched: the sans face is the system\'s', async ({ 
   await openWelcome(page)
   await page.evaluate(() => document.fonts.ready)
 
-  expect(fontRequests.length).toBeGreaterThan(0)
-  for (const url of fontRequests) expect(url).toMatch(/jetbrains-mono/i)
-  expect(fontRequests.some((url) => /inter|plex|mantine/i.test(url))).toBe(false)
+  expect(fontRequests.filter((url) => /jetbrains|inter|plex|mantine|fontsource/i.test(url))).toEqual([])
 })

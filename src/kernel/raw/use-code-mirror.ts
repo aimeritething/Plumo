@@ -21,7 +21,7 @@ import { rawEditorTextInputAttributes } from '@/platform/native-text-assistance'
 import { isInsideMarkdownFence } from '@/kernel/markdown/markdown-fences'
 import { isWindows } from '@/platform/os'
 
-const FONT_FAMILY = '"JetBrains Mono Variable", "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace'
+const FONT_FAMILY = 'var(--font-mono)'
 const RAW_EDITOR_COLORS = {
   activeLineBackground: 'var(--state-hover-subtle)',
   background: 'var(--surface-card)',
