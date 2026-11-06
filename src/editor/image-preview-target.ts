@@ -1,4 +1,4 @@
-export type ImageLightboxTarget = {
+export type ImagePreviewTarget = {
   src: string
   alt: string
 }
@@ -7,6 +7,8 @@ const MIN_VIEWABLE_DIMENSION = 16
 const IMAGE_WRAPPER_SELECTOR = '.bn-visual-media-wrapper'
 const IMAGE_INTERACTION_IGNORE_SELECTOR = [
   '.bn-file-caption',
+  '[data-image-caption]',
+  '[data-image-toolbar]',
   '.bn-resize-handle',
   '.bn-add-file-button',
   '.bn-file-name-with-icon',
@@ -14,7 +16,7 @@ const IMAGE_INTERACTION_IGNORE_SELECTOR = [
   '[role="button"]',
 ].join(', ')
 
-export function getDoubleClickedImageTarget(target: EventTarget | null): ImageLightboxTarget | null {
+export function getDoubleClickedImageTarget(target: EventTarget | null): ImagePreviewTarget | null {
   const image = resolveImageElement(target)
   if (!image?.src) return null
   if (isTooSmallToView(image)) return null

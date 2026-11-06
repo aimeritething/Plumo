@@ -142,7 +142,7 @@ function handleCommandMenuModalCommand(event: KeyboardEvent, commandId: AppComma
 }
 
 /**
- * What counts as a modal layer: Plumo's dialogs (Write failure, the lightbox,
+ * What counts as a modal layer: Plumo's dialogs (Write failure, the Image preview,
  * a diagram opened large) and its menus (a context menu, a dropdown), by the
  * `data-slot` their `ui/` primitives carry, while they are open and not
  * during the exit animation. A popover or a tooltip is not one.

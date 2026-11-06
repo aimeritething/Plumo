@@ -61,6 +61,14 @@ _Avoid_: Table of contents, TOC, minimap, navigator
 The control that appears on a table Block's edge when the pointer is over the table: one on the top edge for a column, one on the left edge for a row. Dragging it moves that column or row; clicking it opens that column's or row's menu.
 _Avoid_: Toolbar, table toolbar, grip
 
+**Image toolbar**:
+The buttons in an Image block's top-right corner, shown when the pointer is over the Block or the Block is selected. On a picture too narrow to hold them, they sit just above that corner instead.
+_Avoid_: Formatting toolbar (the toolbar for text, a different thing)
+
+**Image preview**:
+The view that shows an Image block's picture over the whole window, opened by double-clicking the picture or from the Image toolbar. It is for looking only; it is not an Image file's Tab.
+_Avoid_: Lightbox
+
 **Slash menu**:
 The menu that typing `/` opens in Rich mode, listing items that insert a Block or act on the current one. Its rows are items, not commands: the commands are the native menu bar's, listed in the Command Menu. Typing after the `/` keeps the items whose title or one of whose Aliases contains what was typed, in their usual order. A callout style gets a row of its own only when what was typed is the start of its name or of one of its Aliases.
 _Avoid_: Slash commands, insert menu

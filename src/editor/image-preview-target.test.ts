@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getDoubleClickedImageTarget } from './image-lightbox-target'
+import { getDoubleClickedImageTarget } from './image-preview-target'
 
 describe('getDoubleClickedImageTarget', () => {
   it('returns the src and alt when the target is an image element with a src', () => {

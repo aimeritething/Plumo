@@ -153,7 +153,8 @@ import { useToolbarMenu } from './toolbar-menu-state'
 
 const mockOpenLocalFile = vi.mocked(openLocalFile)
 
-function createMockEditor(blockType = 'image', props: Record<string, unknown> = {}) {
+// A video: a file block that still opens the formatting toolbar (an Image block has its own).
+function createMockEditor(blockType = 'video', props: Record<string, unknown> = {}) {
   const selectedBlock = {
     id: 'file-block',
     type: blockType,
@@ -261,6 +262,17 @@ describe('the formatting toolbar and its controller', () => {
 
     expect(editor.focus).toHaveBeenCalled()
     expect(mockOpenLocalFile).toHaveBeenCalledWith('/vault/attachments/report.pdf', '/vault')
+  })
+
+  it('opens no formatting toolbar on a selected Image block, which has its own', () => {
+    const editor = createMockEditor('image')
+    useBlockNoteEditorMock.mockReturnValue(editor)
+    const Toolbar = () => <div data-testid="custom-toolbar">Toolbar</div>
+
+    render(<FormattingToolbarController formattingToolbar={Toolbar} />)
+
+    expect(screen.queryByTestId('custom-toolbar')).not.toBeInTheDocument()
+    expect(hoverGuardMock).toHaveBeenCalledWith(expect.objectContaining({ selectedFileBlockId: null }))
   })
 
   it('controls the floating toolbar placement, hover guard, and escape-key close behavior', () => {
@@ -578,14 +590,14 @@ describe('the formatting toolbar and its controller', () => {
   it('closes at once when a click elsewhere collapses the selection, instead of trailing to the new caret', () => {
     vi.useFakeTimers()
     try {
-      const editor = createMockEditor('image')
+      const editor = createMockEditor('video')
       const editorInput = editor.domElement.firstElementChild as HTMLElement
       useBlockNoteEditorMock.mockReturnValue(editor)
       const Toolbar = () => <button data-testid="toolbar-action" type="button">Toolbar</button>
 
       const { rerender } = render(<FormattingToolbarController formattingToolbar={Toolbar} />)
       fireEvent.pointerDown(editorInput)
-      // The press hides BlockNote's toolbar while the picture is still
+      // The press hides BlockNote's toolbar while the video is still
       // selected: the grace holds it over that blink.
       showState.value = false
       rerender(<FormattingToolbarController formattingToolbar={Toolbar} />)

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, type MutableRefObject } from 'react'
 import type { useCreateBlockNote } from '@blocknote/react'
 import type { VaultEntry } from '@/types'
+import { endOpenBlockEdits, hasOpenBlockEdits } from '@/kernel/blocknote/open-block-edits'
 import { compactMarkdown } from '@/kernel/markdown/compact-markdown'
 import {
   failNoteOpenTrace,
@@ -317,7 +318,19 @@ function useEditorChangeHandler(options: {
     onContentChangeRef.current?.(path, next.content)
   }, [editor, editorContentPathRef, onContentChangeRef, pendingLocalContentRef, prevActivePathRef, tabCacheRef, tabsRef, vaultPathRef])
 
-  return useDebouncedEditorChange({ onFlush: propagateEditorChange, suppressChangeRef })
+  const debounced = useDebouncedEditorChange({ onFlush: propagateEditorChange, suppressChangeRef })
+  const { flushPendingEditorChange: flushDebounced, hasPendingEditorChange: hasDebounced } = debounced
+  // An edit a Block still holds (a caption being typed) is pending too, and
+  // ends first on a flush, so its text is part of what the flush writes.
+  const flushPendingEditorChange = useCallback(() => {
+    endOpenBlockEdits(editor)
+    return flushDebounced()
+  }, [editor, flushDebounced])
+  const hasPendingEditorChange = useCallback(
+    () => hasDebounced() || hasOpenBlockEdits(editor),
+    [editor, hasDebounced],
+  )
+  return { ...debounced, flushPendingEditorChange, hasPendingEditorChange }
 }
 
 function cachePreviousTabOnPathChange(options: {

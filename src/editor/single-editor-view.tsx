@@ -1,10 +1,10 @@
-import { Component, useCallback, useEffect, useRef, type ReactNode } from 'react'
+import { Component, useCallback, useEffect, useRef, type ReactNode, type RefObject } from 'react'
 import type { useCreateBlockNote } from '@blocknote/react'
 import { BlockNoteView } from '@blocknote/shadcn'
 import { trackEvent } from '@/lib/telemetry'
 import { useDocumentThemeMode } from '@/shell/use-document-theme-mode'
 import { useImageDrop, type ImageImportError } from './use-image-drop'
-import { useImageLightbox } from './use-image-lightbox'
+import { useImagePreview } from './use-image-preview'
 import type { AppLocale } from '@/lib/i18n'
 import { observeNativeTextAssistanceDisabled } from '@/platform/native-text-assistance'
 import type { VaultEntry } from '@/types'
@@ -17,9 +17,11 @@ import { ImageDropAffordance } from './image-drop-affordance'
 import type { ClientPoint } from '@/platform/use-tauri-drag-drop-event'
 import { useBlockNoteSideMenuHoverGuard } from '@/kernel/blocknote/block-note-side-menu-hover-guard'
 import { useEditorLinkActivation } from '@/kernel/blocknote/use-editor-link-activation'
-import { ImageLightbox } from './image-lightbox'
+import { ImagePreview } from './image-preview'
 import { refreshCodeBlockSyntaxHighlighting } from '@/kernel/blocknote/editor-code-block-highlight-refresh'
 import { subscribeRichEditorExternalChange } from '@/kernel/blocknote/editor-external-change-events'
+import { subscribeImageOpenRequests } from '@/kernel/blocknote/image-block-requests'
+import { openEditorAttachmentOrUrl } from '@/kernel/blocknote/editor-attachment-actions'
 import {
   activatePlainTextPasteTarget,
   registerPlainTextPasteTarget,
@@ -166,6 +168,17 @@ function useImageDropInsertion(editor: ReturnType<typeof useCreateBlockNote>) {
   return { dropTargetAt, onImagesDropped }
 }
 
+/** Open with default app / Open in browser on the Image toolbar: the file goes to the app the system picks. */
+function useImageOpenRequests(containerRef: RefObject<HTMLDivElement | null>, vaultPath: string | undefined) {
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+    return subscribeImageOpenRequests(container, ({ url }) => {
+      openEditorAttachmentOrUrl({ url, vaultPath, source: 'file' })
+    })
+  }, [containerRef, vaultPath])
+}
+
 function useRichEditorPlainTextPasteTarget(options: {
   containerRef: React.RefObject<HTMLDivElement | null>
   editable: boolean
@@ -253,7 +266,8 @@ export function SingleEditorView(options: {
     onImagesDropped,
     vaultPath: attachmentVaultPath ?? vaultPath,
   })
-  const lightbox = useImageLightbox({ containerRef })
+  const imagePreview = useImagePreview({ containerRef })
+  useImageOpenRequests(containerRef, vaultPath)
   const {
     clearCopyTarget,
     copyTarget,
@@ -391,7 +405,7 @@ export function SingleEditorView(options: {
         )}
       </BlockNoteRenderRecoveryBoundary>
       {copyTarget && <CodeBlockCopyButton copyTarget={copyTarget} locale={locale} />}
-      <ImageLightbox image={lightbox.image} locale={locale} onClose={lightbox.close} />
+      <ImagePreview image={imagePreview.image} locale={locale} onClose={imagePreview.close} />
     </div>
   )
 }

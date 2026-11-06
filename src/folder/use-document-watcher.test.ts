@@ -1,5 +1,6 @@
 import { act, renderHook } from '@testing-library/react'
 import { beforeEach, expect, it, vi } from 'vitest'
+import { subscribeFolderFilesChanged } from '@/lib/folder-file-changes'
 import { useDocumentWatcher } from './use-document-watcher'
 
 const watch = vi.hoisted(() => ({ options: null as null | { vaultPaths: string[]; onVaultChanged: (paths: string[]) => Promise<void> } }))
@@ -142,4 +143,15 @@ it('reports nothing for a file trashed in Plumo, whose Tab was already closed wh
 
   expect(dropTabsUnder).not.toHaveBeenCalled()
   expect(onTabsClosed).not.toHaveBeenCalled()
+})
+
+it('tells what shows a file which paths changed, once Plumo has acted on them', async () => {
+  const { change } = setup({ paths: [] })
+  const listener = vi.fn()
+  const unsubscribe = subscribeFolderFilesChanged(listener)
+
+  await change([`${FOLDER}/attachments/chart.png`])
+  unsubscribe()
+
+  expect(listener).toHaveBeenCalledWith([`${FOLDER}/attachments/chart.png`])
 })
