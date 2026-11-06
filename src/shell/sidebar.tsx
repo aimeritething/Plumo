@@ -43,7 +43,7 @@ export function Sidebar({ collapsed, slides, width, onWidthChange, children }: S
     >
       {mounted && (
         <aside
-          className="relative flex min-h-0 flex-none flex-col border-r border-border-default bg-surface-app px-3 pb-2 text-sm leading-normal font-medium text-text-secondary select-none data-resizing:cursor-col-resize"
+          className="relative flex min-h-0 flex-none flex-col border-r border-border-default bg-surface-app px-3 pb-2 text-sm leading-normal text-text-secondary select-none data-resizing:cursor-col-resize"
           data-testid="sidebar"
           data-resizing={resizing}
           inert={collapsed}

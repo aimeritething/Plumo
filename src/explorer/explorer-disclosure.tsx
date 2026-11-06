@@ -21,14 +21,14 @@ export function ExplorerDisclosure({ name, expanded, onToggle }: ExplorerDisclos
   return (
     <button
       type="button"
-      className={cn('flex h-5 w-3.5 flex-none items-center justify-center', SIDEBAR_ROW_ICON_COLORS, '[[aria-selected=true]>*>&]:text-text-primary')}
+      className={cn('flex h-5 w-4 flex-none items-center justify-center', SIDEBAR_ROW_ICON_COLORS, '[[aria-selected=true]>*>&]:text-text-primary')}
       tabIndex={-1}
       aria-label={`${expanded ? 'Collapse' : 'Expand'} ${name}`}
       onClick={(event) => { event.stopPropagation(); onToggle() }}
     >
-      <FolderIcon size={14} aria-hidden="true" className="group-hover:hidden group-focus-visible:hidden" />
+      <FolderIcon size={16} aria-hidden="true" className="group-hover:hidden group-focus-visible:hidden" />
       <CaretRight
-        size={12}
+        size={14}
         aria-hidden="true"
         className={cn('hidden transition-transform duration-150 ease-out group-hover:block group-focus-visible:block', expanded && 'rotate-90')}
       />

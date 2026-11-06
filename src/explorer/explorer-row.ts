@@ -16,5 +16,5 @@ export function explorerRowIndent(depth: number): number {
 
 /** Where a row's name starts: past the icon (a folder's caret on hover) and its gap. */
 export function explorerNameIndent(depth: number): number {
-  return explorerRowIndent(depth) + 20
+  return explorerRowIndent(depth) + 22
 }
