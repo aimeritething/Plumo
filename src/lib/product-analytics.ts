@@ -3,4 +3,4 @@
  * call sites are unchanged; each one is a no-op.
  */
 
-export function trackInlineImageLightboxOpened(): void {}
+export function trackImagePreviewOpened(): void {}

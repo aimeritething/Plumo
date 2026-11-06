@@ -271,7 +271,14 @@ function getFormattingToolbarBridgeBlockId(editor: FormattingToolbarEditor) {
   const selectedBlock = getSelectedBlocksSafely(editor).at(0)
   if (!selectedBlock) return null
 
-  return isFileBlockType(selectedBlock.type) ? selectedBlock.id : null
+  return isFileBlockType(selectedBlock.type) && selectedBlock.type !== 'image' ? selectedBlock.id : null
+}
+
+// An Image block has its own toolbar in the picture's corner (image-toolbar.tsx),
+// so selecting one opens no formatting toolbar.
+function isImageBlockSelection(editor: FormattingToolbarEditor) {
+  const selectedBlocks = getSelectedBlocksSafely(editor)
+  return selectedBlocks.length === 1 && selectedBlocks[0]?.type === 'image'
 }
 
 function getFormattingToolbarAnchorElement(editor: FormattingToolbarEditor) {
@@ -503,8 +510,12 @@ export function FormattingToolbarController(props: FormattingToolbarControllerPr
     editor,
     selector: ({ editor }) => isRichFindActive(editor.prosemirrorState) && !editor.prosemirrorView?.hasFocus(),
   })
+  const selectionIsImage = useEditorState({
+    editor,
+    selector: ({ editor }) => isImageBlockSelection(editor),
+  })
   const hasFloatingToolbarAnchor = getFormattingToolbarAnchorElement(editor) !== null
-  const shouldRenderFloatingToolbar = isOpen && !selectionIsFinds && hasFloatingToolbarAnchor
+  const shouldRenderFloatingToolbar = isOpen && !selectionIsFinds && !selectionIsImage && hasFloatingToolbarAnchor
   const currentBridgeBlockId = useEditorState({
     editor,
     selector: ({ editor }) => getFormattingToolbarBridgeBlockId(editor),

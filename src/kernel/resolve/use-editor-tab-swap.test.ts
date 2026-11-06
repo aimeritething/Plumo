@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach, onTestFinished } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
+import { registerOpenBlockEdit } from '@/kernel/blocknote/open-block-edits'
 import { RICH_EDITOR_CHANGE_DEBOUNCE_MS, useEditorTabSwap } from './use-editor-tab-swap'
 import { cacheParsedNoteBlocks, clearParsedNoteBlockCache } from './editor-parsed-block-cache'
 import {
@@ -561,6 +562,30 @@ describe('useEditorTabSwap raw mode sync', () => {
       'a.md',
       '---\ntitle: Note A\n---\n![shot](attachments/shot.png)\n',
     )
+  })
+
+  it('ends an edit a Block still holds before it flushes, so a caption being typed is written', async () => {
+    const tabA = makeTab('a.md', 'Note A')
+    const onContentChange = vi.fn()
+    const { docRef, mockEditor, result } = await createSwapHarness({
+      initialProps: { tabs: [tabA], activeTabPath: 'a.md', rawMode: false, vaultPath: '/vault' },
+      onContentChange,
+    })
+    // Ending the caption edit writes it into the Block, which BlockNote reports as a change.
+    const unregister = registerOpenBlockEdit(mockEditor, () => {
+      unregister()
+      docRef.current = [{ type: 'paragraph', content: [{ type: 'text', text: 'captioned' }], children: [] }]
+      mockEditor.blocksToMarkdownLossy.mockReturnValue('captioned\n')
+      result.current.handleEditorChange()
+    })
+
+    expect(result.current.hasPendingEditorChange()).toBe(true)
+    act(() => {
+      result.current.flushPendingEditorChange()
+    })
+
+    expect(onContentChange).toHaveBeenCalledWith('a.md', expect.stringContaining('captioned'))
+    expect(result.current.hasPendingEditorChange()).toBe(false)
   })
 
   it('reports the first keystrokes of a freshly created, empty Document', async () => {

@@ -1,14 +1,15 @@
 import { act, fireEvent, renderHook } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createRef } from 'react'
-import { useImageLightbox } from './use-image-lightbox'
+import { requestImagePreview } from '@/kernel/blocknote/image-block-requests'
+import { useImagePreview } from './use-image-preview'
 
-const { trackInlineImageLightboxOpenedMock } = vi.hoisted(() => ({
-  trackInlineImageLightboxOpenedMock: vi.fn(),
+const { trackImagePreviewOpenedMock } = vi.hoisted(() => ({
+  trackImagePreviewOpenedMock: vi.fn(),
 }))
 
 vi.mock('@/lib/product-analytics', () => ({
-  trackInlineImageLightboxOpened: trackInlineImageLightboxOpenedMock,
+  trackImagePreviewOpened: trackImagePreviewOpenedMock,
 }))
 
 function createHookTarget() {
@@ -16,7 +17,7 @@ function createHookTarget() {
   document.body.appendChild(container)
   const ref = createRef<HTMLDivElement>()
   ref.current = container
-  const view = renderHook(() => useImageLightbox({ containerRef: ref }))
+  const view = renderHook(() => useImagePreview({ containerRef: ref }))
 
   return { container, view }
 }
@@ -31,11 +32,22 @@ function appendImage(container: HTMLElement, src = 'https://example.com/photo.pn
 
 beforeEach(() => {
   document.body.replaceChildren()
-  trackInlineImageLightboxOpenedMock.mockClear()
+  trackImagePreviewOpenedMock.mockClear()
 })
 
-describe('useImageLightbox', () => {
-  it('opens the image lightbox on image double-click', () => {
+describe('useImagePreview', () => {
+  it('opens the Image preview that Preview image on the Image toolbar asks for', () => {
+    const { container, view } = createHookTarget()
+    const block = document.createElement('div')
+    container.appendChild(block)
+
+    act(() => requestImagePreview(block, { src: 'asset://localhost/a.png', alt: ' A chart ' }))
+
+    expect(view.result.current.image).toEqual({ src: 'asset://localhost/a.png', alt: 'A chart' })
+    expect(trackImagePreviewOpenedMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('opens the Image preview on image double-click', () => {
     const { container, view } = createHookTarget()
     const img = appendImage(container)
 
@@ -45,7 +57,7 @@ describe('useImageLightbox', () => {
       src: 'https://example.com/photo.png',
       alt: 'Preview target',
     })
-    expect(trackInlineImageLightboxOpenedMock).toHaveBeenCalledTimes(1)
+    expect(trackImagePreviewOpenedMock).toHaveBeenCalledTimes(1)
   })
 
   it('opens before BlockNote can stop the double-click from bubbling', () => {
@@ -56,7 +68,7 @@ describe('useImageLightbox', () => {
     fireEvent.doubleClick(img)
 
     expect(view.result.current.image?.src).toBe('https://example.com/photo.png')
-    expect(trackInlineImageLightboxOpenedMock).toHaveBeenCalledTimes(1)
+    expect(trackImagePreviewOpenedMock).toHaveBeenCalledTimes(1)
   })
 
   it('leaves single-click image selection alone', () => {
@@ -66,7 +78,7 @@ describe('useImageLightbox', () => {
     fireEvent.click(img)
 
     expect(view.result.current.image).toBeNull()
-    expect(trackInlineImageLightboxOpenedMock).not.toHaveBeenCalled()
+    expect(trackImagePreviewOpenedMock).not.toHaveBeenCalled()
   })
 
   it('ignores double-clicks on non-image targets', () => {
@@ -77,10 +89,10 @@ describe('useImageLightbox', () => {
     fireEvent.doubleClick(text)
 
     expect(view.result.current.image).toBeNull()
-    expect(trackInlineImageLightboxOpenedMock).not.toHaveBeenCalled()
+    expect(trackImagePreviewOpenedMock).not.toHaveBeenCalled()
   })
 
-  it('closes the current lightbox image', () => {
+  it('closes the current Image preview', () => {
     const { container, view } = createHookTarget()
     const img = appendImage(container)
 

@@ -3,6 +3,7 @@ import { isTauri } from '@/platform/tauri'
 import { documentRoot } from './explorer'
 import { isMissingFileError } from './missing-file'
 import { resolveExternalTabChanges } from './external-tab-changes'
+import { dispatchFolderFilesChanged } from '@/lib/folder-file-changes'
 import { isPathInsideVaultRoot } from '@/lib/vault-path-containment'
 import { normalizeWatchPath, useVaultWatcher } from './use-vault-watcher'
 
@@ -83,6 +84,7 @@ export function useDocumentWatcher({
     }
     await Promise.all(reloads)
     if (closed.length > 0) onTabsClosed(closed)
+    dispatchFolderFilesChanged(changed)
   }, [dropTabsUnder, folder, isPending, listedPaths, onTabsClosed, paths, refresh, reload, retargetTabs])
   useVaultWatcher({ vaultPaths, onVaultChanged })
   useEffect(() => {

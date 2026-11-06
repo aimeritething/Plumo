@@ -8,6 +8,7 @@ import { MARKDOWN_HIGHLIGHT_STYLE } from '@/kernel/markdown/markdown-highlight-m
 import { CalloutBlockSpec } from './callout-block'
 import { createCodeBlockOptions } from './code-block-options'
 import { HtmlBlockSpec } from './html-block'
+import { ImageBlockSpec } from './image-block'
 import { MathBlockSpec, MathInlineSpec } from './math-block'
 import { AudioBlockSpec, VideoBlockSpec } from './media-blocks'
 import { MermaidBlockSpec } from './mermaid-block'
@@ -50,6 +51,7 @@ export const schema = BlockNoteSchema.create({
     audio: AudioBlockSpec(),
     calloutBlock: CalloutBlockSpec(),
     htmlBlock: HtmlBlockSpec(),
+    image: ImageBlockSpec(),
     mathBlock: MathBlockSpec(),
     mermaidBlock: MermaidBlockSpec(),
     tldrawBlock: TldrawBlockSpec(),

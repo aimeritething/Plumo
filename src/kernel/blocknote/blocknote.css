@@ -682,6 +682,44 @@
     font-size: var(--text-sm);
   }
 
+  /* The empty file block's button and the loading line, in Plumo's tokens
+     in place of BlockNote's hard-coded greys (AIM-531). */
+  [data-file-block] .bn-add-file-button {
+    background-color: var(--surface-card);
+    border-radius: var(--radius-sm);
+    color: var(--text-tertiary);
+  }
+
+  .bn-editor[contenteditable="true"] [data-file-block] .bn-add-file-button:hover,
+  .ProseMirror-selectednode [data-file-block] .bn-add-file-button,
+  .ProseMirror-selectednode[data-file-block] .bn-add-file-button {
+    background-color: var(--state-hover);
+  }
+
+  [data-file-block] .bn-file-loading-preview {
+    color: var(--text-tertiary);
+    font-size: var(--text-sm);
+    padding: calc(var(--spacing) * 3);
+  }
+
+  /* An Image block is always centred (ADR 0011): there is no alignment to
+     follow, whatever an older Document's block says. */
+  .bn-block-content[data-content-type="image"] {
+    justify-content: center !important;
+  }
+
+  [data-content-type="image"] > .bn-file-block-content-wrapper {
+    max-width: 100%;
+  }
+
+  /* BlockNote's resize handle, 4px inside each side edge and vertically
+     centred; Plumo's is a button, so the button's own box is taken off. */
+  [data-content-type="image"] .bn-resize-handle {
+    padding: 0;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
   /* A file block is not text. BlockNote says so on its wrapper, but the
      `.bn-editor *` rule above puts it back on everything inside; a picture
      left selectable sits in the DOM range of its own node selection, and
