@@ -71,6 +71,32 @@ test('a selected picture stays selected when the pointer leaves it', async ({ pa
   expect(errors.pageErrors).toEqual([])
 })
 
+test('clicking another line after a picture closes the toolbar where it was, without a flash at the click', async ({ page }) => {
+  const errors = watchForErrors(page)
+  const picture = await openResize(page)
+  await picture.click()
+  await expect(page.locator('.bn-formatting-toolbar')).toBeVisible()
+
+  // Every frame's toolbar, from before the click until it has gone: it never
+  // moves to the line that was clicked, nor turns into the text toolbar there.
+  await page.evaluate(() => {
+    const tops: number[] = []
+    const sample = () => {
+      const toolbar = document.querySelector('.bn-formatting-toolbar')
+      if (toolbar) tops.push(toolbar.getBoundingClientRect().top)
+      requestAnimationFrame(sample)
+    }
+    sample()
+    Object.assign(window, { __toolbarTops: tops })
+  })
+  await page.locator('.bn-editor p', { hasText: 'After the picture.' }).click()
+  await expect(page.locator('.bn-formatting-toolbar')).toHaveCount(0)
+
+  const tops = await page.evaluate(() => (window as unknown as { __toolbarTops: number[] }).__toolbarTops)
+  expect(new Set(tops).size).toBe(1)
+  expect(errors.pageErrors).toEqual([])
+})
+
 test('dragging a handle inward shrinks a selected picture, and undo restores its width', async ({ page }) => {
   const errors = watchForErrors(page)
   const picture = await openResize(page)

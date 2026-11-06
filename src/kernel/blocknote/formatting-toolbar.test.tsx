@@ -575,6 +575,31 @@ describe('the formatting toolbar and its controller', () => {
     }
   })
 
+  it('closes at once when a click elsewhere collapses the selection, instead of trailing to the new caret', () => {
+    vi.useFakeTimers()
+    try {
+      const editor = createMockEditor('image')
+      const editorInput = editor.domElement.firstElementChild as HTMLElement
+      useBlockNoteEditorMock.mockReturnValue(editor)
+      const Toolbar = () => <button data-testid="toolbar-action" type="button">Toolbar</button>
+
+      const { rerender } = render(<FormattingToolbarController formattingToolbar={Toolbar} />)
+      fireEvent.pointerDown(editorInput)
+      // The press hides BlockNote's toolbar while the picture is still
+      // selected: the grace holds it over that blink.
+      showState.value = false
+      rerender(<FormattingToolbarController formattingToolbar={Toolbar} />)
+      expect(screen.getByTestId('toolbar-action')).toBeInTheDocument()
+
+      // The release puts the caret in the line that was clicked.
+      editor.prosemirrorState.selection = { from: 9, to: 9 }
+      rerender(<FormattingToolbarController formattingToolbar={Toolbar} />)
+      expect(screen.queryByTestId('toolbar-action')).not.toBeInTheDocument()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('deduplicates floating toolbar store writes during close races', () => {
     const editor = createMockEditor('paragraph')
     useBlockNoteEditorMock.mockReturnValue(editor)
