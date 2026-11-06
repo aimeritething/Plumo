@@ -44,10 +44,10 @@ import { useEditorComposing } from './use-editor-composing'
 // Plumo's controller for the floating formatting toolbar, in place of
 // BlockNote's: the toolbar stays open while it is hovered or focused, while
 // one of its menus (block type, highlight colour) is open, and for a short
-// grace after the selection collapses; a keystroke in the editor ends the
-// hover hold and the grace; it hides during IME composition; it is
-// clamped to the viewport; and it mounts the code block language controls
-// alongside.
+// grace after BlockNote hides it while something is still selected; a
+// keystroke in the editor ends the hover hold and the grace; it hides during
+// IME composition; it is clamped to the viewport; and it mounts the code block
+// language controls alongside.
 
 const FORMATTER_CLOSE_GRACE_MS = 160
 const FORMATTER_VIEWPORT_PADDING_PX = 8
@@ -288,11 +288,13 @@ function useFormattingToolbarInteractionState({
   editor,
   formattingToolbarStore,
   isComposing,
+  selectionCollapsed,
   show,
 }: {
   editor: FormattingToolbarEditor
   formattingToolbarStore: FormattingToolbarStore
   isComposing: boolean
+  selectionCollapsed: boolean
   show: boolean
 }) {
   const [toolbarHasFocus, setToolbarHasFocus] = useState(false)
@@ -335,8 +337,12 @@ function useFormattingToolbarInteractionState({
   return {
     clearCloseGrace,
     closeToolbarMenu,
+    // The grace bridges the press that hides BlockNote's toolbar before the
+    // release moves the selection; once the selection has collapsed into a
+    // caret there is nothing left to bridge, and holding the toolbar open
+    // would carry it to the caret's line, as the text toolbar, for a moment.
     isOpen: !isComposing
-      && (show || toolbarHasFocus || toolbarHovered || toolbarMenuOpened || closeGraceActive),
+      && (show || toolbarHasFocus || toolbarHovered || toolbarMenuOpened || (closeGraceActive && !selectionCollapsed)),
     setFormattingToolbarOpen,
     setToolbarHasFocus,
     setToolbarHovered,
@@ -469,6 +475,10 @@ export function FormattingToolbarController(props: FormattingToolbarControllerPr
     editor,
   })
   const isComposing = useEditorComposing(editor)
+  const selectionCollapsed = useEditorState({
+    editor,
+    selector: ({ editor }) => editor.prosemirrorState.selection.from === editor.prosemirrorState.selection.to,
+  })
   const {
     clearCloseGrace,
     closeToolbarMenu,
@@ -481,6 +491,7 @@ export function FormattingToolbarController(props: FormattingToolbarControllerPr
     editor,
     formattingToolbarStore: formattingToolbar.store,
     isComposing,
+    selectionCollapsed,
     show,
   })
   // Find selects each match so that closing the bar leaves the caret on it, and
