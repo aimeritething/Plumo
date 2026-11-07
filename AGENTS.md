@@ -10,16 +10,16 @@ Documents in a Folder on disk. Names follow the glossary in `CONTEXT.md`; read t
 `@/<dir>/…`; imports within a directory are relative.
 
 - `kernel/` — the Kernel: BlockNote (`blocknote/`), the Markdown round-trip (`markdown/`),
-  the open-time pipeline (`resolve/`), CodeMirror (`raw/`).
+the open-time pipeline (`resolve/`), CodeMirror (`raw/`).
 - `editor/` — the editing surface: the editor pane and its tab bar controls, Rich / Raw
-  views, Autosave, Write failure, toasts. Utility classes only; no CSS file.
+views, Autosave, Write failure, toasts. Utility classes only; no CSS file.
 - `folder/` — disk: the watcher, asset scope, the Rust command wrappers. `explorer/`
-  imports `folder/`, never the reverse.
+imports `folder/`, never the reverse.
 - `shell/` — sidebar, theme, shortcuts, menu events. `app-command-manifest.json` is also
-  read by `src-tauri/src/menu.rs`.
-- `ui/` — Plumo's generic parts.
+read by `src-tauri/src/menu.rs`.
+
 - `platform/` — `tauri.ts` and `mock/`, the in-memory Folder fixture that stands in for
-  Rust outside Tauri (so `pnpm dev` and the smoke specs run without it).
+Rust outside Tauri (so `pnpm dev` and the smoke specs run without it).
 - `src-tauri/` — the Rust side: commands, the Folder watcher, the Session file, the menu.
 
 Unit tests sit beside the code as `*.test.ts(x)`; helpers are `*.test-utils.ts(x)`; a test
