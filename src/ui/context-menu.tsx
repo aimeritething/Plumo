@@ -3,6 +3,7 @@
 import type * as React from "react"
 import { cn } from "@/lib/cn"
 import { ScrollArea } from "./scroll-area"
+import { surfaceVariants } from "./surface"
 import { CaretRight as ChevronRightIcon, Check as CheckIcon, Circle as CircleIcon } from "@phosphor-icons/react"
 import { ContextMenu as ContextMenuPrimitive } from "radix-ui"
 
@@ -85,7 +86,8 @@ function ContextMenuSubContent({
     <ContextMenuPrimitive.SubContent
       data-slot="context-menu-sub-content"
       className={cn(
-        "z-popover min-w-[8rem] origin-(--radix-context-menu-content-transform-origin) overflow-hidden rounded-xl border-hairline border-border bg-popover p-1.5 text-foreground shadow-md data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
+        surfaceVariants(),
+        "z-popover min-w-[8rem] origin-(--radix-context-menu-content-transform-origin) overflow-hidden p-1.5 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
         className
       )}
       {...props}
@@ -103,7 +105,8 @@ function ContextMenuContent({
       <ContextMenuPrimitive.Content
         data-slot="context-menu-content"
         className={cn(
-          "z-popover flex max-h-(--radix-context-menu-content-available-height) min-w-50 origin-(--radix-context-menu-content-transform-origin) flex-col overflow-hidden rounded-xl border-hairline border-border bg-popover text-foreground shadow-md data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
+          surfaceVariants(),
+          "z-popover flex max-h-(--radix-context-menu-content-available-height) min-w-50 origin-(--radix-context-menu-content-transform-origin) flex-col overflow-hidden data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
           className
         )}
         {...props}

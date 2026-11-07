@@ -43,8 +43,8 @@ export function SettingsDialog({ open, onClose, theme, onThemeChange, primaryCol
   return (
     <Dialog open={open} onOpenChange={(next) => { if (!next) onClose() }}>
       <DialogContent
-        variant="bare"
-        className="flex h-[min(580px,calc(100vh-64px))] w-[min(840px,calc(100vw-64px))] max-w-none gap-0 overflow-hidden rounded-xl border-hairline border-border bg-popover text-foreground shadow-lg"
+        variant="panel"
+        className="h-[min(580px,calc(100vh-64px))] w-[min(840px,calc(100vw-64px))] max-w-none"
         aria-describedby={undefined}
         // Focus lands on the dialog itself, not ringed on the first nav row; Tab goes on from there.
         onOpenAutoFocus={(event) => {

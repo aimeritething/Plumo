@@ -4,6 +4,7 @@ import type * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/cn"
 import { Popover as PopoverPrimitive } from "radix-ui"
+import { surfaceVariants } from "./surface"
 
 function Popover({
   ...props
@@ -26,8 +27,8 @@ const popoverContentVariants = cva(
   {
     variants: {
       variant: {
-        default: "w-72 rounded-xl border-hairline border-border bg-popover p-4 text-foreground shadow-md",
-        compact: "w-72 rounded-xl border-hairline border-border bg-popover p-2 text-foreground shadow-md",
+        default: [surfaceVariants(), "w-72 p-4"],
+        compact: [surfaceVariants(), "w-72 p-2"],
         menu: "",
       },
     },

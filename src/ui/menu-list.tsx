@@ -5,9 +5,9 @@ import {
   menuLabelClassName,
   menuSeparatorClassName,
   menuShortcutClassName,
-  menuSurfaceClassName,
 } from "./dropdown-menu"
 import { ScrollArea } from "./scroll-area"
+import { surfaceVariants } from "./surface"
 
 // A menu that never takes the focus: the element that has it (a text field,
 // an editor) moves the selection with its own keys and says which row is
@@ -31,7 +31,7 @@ function MenuList({
     <div
       data-slot="menu-list"
       role={role}
-      className={cn(menuSurfaceClassName, "flex min-w-[8rem] flex-col overflow-hidden", className)}
+      className={cn(surfaceVariants(), "flex min-w-[8rem] flex-col overflow-hidden", className)}
       {...props}
     >
       <ScrollArea className="min-h-0" viewportClassName="p-1.5">

@@ -9,7 +9,7 @@ import { UploadSimple } from '@phosphor-icons/react'
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { cn } from '@/lib/cn'
 import { Button } from '@/ui/button'
-import { menuSurfaceClassName } from '@/ui/dropdown-menu'
+import { surfaceVariants } from '@/ui/surface'
 import { Input } from '@/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/ui/tabs'
 
@@ -209,7 +209,7 @@ export function FilePanel({ blockId }: FilePanelProps) {
       onValueChange={setOpenTab}
       data-file-panel
       data-testid="file-panel"
-      className={cn(menuSurfaceClassName, 'w-[min(24rem,calc(100vw-2rem))] gap-0')}
+      className={cn(surfaceVariants(), 'w-[min(24rem,calc(100vw-2rem))] gap-0')}
     >
       <TabsList variant="line" className="h-9 w-full justify-start gap-3 rounded-none border-b border-border px-3">
         {canUpload && <TabsTrigger value={UPLOAD_TAB} className="flex-none px-0">{dictionary.file_panel.upload.title}</TabsTrigger>}

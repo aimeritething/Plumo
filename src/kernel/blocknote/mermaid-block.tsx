@@ -63,10 +63,10 @@ const MERMAID_RENDER_HOST_STYLE = [
 ].join(';')
 const OPEN_RAW_EDITOR_LABEL = translate('en', 'editor.toolbar.rawOpen')
 
-// The floating buttons' card shows under the pointer or keyboard focus, and
-// always on a device with no pointer to hover with.
+// The floating buttons' card, in the figure's top right corner; it shows
+// under the pointer or keyboard focus (the toolbar's `reveal`).
 const TOOLBAR_LABEL = 'Mermaid diagram actions'
-const FLOATING_GROUP_CLASS = 'absolute top-2 right-2 z-raised opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100'
+const TOOLBAR_PLACEMENT_CLASS = 'absolute top-2 right-2 z-raised'
 // The rendered SVG at its own size, centred; the box scrolls when it is wider.
 const SVG_CLASS = '[&_svg]:block [&_svg]:h-auto [&_svg]:max-w-none [&_svg]:min-w-min'
 
@@ -292,7 +292,7 @@ export function MermaidDiagram({ diagram, source }: MermaidDiagramProps) {
         className={`${FIGURE_CLASS} rounded-lg border-hairline border-red bg-red/8 p-3`}
         data-testid="mermaid-diagram-error"
       >
-        <Toolbar aria-label={TOOLBAR_LABEL} className={FLOATING_GROUP_CLASS} contentEditable={false}>
+        <Toolbar aria-label={TOOLBAR_LABEL} className={TOOLBAR_PLACEMENT_CLASS} reveal contentEditable={false}>
           <MermaidRawEditorButton />
         </Toolbar>
         <figcaption className="mb-2 text-xs leading-normal font-semibold text-red">Mermaid diagram unavailable</figcaption>
@@ -303,7 +303,7 @@ export function MermaidDiagram({ diagram, source }: MermaidDiagramProps) {
 
   return (
     <figure className={FIGURE_CLASS} data-testid="mermaid-diagram">
-      <Toolbar aria-label={TOOLBAR_LABEL} className={FLOATING_GROUP_CLASS} contentEditable={false}>
+      <Toolbar aria-label={TOOLBAR_LABEL} className={TOOLBAR_PLACEMENT_CLASS} reveal contentEditable={false}>
         <MermaidRawEditorButton />
         <MermaidLightbox svg={currentState.svg} />
       </Toolbar>

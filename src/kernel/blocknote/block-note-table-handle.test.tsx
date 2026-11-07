@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { createEvent, fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
@@ -102,6 +102,33 @@ describe('TableHandle', () => {
 
     fireEvent.click(screen.getByRole('menuitem', { name: 'Delete column' }))
     expect(mocks.tableHandles.removeRowOrColumn).toHaveBeenCalledWith(0, 'column')
+  })
+
+  // A menu trigger opens on the press and cancels it, which would cancel the
+  // column or row drag the press starts: the handle leaves the press alone.
+  it('neither opens the menu on the press nor cancels the press, so the handle can be dragged', () => {
+    render(<TableHandle orientation="column" hideOtherElements={vi.fn()} {...({} as never)} />)
+    const handle = document.querySelector('[data-table-handle="column"]')!
+    expect(handle).toHaveAttribute('draggable', 'true')
+
+    const press = createEvent.pointerDown(handle, { button: 0, ctrlKey: false, pointerType: 'mouse' })
+    fireEvent(handle, press)
+
+    expect(press.defaultPrevented).toBe(false)
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+    expect(handle).toHaveAttribute('aria-expanded', 'false')
+  })
+
+  it('opens the menu from the keyboard, as a menu trigger does, and says so', () => {
+    render(<TableHandle orientation="row" hideOtherElements={vi.fn()} {...({} as never)} />)
+    const handle = document.querySelector('[data-table-handle="row"]')!
+    expect(handle).toHaveAttribute('aria-haspopup', 'menu')
+
+    fireEvent.keyDown(handle, { key: 'ArrowDown' })
+
+    expect(screen.getByRole('menu')).toBeInTheDocument()
+    expect(handle).toHaveAttribute('aria-expanded', 'true')
+    expect(mocks.tableHandles.freezeHandles).toHaveBeenCalledOnce()
   })
 
   it('closes the menu on a second press of the handle instead of opening it again', () => {

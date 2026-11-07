@@ -9,7 +9,10 @@ import { Toolbar as ToolbarPrimitive } from "radix-ui"
 //   a code block, a board), the popover surface and the raised shadow;
 // - floating: a toolbar that floats over the text, the menu material (the
 //   popover hairline and the menu shadow), at the same radius and density.
-// `className` places the toolbar (position, visibility); its look is the variant's.
+// `reveal` keeps a toolbar laid over a Block (an HTML block, a diagram) out of
+// sight until the pointer is over the Block or the focus is in it: the Block's
+// root is the `group`. A device that cannot hover always shows it.
+// `className` places the toolbar; its look and visibility are the variants'.
 const toolbarVariants = cva(
   "flex w-fit items-center gap-0.5 rounded-lg bg-popover p-0.5 text-foreground",
   {
@@ -18,9 +21,14 @@ const toolbarVariants = cva(
         raised: "shadow-xs",
         floating: "border-hairline border-border shadow-md",
       },
+      reveal: {
+        true: "opacity-0 transition-opacity duration-150 ease-out group-focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100",
+        false: "",
+      },
     },
     defaultVariants: {
       variant: "raised",
+      reveal: false,
     },
   }
 )
@@ -28,6 +36,7 @@ const toolbarVariants = cva(
 function Toolbar({
   className,
   variant,
+  reveal,
   ...props
 }: React.ComponentProps<typeof ToolbarPrimitive.Root> &
   VariantProps<typeof toolbarVariants>) {
@@ -35,7 +44,7 @@ function Toolbar({
     <ToolbarPrimitive.Root
       data-slot="toolbar"
       data-variant={variant ?? "raised"}
-      className={cn(toolbarVariants({ variant, className }))}
+      className={cn(toolbarVariants({ variant, reveal, className }))}
       {...props}
     />
   )

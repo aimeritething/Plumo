@@ -2,6 +2,7 @@
 
 import type * as React from "react"
 import { cn } from "@/lib/cn"
+import { surfaceVariants } from "./surface"
 import { HoverCard as HoverCardPrimitive } from "radix-ui"
 
 function HoverCard({
@@ -36,7 +37,8 @@ function HoverCardContent({
       align={align}
       sideOffset={sideOffset}
       className={cn(
-        "z-popover w-64 origin-(--radix-hover-card-content-transform-origin) rounded-xl border-hairline border-border bg-popover p-4 text-foreground shadow-md outline-hidden data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
+        surfaceVariants(),
+        "z-popover w-64 origin-(--radix-hover-card-content-transform-origin) p-4 outline-hidden data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
         className
       )}
       {...props}

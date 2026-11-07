@@ -324,7 +324,8 @@ interface HtmlBlockToolbarProps {
 function HtmlBlockToolbar({ copySource, resetHeight }: HtmlBlockToolbarProps) {
   return (
     <Toolbar
-      className="absolute top-2 right-2 z-raised opacity-0 transition-opacity duration-150 ease-out group-focus-within:opacity-100 group-hover:opacity-100"
+      className="absolute top-2 right-2 z-raised"
+      reveal
       aria-label={t('editor.htmlBlock.toolbar')}
     >
       <SimpleTooltip label={t('editor.htmlBlock.copySource')} side="bottom">
@@ -381,7 +382,7 @@ function HtmlBlockResizeHandle({ onKeyDown, onPointerDown }: {
 }) {
   return (
     // A grip, not a toolbar: the toolbar's card, a plain button on it.
-    <div className={toolbarVariants({ className: 'absolute right-1.5 bottom-1.5 z-raised opacity-0 group-focus-within:opacity-100 group-hover:opacity-100' })}>
+    <div className={cn(toolbarVariants({ reveal: true }), 'absolute right-1.5 bottom-1.5 z-raised')}>
       <SimpleTooltip label={t('editor.htmlBlock.resizeHeight')} side="left">
         <Button aria-label={t('editor.htmlBlock.resizeHeight')} className="cursor-ns-resize"
           onKeyDown={onKeyDown} onMouseDown={stopHtmlBlockEvent} onPointerDown={onPointerDown}

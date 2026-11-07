@@ -89,14 +89,9 @@ export function ImageTabActions({ metadata, onOpenExternal, onCopyPath }: ImageT
       {metadata && (
         <span className="cursor-default pr-1.5 font-mono text-2xs tracking-normal whitespace-nowrap text-muted-foreground tabular-nums" data-testid="image-meta">{metadata}</span>
       )}
-      <button
-        type="button"
-        className="flex h-6.5 flex-none items-center rounded-full px-2.5 text-sm font-medium whitespace-nowrap text-foreground inset-ring inset-ring-border hover:bg-accent focus-visible:focus-ring"
-        data-testid="image-open-external"
-        onClick={onOpenExternal}
-      >
+      <Button variant="outline" size="pill" data-testid="image-open-external" onClick={onOpenExternal}>
         Open ↗
-      </button>
+      </Button>
       {onCopyPath && <CopyPathButton onCopyPath={onCopyPath} />}
     </div>
   )

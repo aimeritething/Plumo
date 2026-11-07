@@ -12,14 +12,16 @@ import { readMarkdownHighlightRange } from './markdown-highlight-range'
 export type CursorControlSide = 'top' | 'bottom'
 
 export type CursorControlState = MarkdownHighlightRange & {
-  left: number
+  /** The highlight end's line box, as wide as the caret: what the control is placed against. */
+  anchor: DOMRect
+  /** The editor's scroll area, the box the control stays inside; null outside one (the window). */
+  boundary: Element | null
   side: CursorControlSide
-  top: number
 }
 
 // The button is `icon-xs`, 24px square, kept 4px off the line box it sits against.
 const CONTROL_SIZE = 24
-const CONTROL_GAP = 4
+export const CONTROL_GAP = 4
 
 function currentLocale(): AppLocale {
   return resolveEffectiveLocale(document.documentElement.lang)
@@ -41,33 +43,34 @@ export function useDocumentLocale(): AppLocale {
   return locale
 }
 
-type EditorViewport = { bottom: number; left: number; right: number; top: number }
+type EditorViewport = { bottom: number; scrollArea: Element | null; top: number }
 
 // What the editor's scroll area shows: its box, less anything stuck to its top
 // (the find bar). Without a scroll area, the window. The find bar is a child
 // of the scroll area's content, which is the scroll area itself or the one
 // wrapper a ScrollArea's viewport puts around it.
 function readEditorViewport(editor: HighlightEditor): EditorViewport {
-  const scrollArea = editor.domElement?.closest(EDITOR_SCROLL_AREA_SELECTOR)
+  const scrollArea = editor.domElement?.closest(EDITOR_SCROLL_AREA_SELECTOR) ?? null
   if (!scrollArea) {
-    return { bottom: window.innerHeight, left: 0, right: window.innerWidth, top: 0 }
+    return { bottom: window.innerHeight, scrollArea, top: 0 }
   }
 
-  const { bottom, left, right, top } = scrollArea.getBoundingClientRect()
+  const { bottom, top } = scrollArea.getBoundingClientRect()
   let visibleTop = top
   for (const child of Array.from<Element>(scrollArea.querySelectorAll(':scope > *, :scope > div > *'))) {
     if (getComputedStyle(child).position !== 'sticky') continue
     const bounds = child.getBoundingClientRect()
     if (bounds.top <= visibleTop) visibleTop = Math.max(visibleTop, bounds.bottom)
   }
-  return { bottom, left, right, top: visibleTop }
+  return { bottom, scrollArea, top: visibleTop }
 }
 
-// The control is fixed on the body, above the editor's chrome, so it is only
-// shown while the highlight end's line lies within what the editor shows; it
-// would otherwise float over the Tab bar or the find bar. It sits just above
-// that line, centred on the end, so it never covers the highlight's line or
-// the text after it; below the line when there is no room above.
+// The control floats over the editor's chrome, so it is only shown while the
+// highlight end's line lies within what the editor shows; it would otherwise
+// float over the Tab bar or the find bar. It sits just above that line,
+// centred on the end, so it never covers the highlight's line or the text
+// after it; below the line when there is no room above (the find bar counts).
+// Kept inside the scroll area's left and right edges by the popover it is in.
 function readCursorControlState(editor: HighlightEditor): CursorControlState | null {
   const range = readMarkdownHighlightRange(editor)
   if (!range) return null
@@ -81,12 +84,8 @@ function readCursorControlState(editor: HighlightEditor): CursorControlState | n
 
     const above = line.top - CONTROL_GAP - CONTROL_SIZE
     const side: CursorControlSide = above >= viewport.top ? 'top' : 'bottom'
-    const top = side === 'top' ? above : line.bottom + CONTROL_GAP
-    const left = Math.max(
-      viewport.left,
-      Math.min(line.right - CONTROL_SIZE / 2, viewport.right - CONTROL_SIZE),
-    )
-    return { ...range, left, side, top }
+    const anchor = new DOMRect(line.right, line.top, 0, line.bottom - line.top)
+    return { ...range, anchor, boundary: viewport.scrollArea, side }
   } catch {
     return null
   }

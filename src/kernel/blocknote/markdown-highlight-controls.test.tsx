@@ -61,9 +61,26 @@ afterEach(() => {
 const SCROLL_AREA_BOUNDS = new DOMRect(0, 100, 800, 400)
 const mountedEditors: Array<Awaited<ReturnType<typeof editorFromMarkdown>>> = []
 
+// jsdom lays nothing out, so the boxes Radix measures to place the popover
+// are given here: the popover the button sits in is the button's 24px
+// square, the scroll area its bounds, and the window 1024×768.
+function layOutForThePopover() {
+  const sizeOf = (element: Element, axis: 'width' | 'height') => {
+    if (element.hasAttribute('data-radix-popper-content-wrapper')) return 24
+    if (element.classList.contains('editor-scroll-area')) return SCROLL_AREA_BOUNDS[axis]
+    if (element === document.documentElement) return axis === 'width' ? 1024 : 768
+    return 0
+  }
+  vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(function (this: HTMLElement) { return sizeOf(this, 'width') })
+  vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (this: HTMLElement) { return sizeOf(this, 'height') })
+  vi.spyOn(Element.prototype, 'clientWidth', 'get').mockImplementation(function (this: Element) { return sizeOf(this, 'width') })
+  vi.spyOn(Element.prototype, 'clientHeight', 'get').mockImplementation(function (this: Element) { return sizeOf(this, 'height') })
+}
+
 // An editor mounted in a scroll area spanning y 100–500, the caret inside the
 // highlight, and the highlight's end drawn at `anchorTop`.
 async function editorWithCaretInHighlight() {
+  layOutForThePopover()
   const editor = await editorFromMarkdown('Start ==🔴marked== end')
   const scrollArea = document.createElement('div')
   scrollArea.className = 'editor-scroll-area'
@@ -99,11 +116,18 @@ function boundaryButton() {
   return screen.queryByRole('button', { name: 'Change highlight color' })
 }
 
-// The fixed box the button sits in; the button is 24px square.
+// Where the popover the button sits in was placed (its wrapper's translate),
+// and on which side of the line; the button is 24px square.
 function boundaryControlBox() {
   const box = document.querySelector<HTMLElement>('[data-test="highlightBoundaryControl"]')
   if (!box) throw new Error('The boundary control is not shown')
-  return { left: parseFloat(box.style.left), top: parseFloat(box.style.top) }
+  const placed = /^translate\((-?[\d.]+)px, (-?[\d.]+)px\)$/.exec(box.parentElement?.style.transform ?? '')
+  if (!placed) throw new Error('The boundary control is not placed yet')
+  return { left: Number(placed[1]), side: box.dataset.side, top: Number(placed[2]) }
+}
+
+async function expectBoundaryControlAt(place: { left: number; side: string; top: number }) {
+  await vi.waitFor(() => expect(boundaryControlBox()).toEqual(place))
 }
 
 describe('Markdown highlight color controls', () => {
@@ -250,7 +274,7 @@ describe('the highlight boundary colour button', () => {
     render(<HighlightBoundaryColorControl editor={editor} />, { wrapper: TooltipProvider })
 
     // The end's line box is y 200–216 and its end x 60: the button's 24px end 4px above.
-    expect(boundaryControlBox()).toEqual({ left: 48, top: 172 })
+    await expectBoundaryControlAt({ left: 48, side: 'top', top: 172 })
   })
 
   it('goes just below the line when there is no room above it in the scroll area', async () => {
@@ -260,7 +284,7 @@ describe('the highlight boundary colour button', () => {
     drawAnchorAt(110)
     fireEvent.scroll(scrollArea)
 
-    expect(boundaryControlBox()).toEqual({ left: 48, top: 130 })
+    await expectBoundaryControlAt({ left: 48, side: 'bottom', top: 130 })
   })
 
   it('goes below the line rather than over a find bar stuck to the scroll area\'s top', async () => {
@@ -271,7 +295,7 @@ describe('the highlight boundary colour button', () => {
     drawAnchorAt(150)
     fireEvent.scroll(scrollArea)
 
-    expect(boundaryControlBox()).toEqual({ left: 48, top: 170 })
+    await expectBoundaryControlAt({ left: 48, side: 'bottom', top: 170 })
   })
 
   it('stays within the scroll area\'s left and right edges', async () => {
@@ -280,11 +304,11 @@ describe('the highlight boundary colour button', () => {
 
     drawAnchorAt(200, 795)
     fireEvent.scroll(scrollArea)
-    expect(boundaryControlBox()).toEqual({ left: 776, top: 172 })
+    await expectBoundaryControlAt({ left: 776, side: 'top', top: 172 })
 
     drawAnchorAt(200, 4)
     fireEvent.scroll(scrollArea)
-    expect(boundaryControlBox()).toEqual({ left: 0, top: 172 })
+    await expectBoundaryControlAt({ left: 0, side: 'top', top: 172 })
   })
 
   it('keeps to the line of the highlight\'s last character when the line wraps at its end', async () => {
@@ -298,7 +322,7 @@ describe('the highlight boundary colour button', () => {
 
     render(<HighlightBoundaryColorControl editor={editor} />, { wrapper: TooltipProvider })
 
-    expect(boundaryControlBox()).toEqual({ left: 288, top: 172 })
+    await expectBoundaryControlAt({ left: 288, side: 'top', top: 172 })
   })
 
   it('hides while the highlight is scrolled outside the editor, and comes back with it', async () => {
@@ -327,6 +351,26 @@ describe('the highlight boundary colour button', () => {
     fireEvent.scroll(scrollArea)
 
     expect(boundaryButton()).toBeNull()
+  })
+
+  // The popover only places the button: it must not take the focus from the
+  // editor when it shows, nor mark an Esc typed there as handled (the editor
+  // reads a marked Esc as someone else's).
+  it('leaves the focus and Esc to the editor while it shows', async () => {
+    const { editor } = await editorWithCaretInHighlight()
+    const view = editor.prosemirrorView!
+    render(<HighlightBoundaryColorControl editor={editor} />, { wrapper: TooltipProvider })
+    await expectBoundaryControlAt({ left: 48, side: 'top', top: 172 })
+
+    expect(document.activeElement).toBe(view.dom)
+
+    // Capturing on the editor's element: what the editor's own listener there
+    // is handed, after the popover's listener on the document.
+    const escapes: boolean[] = []
+    view.dom.addEventListener('keydown', event => escapes.push(event.defaultPrevented), { capture: true })
+    fireEvent.keyDown(view.dom, { key: 'Escape' })
+
+    expect(escapes).toEqual([false])
   })
 
   it('hides when the editor loses the focus', async () => {

@@ -3,17 +3,15 @@
 import type * as React from "react"
 import { cn } from "@/lib/cn"
 import { ScrollArea } from "./scroll-area"
+import { surfaceVariants } from "./surface"
 import { CaretRight as ChevronRightIcon, Check as CheckIcon, Circle as CircleIcon } from "@phosphor-icons/react"
-import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui"
+import { DropdownMenu as DropdownMenuPrimitive, Slot } from "radix-ui"
 
 // The menu look, shared with ui/menu-list.tsx (the list a text field drives,
-// such as an editor's `/` menu), so the two kinds of menu read as one: Notion's
-// rows, an icon then the label, a hint at the right end, small grey labels
-// over the groups, hairlines between them.
-
-/** The menu card: the popover surface, the popover hairline, the menu shadow. */
-const menuSurfaceClassName =
-  "rounded-xl border-hairline border-border bg-popover text-foreground shadow-md"
+// such as an editor's `/` menu), so the two kinds of menu read as one: the
+// popover surface (ui/surface) as the card, Notion's rows, an icon then the
+// label, a hint at the right end, small grey labels over the groups, hairlines
+// between them.
 
 /**
  * A row: 32px, an icon then the label, the icon in the secondary colour unless
@@ -47,15 +45,55 @@ function DropdownMenuPortal({
   )
 }
 
+// `openOnPress={false}` leaves the press to the trigger's own element: its
+// owner opens the menu on the click instead, through a controlled `open`.
+// Radix opens the menu on the press and cancels the press, which also cancels
+// a native drag the press would start (a Table handle is dragged and opens a
+// menu). The keys (Enter, Space, ArrowDown) still open it, and the trigger
+// keeps aria-expanded and its open / closed state.
 function DropdownMenuTrigger({
+  openOnPress = true,
   ...props
-}: React.ComponentProps<typeof DropdownMenuPrimitive.Trigger>) {
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Trigger> & {
+  openOnPress?: boolean
+}) {
+  if (openOnPress) {
+    return (
+      <DropdownMenuPrimitive.Trigger
+        data-slot="dropdown-menu-trigger"
+        {...props}
+      />
+    )
+  }
+  const { asChild, children, onPointerDown, ...triggerProps } = props
   return (
     <DropdownMenuPrimitive.Trigger
       data-slot="dropdown-menu-trigger"
-      {...props}
-    />
+      asChild
+      {...triggerProps}
+    >
+      <TriggerWithoutPress asChild={asChild} onPress={onPointerDown}>
+        {children}
+      </TriggerWithoutPress>
+    </DropdownMenuPrimitive.Trigger>
   )
+}
+
+// Takes Radix's props through its Slot and renders them on the trigger's
+// element, all but Radix's press handler; the caller's own press handler
+// (`onPress`) stays.
+function TriggerWithoutPress({
+  asChild,
+  onPress,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- dropped on purpose
+  onPointerDown: _radixPress,
+  ...props
+}: React.ComponentProps<"button"> & {
+  asChild?: boolean
+  onPress?: React.PointerEventHandler<HTMLButtonElement>
+}) {
+  const Comp = asChild ? Slot.Root : "button"
+  return <Comp {...props} onPointerDown={onPress} />
 }
 
 function DropdownMenuContent({
@@ -70,7 +108,7 @@ function DropdownMenuContent({
         data-slot="dropdown-menu-content"
         sideOffset={sideOffset}
         className={cn(
-          menuSurfaceClassName,
+          surfaceVariants(),
           "z-popover flex max-h-(--radix-dropdown-menu-content-available-height) min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) flex-col overflow-hidden data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
           className
         )}
@@ -265,7 +303,7 @@ function DropdownMenuSubContent({
     <DropdownMenuPrimitive.SubContent
       data-slot="dropdown-menu-sub-content"
       className={cn(
-        menuSurfaceClassName,
+        surfaceVariants(),
         "z-popover min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-hidden p-1.5 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
         className
       )}
@@ -275,7 +313,7 @@ function DropdownMenuSubContent({
 }
 
 // eslint-disable-next-line react-refresh/only-export-components -- the menu look, shared with menu-list.tsx
-export { menuItemClassName, menuLabelClassName, menuSeparatorClassName, menuShortcutClassName, menuSurfaceClassName }
+export { menuItemClassName, menuLabelClassName, menuSeparatorClassName, menuShortcutClassName }
 
 export {
   DropdownMenu,

@@ -7,6 +7,7 @@ import { X as XIcon } from "@phosphor-icons/react"
 import { Dialog as DialogPrimitive } from "radix-ui"
 
 import { Button } from "./button"
+import { surfaceVariants } from "./surface"
 import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip"
 
 function Dialog({
@@ -50,18 +51,29 @@ function DialogOverlay({
 }
 
 // default is the prompt: centred, on the popover surface. bare is the same
-// centring with no panel at all (a lightbox). palette hangs from 24% down,
-// unpadded, no close button; what it holds lays itself out as a column.
+// centring with no panel at all (a lightbox). panel is the same centring on
+// the popover surface, unpadded, no close button: what it holds lays out its
+// own panes side by side (Settings) and sizes the dialog. palette hangs from
+// 24% down, unpadded, no close button; what it holds lays itself out as a
+// column.
 const dialogContentVariants = cva(
   "fixed left-[50%] z-popover grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] gap-4 outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
   {
     variants: {
       variant: {
-        default:
-          "top-[50%] translate-y-[-50%] rounded-xl border-hairline border-border bg-popover p-6 text-foreground shadow-lg sm:max-w-lg",
+        default: [
+          surfaceVariants({ elevation: "dialog" }),
+          "top-[50%] translate-y-[-50%] p-6 sm:max-w-lg",
+        ],
         bare: "top-[50%] w-auto translate-y-[-50%]",
-        palette:
-          "top-[24%] flex flex-col gap-0 rounded-xl border-hairline border-border bg-popover p-0 text-foreground shadow-lg",
+        panel: [
+          surfaceVariants({ elevation: "dialog" }),
+          "top-[50%] flex translate-y-[-50%] gap-0 overflow-hidden p-0",
+        ],
+        palette: [
+          surfaceVariants({ elevation: "dialog" }),
+          "top-[24%] flex flex-col gap-0 p-0",
+        ],
       },
     },
     defaultVariants: {

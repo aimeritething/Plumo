@@ -16,8 +16,12 @@ const ICON_BUTTON_STATES =
 // icon-xs (24px, 16px glyph) everywhere else. `placeholder` with the `row`
 // size is Notion's empty slot: a full-width muted row, an icon and what to
 // add, on the hover fill, a step darker on hover or when `data-selected`.
+// `bare` paints nothing at rest, on hover or open: what it holds draws every
+// state (the Table handle's dash and chip, off the button's `group`).
 // `fill` takes its slot's whole box and its cursor: the slot is laid out (and
-// says what a press does, e.g. a resize cursor) by whoever places it.
+// says what a press does, e.g. a resize cursor) by whoever places it. `pill`
+// is a 26px fully rounded text button for a short label in the Tab bar
+// (an Image Tab's Open ↗), usually on `outline`.
 const buttonVariants = cva(
   "inline-flex shrink-0 items-center justify-center gap-2 rounded-sm text-sm font-medium whitespace-nowrap transition-colors outline-none focus-visible:focus-ring disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
@@ -37,6 +41,7 @@ const buttonVariants = cva(
         "icon-quiet": `text-subtle-foreground ${ICON_BUTTON_STATES}`,
         placeholder:
           "bg-muted font-normal text-muted-foreground hover:bg-selected hover:text-foreground data-[selected=true]:bg-selected",
+        bare: "",
       },
       size: {
         default: "h-7 px-3 py-1 has-[>svg]:px-2.5",
@@ -50,6 +55,7 @@ const buttonVariants = cva(
         "icon-lg": "size-10",
         row: "h-11 w-full justify-start gap-2.5 px-3 [&_svg:not([class*='size-'])]:size-5",
         fill: "size-full cursor-[inherit] p-0",
+        pill: "h-6.5 rounded-full px-2.5",
       },
     },
     defaultVariants: {
