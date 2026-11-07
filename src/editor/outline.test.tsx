@@ -101,7 +101,7 @@ describe('Outline', () => {
     await waitFor(() => expect(card()).not.toBeNull())
     act(() => { toggleCollapsedHeading(editor, 'setup') })
     expect(isCollapsedBlock(editor, 'setup')).toBe(true)
-    await waitFor(() => expect(row('One: create the repository')).toHaveClass('text-text-muted'))
+    await waitFor(() => expect(row('One: create the repository')).toHaveClass('text-subtle-foreground'))
 
     fireEvent.click(row('One: create the repository'))
 

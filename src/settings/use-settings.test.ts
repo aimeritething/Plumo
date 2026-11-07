@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ThemeMode } from '@/shell/theme-mode'
 import { useSettings } from './use-settings'
 
+const BLUE = '#0a6cff'
+
 const runtime = vi.hoisted(() => ({
   invoke: vi.fn<(cmd: string, args?: Record<string, unknown>) => Promise<unknown>>(),
 }))
@@ -25,16 +27,19 @@ const settingsWrites = () =>
 
 describe('useSettings', () => {
   const restoreTheme = vi.fn()
+  const restorePrimaryColor = vi.fn()
+  const restorers = { restoreTheme, restorePrimaryColor, primaryColor: BLUE }
 
   beforeEach(() => {
     runtime.invoke.mockReset()
     restoreTheme.mockReset()
+    restorePrimaryColor.mockReset()
   })
 
   it('restores the saved theme on launch', async () => {
     answerWith({ version: 1, theme: 'dark' })
 
-    const { result } = renderHook(() => useSettings({ theme: 'light', restoreTheme }))
+    const { result } = renderHook(() => useSettings({ theme: 'light', ...restorers }))
 
     await waitFor(() => expect(result.current.restored).toBe(true))
     expect(restoreTheme).toHaveBeenCalledWith('dark')
@@ -43,11 +48,11 @@ describe('useSettings', () => {
   it('restores the default theme when there are no Settings yet, and writes them', async () => {
     answerWith(null)
 
-    const { result } = renderHook(() => useSettings({ theme: 'light', restoreTheme }))
+    const { result } = renderHook(() => useSettings({ theme: 'light', ...restorers }))
 
     await waitFor(() => expect(result.current.restored).toBe(true))
     expect(restoreTheme).toHaveBeenCalledWith('light')
-    await waitFor(() => expect(settingsWrites()).toEqual([{ version: 1, theme: 'light' }]))
+    await waitFor(() => expect(settingsWrites()).toEqual([{ version: 1, theme: 'light', primaryColor: BLUE }]))
   })
 
   it('writes nothing before the read has settled', async () => {
@@ -56,7 +61,7 @@ describe('useSettings', () => {
       cmd === 'read_settings' ? new Promise((resolve) => { releaseRead = resolve }) : Promise.resolve(undefined),
     )
     const { result, rerender } = renderHook(
-      (props: { theme: ThemeMode }) => useSettings({ ...props, restoreTheme }),
+      (props: { theme: ThemeMode }) => useSettings({ ...props, ...restorers }),
       { initialProps: { theme: 'light' as ThemeMode } },
     )
     rerender({ theme: 'dark' })
@@ -73,14 +78,14 @@ describe('useSettings', () => {
   it('writes the theme at once whenever it changes', async () => {
     answerWith({ version: 1, theme: 'light' })
     const { result, rerender } = renderHook(
-      (props: { theme: ThemeMode }) => useSettings({ ...props, restoreTheme }),
+      (props: { theme: ThemeMode }) => useSettings({ ...props, ...restorers }),
       { initialProps: { theme: 'light' as ThemeMode } },
     )
     await waitFor(() => expect(result.current.restored).toBe(true))
 
     rerender({ theme: 'system' })
 
-    await waitFor(() => expect(settingsWrites().at(-1)).toEqual({ version: 1, theme: 'system' }))
+    await waitFor(() => expect(settingsWrites().at(-1)).toEqual({ version: 1, theme: 'system', primaryColor: BLUE }))
   })
 
   it('starts from the defaults when the read fails', async () => {
@@ -90,11 +95,25 @@ describe('useSettings', () => {
     })
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
-    const { result } = renderHook(() => useSettings({ theme: 'light', restoreTheme }))
+    const { result } = renderHook(() => useSettings({ theme: 'light', ...restorers }))
 
     await waitFor(() => expect(result.current.restored).toBe(true))
     expect(restoreTheme).not.toHaveBeenCalled()
     expect(warn).toHaveBeenCalled()
     warn.mockRestore()
+  })
+
+  it('restores the saved Primary color and writes a new one at once', async () => {
+    answerWith({ version: 1, theme: 'light', primaryColor: '#8e4ec6' })
+    const { result, rerender } = renderHook(
+      (props: { primaryColor: string }) => useSettings({ theme: 'light', restoreTheme, restorePrimaryColor, ...props }),
+      { initialProps: { primaryColor: BLUE } },
+    )
+
+    await waitFor(() => expect(result.current.restored).toBe(true))
+    expect(restorePrimaryColor).toHaveBeenCalledWith('#8e4ec6')
+
+    rerender({ primaryColor: '#30a46c' })
+    await waitFor(() => expect(settingsWrites().at(-1)).toEqual({ version: 1, theme: 'light', primaryColor: '#30a46c' }))
   })
 })

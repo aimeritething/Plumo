@@ -110,7 +110,7 @@ describe('SlashMenu', () => {
     fireEvent.mouseEnter(screen.getByRole('option', { name: 'Callout' }))
 
     const submenu = screen.getByRole('menu', { name: 'Callout' })
-    expect(submenu).toHaveClass('fixed', 'rounded-xl', 'shadow-menu')
+    expect(submenu).toHaveClass('fixed', 'rounded-xl', 'shadow-md')
     fireEvent.click(screen.getByRole('menuitem', { name: 'Tip' }))
     expect(onItemClick).toHaveBeenCalledWith(item.submenuItems?.[1])
   })

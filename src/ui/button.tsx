@@ -7,7 +7,7 @@ import { Slot } from "radix-ui"
 // tertiary-hover fill and the secondary colour, disabled goes muted without
 // fading. `icon-quiet` rests one step lighter, for the block side menu.
 const ICON_BUTTON_STATES =
-  "transition-colors duration-150 ease-out hover:bg-control-tertiary-hover hover:text-text-secondary data-[state=open]:bg-control-tertiary-hover data-[state=open]:text-text-secondary disabled:text-text-muted disabled:opacity-100"
+  "transition-colors duration-150 ease-out hover:bg-accent hover:text-muted-foreground data-[state=open]:bg-accent data-[state=open]:text-muted-foreground disabled:text-subtle-foreground disabled:opacity-100"
 
 // shadcn's names, Plumo's values: 28px controls, 13px, `rounded-sm`, the 1px
 // focus ring. default is Linear's primary, secondary its filled secondary,
@@ -23,20 +23,20 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-accent-hover",
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
-          "border-hairline bg-secondary text-secondary-foreground hover:bg-control-secondary-hover hover:text-accent-foreground",
+          "border-hairline border-border bg-background text-foreground shadow-xs hover:bg-accent hover:text-accent-foreground",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-control-secondary-hover",
+          "bg-secondary text-secondary-foreground hover:bg-selected",
         ghost:
-          "hover:bg-control-tertiary-hover hover:text-accent-foreground data-[state=open]:bg-control-tertiary-hover data-[state=open]:text-accent-foreground",
+          "hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        icon: `text-text-tertiary ${ICON_BUTTON_STATES}`,
-        "icon-quiet": `text-text-muted ${ICON_BUTTON_STATES}`,
+        icon: `text-muted-foreground ${ICON_BUTTON_STATES}`,
+        "icon-quiet": `text-subtle-foreground ${ICON_BUTTON_STATES}`,
         placeholder:
-          "bg-state-hover font-normal text-text-tertiary hover:bg-control-tertiary-hover hover:text-text-secondary data-[selected=true]:bg-control-tertiary-hover",
+          "bg-muted font-normal text-muted-foreground hover:bg-selected hover:text-foreground data-[selected=true]:bg-selected",
       },
       size: {
         default: "h-7 px-3 py-1 has-[>svg]:px-2.5",

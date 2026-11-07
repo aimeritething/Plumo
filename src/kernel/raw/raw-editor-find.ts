@@ -71,12 +71,12 @@ export function rawFindDecorations(state: EditorState): DecorationSet {
 const rawFindTheme = EditorView.theme({
   [`.${RAW_FIND_MATCH_CLASS}`]: {
     borderRadius: 'var(--radius-sm)',
-    backgroundColor: 'var(--chroma-yellow-bg)',
-    boxShadow: '0 0 0 1px var(--chroma-yellow-bg)',
+    backgroundColor: 'var(--yellow-muted)',
+    boxShadow: '0 0 0 1px var(--yellow-muted)',
   },
   [`.${RAW_FIND_ACTIVE_MATCH_CLASS}`]: {
-    backgroundColor: 'color-mix(in srgb, var(--chroma-orange) 38%, transparent)',
-    boxShadow: '0 0 0 1px color-mix(in srgb, var(--chroma-orange) 38%, transparent)',
+    backgroundColor: 'color-mix(in srgb, var(--orange) 38%, transparent)',
+    boxShadow: '0 0 0 1px color-mix(in srgb, var(--orange) 38%, transparent)',
   },
 })
 

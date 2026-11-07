@@ -61,7 +61,7 @@ function OutlineRail({ outline }: { outline: OutlineState }) {
           <span
             className={cn(
               'h-0.5 rounded-full',
-              entry.id === activeId ? 'bg-text-secondary' : 'bg-border-strong',
+              entry.id === activeId ? 'bg-muted-foreground' : 'bg-input',
               hiddenIds.has(entry.id) && 'opacity-40',
             )}
             style={{ width: dashWidth(entry.depth) }}
@@ -88,8 +88,8 @@ function OutlineRow({ entry, active, hidden, onPick }: {
       onClick={() => onPick(entry.id)}
       className={cn(
         'flex h-7 shrink-0 cursor-default items-center rounded-md pr-2 text-left text-[13px] outline-none',
-        'hover:bg-menu-item-hover hover:text-text-heading focus-visible:bg-menu-item-hover',
-        active ? 'font-medium text-text-heading' : hidden ? 'text-text-muted' : 'text-text-tertiary',
+        'hover:bg-accent hover:text-foreground focus-visible:bg-accent',
+        active ? 'font-medium text-foreground' : hidden ? 'text-subtle-foreground' : 'text-muted-foreground',
       )}
       style={{ paddingLeft: 8 + entry.depth * 12 }}
     >
@@ -144,7 +144,7 @@ export function Outline({ editor, scrollAreaRef, locale = 'en' }: {
         className={cn(
           // As wide as its longest heading, within bounds, so short headings leave the text beside it uncovered.
           'absolute top-1/2 left-2 flex w-max max-w-64 min-w-40 origin-left -translate-y-1/2 flex-col overflow-hidden',
-          'rounded-xl border-hairline border-border-popover bg-surface-popover shadow-menu',
+          'rounded-xl border-hairline border-border bg-popover shadow-md',
           'pointer-events-none scale-95 opacity-0 transition-[opacity,scale] duration-150 ease-out motion-reduce:scale-100',
           'data-open:pointer-events-auto data-open:scale-100 data-open:opacity-100',
         )}

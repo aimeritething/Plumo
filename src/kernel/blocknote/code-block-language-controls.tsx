@@ -213,7 +213,7 @@ function CodeBlockLanguagePicker({
     >
       <SelectTrigger
         size="sm"
-        className="h-7 max-w-72 border-transparent bg-transparent px-2 py-0 text-xs text-text-secondary shadow-none hover:bg-state-hover hover:text-text-heading focus-visible:ring-1"
+        className="h-7 max-w-72 border-transparent bg-transparent px-2 py-0 text-xs text-muted-foreground shadow-none hover:bg-accent hover:text-foreground focus-visible:ring-1"
       >
         <SelectValue />
       </SelectTrigger>

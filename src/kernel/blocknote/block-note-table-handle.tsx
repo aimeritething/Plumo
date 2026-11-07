@@ -149,7 +149,7 @@ export function TableHandle({ orientation, hideOtherElements }: TableHandleProps
           <span
             aria-hidden
             className={cn(
-              'rounded-sm border-2 border-surface-card bg-text-muted',
+              'rounded-sm border-2 border-background bg-subtle-foreground',
               'group-hover:opacity-0 group-focus-visible:opacity-0 group-data-dragging:opacity-0 group-data-[state=open]:opacity-0',
               isColumn ? 'h-1.5 w-4.5' : 'h-4.5 w-1.5',
             )}
@@ -157,11 +157,11 @@ export function TableHandle({ orientation, hideOtherElements }: TableHandleProps
           <span
             aria-hidden
             className={cn(
-              'absolute inset-0 flex scale-90 items-center justify-center rounded-sm border border-border-strong bg-surface-popover text-text-tertiary opacity-0',
+              'absolute inset-0 flex scale-90 items-center justify-center rounded-sm border border-input bg-popover text-muted-foreground opacity-0',
               'transition-[opacity,scale] duration-100 ease-out',
               'group-hover:scale-100 group-hover:opacity-100 group-focus-visible:scale-100 group-focus-visible:opacity-100',
               'group-data-dragging:scale-100 group-data-dragging:opacity-100',
-              'group-data-[state=open]:scale-100 group-data-[state=open]:border-accent-base group-data-[state=open]:bg-accent-base group-data-[state=open]:text-text-inverse group-data-[state=open]:opacity-100',
+              'group-data-[state=open]:scale-100 group-data-[state=open]:border-primary group-data-[state=open]:bg-primary group-data-[state=open]:text-primary-foreground group-data-[state=open]:opacity-100',
             )}
           >
             <Dots className="size-4" weight="bold" />

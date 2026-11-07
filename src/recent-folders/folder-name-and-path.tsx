@@ -8,7 +8,7 @@ export function FolderNameAndPath({ path, home }: { path: string; home: string |
   return (
     <span className="flex min-w-0 flex-1 flex-col gap-px text-left">
       <span className="truncate text-sm leading-4">{folderName(path)}</span>
-      <span className="truncate text-2xs leading-3.5 font-normal text-text-muted">{tildePath(path, home)}</span>
+      <span className="truncate text-2xs leading-3.5 font-normal text-subtle-foreground">{tildePath(path, home)}</span>
     </span>
   )
 }

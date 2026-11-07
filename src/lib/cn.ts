@@ -4,7 +4,7 @@ import { extendTailwindMerge } from "tailwind-merge"
 // `border-hairline` (and its per-side forms) is a border width, bridged in
 // index.css as `--border-width-hairline`. tailwind-merge does not know the
 // name, so it would file it under border colours and drop it behind
-// `border-border-popover`; register it in the width groups instead.
+// `border-border`; register it in the width groups instead.
 const twMerge = extendTailwindMerge({
   extend: {
     classGroups: {

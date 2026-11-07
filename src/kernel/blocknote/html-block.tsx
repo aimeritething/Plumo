@@ -375,7 +375,7 @@ function HtmlBlockContent({ blocked, frameRef, onFocus, onLoad, resizing, srcDoc
       tabIndex={-1} title={t('editor.htmlBlock.previewTitle')} />
   }
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center text-text-secondary" role="alert">
+    <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center text-muted-foreground" role="alert">
       <span>{t('editor.htmlBlock.blockedFallback')}</span>
       <Button onClick={openRawEditorForHtmlSource} onMouseDown={stopHtmlBlockEvent} type="button" variant="outline" size="sm">
         <Code aria-hidden="true" />
@@ -414,7 +414,7 @@ export function HtmlBlock({ block, editor }: HtmlBlockViewProps) {
 
   return (
     <section
-      className="group relative min-h-45 w-full overflow-hidden rounded-lg border-hairline border-transparent bg-surface-card transition-colors duration-150 ease-out hover:border-border-default"
+      className="group relative min-h-45 w-full overflow-hidden rounded-lg border-hairline border-transparent bg-background transition-colors duration-150 ease-out hover:border-border"
       contentEditable={false} data-html-block aria-label={t('editor.htmlBlock.previewTitle')}
       onMouseDown={stopHtmlBlockEvent} onPointerDown={stopHtmlBlockEvent} style={{ height: `${height.displayHeight}px` }}
       suppressContentEditableWarning>

@@ -248,7 +248,7 @@ function MermaidLightbox({ svg }: { svg: string }) {
         </DialogDescription>
         <MermaidSvgViewport
           ariaLabel="Expanded Mermaid diagram"
-          className={`${SVG_CLASS} h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] overflow-auto rounded-xl bg-surface-card p-6 text-text-primary focus-visible:focus-ring [&_svg]:m-auto`}
+          className={`${SVG_CLASS} h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] overflow-auto rounded-xl bg-background p-6 text-foreground focus-visible:focus-ring [&_svg]:m-auto`}
           svg={svg}
           testId="mermaid-diagram-dialog-viewport"
         />
@@ -260,7 +260,7 @@ function MermaidLightbox({ svg }: { svg: string }) {
 function MermaidSourceFallback({ source }: { source: string }) {
   return (
     <pre
-      className="m-0 max-w-full overflow-auto rounded-md bg-inline-code-bg p-2.5 text-xs leading-normal text-inherit"
+      className="m-0 max-w-full overflow-auto rounded-md bg-muted p-2.5 text-xs leading-normal text-inherit"
       role="img"
       aria-label="Mermaid source"
     >
@@ -269,7 +269,7 @@ function MermaidSourceFallback({ source }: { source: string }) {
   )
 }
 
-const FIGURE_CLASS = 'group relative my-2.5 w-full text-text-document'
+const FIGURE_CLASS = 'group relative my-2.5 w-full text-document-foreground'
 
 export function MermaidDiagram({ diagram, source }: MermaidDiagramProps) {
   const reactId = useId()
@@ -295,13 +295,13 @@ export function MermaidDiagram({ diagram, source }: MermaidDiagramProps) {
   if (!diagram.trim() || currentState.error) {
     return (
       <figure
-        className={`${FIGURE_CLASS} rounded-lg border-hairline border-chroma-red bg-chroma-red/8 p-3`}
+        className={`${FIGURE_CLASS} rounded-lg border-hairline border-red bg-red/8 p-3`}
         data-testid="mermaid-diagram-error"
       >
         <Toolbar aria-label={TOOLBAR_LABEL} className={FLOATING_GROUP_CLASS} contentEditable={false}>
           <MermaidRawEditorButton />
         </Toolbar>
-        <figcaption className="mb-2 text-xs leading-normal font-semibold text-chroma-red">Mermaid diagram unavailable</figcaption>
+        <figcaption className="mb-2 text-xs leading-normal font-semibold text-red">Mermaid diagram unavailable</figcaption>
         <MermaidSourceFallback source={source} />
       </figure>
     )
@@ -315,7 +315,7 @@ export function MermaidDiagram({ diagram, source }: MermaidDiagramProps) {
       </Toolbar>
       <MermaidSvgViewport
         ariaLabel="Mermaid diagram"
-        className={`${SVG_CLASS} max-w-full overflow-auto rounded-lg border-hairline border-border-default bg-surface-card p-3.5 focus-visible:focus-ring [&_svg]:mx-auto`}
+        className={`${SVG_CLASS} max-w-full overflow-auto rounded-lg border-hairline border-border bg-background p-3.5 focus-visible:focus-ring [&_svg]:mx-auto`}
         svg={currentState.svg}
         testId="mermaid-diagram-viewport"
       />

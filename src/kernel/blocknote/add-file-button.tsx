@@ -49,7 +49,7 @@ export function AddFileButton({ blockId, blockType, editor, icon }: {
 
 export function FileBlockLoading() {
   return (
-    <div className="flex h-11 w-full items-center rounded-sm px-3 text-sm text-text-tertiary" data-file-loading="">
+    <div className="flex h-11 w-full items-center rounded-sm px-3 text-sm text-muted-foreground" data-file-loading="">
       {translate('en', 'editor.file.loading')}
     </div>
   )

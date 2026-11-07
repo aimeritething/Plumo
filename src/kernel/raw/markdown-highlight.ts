@@ -8,7 +8,7 @@ import type { Extension } from '@codemirror/state'
 const SYNTAX_COLORS = {
   atom: 'var(--syntax-highlight-number)',
   comment: 'var(--syntax-highlight-comment)',
-  foreground: 'var(--text-primary)',
+  foreground: 'var(--foreground)',
   heading: 'var(--syntax-heading)',
   keyword: 'var(--syntax-highlight-keyword)',
   link: 'var(--syntax-link)',

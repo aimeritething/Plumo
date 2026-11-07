@@ -25,7 +25,7 @@ export function ImagePreview({ image, locale = 'en', onClose }: ImagePreviewProp
             data-testid="image-preview-image"
             src={image.src}
             alt={image.alt || title}
-            className="max-h-[90vh] max-w-[90vw] rounded-md object-contain shadow-dialog"
+            className="max-h-[90vh] max-w-[90vw] rounded-md object-contain shadow-lg"
           />
         )}
       </DialogContent>

@@ -5,8 +5,8 @@
  */
 export function ImageDropAffordance() {
   return (
-    <div className="pointer-events-none absolute inset-0 z-overlay flex items-center justify-center bg-state-drag-target">
-      <div className="rounded-lg bg-surface-popover px-5 py-2.5 text-sm font-medium text-accent-base shadow-menu">Drop image here</div>
+    <div className="pointer-events-none absolute inset-0 z-overlay flex items-center justify-center bg-primary-muted">
+      <div className="rounded-lg bg-popover px-5 py-2.5 text-sm font-medium text-primary shadow-md">Drop image here</div>
     </div>
   )
 }

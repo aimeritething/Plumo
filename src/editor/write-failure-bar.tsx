@@ -26,16 +26,16 @@ export interface WriteFailureBarProps {
 export function WriteFailureBar({ path, message, failedAgainAt, pending = null, onRetry, onDiscard }: WriteFailureBarProps) {
   return (
     <div
-      className="mx-4 mb-2 flex flex-none items-center gap-3 rounded-md bg-chroma-red/2 py-2 pr-2 pl-3 text-sm tracking-[-0.01em] ring-(length:--hairline) ring-chroma-red/20"
+      className="mx-4 mb-2 flex flex-none items-center gap-3 rounded-md bg-red/2 py-2 pr-2 pl-3 text-sm tracking-[-0.01em] ring-(length:--hairline) ring-red/20"
       role="alert"
       data-testid="write-failure-bar"
     >
       <div className="flex min-w-0 flex-col gap-0.5">
-        <span className="flex min-w-0 font-medium text-chroma-red-text">
+        <span className="flex min-w-0 font-medium text-red-text">
           <span className="truncate">{couldNotSaveTo(failedAgainAt)} {path}</span>
           {failedAgainAt !== undefined && <span className="flex-none whitespace-pre"> · {clockTime(failedAgainAt)}</span>}
         </span>
-        <span className="truncate font-mono text-2xs tracking-normal text-text-secondary">{message}</span>
+        <span className="truncate font-mono text-2xs tracking-normal text-muted-foreground">{message}</span>
       </div>
       <div className="ml-auto flex flex-none gap-1.5">
         <Button size="sm" disabled={pending !== null} aria-busy={pending === 'retry'} onClick={onRetry}>

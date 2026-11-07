@@ -126,8 +126,8 @@ export function frontmatterHighlightTheme() {
     '.cm-frontmatter-key': { color: 'var(--syntax-frontmatter-key)' },
     '.cm-frontmatter-value': { color: 'var(--syntax-frontmatter-value)' },
     '.cm-frontmatter-error': {
-      backgroundColor: 'var(--feedback-error-bg)',
-      textDecoration: 'underline wavy var(--feedback-error-text)',
+      backgroundColor: 'var(--destructive-muted)',
+      textDecoration: 'underline wavy var(--destructive-text)',
       textDecorationSkipInk: 'none',
     },
   })

@@ -42,7 +42,7 @@ export function Sidebar({ collapsed, slides, width, onWidthChange, children }: S
     >
       {mounted && (
         <aside
-          className="relative flex min-h-0 flex-none flex-col border-r border-border-default bg-surface-app px-3 pb-2 text-sm leading-normal text-text-secondary select-none data-resizing:cursor-col-resize"
+          className="relative flex min-h-0 flex-none flex-col bg-sidebar px-3 pb-2 text-sm leading-normal text-sidebar-foreground select-none data-resizing:cursor-col-resize"
           data-testid="sidebar"
           data-resizing={resizing}
           inert={collapsed}
@@ -53,7 +53,7 @@ export function Sidebar({ collapsed, slides, width, onWidthChange, children }: S
           {children}
           {/* The drag edge: a 6px hit area over the sidebar's right edge, nothing drawn. */}
           <div
-            className="absolute inset-y-0 -right-0.75 z-raised w-1.5 cursor-col-resize outline-none focus-visible:bg-state-focus-ring"
+            className="absolute inset-y-0 -right-0.75 z-raised w-1.5 cursor-col-resize outline-none focus-visible:bg-ring"
             role="separator"
             aria-orientation="vertical"
             aria-label="Resize sidebar"

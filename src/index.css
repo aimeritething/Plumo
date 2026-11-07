@@ -10,6 +10,7 @@
 @import "@blocknote/react/style.css" layer(vendor);
 @import "katex/dist/katex.min.css" layer(vendor);
 @import "tldraw/tldraw.css" layer(vendor);
+@import "./color-scales.css";
 @import "./kernel/blocknote/blocknote.css";
 
 /* `data-theme` on <html> is the only theme switch. Tailwind's `dark:` follows
@@ -110,356 +111,237 @@
 }
 
 /* ============================================================
-   Colours and shadows. The light block and the dark block declare exactly
-   the same names; `:root` carries the light values as the fallback.
+   Colours: the second of the two token levels. The scales are the first
+   (color-scales.css); every name here is a role, written in shadcn's
+   vocabulary where shadcn has the role (`background`, `primary`, `accent`
+   is the hover fill, …) and in the same style where it has not. A role
+   points at a scale step, never at a literal, so it follows the theme and
+   the Primary color through the scale. Components write the roles, never a
+   scale step.
+
+   The two theme blocks hold what differs by theme beyond the scales: the
+   surfaces, the overlay, the text on red, and the shadows. They declare
+   exactly the same names.
    ============================================================ */
 :root,
 [data-theme="light"] {
   color-scheme: light;
 
-  /* surface */
-  --surface-app: #fafafa;
-  --surface-card: #ffffff;
-  --surface-popover: #ffffff;
-  --surface-shade: #f0f0f0;
-  --surface-overlay: #0a0a0a1f;
+  --background: #ffffff;
+  --card: #ffffff;
+  --popover: #ffffff;
+  --sidebar: var(--gray-2);
+  --overlay: #0000001f;
+  --destructive-foreground: #ffffff;
 
-  /* text */
-  --text-heading: #0a0a0a;
-  --text-primary: #171717;
-  --text-secondary: #4d4d4d;
-  --text-document: #484848;
-  --text-document-heading: #262626;
-  --text-tertiary: #737373;
-  --text-muted: #a3a3a3;
-  --text-inverse: #ffffff;
-  --text-link: #2563eb;
-
-  /* border */
-  --border-default: #e5e5e5;
-  --border-strong: #d4d4d4;
-  --border-popover: #e5e5e5;
-
-  /* state */
-  --state-hover: #f5f5f5;
-  --state-hover-subtle: #fafafa;
-  --state-selected: #efefef;
-  --state-focus-ring: #a3a3a3;
-  --state-drag-target: color-mix(in srgb, var(--accent-base) 12%, transparent);
-  --state-selection: color-mix(in srgb, var(--text-secondary) 20%, transparent);
-
-  /* accent */
-  --accent-base: #171717;
-  --accent-hover: #262626;
-  --accent-bg: color-mix(in srgb, var(--accent-base) 10%, transparent);
-
-  /* control */
-  --control-secondary: #ffffff;
-  --control-secondary-hover: #f5f5f5;
-  --control-secondary-selected: #f0f0f0;
-  --control-tertiary-hover: #f0f0f0;
-
-  /* sidebar / tab / menu */
-  --sidebar-row-hover: #f4f4f4;
-  --sidebar-row-active: #efefef;
-  --tab-hover: #f7f7f7;
-  --tab-active: #f2f2f2;
-  --menu-item-hover: #f2f2f2;
-  --menu-shortcut: #737373;
-
-  /* scrollbar: the overlay thumb (ui/scroll-area.tsx), see-through so it reads on every surface */
-  --scrollbar-thumb: color-mix(in srgb, var(--text-primary) 28%, transparent);
-  --scrollbar-thumb-hover: color-mix(in srgb, var(--text-primary) 48%, transparent);
-
-  /* chroma */
-  --chroma-teal: #00b8cb;
-  --chroma-teal-text: color-mix(in oklab, var(--chroma-teal) 72%, black);
-  --chroma-teal-bg: color-mix(in srgb, var(--chroma-teal) 12%, transparent);
-  --chroma-green: #43bc58;
-  --chroma-green-text: #166534;
-  --chroma-green-bg: color-mix(in srgb, var(--chroma-green) 12%, transparent);
-  --chroma-yellow: #f0bf00;
-  --chroma-yellow-text: color-mix(in oklab, var(--chroma-yellow) 66%, black);
-  --chroma-yellow-bg: #fef08a;
-  --chroma-orange: #ff7235;
-  --chroma-orange-text: color-mix(in oklab, var(--chroma-orange) 72%, black);
-  --chroma-orange-bg: color-mix(in srgb, var(--chroma-orange) 12%, transparent);
-  --chroma-red: #f34e52;
-  --chroma-red-text: color-mix(in oklab, var(--chroma-red) 76%, black);
-  --chroma-red-bg: color-mix(in srgb, var(--chroma-red) 12%, transparent);
-  --chroma-blue: #55ccff;
-  --chroma-blue-text: color-mix(in oklab, var(--chroma-blue) 66%, black);
-  --chroma-blue-bg: color-mix(in srgb, var(--chroma-blue) 14%, transparent);
-  --chroma-purple: #9333ea;
-  --chroma-purple-text: color-mix(in oklab, var(--chroma-purple) 80%, black);
-  --chroma-purple-bg: color-mix(in srgb, var(--chroma-purple) 12%, transparent);
-
-  /* feedback */
-  --feedback-info-text: var(--chroma-blue-text);
-  --feedback-info-bg: var(--chroma-blue-bg);
-  --feedback-success-text: var(--chroma-green-text);
-  --feedback-success-bg: var(--chroma-green-bg);
-  --feedback-warning-text: var(--chroma-orange-text);
-  --feedback-warning-bg: var(--chroma-orange-bg);
-  --feedback-error-text: var(--chroma-red-text);
-  --feedback-error-bg: var(--chroma-red-bg);
-
-  /* syntax */
-  --syntax-heading: var(--text-heading);
-  --syntax-link: var(--text-link);
-  --syntax-monospace: #C9383E;
-  --syntax-monospace-bg: rgba(175, 184, 193, 0.15);
-  --syntax-muted: #636C76;
-  --syntax-frontmatter-key: #C9383E;
-  --syntax-frontmatter-value: #2A7E4F;
-  --syntax-highlight-comment: #6A737D;
-  --syntax-highlight-keyword: #D73A49;
-  --syntax-highlight-string: #032F62;
-  --syntax-highlight-number: #005CC5;
-  --syntax-highlight-attr: #005CC5;
-  --syntax-highlight-title: #6F42C1;
-  --syntax-highlight-type: #E36209;
-  --syntax-highlight-deletion: #B31D28;
-  --syntax-highlight-deletion-bg: #FFEEF0;
-
-  /* inline code */
-  --inline-code-bg: #f5f5f5;
-  --inline-code-border: #e5e5e5;
-
-  /* shadow */
-  --shadow-card: 0 3px 6px -2px #00000005, 0 1px 1px #0000000a;
-  --shadow-menu: 0 6px 18px #00000005, 0 3px 9px #0000000a, 0 1px 1px #0000000a;
-  --shadow-dialog: 0 16px 48px -12px #0000001a, 0 4px 12px #0000000a;
-  --shadow-raised: 0 1px 2px #0000001f, 0 0 0 var(--hairline) #00000014;
+  --elevation-xs: 0 1px 2px #0000000d;
+  --elevation-sm: 0 1px 2px #0000000a, 0 2px 6px -2px #0000000a;
+  --elevation-md: 0 1px 2px #0000000a, 0 4px 12px #00000008, 0 8px 24px -4px #0000000f;
+  --elevation-lg: 0 4px 12px #0000000a, 0 16px 48px -12px #0000001f;
 }
 
 [data-theme="dark"] {
   color-scheme: dark;
 
-  /* surface */
-  --surface-app: #0a0a0a;
-  --surface-card: #171717;
-  --surface-popover: #1f1f1f;
-  --surface-shade: #262626;
-  --surface-overlay: #00000080;
+  --background: var(--gray-1);
+  --card: var(--gray-2);
+  --popover: var(--gray-2);
+  --sidebar: var(--gray-1);
+  --overlay: #00000080;
+  --destructive-foreground: #ffffff;
 
+  --elevation-xs: 0 1px 2px #00000040;
+  --elevation-sm: 0 1px 2px #0000004d, 0 2px 6px -2px #0000004d;
+  --elevation-md: 0 2px 4px #00000040, 0 8px 24px #00000059;
+  --elevation-lg: 0 8px 24px #00000059, 0 24px 64px -12px #00000080;
+}
+
+/* On every themed element, not only <html>: a custom property inherits as
+   a value, so a role must be declared where `data-theme` changes the scales
+   under it (Settings draws each theme in miniature). */
+:root,
+[data-theme] {
   /* text */
-  --text-heading: #fafafa;
-  --text-primary: #e5e5e5;
-  --text-secondary: #a3a3a3;
-  --text-document: var(--text-primary);
-  --text-document-heading: var(--text-heading);
-  --text-tertiary: #979797;
-  --text-muted: #8a8a8a;
-  --text-inverse: #0a0a0a;
-  --text-link: #60a5fa;
+  --foreground: var(--gray-12);
+  --muted-foreground: var(--gray-11);
+  --subtle-foreground: var(--gray-9);
+  --card-foreground: var(--foreground);
+  --popover-foreground: var(--foreground);
+  /* The Document reads a little softer than the UI; its headings do not. */
+  --document-foreground: color-mix(in oklab, var(--gray-12) 60%, var(--gray-11));
+  --document-heading: var(--gray-12);
 
-  /* border */
-  --border-default: #262626;
-  --border-strong: #404040;
-  --border-popover: #333333;
+  /* fills: hover, selected (also pressed), and the quiet ones */
+  --accent: var(--gray-a3);
+  --accent-foreground: var(--foreground);
+  --selected: var(--gray-a4);
+  --secondary: var(--gray-a3);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--gray-a3);
 
-  /* state */
-  --state-hover: #1f1f1f;
-  --state-hover-subtle: #1c1c1c;
-  --state-selected: #2e2e2e;
-  --state-focus-ring: #737373;
-  --state-drag-target: color-mix(in srgb, var(--accent-base) 20%, transparent);
-  --state-selection: color-mix(in srgb, var(--text-secondary) 20%, transparent);
+  /* lines */
+  --border: var(--gray-a5);
+  --input: var(--gray-a7);
 
-  /* accent */
-  --accent-base: #fafafa;
-  --accent-hover: #e5e5e5;
-  --accent-bg: color-mix(in srgb, var(--accent-base) 16%, transparent);
+  /* the Primary color */
+  --primary: var(--primary-9);
+  --primary-foreground: var(--primary-contrast);
+  --primary-muted: var(--primary-a3);
+  --ring: var(--primary-8);
+  --link: var(--primary-11);
+  --selection: var(--primary-a5);
 
-  /* control */
-  --control-secondary: #1f1f1f;
-  --control-secondary-hover: #262626;
-  --control-secondary-selected: #2e2e2e;
-  --control-tertiary-hover: #262626;
+  /* states: fixed, they do not follow the Primary color */
+  --destructive: var(--red-9);
+  --destructive-muted: var(--red-a3);
+  --destructive-text: var(--red-11);
+  --success-muted: var(--green-a3);
+  --success-text: var(--green-11);
+  --warning-muted: var(--yellow-a3);
+  --warning-text: var(--yellow-11);
+  --info-muted: var(--blue-a3);
+  --info-text: var(--blue-11);
 
-  /* sidebar / tab / menu */
-  --sidebar-row-hover: #171717;
-  --sidebar-row-active: #212121;
-  --tab-hover: #1f1f1f;
-  --tab-active: #262626;
-  --menu-item-hover: #2a2a2a;
-  --menu-shortcut: #a3a3a3;
+  /* the sidebar: shadcn's set plus `selected`, each the general role until the sidebar needs its own */
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-selected: var(--selected);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
 
-  /* scrollbar: the overlay thumb (ui/scroll-area.tsx), see-through so it reads on every surface */
-  --scrollbar-thumb: color-mix(in srgb, var(--text-primary) 30%, transparent);
-  --scrollbar-thumb-hover: color-mix(in srgb, var(--text-primary) 50%, transparent);
+  /* scrollbar: the overlay thumb (ui/scroll-area.tsx) */
+  --scrollbar-thumb: var(--gray-a8);
+  --scrollbar-thumb-hover: var(--gray-a10);
 
-  /* chroma */
-  --chroma-teal: #00b8cb;
-  --chroma-teal-text: #00e8ff;
-  --chroma-teal-bg: color-mix(in srgb, var(--chroma-teal) 16%, transparent);
-  --chroma-green: #26a544;
-  --chroma-green-text: #3de261;
-  --chroma-green-bg: color-mix(in srgb, var(--chroma-green) 16%, transparent);
-  --chroma-yellow: #f0bf00;
-  --chroma-yellow-text: #edbf0a;
-  --chroma-yellow-bg: color-mix(in srgb, var(--chroma-yellow) 16%, transparent);
-  --chroma-orange: #ff7235;
-  --chroma-orange-text: #ff9958;
-  --chroma-orange-bg: color-mix(in srgb, var(--chroma-orange) 16%, transparent);
-  --chroma-red: #f34e52;
-  --chroma-red-text: #ff8583;
-  --chroma-red-bg: color-mix(in srgb, var(--chroma-red) 16%, transparent);
-  --chroma-blue: #55ccff;
-  --chroma-blue-text: #00ceff;
-  --chroma-blue-bg: color-mix(in srgb, var(--chroma-blue) 16%, transparent);
-  --chroma-purple: #a855f7;
-  --chroma-purple-text: #d8b4fe;
-  --chroma-purple-bg: color-mix(in srgb, var(--chroma-purple) 20%, transparent);
+  /* content colours: Markdown highlights, Callouts, find matches. Fixed. */
+  --red: var(--red-9);
+  --red-muted: var(--red-a3);
+  --red-text: var(--red-11);
+  --orange: var(--orange-9);
+  --orange-muted: var(--orange-a3);
+  --orange-text: var(--orange-11);
+  --yellow: var(--yellow-9);
+  --yellow-muted: var(--yellow-a4);
+  --yellow-text: var(--yellow-11);
+  --green: var(--green-9);
+  --green-muted: var(--green-a3);
+  --green-text: var(--green-11);
+  --teal: var(--teal-9);
+  --teal-muted: var(--teal-a3);
+  --teal-text: var(--teal-11);
+  --blue: var(--blue-9);
+  --blue-muted: var(--blue-a3);
+  --blue-text: var(--blue-11);
+  --purple: var(--purple-9);
+  --purple-muted: var(--purple-a3);
+  --purple-text: var(--purple-11);
 
-  /* feedback */
-  --feedback-info-text: var(--chroma-blue-text);
-  --feedback-info-bg: var(--chroma-blue-bg);
-  --feedback-success-text: var(--chroma-green-text);
-  --feedback-success-bg: var(--chroma-green-bg);
-  --feedback-warning-text: var(--chroma-orange-text);
-  --feedback-warning-bg: var(--chroma-orange-bg);
-  --feedback-error-text: var(--chroma-red-text);
-  --feedback-error-bg: var(--chroma-red-bg);
-
-  /* syntax */
-  --syntax-heading: var(--text-heading);
-  --syntax-link: var(--text-link);
-  --syntax-monospace: #FFA6A3;
-  --syntax-monospace-bg: rgba(167, 176, 189, 0.16);
-  --syntax-muted: #9C9488;
-  --syntax-frontmatter-key: #FFA6A3;
-  --syntax-frontmatter-value: #8EDFAE;
-  --syntax-highlight-comment: var(--text-muted);
-  --syntax-highlight-keyword: #e394dc;
-  --syntax-highlight-string: #00c5f0;
-  --syntax-highlight-number: #ec3b40;
-  --syntax-highlight-attr: #fce27d;
-  --syntax-highlight-title: #25f8ca;
-  --syntax-highlight-type: #fce27d;
-  --syntax-highlight-deletion: #FF9C9A;
-  --syntax-highlight-deletion-bg: rgba(255, 138, 134, 0.16);
-
-  /* inline code */
-  --inline-code-bg: #262626;
-  --inline-code-border: #333333;
-
-  /* shadow */
-  --shadow-card: 0 0.5px 1px 1px rgba(0, 0, 0, 0.3);
-  --shadow-menu: 0 3px 8px #0000001f, 0 2px 5px #0000001f, 0 1px 1px #0000001f;
-  --shadow-dialog: 0 24px 64px -12px rgba(0, 0, 0, 0.3), var(--shadow-menu);
-  --shadow-raised: 0 0 0 var(--hairline) var(--border-default), 0 1px 2px rgba(0, 0, 0, 0.25);
+  /* code: Raw mode and code blocks, GitHub's roles on the content scales */
+  --syntax-heading: var(--foreground);
+  --syntax-link: var(--link);
+  --syntax-muted: var(--muted-foreground);
+  --syntax-monospace: var(--red-text);
+  --syntax-monospace-bg: var(--muted);
+  --syntax-frontmatter-key: var(--red-text);
+  --syntax-frontmatter-value: var(--green-text);
+  --syntax-highlight-comment: var(--muted-foreground);
+  --syntax-highlight-keyword: var(--red-text);
+  --syntax-highlight-string: var(--blue-12);
+  --syntax-highlight-number: var(--blue-text);
+  --syntax-highlight-attr: var(--blue-text);
+  --syntax-highlight-title: var(--purple-text);
+  --syntax-highlight-type: var(--orange-text);
+  --syntax-highlight-deletion: var(--red-text);
+  --syntax-highlight-deletion-bg: var(--red-muted);
 }
 
 /* ============================================================
-   shadcn aliases. These names may appear only inside `src/ui/`; everywhere
-   else write the semantic name. Every line here must be `var(--semantic)`,
-   never a literal value, and the block is written once: it follows the
-   theme through the names it points at.
-   ============================================================ */
-:root {
-  --background: var(--surface-app);
-  --foreground: var(--text-primary);
-  --card: var(--surface-card);
-  --card-foreground: var(--text-primary);
-  --popover: var(--surface-popover);
-  --popover-foreground: var(--text-primary);
-  --primary: var(--accent-base);
-  --primary-foreground: var(--text-inverse);
-  --secondary: var(--control-secondary);
-  --secondary-foreground: var(--text-primary);
-  --muted: var(--surface-shade);
-  --muted-foreground: var(--text-secondary);
-  --accent: var(--state-hover);
-  --accent-foreground: var(--text-heading);
-  --destructive: var(--chroma-red);
-  --destructive-foreground: var(--text-inverse);
-  --border: var(--border-default);
-  --input: var(--border-default);
-  --ring: var(--state-focus-ring);
-}
-
-/* ============================================================
-   The Tailwind bridge: every semantic colour, the shadcn aliases, the four
-   radii, the z tiers, the hairline width, the shadows, the two faces and the
-   four UI text sizes, so tsx writes `bg-surface-card`, `border-hairline`,
-   `z-popover`, `shadow-raised`, `font-mono`, `text-sm`.
+   The Tailwind bridge: every role, the radii, the z tiers, the hairline
+   width, the shadows, the two faces and the four UI text sizes, so tsx
+   writes `bg-popover`, `text-muted-foreground`, `border-hairline`,
+   `z-popover`, `shadow-md`, `font-mono`, `text-sm`. Tailwind's own palette
+   is switched off: a colour is a role or it is not written.
    ============================================================ */
 @theme inline {
-  /* semantic colours */
-  --color-surface-app: var(--surface-app);
-  --color-surface-card: var(--surface-card);
-  --color-surface-popover: var(--surface-popover);
-  --color-surface-shade: var(--surface-shade);
-  --color-surface-overlay: var(--surface-overlay);
-  --color-text-heading: var(--text-heading);
-  --color-text-primary: var(--text-primary);
-  --color-text-document: var(--text-document);
-  --color-text-document-heading: var(--text-document-heading);
-  --color-text-secondary: var(--text-secondary);
-  --color-text-tertiary: var(--text-tertiary);
-  --color-text-muted: var(--text-muted);
-  --color-text-inverse: var(--text-inverse);
-  --color-text-link: var(--text-link);
-  --color-border-default: var(--border-default);
-  --color-border-strong: var(--border-strong);
-  --color-border-popover: var(--border-popover);
-  --color-state-hover: var(--state-hover);
-  --color-state-hover-subtle: var(--state-hover-subtle);
-  --color-state-selected: var(--state-selected);
-  --color-state-focus-ring: var(--state-focus-ring);
-  --color-state-drag-target: var(--state-drag-target);
-  --color-state-selection: var(--state-selection);
-  --color-accent-base: var(--accent-base);
-  --color-accent-hover: var(--accent-hover);
-  --color-accent-bg: var(--accent-bg);
-  --color-control-secondary: var(--control-secondary);
-  --color-control-secondary-hover: var(--control-secondary-hover);
-  --color-control-secondary-selected: var(--control-secondary-selected);
-  --color-control-tertiary-hover: var(--control-tertiary-hover);
-  --color-sidebar-row-hover: var(--sidebar-row-hover);
-  --color-sidebar-row-active: var(--sidebar-row-active);
-  --color-tab-hover: var(--tab-hover);
-  --color-tab-active: var(--tab-active);
-  --color-menu-item-hover: var(--menu-item-hover);
-  --color-menu-shortcut: var(--menu-shortcut);
+  --color-*: initial;
+  --color-white: #ffffff;
+  --color-black: #000000;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-overlay: var(--overlay);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-subtle-foreground: var(--subtle-foreground);
+  --color-document-foreground: var(--document-foreground);
+  --color-document-heading: var(--document-heading);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-selected: var(--selected);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-muted: var(--primary-muted);
+  --color-ring: var(--ring);
+  --color-link: var(--link);
+  --color-selection: var(--selection);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-muted: var(--destructive-muted);
+  --color-destructive-text: var(--destructive-text);
+  --color-success-muted: var(--success-muted);
+  --color-success-text: var(--success-text);
+  --color-warning-muted: var(--warning-muted);
+  --color-warning-text: var(--warning-text);
+  --color-info-muted: var(--info-muted);
+  --color-info-text: var(--info-text);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-selected: var(--sidebar-selected);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
   --color-scrollbar-thumb: var(--scrollbar-thumb);
   --color-scrollbar-thumb-hover: var(--scrollbar-thumb-hover);
-  --color-chroma-teal: var(--chroma-teal);
-  --color-chroma-teal-text: var(--chroma-teal-text);
-  --color-chroma-teal-bg: var(--chroma-teal-bg);
-  --color-chroma-green: var(--chroma-green);
-  --color-chroma-green-text: var(--chroma-green-text);
-  --color-chroma-green-bg: var(--chroma-green-bg);
-  --color-chroma-yellow: var(--chroma-yellow);
-  --color-chroma-yellow-text: var(--chroma-yellow-text);
-  --color-chroma-yellow-bg: var(--chroma-yellow-bg);
-  --color-chroma-orange: var(--chroma-orange);
-  --color-chroma-orange-text: var(--chroma-orange-text);
-  --color-chroma-orange-bg: var(--chroma-orange-bg);
-  --color-chroma-red: var(--chroma-red);
-  --color-chroma-red-text: var(--chroma-red-text);
-  --color-chroma-red-bg: var(--chroma-red-bg);
-  --color-chroma-blue: var(--chroma-blue);
-  --color-chroma-blue-text: var(--chroma-blue-text);
-  --color-chroma-blue-bg: var(--chroma-blue-bg);
-  --color-chroma-purple: var(--chroma-purple);
-  --color-chroma-purple-text: var(--chroma-purple-text);
-  --color-chroma-purple-bg: var(--chroma-purple-bg);
-  --color-feedback-info-text: var(--feedback-info-text);
-  --color-feedback-info-bg: var(--feedback-info-bg);
-  --color-feedback-success-text: var(--feedback-success-text);
-  --color-feedback-success-bg: var(--feedback-success-bg);
-  --color-feedback-warning-text: var(--feedback-warning-text);
-  --color-feedback-warning-bg: var(--feedback-warning-bg);
-  --color-feedback-error-text: var(--feedback-error-text);
-  --color-feedback-error-bg: var(--feedback-error-bg);
+  --color-red: var(--red);
+  --color-red-muted: var(--red-muted);
+  --color-red-text: var(--red-text);
+  --color-orange: var(--orange);
+  --color-orange-muted: var(--orange-muted);
+  --color-orange-text: var(--orange-text);
+  --color-yellow: var(--yellow);
+  --color-yellow-muted: var(--yellow-muted);
+  --color-yellow-text: var(--yellow-text);
+  --color-green: var(--green);
+  --color-green-muted: var(--green-muted);
+  --color-green-text: var(--green-text);
+  --color-teal: var(--teal);
+  --color-teal-muted: var(--teal-muted);
+  --color-teal-text: var(--teal-text);
+  --color-blue: var(--blue);
+  --color-blue-muted: var(--blue-muted);
+  --color-blue-text: var(--blue-text);
+  --color-purple: var(--purple);
+  --color-purple-muted: var(--purple-muted);
+  --color-purple-text: var(--purple-text);
   --color-syntax-heading: var(--syntax-heading);
   --color-syntax-link: var(--syntax-link);
+  --color-syntax-muted: var(--syntax-muted);
   --color-syntax-monospace: var(--syntax-monospace);
   --color-syntax-monospace-bg: var(--syntax-monospace-bg);
-  --color-syntax-muted: var(--syntax-muted);
   --color-syntax-frontmatter-key: var(--syntax-frontmatter-key);
   --color-syntax-frontmatter-value: var(--syntax-frontmatter-value);
   --color-syntax-highlight-comment: var(--syntax-highlight-comment);
@@ -471,29 +353,6 @@
   --color-syntax-highlight-type: var(--syntax-highlight-type);
   --color-syntax-highlight-deletion: var(--syntax-highlight-deletion);
   --color-syntax-highlight-deletion-bg: var(--syntax-highlight-deletion-bg);
-  --color-inline-code-bg: var(--inline-code-bg);
-  --color-inline-code-border: var(--inline-code-border);
-
-  /* shadcn aliases */
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
 
   /* radii */
   --radius-sm: 4px;
@@ -511,11 +370,11 @@
   /* the hairline, as a border width: `border-hairline` */
   --border-width-hairline: var(--hairline);
 
-  /* shadows */
-  --shadow-card: var(--shadow-card);
-  --shadow-menu: var(--shadow-menu);
-  --shadow-dialog: var(--shadow-dialog);
-  --shadow-raised: var(--shadow-raised);
+  /* shadows, by height: controls, cards, menus and popovers, dialogs */
+  --shadow-xs: var(--elevation-xs);
+  --shadow-sm: var(--elevation-sm);
+  --shadow-md: var(--elevation-md);
+  --shadow-lg: var(--elevation-lg);
 
   /* faces */
   --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -538,11 +397,11 @@
 
 @layer base {
   * {
-    @apply border-border-default;
+    @apply border-border;
     box-sizing: border-box;
   }
   body {
-    @apply bg-surface-app text-text-primary;
+    @apply bg-background text-foreground;
     margin: 0;
     padding: 0;
     overflow: hidden;
@@ -637,7 +496,7 @@
 /* The focus ring: outline gone, a 1px ring in the focus colour. Written with
    Tailwind's ring so it composes with an element's own `shadow-*`. */
 @utility focus-ring {
-  @apply outline-none ring-1 ring-state-focus-ring;
+  @apply outline-none ring-1 ring-ring;
 }
 
 /* The sidebar's slide: its slot's width and the collapsed tab bar's left

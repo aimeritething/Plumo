@@ -200,7 +200,7 @@ function ResizeHandle({ shown, side, onMouseDown }: {
 function ImagePlaceholder({ fileName }: { fileName: string }) {
   return (
     <div
-      className="flex h-24 w-full items-center justify-center gap-2 rounded-sm border-hairline border-border-default bg-surface-card px-3 text-sm text-text-muted"
+      className="flex h-24 w-full items-center justify-center gap-2 rounded-sm border-hairline border-border bg-background px-3 text-sm text-subtle-foreground"
       data-testid="image-placeholder"
       role="img"
       aria-label={fileName}

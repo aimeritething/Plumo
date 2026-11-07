@@ -82,7 +82,7 @@ type FlushPendingContentRef = MutableRefObject<((path: string) => void) | null>
  * sidebar's line divides the two; collapsed, nothing is left of it and the
  * pane takes the window, its tab bar seating the traffic lights.
  */
-const PANE_CLASS = 'relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-surface-card'
+const PANE_CLASS = 'relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background'
 /**
  * The scroll context around the Rich surface, the find bar sticky at its top:
  * the viewport of a `ScrollArea`, so the Document scrolls with Plumo's bar.

@@ -39,8 +39,8 @@ export function ThemePicker({ theme, onChange }: ThemePickerProps) {
   return (
     <div className="flex flex-col gap-3.5">
       <div className="flex flex-col gap-0.5">
-        <span id="settings-theme-label" className="text-sm font-medium text-text-primary">Theme</span>
-        <span className="text-xs text-text-tertiary">System follows macOS, switching with it.</span>
+        <span id="settings-theme-label" className="text-sm font-medium text-foreground">Theme</span>
+        <span className="text-xs text-muted-foreground">System follows macOS, switching with it.</span>
       </div>
       <div
         role="radiogroup"
@@ -63,9 +63,9 @@ export function ThemePicker({ theme, onChange }: ThemePickerProps) {
           >
             <span
               className={cn(
-                'relative block aspect-[17/11] w-full overflow-hidden rounded-lg ring-1 ring-border-default',
-                'group-aria-checked:ring-2 group-aria-checked:ring-text-heading group-aria-checked:ring-offset-2 group-aria-checked:ring-offset-surface-popover',
-                'group-focus-visible:ring-2 group-focus-visible:ring-state-focus-ring group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-surface-popover',
+                'relative block aspect-[17/11] w-full overflow-hidden rounded-lg ring-1 ring-border',
+                'group-aria-checked:ring-2 group-aria-checked:ring-foreground group-aria-checked:ring-offset-2 group-aria-checked:ring-offset-popover',
+                'group-focus-visible:ring-2 group-focus-visible:ring-ring group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-popover',
               )}
             >
               {mode === 'system' ? (
@@ -79,7 +79,7 @@ export function ThemePicker({ theme, onChange }: ThemePickerProps) {
                 <MiniWindow theme={mode} className="absolute inset-0" />
               )}
             </span>
-            <span className="truncate pl-0.5 text-xs text-text-secondary group-aria-checked:font-medium group-aria-checked:text-text-heading">
+            <span className="truncate pl-0.5 text-xs text-muted-foreground group-aria-checked:font-medium group-aria-checked:text-foreground">
               {label}
             </span>
           </button>
@@ -95,17 +95,17 @@ export function ThemePicker({ theme, onChange }: ThemePickerProps) {
  */
 function MiniWindow({ theme, className }: { theme: ResolvedThemeMode; className?: string }) {
   return (
-    <span data-theme={theme} aria-hidden="true" className={cn('flex bg-surface-card', className)}>
-      <span className="flex w-1/4 flex-none flex-col gap-1.5 bg-surface-app px-[6%] pt-[10%]">
-        <span className="h-1 w-3/5 rounded-full bg-border-strong" />
-        <span className="h-1 w-2/5 rounded-full bg-border-strong" />
-        <span className="h-1 w-1/2 rounded-full bg-border-strong" />
+    <span data-theme={theme} aria-hidden="true" className={cn('flex bg-background', className)}>
+      <span className="flex w-1/4 flex-none flex-col gap-1.5 bg-sidebar px-[6%] pt-[10%]">
+        <span className="h-1 w-3/5 rounded-full bg-input" />
+        <span className="h-1 w-2/5 rounded-full bg-input" />
+        <span className="h-1 w-1/2 rounded-full bg-input" />
       </span>
       <span className="flex flex-1 flex-col gap-1.5 px-[9%] pt-[10%]">
-        <span className="mb-0.5 h-1.5 w-1/2 rounded-full bg-text-document-heading" />
-        <span className="h-1 w-5/6 rounded-full bg-border-strong" />
-        <span className="h-1 w-2/3 rounded-full bg-border-strong" />
-        <span className="h-1 w-3/4 rounded-full bg-border-strong" />
+        <span className="mb-0.5 h-1.5 w-1/2 rounded-full bg-document-heading" />
+        <span className="h-1 w-5/6 rounded-full bg-input" />
+        <span className="h-1 w-2/3 rounded-full bg-input" />
+        <span className="h-1 w-3/4 rounded-full bg-input" />
       </span>
     </span>
   )

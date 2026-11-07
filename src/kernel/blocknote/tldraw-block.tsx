@@ -22,7 +22,7 @@ export const TLDRAW_BLOCK_CONFIG = {
 
 // The board's frame at the default height while the chunk loads.
 function TldrawBlockFallback() {
-  return <div className="h-130 w-full overflow-hidden rounded-lg border-hairline border-border-default bg-surface-card" />
+  return <div className="h-130 w-full overflow-hidden rounded-lg border-hairline border-border bg-background" />
 }
 
 export const TldrawBlockSpec = createReactBlockSpec(

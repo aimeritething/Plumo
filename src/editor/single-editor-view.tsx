@@ -364,7 +364,7 @@ export function SingleEditorView(options: {
       role="application"
       aria-label="Rich text editor"
       // The `editor__blocknote-container` name is the Kernel's hook (EDITOR_CONTAINER_SELECTOR); the look is the utilities.
-      className="editor__blocknote-container relative flex min-h-0 flex-1 cursor-text data-drag-over:outline-2 data-drag-over:outline-dashed data-drag-over:-outline-offset-2 data-drag-over:outline-accent-base"
+      className="editor__blocknote-container relative flex min-h-0 flex-1 cursor-text data-drag-over:outline-2 data-drag-over:outline-dashed data-drag-over:-outline-offset-2 data-drag-over:outline-primary"
       data-drag-over={isDragOver || undefined}
       onCopyCapture={handleCopyCapture}
       onFocusCapture={handleFocusCapture}

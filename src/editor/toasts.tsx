@@ -18,7 +18,7 @@ import type { ImageImportError } from './use-image-drop'
 const COPY_PATH_TOAST_ID = 'copy-path'
 
 function warningIcon() {
-  return <WarningCircle size={16} className="text-text-secondary" aria-hidden="true" />
+  return <WarningCircle size={16} className="text-muted-foreground" aria-hidden="true" />
 }
 
 /** A refused move or Trash, in the Explorer's words. */

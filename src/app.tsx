@@ -39,6 +39,7 @@ import { useSidebar } from '@/shell/use-sidebar'
 import { copyPathWithToast, showClosedOutsideToast, showRefusalToast } from '@/editor/toasts'
 import { useTabCommands } from '@/tabs/use-tab-commands'
 import { openTabFileInDefaultApp, revealTabFile } from '@/tabs/tab-file-actions'
+import { usePrimaryColor } from '@/shell/use-primary-color'
 import { useThemeMode } from '@/shell/use-theme-mode'
 import { useWriteFailureRecord, useWriteFailures } from '@/editor/use-write-failures'
 import { closeAppWindow, exitApp } from '@/platform/app-window'
@@ -127,8 +128,14 @@ export default function App() {
     recent,
     restoreRecent: recent.restore,
   })
-  const { restored: settingsRestored } = useSettings({ theme: appearance.themeMode, restoreTheme: appearance.restoreTheme })
+  const { restored: settingsRestored } = useSettings({
+    theme: appearance.themeMode,
+    restoreTheme: appearance.restoreTheme,
+    primaryColor: appearance.primaryColor,
+    restorePrimaryColor: appearance.restorePrimaryColor,
+  })
   useThemeMode(appearance.themeMode, settingsRestored)
+  usePrimaryColor(appearance.primaryColor, settingsRestored)
   const flushPendingEditorContentRef = useRef<((path: string) => void) | null>(null)
   const flushPendingRawContentRef = useRef<((path: string) => void) | null>(null)
   const hasPendingEditorContentRef = useRef<((path: string) => boolean) | null>(null)
@@ -589,7 +596,7 @@ export default function App() {
   // background colour is the canvas until then).
   return (
     <div
-      className="relative flex h-full w-full bg-surface-app text-text-primary data-restoring:invisible"
+      className="relative flex h-full w-full bg-background text-foreground data-restoring:invisible"
       data-testid="shell"
       data-restoring={!(restored && settingsRestored && finderOpenSettled) || undefined}
       data-sidebar-slides={sidebarSlides || undefined}
@@ -684,6 +691,8 @@ export default function App() {
         onClose={closeSettings}
         theme={appearance.themeMode}
         onThemeChange={appearance.setThemeMode}
+        primaryColor={appearance.primaryColor}
+        onPrimaryColorChange={appearance.setPrimaryColor}
       />
     </div>
   )

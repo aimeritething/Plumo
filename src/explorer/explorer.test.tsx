@@ -228,7 +228,7 @@ describe('the context menu', () => {
   it('marks the row its menu is open on, and only while it is open', async () => {
     renderExplorer(stubActions({ selected: `${FOLDER}/Welcome.md` }))
     const row = screen.getByTestId(`explorer-row:${FOLDER}/Projects`)
-    expect(row).toHaveClass('data-[state=open]:bg-sidebar-row-hover')
+    expect(row).toHaveClass('data-[state=open]:bg-sidebar-accent')
     expect(row).not.toHaveAttribute('data-state', 'open')
 
     rightClick(row)

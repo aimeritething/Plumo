@@ -151,7 +151,7 @@ function TabPill({ path, filename, parentHint, active, onActivate, onClose }: Ta
   const isImage = isImageFilePath(path)
   return (
     <div
-      className="group flex h-7.5 max-w-55 min-w-24 flex-initial cursor-default items-center gap-1.5 rounded-md px-3 text-sm whitespace-nowrap text-text-secondary outline-none hover:bg-tab-hover hover:text-text-heading aria-selected:bg-tab-active aria-selected:text-text-heading focus-visible:focus-ring"
+      className="group flex h-7.5 max-w-55 min-w-24 flex-initial cursor-default items-center gap-1.5 rounded-md px-3 text-sm whitespace-nowrap text-muted-foreground outline-none hover:bg-accent hover:text-foreground aria-selected:bg-selected aria-selected:text-foreground focus-visible:focus-ring"
       role="tab"
       aria-selected={active}
       aria-label={parentHint ? `${filename}, ${parentHint}` : filename}
@@ -174,9 +174,9 @@ function TabPill({ path, filename, parentHint, active, onActivate, onClose }: Ta
         if (event.key === 'Enter' || event.key === ' ') onActivate(path)
       }}
     >
-      {isImage && <Image size={13} className="flex-none text-text-secondary" aria-hidden="true" />}
+      {isImage && <Image size={13} className="flex-none text-muted-foreground" aria-hidden="true" />}
       <span className="min-w-0 truncate" data-testid="tab-name">{filename}</span>
-      {parentHint && <span className="min-w-0 flex-initial truncate text-text-muted" data-testid="tab-parent">{parentHint}</span>}
+      {parentHint && <span className="min-w-0 flex-initial truncate text-subtle-foreground" data-testid="tab-parent">{parentHint}</span>}
       <CloseAffordance name={filename} onClose={() => onClose(path)} />
     </div>
   )

@@ -7,6 +7,7 @@ import { Button } from '@/ui/button'
 import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/ui/dialog'
 import { ScrollArea } from '@/ui/scroll-area'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
+import { PrimaryColorPicker } from './primary-color-picker'
 import { ThemePicker } from './theme-picker'
 
 type SettingsSectionId = 'appearance'
@@ -16,13 +17,15 @@ const SETTINGS_SECTIONS: readonly { id: SettingsSectionId; label: string; icon: 
 ]
 
 /** The sidebar row's selected look, for the section shown. */
-const SECTION_CURRENT_CLASSES = 'aria-[current=page]:bg-sidebar-row-active aria-[current=page]:text-text-heading'
+const SECTION_CURRENT_CLASSES = 'aria-[current=page]:bg-sidebar-selected aria-[current=page]:text-sidebar-foreground'
 
 interface SettingsDialogProps {
   open: boolean
   onClose: () => void
   theme: ThemeMode
   onThemeChange: (theme: ThemeMode) => void
+  primaryColor: string
+  onPrimaryColorChange: (color: string) => void
 }
 
 /**
@@ -32,7 +35,7 @@ interface SettingsDialogProps {
  * 840×580 and 32px clear of every window edge: a narrow window narrows the
  * nav and shrinks the theme cards, a short one scrolls the right pane.
  */
-export function SettingsDialog({ open, onClose, theme, onThemeChange }: SettingsDialogProps) {
+export function SettingsDialog({ open, onClose, theme, onThemeChange, primaryColor, onPrimaryColorChange }: SettingsDialogProps) {
   const [sectionId, setSectionId] = useState<SettingsSectionId>('appearance')
   const section = SETTINGS_SECTIONS.find(({ id }) => id === sectionId) ?? SETTINGS_SECTIONS[0]
 
@@ -40,7 +43,7 @@ export function SettingsDialog({ open, onClose, theme, onThemeChange }: Settings
     <Dialog open={open} onOpenChange={(next) => { if (!next) onClose() }}>
       <DialogContent
         variant="bare"
-        className="flex h-[min(580px,calc(100vh-64px))] w-[min(840px,calc(100vw-64px))] max-w-none gap-0 overflow-hidden rounded-xl border-hairline border-border-popover bg-surface-popover text-text-primary shadow-dialog"
+        className="flex h-[min(580px,calc(100vh-64px))] w-[min(840px,calc(100vw-64px))] max-w-none gap-0 overflow-hidden rounded-xl border-hairline border-border bg-popover text-foreground shadow-lg"
         aria-describedby={undefined}
         // Focus lands on the dialog itself, not ringed on the first nav row; Tab goes on from there.
         onOpenAutoFocus={(event) => {
@@ -51,8 +54,8 @@ export function SettingsDialog({ open, onClose, theme, onThemeChange }: Settings
         // The keyboard's modal rule lets ⌘W and ⌘, through to this dialog alone.
         data-settings-dialog="true"
       >
-        <nav aria-label="Settings sections" className="flex w-54 flex-none flex-col gap-0.5 border-r-hairline border-border-default bg-surface-app px-3 py-5 max-[760px]:w-40">
-          <DialogTitle className="px-2.5 pt-1 pb-3 text-sm leading-4 font-semibold text-text-heading">Settings</DialogTitle>
+        <nav aria-label="Settings sections" className="flex w-54 flex-none flex-col gap-0.5 bg-sidebar px-3 py-5 max-[760px]:w-40">
+          <DialogTitle className="px-2.5 pt-1 pb-3 text-sm leading-4 font-semibold text-foreground">Settings</DialogTitle>
           {SETTINGS_SECTIONS.map(({ id, label, icon }) => (
             <button
               key={id}
@@ -62,14 +65,14 @@ export function SettingsDialog({ open, onClose, theme, onThemeChange }: Settings
               onClick={() => setSectionId(id)}
               data-testid={`settings-section:${id}`}
             >
-              <SidebarRowIcon icon={icon} className="group-aria-[current=page]:text-text-primary" />
+              <SidebarRowIcon icon={icon} className="group-aria-[current=page]:text-foreground" />
               <SidebarRowName className="text-left">{label}</SidebarRowName>
             </button>
           ))}
         </nav>
         <section aria-labelledby="settings-section-title" className="flex min-w-0 flex-1 flex-col">
           <header className="flex h-17 flex-none items-center justify-between pr-4 pl-10 max-[760px]:pl-6">
-            <h2 id="settings-section-title" className="text-lg font-semibold tracking-[-0.01em] text-text-heading">{section.label}</h2>
+            <h2 id="settings-section-title" className="text-lg font-semibold tracking-[-0.01em] text-foreground">{section.label}</h2>
             <Tooltip>
               <TooltipTrigger asChild>
                 <DialogClose asChild>
@@ -82,7 +85,12 @@ export function SettingsDialog({ open, onClose, theme, onThemeChange }: Settings
             </Tooltip>
           </header>
           <ScrollArea className="min-h-0 flex-1" viewportClassName="px-10 pt-1 pb-10 max-[760px]:px-6">
-            {section.id === 'appearance' && <ThemePicker theme={theme} onChange={onThemeChange} />}
+            {section.id === 'appearance' && (
+              <div className="flex flex-col gap-9">
+                <ThemePicker theme={theme} onChange={onThemeChange} />
+                <PrimaryColorPicker color={primaryColor} onChange={onPrimaryColorChange} />
+              </div>
+            )}
           </ScrollArea>
         </section>
       </DialogContent>

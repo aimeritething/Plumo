@@ -3,8 +3,8 @@ import { cn } from './cn'
 
 describe('cn', () => {
   it('keeps the hairline width next to a border colour', () => {
-    expect(cn('border-hairline border-border-popover')).toBe('border-hairline border-border-popover')
-    expect(cn('border-b-hairline border-border-default')).toBe('border-b-hairline border-border-default')
+    expect(cn('border-hairline border-border')).toBe('border-hairline border-border')
+    expect(cn('border-b-hairline border-border')).toBe('border-b-hairline border-border')
   })
 
   it('lets a later width replace the hairline', () => {

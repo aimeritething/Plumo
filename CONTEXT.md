@@ -142,5 +142,9 @@ _Avoid_: Footer, workspace switcher, folder picker
 The state Plumo restores on launch: the Folder, the open Tabs (with each Document's Rich or Raw mode), the active Tab, sidebar state (its width, and which sections are collapsed), and window geometry. It also keeps, for each Folder, its Pinned list and the Tabs that were open when the Folder was last shown, so a Folder opened again gets its pins and its Tabs back; a Tab belongs to the Folder that was open when it was opened, wherever its file lives. It also keeps the Recent Folders. Stored in the app's own config directory, never in the Folder.
 
 **Settings**:
-What the user chooses about how Plumo looks and behaves, the same whichever Folder is open; for now only the theme. Opened with Settings (⌘,) from the app menu, the Command Menu or the Folder switcher, so it is reachable with no Folder open. Kept apart from the Session, in the app's own config directory, so starting the Session over keeps them.
+What the user chooses about how Plumo looks and behaves, the same whichever Folder is open; for now the theme and the Primary color. Opened with Settings (⌘,) from the app menu, the Command Menu or the Folder switcher, so it is reachable with no Folder open. Kept apart from the Session, in the app's own config directory, so starting the Session over keeps them.
 _Avoid_: Preferences, options, config
+
+**Primary color**:
+The one color that marks what the user can act on or what has focus: the main buttons, the focus ring, links and the text selection. Selected rows and the selected Tab stay gray. Blue unless the user picks another in Settings.
+_Avoid_: Accent color, brand color, theme color, highlight color

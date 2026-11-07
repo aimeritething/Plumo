@@ -27,7 +27,8 @@ async function expectFlush(page: Page) {
 
 async function expectExpanded(page: Page) {
   await expect(sidebar(page)).toBeVisible()
-  await expect(sidebar(page)).toHaveCSS('border-right', '1px solid rgb(229, 229, 229)')
+  // No line between the sidebar and the pane: the sidebar's gray against the pane's white.
+  await expect(sidebar(page)).toHaveCSS('border-right-width', '0px')
   await expectPaneFlush(page)
   // Settled: the sidebar is at the window's left edge and the pane starts at its right edge.
   await expect.poll(async () => (await sidebar(page).boundingBox())!.x).toBe(0)

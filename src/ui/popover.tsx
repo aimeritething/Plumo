@@ -35,7 +35,7 @@ function PopoverContent({
         sideOffset={sideOffset}
         data-variant={variant}
         className={cn(
-          "z-popover w-72 origin-(--radix-popover-content-transform-origin) rounded-xl border-hairline border-border-popover bg-surface-popover text-text-primary shadow-menu outline-hidden data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
+          "z-popover w-72 origin-(--radix-popover-content-transform-origin) rounded-xl border-hairline border-border bg-popover text-foreground shadow-md outline-hidden data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
           variant === "compact" ? "p-2" : "p-4",
           className
         )}

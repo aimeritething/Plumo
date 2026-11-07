@@ -11,12 +11,12 @@ import { Toolbar as ToolbarPrimitive } from "radix-ui"
 //   popover hairline and the menu shadow), at the same radius and density.
 // `className` places the toolbar (position, visibility); its look is the variant's.
 const toolbarVariants = cva(
-  "flex w-fit items-center gap-0.5 rounded-lg bg-surface-popover p-0.5 text-text-primary",
+  "flex w-fit items-center gap-0.5 rounded-lg bg-popover p-0.5 text-foreground",
   {
     variants: {
       variant: {
-        raised: "shadow-raised",
-        floating: "border-hairline border-border-popover shadow-menu",
+        raised: "shadow-xs",
+        floating: "border-hairline border-border shadow-md",
       },
     },
     defaultVariants: {
@@ -48,7 +48,7 @@ function Toolbar({
 // toolbar on a Block). `segment` joins two buttons into one control, the
 // second a narrow caret (a toggle and its menu).
 const toolbarButtonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-1 rounded-md text-sm font-medium whitespace-nowrap text-text-secondary outline-none transition-colors duration-150 ease-out hover:bg-control-tertiary-hover hover:text-text-primary focus-visible:focus-ring disabled:pointer-events-none disabled:text-text-muted data-[state=on]:bg-control-secondary-selected data-[state=on]:text-text-primary data-[state=open]:bg-control-tertiary-hover data-[state=open]:text-text-primary [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "inline-flex shrink-0 items-center justify-center gap-1 rounded-md text-sm font-medium whitespace-nowrap text-muted-foreground outline-none transition-colors duration-150 ease-out hover:bg-accent hover:text-foreground focus-visible:focus-ring disabled:pointer-events-none disabled:text-subtle-foreground data-[state=on]:bg-selected data-[state=on]:text-foreground data-[state=open]:bg-accent data-[state=open]:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       size: {
@@ -101,7 +101,7 @@ function ToolbarSeparator({
   return (
     <ToolbarPrimitive.Separator
       data-slot="toolbar-separator"
-      className={cn("mx-0.5 h-4 w-(--hairline) shrink-0 bg-border-default", className)}
+      className={cn("mx-0.5 h-4 w-(--hairline) shrink-0 bg-border", className)}
       {...props}
     />
   )
