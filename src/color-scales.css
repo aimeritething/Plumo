@@ -198,31 +198,31 @@
   --purple-a11: #52009aba;
   --purple-a12: #250049df;
 
-  /* blue: built from #1780f3 by shell/primary-color.ts */
+  /* blue: built from #0082fb by shell/primary-color.ts */
   --blue-1: #fbfdff;
   --blue-2: #f5f9ff;
   --blue-3: #e9f2ff;
   --blue-4: #daeaff;
   --blue-5: #c8e0ff;
-  --blue-6: #b2d3ff;
-  --blue-7: #94c2ff;
-  --blue-8: #6baafd;
-  --blue-9: #1780f3;
-  --blue-10: #0a77e6;
-  --blue-11: #0b6cd2;
-  --blue-12: #0f3563;
+  --blue-6: #b1d3ff;
+  --blue-7: #93c2ff;
+  --blue-8: #68abff;
+  --blue-9: #0082fb;
+  --blue-10: #0079eb;
+  --blue-11: #006cd3;
+  --blue-12: #0a3565;
   --blue-a1: #3399ff05;
   --blue-a2: #0066ff0a;
   --blue-a3: #0b6fff17;
   --blue-a4: #0772ff26;
   --blue-a5: #006fff37;
-  --blue-a6: #036fff4e;
-  --blue-a7: #006eff6b;
-  --blue-a8: #006dfc94;
-  --blue-a9: #0073f2e8;
-  --blue-a10: #0071e5f5;
-  --blue-a11: #0065d0f4;
-  --blue-a12: #002859f0;
+  --blue-a6: #006fff4e;
+  --blue-a7: #0270ff6d;
+  --blue-a8: #0071ff97;
+  --blue-a9: #0082fbff;
+  --blue-a10: #0079ebff;
+  --blue-a11: #006cd3ff;
+  --blue-a12: #002d5ff5;
   --blue-contrast: #ffffff;
 }
 
@@ -409,29 +409,29 @@
   --purple-a11: #d19dff;
   --purple-a12: #f1ddfffa;
 
-  /* blue: built from #1780f3 by shell/primary-color.ts */
-  --blue-1: #0e141d;
+  /* blue: built from #0082fb by shell/primary-color.ts */
+  --blue-1: #0d141d;
   --blue-2: #101925;
-  --blue-3: #0f2643;
-  --blue-4: #0a2f5c;
-  --blue-5: #0f3a6e;
-  --blue-6: #1a477f;
-  --blue-7: #245797;
-  --blue-8: #2d6dbb;
-  --blue-9: #1780f3;
-  --blue-10: #2f8dfe;
+  --blue-3: #0d2645;
+  --blue-4: #052f5e;
+  --blue-5: #093a70;
+  --blue-6: #154782;
+  --blue-7: #1f579a;
+  --blue-8: #276cbf;
+  --blue-9: #0082fb;
+  --blue-10: #3190ff;
   --blue-11: #86bbff;
   --blue-12: #cee3ff;
-  --blue-a1: #0022552d;
+  --blue-a1: #001e443c;
   --blue-a2: #056ef916;
-  --blue-a3: #0874fd36;
-  --blue-a4: #005ac769;
-  --blue-a5: #0c7afe64;
-  --blue-a6: #2486ff76;
-  --blue-a7: #338dfe90;
-  --blue-a8: #3891feb7;
-  --blue-a9: #1785fef3;
-  --blue-a10: #2f8dfffe;
+  --blue-a3: #006aee3c;
+  --blue-a4: #003c7eb4;
+  --blue-a5: #0068db78;
+  --blue-a6: #1982fd7a;
+  --blue-a7: #298aff93;
+  --blue-a8: #2f8dfebb;
+  --blue-a9: #0082fbff;
+  --blue-a10: #3190ffff;
   --blue-a11: #86bbffff;
   --blue-a12: #cee3ffff;
   --blue-contrast: #ffffff;

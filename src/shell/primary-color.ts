@@ -19,7 +19,7 @@ export interface PrimaryColorPreset { id: string; label: string; hex: string }
 
 /** The swatches Settings offers, in the order macOS lists its accent colours. */
 export const PRIMARY_COLOR_PRESETS: readonly PrimaryColorPreset[] = [
-  { id: 'blue', label: 'Blue', hex: '#1780f3' },
+  { id: 'blue', label: 'Blue', hex: '#0082fb' },
   { id: 'purple', label: 'Purple', hex: '#8e4ec6' },
   { id: 'pink', label: 'Pink', hex: '#d6409f' },
   { id: 'red', label: 'Red', hex: '#e5484d' },

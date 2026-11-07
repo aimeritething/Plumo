@@ -4,7 +4,7 @@ import type { ThemeMode } from '@/shell/theme-mode'
 import { TooltipProvider } from '@/ui/tooltip'
 import { SettingsDialog } from './settings-dialog'
 
-function renderDialog(theme: ThemeMode = 'light', primaryColor = '#1780f3') {
+function renderDialog(theme: ThemeMode = 'light', primaryColor = '#0082fb') {
   const props = { open: true, onClose: vi.fn(), theme, onThemeChange: vi.fn(), primaryColor, onPrimaryColorChange: vi.fn() }
   render(<SettingsDialog {...props} />, { wrapper: TooltipProvider })
   return props
@@ -98,7 +98,7 @@ describe('SettingsDialog', () => {
   })
 
   it('renders nothing while closed', () => {
-    render(<SettingsDialog open={false} onClose={vi.fn()} theme="light" onThemeChange={vi.fn()} primaryColor="#1780f3" onPrimaryColorChange={vi.fn()} />, { wrapper: TooltipProvider })
+    render(<SettingsDialog open={false} onClose={vi.fn()} theme="light" onThemeChange={vi.fn()} primaryColor="#0082fb" onPrimaryColorChange={vi.fn()} />, { wrapper: TooltipProvider })
     expect(screen.queryByTestId('settings-dialog')).not.toBeInTheDocument()
   })
 })

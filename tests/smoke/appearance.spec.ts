@@ -98,7 +98,7 @@ test('View → Appearance → Dark switches the document, persists in the Settin
   await expect(page.getByTestId('editor-pane')).toHaveCSS('background-color', 'rgb(17, 17, 17)')
   await expect(page.locator('.bn-editor')).toHaveCSS('color', /^oklab\(0\.877/)
   await expect(page.locator('.bn-editor h1')).toHaveCSS('color', 'rgb(238, 238, 238)')
-  await expect.poll(() => storedSettings(page)).toEqual({ version: 1, theme: 'dark', primaryColor: '#1780f3' })
+  await expect.poll(() => storedSettings(page)).toEqual({ version: 1, theme: 'dark', primaryColor: '#0082fb' })
   expect(await storedSession(page)).not.toHaveProperty('theme')
 
   await page.reload()
@@ -167,7 +167,7 @@ test('a Primary color chosen in Settings repaints the page, persists and is pain
   const errors = watchForErrors(page)
   await openWelcome(page)
   const primary = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--primary-9').trim())
-  expect(await primary()).toBe('#1780f3')
+  expect(await primary()).toBe('#0082fb')
 
   await page.evaluate((eventName) => window.dispatchEvent(new CustomEvent(eventName, { detail: 'app-settings' })), APP_COMMAND_EVENT_NAME)
   await page.getByTestId('settings-primary-color:purple').click()
@@ -182,7 +182,7 @@ test('a Primary color chosen in Settings repaints the page, persists and is pain
 
   await page.evaluate((eventName) => window.dispatchEvent(new CustomEvent(eventName, { detail: 'app-settings' })), APP_COMMAND_EVENT_NAME)
   await page.getByTestId('settings-primary-color:blue').click()
-  await expect.poll(primary).toBe('#1780f3')
+  await expect.poll(primary).toBe('#0082fb')
   await expect(page.locator('#plumo-primary-color')).toHaveCount(0)
   expect(errors.pageErrors).toEqual([])
   expect(errors.consoleErrors).toEqual([])

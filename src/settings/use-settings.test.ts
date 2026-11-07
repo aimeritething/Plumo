@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ThemeMode } from '@/shell/theme-mode'
 import { useSettings } from './use-settings'
 
-const BLUE = '#1780f3'
+const BLUE = '#0082fb'
 
 const runtime = vi.hoisted(() => ({
   invoke: vi.fn<(cmd: string, args?: Record<string, unknown>) => Promise<unknown>>(),
