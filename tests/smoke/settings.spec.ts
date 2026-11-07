@@ -34,7 +34,7 @@ test('⌘, opens the Settings with no Folder open, and a theme chosen there appl
 
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
   await expect(themeCard(page, 'dark')).toHaveAttribute('aria-checked', 'true')
-  await expect.poll(() => storedSettings(page)).toEqual({ version: 1, theme: 'dark', primaryColor: '#0a6cff' })
+  await expect.poll(() => storedSettings(page)).toEqual({ version: 1, theme: 'dark', primaryColor: '#1780f3' })
   expect(await storedSession(page)).not.toHaveProperty('theme')
 
   await page.keyboard.press('Escape')

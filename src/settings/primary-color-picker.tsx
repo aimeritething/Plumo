@@ -93,7 +93,7 @@ export function PrimaryColorPicker({ color, onChange }: PrimaryColorPickerProps)
             SWATCH_CLASSES,
             checked === CUSTOM
               ? 'bg-(--swatch)'
-              : 'bg-[conic-gradient(from_90deg,#e5484d,#ffc53d,#30a46c,#0a6cff,#8e4ec6,#d6409f,#e5484d)]',
+              : 'bg-[conic-gradient(from_90deg,#e5484d,#ffc53d,#30a46c,#1780f3,#8e4ec6,#d6409f,#e5484d)]',
           )}
           style={swatchStyle(current)}
           onClick={() => panel.current?.click()}

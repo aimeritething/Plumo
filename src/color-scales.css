@@ -198,31 +198,31 @@
   --purple-a11: #52009aba;
   --purple-a12: #250049df;
 
-  /* blue: built from #0a6cff by shell/primary-color.ts */
+  /* blue: built from #1780f3 by shell/primary-color.ts */
   --blue-1: #fbfdff;
-  --blue-2: #f6f9ff;
-  --blue-3: #eaf2ff;
-  --blue-4: #dce9ff;
-  --blue-5: #cbdfff;
-  --blue-6: #b6d2ff;
-  --blue-7: #9ac0ff;
-  --blue-8: #74a8ff;
-  --blue-9: #0a6cff;
-  --blue-10: #0063f1;
-  --blue-11: #1164e7;
-  --blue-12: #0f326d;
+  --blue-2: #f5f9ff;
+  --blue-3: #e9f2ff;
+  --blue-4: #daeaff;
+  --blue-5: #c8e0ff;
+  --blue-6: #b2d3ff;
+  --blue-7: #94c2ff;
+  --blue-8: #6baafd;
+  --blue-9: #1780f3;
+  --blue-10: #0a77e6;
+  --blue-11: #0b6cd2;
+  --blue-12: #0f3563;
   --blue-a1: #3399ff05;
-  --blue-a2: #0055ff09;
-  --blue-a3: #0c68ff16;
-  --blue-a4: #005fff23;
-  --blue-a5: #0565ff35;
-  --blue-a6: #0062ff49;
-  --blue-a7: #0262ff66;
-  --blue-a8: #0261ff8c;
-  --blue-a9: #0066fff5;
-  --blue-a10: #0063f1ff;
-  --blue-a11: #0059e5ee;
-  --blue-a12: #002564f0;
+  --blue-a2: #0066ff0a;
+  --blue-a3: #0b6fff17;
+  --blue-a4: #0772ff26;
+  --blue-a5: #006fff37;
+  --blue-a6: #036fff4e;
+  --blue-a7: #006eff6b;
+  --blue-a8: #006dfc94;
+  --blue-a9: #0073f2e8;
+  --blue-a10: #0071e5f5;
+  --blue-a11: #0065d0f4;
+  --blue-a12: #002859f0;
   --blue-contrast: #ffffff;
 }
 
@@ -409,31 +409,31 @@
   --purple-a11: #d19dff;
   --purple-a12: #f1ddfffa;
 
-  /* blue: built from #0a6cff by shell/primary-color.ts */
-  --blue-1: #0d141e;
-  --blue-2: #101927;
-  --blue-3: #0e244a;
-  --blue-4: #0a2c66;
-  --blue-5: #0f3779;
-  --blue-6: #19438b;
-  --blue-7: #2453a5;
-  --blue-8: #2d67cc;
-  --blue-9: #0a6cff;
-  --blue-10: #307dff;
-  --blue-11: #8eb8ff;
-  --blue-12: #d0e2ff;
-  --blue-a1: #001e483c;
-  --blue-a2: #0666fb18;
-  --blue-a3: #055ffb3e;
-  --blue-a4: #0053df69;
-  --blue-a5: #0c68fe70;
-  --blue-a6: #2172fe83;
-  --blue-a7: #2f7bfe9f;
-  --blue-a8: #357efec9;
-  --blue-a9: #0a6cffff;
-  --blue-a10: #307dffff;
-  --blue-a11: #8eb8ffff;
-  --blue-a12: #d0e2ffff;
+  /* blue: built from #1780f3 by shell/primary-color.ts */
+  --blue-1: #0e141d;
+  --blue-2: #101925;
+  --blue-3: #0f2643;
+  --blue-4: #0a2f5c;
+  --blue-5: #0f3a6e;
+  --blue-6: #1a477f;
+  --blue-7: #245797;
+  --blue-8: #2d6dbb;
+  --blue-9: #1780f3;
+  --blue-10: #2f8dfe;
+  --blue-11: #86bbff;
+  --blue-12: #cee3ff;
+  --blue-a1: #0022552d;
+  --blue-a2: #056ef916;
+  --blue-a3: #0874fd36;
+  --blue-a4: #005ac769;
+  --blue-a5: #0c7afe64;
+  --blue-a6: #2486ff76;
+  --blue-a7: #338dfe90;
+  --blue-a8: #3891feb7;
+  --blue-a9: #1785fef3;
+  --blue-a10: #2f8dfffe;
+  --blue-a11: #86bbffff;
+  --blue-a12: #cee3ffff;
   --blue-contrast: #ffffff;
 }
 

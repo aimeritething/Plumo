@@ -25,7 +25,7 @@ function stylesheetScale(name: string, theme: ScaleTheme): Record<string, string
 
 describe('normalizePrimaryColor', () => {
   it('takes #rrggbb in any case and nothing else', () => {
-    expect(normalizePrimaryColor('#0A6CFF')).toBe('#0a6cff')
+    expect(normalizePrimaryColor('#1780F3')).toBe('#1780f3')
     expect(normalizePrimaryColor('#fff')).toBeNull()
     expect(normalizePrimaryColor('blue')).toBeNull()
     expect(normalizePrimaryColor(42)).toBeNull()
@@ -68,7 +68,7 @@ describe('primaryScale', () => {
   })
 
   it('puts white text on a dark step 9 and dark text on a light one', () => {
-    expect(primaryScale('#0a6cff', 'light').contrast).toBe('#ffffff')
+    expect(primaryScale('#1780f3', 'light').contrast).toBe('#ffffff')
     const yellow = primaryScale('#ffc53d', 'light')
     expect(yellow.contrast).toBe(yellow['12'])
   })

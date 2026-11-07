@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { DEFAULT_SETTINGS, parseSettings } from './settings-schema'
 
-const BLUE = '#0a6cff'
+const BLUE = '#1780f3'
 
 describe('parseSettings', () => {
   it('reads the documented schema', () => {
