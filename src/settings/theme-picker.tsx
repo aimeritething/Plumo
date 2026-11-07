@@ -96,7 +96,7 @@ export function ThemePicker({ theme, onChange }: ThemePickerProps) {
 function MiniWindow({ theme, className }: { theme: ResolvedThemeMode; className?: string }) {
   return (
     <span data-theme={theme} aria-hidden="true" className={cn('flex bg-background', className)}>
-      <span className="flex w-1/4 flex-none flex-col gap-1.5 bg-sidebar px-[6%] pt-[10%]">
+      <span className="flex w-1/4 flex-none flex-col gap-1.5 border-r-hairline border-sidebar-border bg-sidebar px-[6%] pt-[10%]">
         <span className="h-1 w-3/5 rounded-full bg-input" />
         <span className="h-1 w-2/5 rounded-full bg-input" />
         <span className="h-1 w-1/2 rounded-full bg-input" />

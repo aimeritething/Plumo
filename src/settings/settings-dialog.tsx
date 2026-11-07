@@ -54,7 +54,7 @@ export function SettingsDialog({ open, onClose, theme, onThemeChange, primaryCol
         // The keyboard's modal rule lets ⌘W and ⌘, through to this dialog alone.
         data-settings-dialog="true"
       >
-        <nav aria-label="Settings sections" className="flex w-54 flex-none flex-col gap-0.5 bg-sidebar px-3 py-5 max-[760px]:w-40">
+        <nav aria-label="Settings sections" className="flex w-54 flex-none flex-col gap-0.5 border-r-hairline border-sidebar-border bg-sidebar px-3 py-5 max-[760px]:w-40">
           <DialogTitle className="px-2.5 pt-1 pb-3 text-sm leading-4 font-semibold text-foreground">Settings</DialogTitle>
           {SETTINGS_SECTIONS.map(({ id, label, icon }) => (
             <button

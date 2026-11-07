@@ -130,7 +130,7 @@
   --background: #ffffff;
   --card: #ffffff;
   --popover: #ffffff;
-  --sidebar: var(--gray-2);
+  --sidebar: var(--background);
   --overlay: #0000001f;
   --destructive-foreground: #ffffff;
 
@@ -146,7 +146,7 @@
   --background: var(--gray-1);
   --card: var(--gray-2);
   --popover: var(--gray-2);
-  --sidebar: var(--gray-1);
+  --sidebar: var(--background);
   --overlay: #00000080;
   --destructive-foreground: #ffffff;
 
