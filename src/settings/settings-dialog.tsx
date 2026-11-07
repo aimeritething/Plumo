@@ -6,7 +6,7 @@ import { cn } from '@/lib/cn'
 import { Button } from '@/ui/button'
 import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/ui/dialog'
 import { ScrollArea } from '@/ui/scroll-area'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
+import { SimpleTooltip } from '@/ui/tooltip'
 import { PrimaryColorPicker } from './primary-color-picker'
 import { ThemePicker } from './theme-picker'
 
@@ -73,16 +73,13 @@ export function SettingsDialog({ open, onClose, theme, onThemeChange, primaryCol
         <section aria-labelledby="settings-section-title" className="flex min-w-0 flex-1 flex-col">
           <header className="flex h-17 flex-none items-center justify-between pr-4 pl-10 max-[760px]:pl-6">
             <h2 id="settings-section-title" className="text-lg font-semibold tracking-[-0.01em] text-foreground">{section.label}</h2>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <DialogClose asChild>
-                  <Button variant="icon" size="icon-xs" aria-label="Close">
-                    <XIcon />
-                  </Button>
-                </DialogClose>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">Close</TooltipContent>
-            </Tooltip>
+            <SimpleTooltip label="Close" side="bottom">
+              <DialogClose asChild>
+                <Button variant="icon" size="icon-xs" aria-label="Close">
+                  <XIcon />
+                </Button>
+              </DialogClose>
+            </SimpleTooltip>
           </header>
           <ScrollArea className="min-h-0 flex-1" viewportClassName="px-10 pt-1 pb-10 max-[760px]:px-6">
             {section.id === 'appearance' && (

@@ -1,4 +1,4 @@
-import { useRef, type ComponentProps, type ReactNode } from 'react'
+import { useRef } from 'react'
 import { Code, DotsThree, LinkSimple, TextAa, type Icon } from '@phosphor-icons/react'
 import { APP_COMMAND_DEFINITIONS, APP_COMMAND_IDS, type AppCommandId } from '@/shell/app-command-catalog'
 import type { EditorMode } from '@/types'
@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/ui/dropdown-menu'
 import { Button } from '@/ui/button'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
+import { SimpleTooltip } from '@/ui/tooltip'
 
 /** A shortcut as the manifest writes it (`⌘\\`): Plumo v0.1 is a macOS app, like the sidebar toggle's `⌘[`. */
 const shortcutOf = (id: AppCommandId) => APP_COMMAND_DEFINITIONS[id].shortcut?.display
@@ -104,11 +104,11 @@ export function ImageTabActions({ metadata, onOpenExternal, onCopyPath }: ImageT
 /** The link button, its tooltip naming Copy path's shortcut as a chip. */
 function CopyPathButton({ onCopyPath }: { onCopyPath: () => void }) {
   return (
-    <TabActionTooltip label="Copy path" shortcut={COPY_PATH_SHORTCUT}>
+    <SimpleTooltip label="Copy path" shortcut={COPY_PATH_SHORTCUT} side="bottom">
       <Button variant="icon" size="icon-xs" aria-label="Copy path" data-testid="tab-copy-path" onClick={onCopyPath}>
         <LinkSimple aria-hidden="true" />
       </Button>
-    </TabActionTooltip>
+    </SimpleTooltip>
   )
 }
 
@@ -129,7 +129,7 @@ function ModeControl({ mode }: { mode: TabMode }) {
         const disabledReason = segment === 'rich' ? mode.richDisabledReason : null
         const SegmentIcon = MODE_ICONS[segment]
         return (
-          <TabActionTooltip key={segment} label={disabledReason ?? MODE_LABELS[segment]} shortcut={disabledReason === null ? TOGGLE_SHORTCUT : undefined}>
+          <SimpleTooltip key={segment} label={disabledReason ?? MODE_LABELS[segment]} shortcut={disabledReason === null ? TOGGLE_SHORTCUT : undefined} side="bottom">
             <button
               type="button"
               role="radio"
@@ -145,7 +145,7 @@ function ModeControl({ mode }: { mode: TabMode }) {
             >
               <SegmentIcon size={16} aria-hidden="true" />
             </button>
-          </TabActionTooltip>
+          </SimpleTooltip>
         )
       })}
     </div>
@@ -166,11 +166,11 @@ function DocumentMenu({ menu }: { menu: DocumentMenuActions }) {
     <DropdownMenu>
       {/* The tooltip trigger sits inside the menu trigger, so the menu's open / closed data-state is the one the button keeps. */}
       <DropdownMenuTrigger asChild>
-        <TabActionTooltip label="More">
+        <SimpleTooltip label="More" side="bottom">
           <Button variant="icon" size="icon-xs" aria-label="More" data-testid="tab-more">
             <DotsThree aria-hidden="true" />
           </Button>
-        </TabActionTooltip>
+        </SimpleTooltip>
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
@@ -210,12 +210,3 @@ function MenuItem({ label, shortcut, onSelect }: { label: string; shortcut?: str
   )
 }
 
-function TabActionTooltip({ label, shortcut, children, ...triggerProps }: { label: string; shortcut?: string; children: ReactNode } & ComponentProps<'button'>) {
-  return (
-    <Tooltip>
-      {/* Props a menu trigger hands down (as its Slot child) go on to the button. */}
-      <TooltipTrigger asChild {...triggerProps}>{children}</TooltipTrigger>
-      <TooltipContent side="bottom" shortcut={shortcut}>{label}</TooltipContent>
-    </Tooltip>
-  )
-}

@@ -54,7 +54,7 @@ test('an Image file opens as a Tab with its picture, dimensions, size and two ha
 
   await expect(activeTab(page)).toHaveText('lake.png')
   await expect(page.getByTestId(`tab:${LAKE}`)).toBeVisible()
-  await expect(page.getByRole('tab', { selected: true })).toHaveAttribute('title', LAKE)
+  await expect(page.getByRole('tab', { selected: true })).toHaveAttribute('data-testid', `tab:${LAKE}`)
   await expect(page.getByTestId('image-meta')).toHaveText('1920 × 1080 · 240 KB')
   await expect(page.getByRole('button', { name: 'Open ↗' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Copy path' })).toBeVisible()

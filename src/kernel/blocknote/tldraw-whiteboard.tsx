@@ -24,7 +24,7 @@ import {
 } from './whiteboard-platform-permission-rejection'
 import { Toolbar, ToolbarButton } from '@/ui/toolbar'
 import { Dialog } from '@/ui/dialog'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
+import { SimpleTooltip } from '@/ui/tooltip'
 import { installTldrawTextMeasurementGuard } from './tldraw-text-measurement-guard'
 
 const EMPTY_TLDRAW_TRANSLATION_URL = 'data:application/json;base64,e30K'
@@ -682,20 +682,17 @@ export function TldrawWhiteboard({
         </div>
       ) : null}
       <Toolbar aria-label={translate(locale, 'editor.whiteboard.toolbar')} className="absolute top-2 right-2 z-sticky group-data-fullscreen:top-3 group-data-fullscreen:right-3">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <ToolbarButton
-              size="sm"
-              aria-label={fullscreenLabel}
-              aria-pressed={fullscreen}
-              data-testid="tldraw-whiteboard-fullscreen-toggle"
-              onClick={toggleFullscreen}
-            >
-              {fullscreen ? <ArrowsIn aria-hidden="true" /> : <ArrowsOut aria-hidden="true" />}
-            </ToolbarButton>
-          </TooltipTrigger>
-          <TooltipContent side="left">{fullscreenLabel}</TooltipContent>
-        </Tooltip>
+        <SimpleTooltip label={fullscreenLabel} side="left">
+          <ToolbarButton
+            size="sm"
+            aria-label={fullscreenLabel}
+            aria-pressed={fullscreen}
+            data-testid="tldraw-whiteboard-fullscreen-toggle"
+            onClick={toggleFullscreen}
+          >
+            {fullscreen ? <ArrowsIn aria-hidden="true" /> : <ArrowsOut aria-hidden="true" />}
+          </ToolbarButton>
+        </SimpleTooltip>
       </Toolbar>
       <button
         type="button"

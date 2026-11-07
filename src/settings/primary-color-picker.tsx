@@ -1,6 +1,7 @@
 import { useRef, type CSSProperties, type KeyboardEvent } from 'react'
 import { cn } from '@/lib/cn'
 import { normalizePrimaryColor, PRIMARY_COLOR_PRESETS } from '@/shell/primary-color'
+import { SimpleTooltip } from '@/ui/tooltip'
 
 const NEXT_KEYS = new Set(['ArrowRight', 'ArrowDown'])
 const PREVIOUS_KEYS = new Set(['ArrowLeft', 'ArrowUp'])
@@ -66,39 +67,40 @@ export function PrimaryColorPicker({ color, onChange }: PrimaryColorPickerProps)
         data-testid="settings-primary-color"
       >
         {PRIMARY_COLOR_PRESETS.map(({ id, label, hex }, index) => (
+          <SimpleTooltip key={id} label={label}>
+            <button
+              ref={(swatch) => { swatches.current[index] = swatch }}
+              type="button"
+              role="radio"
+              aria-checked={checked === id}
+              aria-label={label}
+              tabIndex={checked === id ? 0 : -1}
+              className={cn(SWATCH_CLASSES, 'bg-(--swatch)')}
+              style={swatchStyle(hex)}
+              onClick={() => onChange(hex)}
+              data-testid={`settings-primary-color:${id}`}
+            />
+          </SimpleTooltip>
+        ))}
+        <SimpleTooltip label="Custom">
           <button
-            key={id}
-            ref={(swatch) => { swatches.current[index] = swatch }}
+            ref={(swatch) => { swatches.current[PRIMARY_COLOR_PRESETS.length] = swatch }}
             type="button"
             role="radio"
-            aria-checked={checked === id}
-            aria-label={label}
-            title={label}
-            tabIndex={checked === id ? 0 : -1}
-            className={cn(SWATCH_CLASSES, 'bg-(--swatch)')}
-            style={swatchStyle(hex)}
-            onClick={() => onChange(hex)}
-            data-testid={`settings-primary-color:${id}`}
+            aria-checked={checked === CUSTOM}
+            aria-label="Custom"
+            tabIndex={checked === CUSTOM ? 0 : -1}
+            className={cn(
+              SWATCH_CLASSES,
+              checked === CUSTOM
+                ? 'bg-(--swatch)'
+                : 'bg-[conic-gradient(from_90deg,#e5484d,#ffc53d,#30a46c,#0082fb,#8e4ec6,#d6409f,#e5484d)]',
+            )}
+            style={swatchStyle(current)}
+            onClick={() => panel.current?.click()}
+            data-testid="settings-primary-color:custom"
           />
-        ))}
-        <button
-          ref={(swatch) => { swatches.current[PRIMARY_COLOR_PRESETS.length] = swatch }}
-          type="button"
-          role="radio"
-          aria-checked={checked === CUSTOM}
-          aria-label="Custom"
-          title="Custom"
-          tabIndex={checked === CUSTOM ? 0 : -1}
-          className={cn(
-            SWATCH_CLASSES,
-            checked === CUSTOM
-              ? 'bg-(--swatch)'
-              : 'bg-[conic-gradient(from_90deg,#e5484d,#ffc53d,#30a46c,#0082fb,#8e4ec6,#d6409f,#e5484d)]',
-          )}
-          style={swatchStyle(current)}
-          onClick={() => panel.current?.click()}
-          data-testid="settings-primary-color:custom"
-        />
+        </SimpleTooltip>
         <input
           ref={panel}
           type="color"

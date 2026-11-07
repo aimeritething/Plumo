@@ -1,10 +1,10 @@
 import { CaretDown as ChevronDown, CaretUp as ChevronUp, X } from '@phosphor-icons/react'
 import type { EditorView } from '@tiptap/pm/view'
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Toggle } from '@/ui/toggle'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
+import { SimpleTooltip } from '@/ui/tooltip'
 import { translate, type AppLocale } from '@/lib/i18n'
 import { isImeKeyEvent } from '@/lib/ime-key-event'
 import { clampEditorFindIndex, nextEditorFindIndex, type EditorFindOptions } from '@/kernel/blocknote/editor-find'
@@ -203,41 +203,32 @@ export function RichEditorFindBar({ editor, path, request, find, locale = 'en' }
       <span className="min-w-[4.75rem] text-right text-xs text-muted-foreground" aria-live="polite" data-testid="rich-editor-find-count">
         {statusText(locale, result, currentIndex)}
       </span>
-      <FindTooltip label={translate(locale, 'editor.find.previousMatch')}>
+      <SimpleTooltip label={translate(locale, 'editor.find.previousMatch')} side="bottom">
         <Button type="button" variant="icon" size="icon-xs" aria-label={translate(locale, 'editor.find.previousMatch')} disabled={matchCount === 0} onClick={movePrevious}>
           <ChevronUp />
         </Button>
-      </FindTooltip>
-      <FindTooltip label={translate(locale, 'editor.find.nextMatch')}>
+      </SimpleTooltip>
+      <SimpleTooltip label={translate(locale, 'editor.find.nextMatch')} side="bottom">
         <Button type="button" variant="icon" size="icon-xs" aria-label={translate(locale, 'editor.find.nextMatch')} disabled={matchCount === 0} onClick={moveNext}>
           <ChevronDown />
         </Button>
-      </FindTooltip>
-      <FindTooltip label={translate(locale, 'editor.find.regex')}>
+      </SimpleTooltip>
+      <SimpleTooltip label={translate(locale, 'editor.find.regex')} side="bottom">
         <Toggle pressed={regex} data-state={regex ? 'on' : 'off'} onPressedChange={(pressed) => { setOptions({ ...options, regex: pressed }); searchAgain() }} aria-label={translate(locale, 'editor.find.regex')}>
           .*
         </Toggle>
-      </FindTooltip>
-      <FindTooltip label={translate(locale, 'editor.find.matchCase')}>
+      </SimpleTooltip>
+      <SimpleTooltip label={translate(locale, 'editor.find.matchCase')} side="bottom">
         <Toggle pressed={caseSensitive} data-state={caseSensitive ? 'on' : 'off'} onPressedChange={(pressed) => { setOptions({ ...options, caseSensitive: pressed }); searchAgain() }} aria-label={translate(locale, 'editor.find.matchCase')}>
           Aa
         </Toggle>
-      </FindTooltip>
-      <FindTooltip label={translate(locale, 'editor.find.close')}>
+      </SimpleTooltip>
+      <SimpleTooltip label={translate(locale, 'editor.find.close')} side="bottom">
         <Button type="button" variant="icon" size="icon-xs" aria-label={translate(locale, 'editor.find.close')} onClick={close}>
           <X />
         </Button>
-      </FindTooltip>
+      </SimpleTooltip>
     </div>
   )
 }
 
-/** An icon control's tooltip, below it. A `Toggle` inside restates its `data-state`: the trigger writes its own over it. */
-function FindTooltip({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>{children}</TooltipTrigger>
-      <TooltipContent side="bottom">{label}</TooltipContent>
-    </Tooltip>
-  )
-}

@@ -20,7 +20,7 @@ async function openFolder(page: Page) {
   await page.goto('/')
   await page.evaluate((chosen) => window.__plumoMockVault?.queueDialogSelection([chosen]), MOCK_FOLDER)
   await page.keyboard.press('Meta+o')
-  await expect(page.getByTestId('explorer-toggle')).toHaveAttribute('title', MOCK_FOLDER)
+  await expect(page.getByTestId('explorer-toggle')).toHaveText('Notes')
 }
 
 function folderPaths(page: Page): Promise<string[]> {

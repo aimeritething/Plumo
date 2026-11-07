@@ -2,7 +2,7 @@ import { createReactBlockSpec } from '@blocknote/react'
 import { ArrowsOut as Maximize2, PencilSimpleLine } from '@phosphor-icons/react'
 import { useEffect, useId, useMemo, useState, type SyntheticEvent } from 'react'
 import { MERMAID_BLOCK_TYPE, mermaidFenceSource } from '@/kernel/markdown/mermaid-markdown'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
+import { SimpleTooltip } from '@/ui/tooltip'
 import { Toolbar, ToolbarButton } from '@/ui/toolbar'
 import {
   Dialog,
@@ -212,35 +212,29 @@ function openRawEditorForMermaidSource(event: SyntheticEvent): void {
 
 function MermaidRawEditorButton() {
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <ToolbarButton
-          aria-label={OPEN_RAW_EDITOR_LABEL}
-          onClick={openRawEditorForMermaidSource}
-          onMouseDown={stopMermaidViewportEvent}
-          size="sm"
-        >
-          <PencilSimpleLine aria-hidden="true" />
-        </ToolbarButton>
-      </TooltipTrigger>
-      <TooltipContent side="bottom">{OPEN_RAW_EDITOR_LABEL}</TooltipContent>
-    </Tooltip>
+    <SimpleTooltip label={OPEN_RAW_EDITOR_LABEL} side="bottom">
+      <ToolbarButton
+        aria-label={OPEN_RAW_EDITOR_LABEL}
+        onClick={openRawEditorForMermaidSource}
+        onMouseDown={stopMermaidViewportEvent}
+        size="sm"
+      >
+        <PencilSimpleLine aria-hidden="true" />
+      </ToolbarButton>
+    </SimpleTooltip>
   )
 }
 
 function MermaidLightbox({ svg }: { svg: string }) {
   return (
     <Dialog>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <DialogTrigger asChild>
-            <ToolbarButton aria-label="Open Mermaid diagram" size="sm">
-              <Maximize2 aria-hidden="true" />
-            </ToolbarButton>
-          </DialogTrigger>
-        </TooltipTrigger>
-        <TooltipContent side="bottom">Open diagram</TooltipContent>
-      </Tooltip>
+      <SimpleTooltip label="Open diagram" side="bottom">
+        <DialogTrigger asChild>
+          <ToolbarButton aria-label="Open Mermaid diagram" size="sm">
+            <Maximize2 aria-hidden="true" />
+          </ToolbarButton>
+        </DialogTrigger>
+      </SimpleTooltip>
       <DialogContent variant="bare" showCloseButton>
         <DialogTitle className="sr-only">Mermaid diagram</DialogTitle>
         <DialogDescription className="sr-only">

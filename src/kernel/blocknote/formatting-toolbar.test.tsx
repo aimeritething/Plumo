@@ -87,6 +87,7 @@ vi.mock('@/ui/tooltip', () => ({
   Tooltip: ({ children }: { children?: ReactNode }) => <>{children}</>,
   TooltipTrigger: ({ children }: { children?: ReactNode }) => <>{children}</>,
   TooltipContent: () => null,
+  SimpleTooltip: ({ children }: { children?: ReactNode }) => <>{children}</>,
 }))
 
 vi.mock('@phosphor-icons/react', () => ({

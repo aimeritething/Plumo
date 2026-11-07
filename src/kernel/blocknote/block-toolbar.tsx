@@ -12,7 +12,7 @@ import {
 import { Input } from '@/ui/input'
 import { Popover, PopoverAnchor, PopoverContent } from '@/ui/popover'
 import { Toolbar, ToolbarButton } from '@/ui/toolbar'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
+import { SimpleTooltip } from '@/ui/tooltip'
 
 // The parts of a toolbar drawn on a Block, Notion's: a few buttons and a `⋯`
 // menu on the shared raised toolbar card, in a corner of the Block, shown on
@@ -51,15 +51,6 @@ export function hiddenFromTab(shown: boolean) {
   return shown ? {} : { tabIndex: -1 }
 }
 
-export function BlockToolbarTooltip({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>{children}</TooltipTrigger>
-      <TooltipContent side="bottom">{label}</TooltipContent>
-    </Tooltip>
-  )
-}
-
 /** One of the toolbar's icon buttons, with its label as the tooltip. */
 export function BlockToolbarButton({ children, disabled, label, shown, testId, onClick }: {
   children: ReactNode
@@ -70,11 +61,11 @@ export function BlockToolbarButton({ children, disabled, label, shown, testId, o
   onClick: () => void
 }) {
   return (
-    <BlockToolbarTooltip label={label}>
+    <SimpleTooltip label={label} side="bottom">
       <ToolbarButton aria-label={label} data-testid={testId} disabled={disabled} onClick={onClick} size="sm" {...hiddenFromTab(shown)}>
         {children}
       </ToolbarButton>
-    </BlockToolbarTooltip>
+    </SimpleTooltip>
   )
 }
 
@@ -112,13 +103,13 @@ export function BlockToolbarMenu({ items, label, shown, testId, onPopupOpenChang
         onPopupOpenChange(next)
       }}
     >
-      <BlockToolbarTooltip label={label}>
+      <SimpleTooltip label={label} side="bottom">
         <DropdownMenuTrigger asChild>
           <ToolbarButton aria-label={label} data-testid={testId} size="sm" {...hiddenFromTab(shown)}>
             <DotsThree aria-hidden="true" weight="bold" />
           </ToolbarButton>
         </DropdownMenuTrigger>
-      </BlockToolbarTooltip>
+      </SimpleTooltip>
       <DropdownMenuContent
         align="end"
         onCloseAutoFocus={(event) => {

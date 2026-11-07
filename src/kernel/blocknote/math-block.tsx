@@ -28,7 +28,6 @@ export const MATH_INLINE_CONFIG = {
 } as const
 
 function MathRender({ latex, displayMode }: { latex: string; displayMode: boolean }) {
-  const source = displayMode ? `$$\n${latex}\n$$` : `$${latex}$`
   return (
     <SafeHtmlSpan
       aria-label={`Math: ${latex}`}
@@ -40,7 +39,6 @@ function MathRender({ latex, displayMode }: { latex: string; displayMode: boolea
       data-math-mode={displayMode ? 'block' : 'inline'}
       markup={renderMathToHtml({ latex, displayMode })}
       role="img"
-      title={source}
     />
   )
 }

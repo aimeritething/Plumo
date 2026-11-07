@@ -1,10 +1,10 @@
 import { CaretDown as ChevronDown, CaretRight as ChevronRight, CaretUp as ChevronUp, X } from '@phosphor-icons/react'
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { EditorView } from '@codemirror/view'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Toggle } from '@/ui/toggle'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
+import { SimpleTooltip } from '@/ui/tooltip'
 import { cn } from '@/lib/cn'
 import { translate, type AppLocale } from '@/lib/i18n'
 import { isImeKeyEvent } from '@/lib/ime-key-event'
@@ -342,16 +342,16 @@ function FindNavigationControls({
   const nextLabel = translate(locale, 'editor.find.nextMatch')
   return (
     <>
-      <FindTooltip label={previousLabel}>
+      <SimpleTooltip label={previousLabel} side="bottom">
         <Button type="button" variant="icon" size="icon-xs" aria-label={previousLabel} disabled={!hasMatches} onClick={movePrevious}>
           <ChevronUp />
         </Button>
-      </FindTooltip>
-      <FindTooltip label={nextLabel}>
+      </SimpleTooltip>
+      <SimpleTooltip label={nextLabel} side="bottom">
         <Button type="button" variant="icon" size="icon-xs" aria-label={nextLabel} disabled={!hasMatches} onClick={moveNext}>
           <ChevronDown />
         </Button>
-      </FindTooltip>
+      </SimpleTooltip>
     </>
   )
 }
@@ -369,32 +369,22 @@ function FindModeControls({
   const closeLabel = translate(locale, 'editor.find.close')
   return (
     <>
-      <FindTooltip label={regexLabel}>
+      <SimpleTooltip label={regexLabel} side="bottom">
         <Toggle pressed={regex} data-state={regex ? 'on' : 'off'} aria-label={regexLabel} onPressedChange={toggleRegex}>
           .*
         </Toggle>
-      </FindTooltip>
-      <FindTooltip label={matchCaseLabel}>
+      </SimpleTooltip>
+      <SimpleTooltip label={matchCaseLabel} side="bottom">
         <Toggle pressed={caseSensitive} data-state={caseSensitive ? 'on' : 'off'} aria-label={matchCaseLabel} onPressedChange={toggleCaseSensitive}>
           Aa
         </Toggle>
-      </FindTooltip>
-      <FindTooltip label={closeLabel}>
+      </SimpleTooltip>
+      <SimpleTooltip label={closeLabel} side="bottom">
         <Button type="button" variant="icon" size="icon-xs" aria-label={closeLabel} onClick={close}>
           <X />
         </Button>
-      </FindTooltip>
+      </SimpleTooltip>
     </>
-  )
-}
-
-/** An icon control's tooltip, below it. A `Toggle` inside restates its `data-state`: the trigger writes its own over it. */
-function FindTooltip({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>{children}</TooltipTrigger>
-      <TooltipContent side="bottom">{label}</TooltipContent>
-    </Tooltip>
   )
 }
 
@@ -403,11 +393,11 @@ function FindControls(options: FindControlsProps) {
   const replaceLabel = translate(locale, replaceOpen ? 'editor.find.hideReplace' : 'editor.find.showReplace')
   return (
     <div className="flex min-w-0 items-center gap-1.5">
-      <FindTooltip label={replaceLabel}>
+      <SimpleTooltip label={replaceLabel} side="bottom">
         <Button type="button" variant="icon" size="icon-xs" aria-label={replaceLabel} onClick={() => onReplaceOpenChange(!replaceOpen)}>
           <ChevronRight className={cn('transition-transform', replaceOpen && 'rotate-90')} />
         </Button>
-      </FindTooltip>
+      </SimpleTooltip>
       <Input
         ref={findInputRef}
         type="search"

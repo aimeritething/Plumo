@@ -1,7 +1,7 @@
 import type { ComponentProps } from 'react'
 import { DotsThree, Plus } from '@phosphor-icons/react'
 import { Button } from '@/ui/button'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
+import { SimpleTooltip } from '@/ui/tooltip'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,12 +32,9 @@ interface ExplorerHeaderActionsProps {
  */
 function HeaderAction({ label, ...props }: ComponentProps<'button'> & { label: string }) {
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button variant="icon" size="icon-2xs" aria-label={label} {...props} />
-      </TooltipTrigger>
-      <TooltipContent side="bottom">{label}</TooltipContent>
-    </Tooltip>
+    <SimpleTooltip label={label} side="bottom">
+      <Button variant="icon" size="icon-2xs" aria-label={label} {...props} />
+    </SimpleTooltip>
   )
 }
 

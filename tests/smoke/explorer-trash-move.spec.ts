@@ -11,7 +11,7 @@ async function openFolder(page: Page) {
   await expect(page.getByTestId('editor-empty-state')).toBeVisible()
   await page.evaluate((chosen) => window.__plumoMockVault?.queueDialogSelection([chosen]), MOCK_FOLDER)
   await page.keyboard.press('Meta+o')
-  await expect(page.getByTestId('explorer-toggle')).toHaveAttribute('title', MOCK_FOLDER)
+  await expect(page.getByTestId('explorer-toggle')).toHaveText('Notes')
 }
 
 function folderPaths(page: Page): Promise<string[]> {
@@ -104,7 +104,7 @@ test('dragging a Document onto a folder moves it, and its Tab follows without a 
     .dragTo(page.getByTestId(`explorer-row:${MOCK_FOLDER}/Projects`))
 
   await expect(page.getByTestId(`tab:${MOCK_FOLDER}/Projects/Welcome.md`)).toBeVisible()
-  await expect(page.getByRole('tab', { selected: true })).toHaveAttribute('title', `${MOCK_FOLDER}/Projects/Welcome.md`)
+  await expect(page.getByRole('tab', { selected: true })).toHaveAttribute('data-testid', `tab:${MOCK_FOLDER}/Projects/Welcome.md`)
   await expect(page.locator('.bn-editor h1')).toHaveText('Welcome')
   expect(await folderPaths(page)).toContain(`${MOCK_FOLDER}/Projects/Welcome.md`)
 
@@ -173,7 +173,7 @@ test('moving the open Document in Finder retargets its Tab, renaming it closes t
   )
 
   await expect(page.getByTestId(`tab:${MOCK_FOLDER}/Projects/Welcome.md`)).toBeVisible()
-  await expect(page.getByRole('tab', { selected: true })).toHaveAttribute('title', `${MOCK_FOLDER}/Projects/Welcome.md`)
+  await expect(page.getByRole('tab', { selected: true })).toHaveAttribute('data-testid', `tab:${MOCK_FOLDER}/Projects/Welcome.md`)
 
   await externalChange(
     page,
@@ -204,6 +204,6 @@ test('renaming a folder in Finder retargets every Tab under it', async ({ page }
 
   await expect(page.getByTestId(`tab:${MOCK_FOLDER}/Work/Plumo.md`)).toBeVisible()
   await expect(page.getByTestId(`tab:${MOCK_FOLDER}/Work/Plan.md`)).toBeVisible()
-  await expect(page.getByRole('tab', { selected: true })).toHaveAttribute('title', `${MOCK_FOLDER}/Work/Plan.md`)
+  await expect(page.getByRole('tab', { selected: true })).toHaveAttribute('data-testid', `tab:${MOCK_FOLDER}/Work/Plan.md`)
   await expect(page.locator('.bn-editor h1')).toHaveText('Plan')
 })

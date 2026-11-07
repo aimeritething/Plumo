@@ -1,11 +1,11 @@
 import { LinkToolbarExtension } from '@blocknote/core/extensions'
 import { useDictionary, useExtension, type LinkToolbarProps } from '@blocknote/react'
 import { Globe, LinkBreak, PencilSimple } from '@phosphor-icons/react'
-import { useCallback, useState, type ReactNode } from 'react'
+import { useCallback, useState } from 'react'
 import { translate } from '@/lib/i18n'
 import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from '@/ui/popover'
 import { Toolbar, ToolbarButton, ToolbarSeparator } from '@/ui/toolbar'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
+import { SimpleTooltip } from '@/ui/tooltip'
 import { LinkForm } from './link-form'
 
 // The Link toolbar (CONTEXT.md): what shows over a link under the caret or
@@ -20,15 +20,6 @@ import { LinkForm } from './link-form'
 // mark off and closes the toolbar. BlockNote's LinkToolbarController places it.
 
 type OpenLink = { onOpenLink: (href: string) => void }
-
-function LinkToolbarTooltip({ children, label }: { children: ReactNode; label: string }) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>{children}</TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
-  )
-}
 
 export function LinkToolbar({
   onOpenLink,
@@ -54,25 +45,22 @@ export function LinkToolbar({
     <Popover open={editing} onOpenChange={setEditOpen}>
       <PopoverAnchor asChild>
         <Toolbar aria-label={translate('en', 'editor.link.toolbar')} data-link-toolbar="" variant="floating">
-          <LinkToolbarTooltip label={openLabel}>
+          <SimpleTooltip label={openLabel}>
             <ToolbarButton aria-label={openLabel} data-test="openLink" onClick={() => onOpenLink(url)}>
               <Globe aria-hidden="true" />
               <span className="max-w-60 truncate">{url}</span>
             </ToolbarButton>
-          </LinkToolbarTooltip>
+          </SimpleTooltip>
           <ToolbarSeparator />
-          {/* The tooltip trigger is the popover trigger's child, so the popover's open / closed data-state is the one the button keeps. */}
-          <Tooltip>
-            <PopoverTrigger asChild>
-              <TooltipTrigger asChild>
-                <ToolbarButton aria-label={editLabel} data-test="editLink">
-                  <PencilSimple aria-hidden="true" />
-                </ToolbarButton>
-              </TooltipTrigger>
-            </PopoverTrigger>
-            <TooltipContent>{editLabel}</TooltipContent>
-          </Tooltip>
-          <LinkToolbarTooltip label={removeLabel}>
+          {/* The tooltip sits inside the popover trigger, so the popover's open / closed data-state is the one the button keeps. */}
+          <PopoverTrigger asChild>
+            <SimpleTooltip label={editLabel}>
+              <ToolbarButton aria-label={editLabel} data-test="editLink">
+                <PencilSimple aria-hidden="true" />
+              </ToolbarButton>
+            </SimpleTooltip>
+          </PopoverTrigger>
+          <SimpleTooltip label={removeLabel}>
             <ToolbarButton
               aria-label={removeLabel}
               data-test="removeLink"
@@ -83,7 +71,7 @@ export function LinkToolbar({
             >
               <LinkBreak aria-hidden="true" />
             </ToolbarButton>
-          </LinkToolbarTooltip>
+          </SimpleTooltip>
         </Toolbar>
       </PopoverAnchor>
       <PopoverContent align="start" variant="compact">

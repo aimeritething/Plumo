@@ -1,6 +1,6 @@
 import { SidebarSimple } from '@phosphor-icons/react'
 import { Button } from '@/ui/button'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
+import { SimpleTooltip } from '@/ui/tooltip'
 
 const SHORTCUT = '⌘['
 
@@ -23,22 +23,17 @@ interface SidebarToggleProps {
 export function SidebarToggle({ collapsed, onToggle }: SidebarToggleProps) {
   const label = collapsed ? 'Show sidebar' : 'Hide sidebar'
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          variant="icon"
-          size="icon-xs"
-          className="absolute top-3.5 left-20.5 z-raised"
-          aria-label={label}
-          data-testid="sidebar-toggle"
-          onClick={onToggle}
-        >
-          <SidebarSimple aria-hidden="true" />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent side="bottom" shortcut={SHORTCUT}>
-        {label}
-      </TooltipContent>
-    </Tooltip>
+    <SimpleTooltip label={label} side="bottom" shortcut={SHORTCUT}>
+      <Button
+        variant="icon"
+        size="icon-xs"
+        className="absolute top-3.5 left-20.5 z-raised"
+        aria-label={label}
+        data-testid="sidebar-toggle"
+        onClick={onToggle}
+      >
+        <SidebarSimple aria-hidden="true" />
+      </Button>
+    </SimpleTooltip>
   )
 }

@@ -12,7 +12,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import type { KeyboardEvent, PointerEvent as ReactPointerEvent, ReactNode, RefObject, SyntheticEvent } from 'react'
+import type { KeyboardEvent, PointerEvent as ReactPointerEvent, RefObject, SyntheticEvent } from 'react'
 import { APP_COMMAND_EVENT_NAME, APP_COMMAND_IDS } from '@/shell/app-command-dispatcher'
 import { translate } from '@/lib/i18n'
 import { trackEvent } from '@/lib/telemetry'
@@ -30,7 +30,7 @@ import { dispatchRichEditorExternalChange } from './editor-external-change-event
 import { readFencedPreElement } from './fenced-pre-element'
 import { Button } from '@/ui/button'
 import { cn } from '@/lib/cn'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
+import { SimpleTooltip } from '@/ui/tooltip'
 import { Toolbar, ToolbarButton, toolbarVariants } from '@/ui/toolbar'
 
 export const HTML_BLOCK_CONFIG = {
@@ -321,40 +321,30 @@ interface HtmlBlockToolbarProps {
   resetHeight: (event: SyntheticEvent) => void
 }
 
-/** A block control's tooltip: below the toolbar's buttons, left of the resize handle in the bottom corner. */
-function HtmlBlockTooltip({ label, side = 'bottom', children }: { label: string; side?: 'bottom' | 'left'; children: ReactNode }) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>{children}</TooltipTrigger>
-      <TooltipContent side={side}>{label}</TooltipContent>
-    </Tooltip>
-  )
-}
-
 function HtmlBlockToolbar({ copySource, resetHeight }: HtmlBlockToolbarProps) {
   return (
     <Toolbar
       className="absolute top-2 right-2 z-raised opacity-0 transition-opacity duration-150 ease-out group-focus-within:opacity-100 group-hover:opacity-100"
       aria-label={t('editor.htmlBlock.toolbar')}
     >
-      <HtmlBlockTooltip label={t('editor.htmlBlock.copySource')}>
+      <SimpleTooltip label={t('editor.htmlBlock.copySource')} side="bottom">
         <ToolbarButton aria-label={t('editor.htmlBlock.copySource')} onClick={copySource}
           onMouseDown={stopHtmlBlockEvent} size="sm">
           <Copy aria-hidden="true" />
         </ToolbarButton>
-      </HtmlBlockTooltip>
-      <HtmlBlockTooltip label={t('editor.htmlBlock.openRawEditor')}>
+      </SimpleTooltip>
+      <SimpleTooltip label={t('editor.htmlBlock.openRawEditor')} side="bottom">
         <ToolbarButton aria-label={t('editor.htmlBlock.openRawEditor')}
           onClick={openRawEditorForHtmlSource} onMouseDown={stopHtmlBlockEvent} size="sm">
           <Code aria-hidden="true" />
         </ToolbarButton>
-      </HtmlBlockTooltip>
-      <HtmlBlockTooltip label={t('editor.htmlBlock.resetHeight')}>
+      </SimpleTooltip>
+      <SimpleTooltip label={t('editor.htmlBlock.resetHeight')} side="bottom">
         <ToolbarButton aria-label={t('editor.htmlBlock.resetHeight')} onClick={resetHeight}
           onMouseDown={stopHtmlBlockEvent} size="sm">
           <ArrowsClockwise aria-hidden="true" />
         </ToolbarButton>
-      </HtmlBlockTooltip>
+      </SimpleTooltip>
     </Toolbar>
   )
 }
@@ -392,13 +382,13 @@ function HtmlBlockResizeHandle({ onKeyDown, onPointerDown }: {
   return (
     // A grip, not a toolbar: the toolbar's card, a plain button on it.
     <div className={toolbarVariants({ className: 'absolute right-1.5 bottom-1.5 z-raised opacity-0 group-focus-within:opacity-100 group-hover:opacity-100' })}>
-      <HtmlBlockTooltip label={t('editor.htmlBlock.resizeHeight')} side="left">
+      <SimpleTooltip label={t('editor.htmlBlock.resizeHeight')} side="left">
         <Button aria-label={t('editor.htmlBlock.resizeHeight')} className="cursor-ns-resize"
           onKeyDown={onKeyDown} onMouseDown={stopHtmlBlockEvent} onPointerDown={onPointerDown}
           size="icon-xs" type="button" variant="icon">
           <ArrowsOutLineVertical aria-hidden="true" />
         </Button>
-      </HtmlBlockTooltip>
+      </SimpleTooltip>
     </div>
   )
 }

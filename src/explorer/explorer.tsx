@@ -431,7 +431,7 @@ function ExplorerRow(props: RowProps) {
             )}
             style={{ paddingLeft: explorerRowIndent(depth) }}
             data-drop-target={isDropTarget || undefined}
-            data-testid={`explorer-row:${node.path}`} tabIndex={0} title={node.path}
+            data-testid={`explorer-row:${node.path}`} tabIndex={0}
             {...dragProps} {...dropProps}
             onClick={select} onKeyDown={(event) => {
               if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); select() }

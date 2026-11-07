@@ -9,7 +9,7 @@ import {
 } from './markdown-highlight-control-state'
 import type { HighlightEditor } from './markdown-highlight-model'
 import { Button } from '@/ui/button'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
+import { SimpleTooltip } from '@/ui/tooltip'
 
 // Shown while the focus is in the editor, or in the button or its colour menu
 // (the menu is portaled, so it counts while open). The menu and the tooltip
@@ -31,33 +31,30 @@ export function HighlightBoundaryColorControl({ editor }: { editor: HighlightEdi
       data-test="highlightBoundaryControl"
       style={{ left: state.left, top: state.top }}
     >
-      {/* The tooltip trigger is the menu trigger's child, so the menu's open / closed data-state is the one the button keeps. */}
-      <Tooltip>
-        <MarkdownHighlightColorMenu
-          currentColor={state.color}
-          editor={editor}
-          locale={locale}
-          onOpenChange={setMenuOpen}
-          readRange={() => state}
-          side={state.side}
-          source="cursor"
-          trigger={(
-            <TooltipTrigger asChild>
-              <Button
-                aria-label={label}
-                className="bg-popover text-foreground border-hairline border-border shadow-md"
-                data-test="highlightBoundaryColorMenu"
-                onMouseDown={event => event.preventDefault()}
-                size="icon-xs"
-                variant="ghost"
-              >
-                <Highlighter aria-hidden="true" />
-              </Button>
-            </TooltipTrigger>
-          )}
-        />
-        <TooltipContent side={state.side}>{label}</TooltipContent>
-      </Tooltip>
+      {/* The tooltip sits inside the menu trigger, so the menu's open / closed data-state is the one the button keeps. */}
+      <MarkdownHighlightColorMenu
+        currentColor={state.color}
+        editor={editor}
+        locale={locale}
+        onOpenChange={setMenuOpen}
+        readRange={() => state}
+        side={state.side}
+        source="cursor"
+        trigger={(
+          <SimpleTooltip label={label} side={state.side}>
+            <Button
+              aria-label={label}
+              className="bg-popover text-foreground border-hairline border-border shadow-md"
+              data-test="highlightBoundaryColorMenu"
+              onMouseDown={event => event.preventDefault()}
+              size="icon-xs"
+              variant="ghost"
+            >
+              <Highlighter aria-hidden="true" />
+            </Button>
+          </SimpleTooltip>
+        )}
+      />
     </div>
   )
 }

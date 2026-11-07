@@ -77,6 +77,16 @@ describe('SettingsDialog', () => {
     expect(within(group).getByRole('radio', { checked: true })).toHaveAccessibleName('Purple')
   })
 
+  it('names a swatch in a tooltip, not a native title, and keeps its accessible name', async () => {
+    renderDialog()
+
+    const swatch = screen.getByRole('radio', { name: 'Green' })
+    expect(swatch).not.toHaveAttribute('title')
+    fireEvent.focus(swatch)
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Green')
+    expect(swatch).toHaveAccessibleName('Green')
+  })
+
   it('applies a preset on click and on the arrows, and any colour from the panel', () => {
     const props = renderDialog()
 

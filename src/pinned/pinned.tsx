@@ -188,7 +188,6 @@ function PinnedRow({ path, parentHint, active, dragging, dropMark, dragProps, on
           aria-selected={active}
           aria-label={filename}
           tabIndex={0}
-          title={path}
           // WebKit will not start an HTML5 drag from inside `user-select: none` (the whole shell) without this.
           className="relative [-webkit-user-drag:element] data-dragging:opacity-50"
           data-testid={`pinned-row:${path}`}

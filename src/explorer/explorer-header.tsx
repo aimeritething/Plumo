@@ -64,7 +64,6 @@ export function ExplorerHeader(props: ExplorerHeaderProps) {
             className="flex min-w-0 cursor-default items-center gap-1 rounded-sm outline-none focus-visible:focus-ring"
             aria-expanded={!collapsed}
             aria-controls={collapsed ? undefined : treeId}
-            title={folder}
             data-testid="explorer-toggle"
             onClick={onToggleCollapsed}
           >

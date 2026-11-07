@@ -2,7 +2,7 @@ import { useBlockNoteEditor, useDictionary, useEditorState } from '@blocknote/re
 import { TextIndent, TextOutdent } from '@phosphor-icons/react'
 import { useCallback } from 'react'
 import { ToolbarButton } from '@/ui/toolbar'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
+import { SimpleTooltip } from '@/ui/tooltip'
 import { getSelectedBlocksSafely, type FormattingToolbarEditor } from './formatting-toolbar-selection'
 
 // The formatting toolbar's nest and unnest buttons, Plumo's own in place of
@@ -33,19 +33,16 @@ function NestingButton({
   testId: string
 }) {
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <ToolbarButton
-          aria-label={label}
-          data-test={testId}
-          disabled={disabled}
-          onClick={onClick}
-        >
-          {icon}
-        </ToolbarButton>
-      </TooltipTrigger>
-      <TooltipContent shortcut={shortcut}>{label}</TooltipContent>
-    </Tooltip>
+    <SimpleTooltip label={label} shortcut={shortcut}>
+      <ToolbarButton
+        aria-label={label}
+        data-test={testId}
+        disabled={disabled}
+        onClick={onClick}
+      >
+        {icon}
+      </ToolbarButton>
+    </SimpleTooltip>
   )
 }
 

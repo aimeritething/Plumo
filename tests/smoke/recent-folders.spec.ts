@@ -37,7 +37,7 @@ test('a Folder switched away from and back to gets its Tabs and its active Tab b
   await expect(menu.getByRole('menuitem')).toHaveText(['Projects~/Documents/Notes/Projects', 'Notes~/Documents/Notes', 'Open Folder…⌘O', 'Close Folder', 'Settings⌘,'])
   await menu.getByTestId(`recent-folder:${MOCK_FOLDER}`).click()
 
-  await expect(page.getByTestId('explorer-toggle')).toHaveAttribute('title', MOCK_FOLDER)
+  await expect(page.getByTestId('explorer-toggle')).toHaveText('Notes')
   await expect.poll(() => tabNames(page)).toEqual(['Welcome.md', 'Plumo.md'])
   await expect(activeTab(page)).toHaveText('Welcome.md')
   await expect.poll(() => storedSession(page)).toMatchObject({ folder: MOCK_FOLDER, recentFolders: [MOCK_FOLDER, PROJECTS], tabsByFolder: {} })

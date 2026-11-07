@@ -20,7 +20,7 @@ test('Open Folder shows a sorted Explorer, opens Documents, follows Tabs and res
   await explorer.getByRole('button', { name: 'Expand Projects' }).click()
   await page.getByTestId(`explorer-row:${MOCK_FOLDER}/Projects/Plumo.md`).click()
   await expect(page.locator('.bn-editor h1')).toHaveText('Plumo')
-  await expect(page.getByRole('tab', { selected: true })).toHaveAttribute('title', `${MOCK_FOLDER}/Projects/Plumo.md`)
+  await expect(page.getByRole('tab', { selected: true })).toHaveAttribute('data-testid', `tab:${MOCK_FOLDER}/Projects/Plumo.md`)
   await explorer.getByRole('button', { name: 'Collapse Projects' }).click()
   await page.getByTestId(`explorer-row:${MOCK_FOLDER}/Welcome.md`).click()
   await expect(page.locator('.bn-editor h1')).toHaveText('Welcome')
@@ -110,7 +110,7 @@ test('outside Documents stay out of the Explorer and the Pinned list, and reload
   await expect(page.getByTestId('editor-empty-state')).toBeVisible()
   await openFolder(page, `${MOCK_FOLDER}/Projects`)
   await openDocumentThroughDialog(page, `${MOCK_FOLDER}/Welcome.md`)
-  await expect(page.getByRole('tab', { selected: true })).toHaveAttribute('title', `${MOCK_FOLDER}/Welcome.md`)
+  await expect(page.getByRole('tab', { selected: true })).toHaveAttribute('data-testid', `tab:${MOCK_FOLDER}/Welcome.md`)
   // Pin/Unpin is greyed in the "…": only a file in the Folder can be pinned.
   await page.getByTestId('tab-more').click()
   await expect(page.getByRole('menuitem', { name: 'Pin', exact: true })).toHaveAttribute('data-disabled')

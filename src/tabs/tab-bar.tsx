@@ -6,7 +6,7 @@ import { tabParentHints } from './tab-labels'
 import { CloseAffordance } from './close-affordance'
 import { APP_COMMAND_DEFINITIONS, APP_COMMAND_IDS } from '@/shell/app-command-catalog'
 import { Button } from '@/ui/button'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
+import { SimpleTooltip } from '@/ui/tooltip'
 
 const MIDDLE_BUTTON = 1
 const NEW_DOCUMENT_SHORTCUT = APP_COMMAND_DEFINITIONS[APP_COMMAND_IDS.fileNewNote].shortcut?.display
@@ -111,21 +111,18 @@ function useWheelScrollsSideways(stripRef: RefObject<HTMLDivElement | null>, mou
 /** "+": a 24px icon button, 2px further from the last Tab than the Tabs are from each other. */
 function NewDocumentButton({ onNewDocument }: { onNewDocument: () => void }) {
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          variant="icon"
-          size="icon-xs"
-          className="ml-0.5"
-          aria-label="New Document"
-          data-testid="tab-bar-new-document"
-          onClick={onNewDocument}
-        >
-          <Plus aria-hidden="true" />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent side="bottom" shortcut={NEW_DOCUMENT_SHORTCUT}>New Document</TooltipContent>
-    </Tooltip>
+    <SimpleTooltip label="New Document" side="bottom" shortcut={NEW_DOCUMENT_SHORTCUT}>
+      <Button
+        variant="icon"
+        size="icon-xs"
+        className="ml-0.5"
+        aria-label="New Document"
+        data-testid="tab-bar-new-document"
+        onClick={onNewDocument}
+      >
+        <Plus aria-hidden="true" />
+      </Button>
+    </SimpleTooltip>
   )
 }
 
@@ -156,7 +153,6 @@ function TabPill({ path, filename, parentHint, active, onActivate, onClose }: Ta
       aria-selected={active}
       aria-label={parentHint ? `${filename}, ${parentHint}` : filename}
       tabIndex={active ? 0 : -1}
-      title={path}
       data-testid={`tab:${path}`}
       onClick={() => onActivate(path)}
       // A middle-click closes the Tab through the same close as its ×. Both

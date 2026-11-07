@@ -97,4 +97,35 @@ function TooltipContent({
   )
 }
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }
+/**
+ * The common tooltip: one trigger, a label, an optional shortcut and side.
+ * Props a parent Slot hands down (a menu, popover or dialog trigger with
+ * `asChild`, wrapping this) go on to the trigger, so that parent's handlers,
+ * ref and open / closed `data-state` reach the button underneath. A child that
+ * keeps a `data-state` of its own (a `Toggle`) has to restate it as a prop:
+ * otherwise the tooltip's open / closed state is written over it.
+ */
+function SimpleTooltip({
+  label,
+  shortcut,
+  side,
+  children,
+  ...triggerProps
+}: Omit<ComponentProps<typeof TooltipPrimitive.Trigger>, "asChild"> & {
+  label: ReactNode
+  shortcut?: string
+  side?: ComponentProps<typeof TooltipPrimitive.Content>["side"]
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild {...triggerProps}>
+        {children}
+      </TooltipTrigger>
+      <TooltipContent side={side} shortcut={shortcut}>
+        {label}
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
+export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider, SimpleTooltip }

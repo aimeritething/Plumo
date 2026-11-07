@@ -36,7 +36,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/ui/dropdown-menu'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
+import { SimpleTooltip } from '@/ui/tooltip'
 import { richEditorBlockTypeName } from './rich-editor-block-types'
 import {
   useCallback,
@@ -232,7 +232,7 @@ function AddBlockButton() {
   if (!block) return null
 
   return (
-    <SideMenuTooltip label={dict.side_menu.add_block_label}>
+    <SimpleTooltip label={dict.side_menu.add_block_label} side="bottom">
       <Button
         aria-label={dict.side_menu.add_block_label}
         onClick={onButtonClick}
@@ -241,17 +241,7 @@ function AddBlockButton() {
       >
         <Plus data-test="dragHandleAdd" />
       </Button>
-    </SideMenuTooltip>
-  )
-}
-
-/** A side menu button's tooltip, below it, as the tab bar's are. */
-function SideMenuTooltip({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>{children}</TooltipTrigger>
-      <TooltipContent side="bottom">{label}</TooltipContent>
-    </Tooltip>
+    </SimpleTooltip>
   )
 }
 
@@ -293,7 +283,7 @@ function HeadingCollapseButton({ locale }: { locale: AppLocale }) {
   if (!isCollapsible) return null
 
   return (
-    <SideMenuTooltip label={label}>
+    <SimpleTooltip label={label} side="bottom">
       <Button
         aria-label={label}
         onClick={onButtonClick}
@@ -302,7 +292,7 @@ function HeadingCollapseButton({ locale }: { locale: AppLocale }) {
       >
         <Icon onClick={onButtonClick} data-test="headingCollapseToggle" />
       </Button>
-    </SideMenuTooltip>
+    </SimpleTooltip>
   )
 }
 
@@ -369,7 +359,7 @@ function DragHandleButton({ locale = 'en' }: { locale?: AppLocale }) {
           setMenuOpen(!openRef.current)
         }}
       >
-        <SideMenuTooltip label={dict.side_menu.drag_handle_label}>
+        <SimpleTooltip label={dict.side_menu.drag_handle_label} side="bottom">
           <Button
             aria-expanded={open}
             aria-haspopup="menu"
@@ -389,7 +379,7 @@ function DragHandleButton({ locale = 'en' }: { locale?: AppLocale }) {
           >
             <GripVertical data-test="dragHandle" />
           </Button>
-        </SideMenuTooltip>
+        </SimpleTooltip>
         <DropdownMenuTrigger asChild>
           <span aria-hidden="true" className="pointer-events-none absolute inset-0" tabIndex={-1} />
         </DropdownMenuTrigger>
