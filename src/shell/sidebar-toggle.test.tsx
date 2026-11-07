@@ -1,20 +1,28 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { TooltipProvider } from '@/ui/tooltip'
+import { SidebarProvider } from '@/ui/sidebar'
 import { SidebarToggle } from './sidebar-toggle'
 
-function renderWithTooltips(ui: React.ReactElement) {
-  return render(<TooltipProvider>{ui}</TooltipProvider>)
+function renderToggle(open: boolean) {
+  const onOpenChange = vi.fn()
+  render(
+    <TooltipProvider>
+      <SidebarProvider open={open} onOpenChange={onOpenChange}>
+        <SidebarToggle />
+      </SidebarProvider>
+    </TooltipProvider>,
+  )
+  return { onOpenChange }
 }
 
 describe('SidebarToggle', () => {
   it('hides the sidebar from its top row, with the shortcut as a chip in its tooltip', async () => {
-    const onToggle = vi.fn()
-    renderWithTooltips(<SidebarToggle collapsed={false} onToggle={onToggle} />)
+    const { onOpenChange } = renderToggle(true)
 
     const button = screen.getByRole('button', { name: 'Hide sidebar' })
     fireEvent.click(button)
-    expect(onToggle).toHaveBeenCalledTimes(1)
+    expect(onOpenChange).toHaveBeenCalledExactlyOnceWith(false)
 
     fireEvent.focus(button)
     const tip = await screen.findByRole('tooltip')
@@ -23,13 +31,12 @@ describe('SidebarToggle', () => {
   })
 
   it('shows the sidebar again once collapsed', async () => {
-    const onToggle = vi.fn()
-    renderWithTooltips(<SidebarToggle collapsed onToggle={onToggle} />)
+    const { onOpenChange } = renderToggle(false)
 
     const button = screen.getByRole('button', { name: 'Show sidebar' })
     fireEvent.focus(button)
     expect(await screen.findByRole('tooltip')).toHaveTextContent('Show sidebar ⌘[')
     fireEvent.click(button)
-    expect(onToggle).toHaveBeenCalledTimes(1)
+    expect(onOpenChange).toHaveBeenCalledExactlyOnceWith(true)
   })
 })

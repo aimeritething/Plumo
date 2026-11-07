@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import type { Tab } from './types'
 import { CommandMenu } from '@/command-menu/command-menu'
 import { Editor, type TabCommands } from '@/editor/editor'
@@ -16,6 +16,7 @@ import { findByNotePath } from '@/lib/note-path-identity'
 import { isWithinPrefix } from '@/folder/folder-action-utils'
 import { Sidebar } from '@/shell/sidebar'
 import { SidebarToggle } from '@/shell/sidebar-toggle'
+import { SidebarProvider } from '@/ui/sidebar'
 import { useAppearance } from '@/shell/use-appearance'
 import { WriteFailureDialog } from '@/editor/write-failure-dialog'
 import { dispatchAppCommand, isAppCommandId } from '@/shell/app-command-dispatcher'
@@ -364,6 +365,11 @@ export default function App() {
     createDocument({ rename: !sidebar.collapsed })
   }, [createDocument, sidebar.collapsed])
   const focusActiveEditor = useCallback(() => requestEditorFocus({}), [])
+  // The provider's trigger asks for the opposite of what it shows; the toggle
+  // is the same one ⌘[ and View → Toggle Sidebar run, so it slides.
+  const onSidebarOpenChange = useCallback((open: boolean) => {
+    if (open === sidebar.collapsed) toggleSidebar()
+  }, [sidebar.collapsed, toggleSidebar])
   const onTogglePinnedSection = useCallback(() => toggleSidebarSection('pinned'), [toggleSidebarSection])
   const onToggleExplorerSection = useCallback(() => toggleSidebarSection('explorer'), [toggleSidebarSection])
   const onOpenExplorerSection = useCallback(() => openSidebarSection('explorer'), [openSidebarSection])
@@ -595,13 +601,16 @@ export default function App() {
   // Session's Tab, for a frame before the right state (the window's own
   // background colour is the canvas until then).
   return (
-    <div
-      className="relative flex h-full w-full bg-background text-foreground data-restoring:invisible"
+    <SidebarProvider
+      open={!sidebar.collapsed}
+      onOpenChange={onSidebarOpenChange}
+      className="relative h-full bg-background text-foreground data-restoring:invisible"
+      style={{ '--sidebar-width': `${sidebar.width}px` } as CSSProperties}
       data-testid="shell"
       data-restoring={!(restored && settingsRestored && finderOpenSettled) || undefined}
       data-sidebar-slides={sidebarSlides || undefined}
     >
-      <Sidebar collapsed={sidebar.collapsed} slides={sidebarSlides} width={sidebar.width} onWidthChange={setSidebarWidth}>
+      <Sidebar slides={sidebarSlides} width={sidebar.width} onWidthChange={setSidebarWidth}>
         <Pinned
           paths={pinned.paths}
           activeTabPath={activeTabPath}
@@ -671,7 +680,7 @@ export default function App() {
         themeMode={appearance.themeMode}
         sidebarCollapsed={sidebar.collapsed}
       />
-      <SidebarToggle collapsed={sidebar.collapsed} onToggle={toggleSidebar} />
+      <SidebarToggle />
       <WriteFailureDialog
         prompt={writeFailures.prompt}
         pending={writeFailures.promptPending ?? writeFailures.pendingFor(writeFailures.prompt?.path ?? null)}
@@ -694,6 +703,6 @@ export default function App() {
         primaryColor={appearance.primaryColor}
         onPrimaryColorChange={appearance.setPrimaryColor}
       />
-    </div>
+    </SidebarProvider>
   )
 }

@@ -1,47 +1,71 @@
+import type { CSSProperties, ReactNode } from 'react'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { Sidebar } from './sidebar'
 import { TooltipProvider } from '@/ui/tooltip'
+import { SidebarProvider } from '@/ui/sidebar'
+
+// The shell's provider: open state and the Session's width, as app.tsx passes them.
+function Shell({ collapsed = false, width = 260, children }: { collapsed?: boolean; width?: number; children: ReactNode }) {
+  return (
+    <TooltipProvider>
+      <SidebarProvider open={!collapsed} data-testid="shell" style={{ '--sidebar-width': `${width}px` } as CSSProperties}>
+        {children}
+      </SidebarProvider>
+    </TooltipProvider>
+  )
+}
 
 function renderSidebar(width: number, onWidthChange = vi.fn()) {
   render(
-    <TooltipProvider>
-      <Sidebar collapsed={false} slides={false} width={width} onWidthChange={onWidthChange}><div>rows</div></Sidebar>
-    </TooltipProvider>,
+    <Shell width={width}>
+      <Sidebar slides={false} width={width} onWidthChange={onWidthChange}><div>rows</div></Sidebar>
+    </Shell>,
   )
   return { onWidthChange }
 }
 
 function sidebarAt(collapsed: boolean, slides: boolean) {
-  return <Sidebar collapsed={collapsed} slides={slides} width={260} onWidthChange={vi.fn()}><div>rows</div></Sidebar>
+  return <Shell collapsed={collapsed}><Sidebar slides={slides} width={260} onWidthChange={vi.fn()}><div>rows</div></Sidebar></Shell>
+}
+
+/** shadcn's container: it carries the width, the slide and `inert`, and stays mounted collapsed. */
+function container() {
+  return document.querySelector<HTMLElement>('[data-slot="sidebar-container"]')!
+}
+
+/** The width the sidebar is drawn at: its own `--sidebar-width` during a drag, the provider's otherwise. */
+function drawnWidth() {
+  return container().style.getPropertyValue('--sidebar-width') || screen.getByTestId('shell').style.getPropertyValue('--sidebar-width')
 }
 
 describe('Sidebar', () => {
-  it('is as wide as the Session says, and so is its slot', () => {
+  it('is as wide as the Session says, through the provider\'s --sidebar-width', () => {
     renderSidebar(300)
 
-    expect(screen.getByTestId('sidebar').style.width).toBe('300px')
-    expect(screen.getByTestId('sidebar-slot').style.width).toBe('300px')
+    expect(drawnWidth()).toBe('300px')
+    expect(document.querySelector('[data-slot="sidebar"]')).toHaveAttribute('data-state', 'expanded')
   })
 
-  it('slides out: collapsed, its slot closes and it stays, inert, until the slot\'s width transition ends', () => {
+  it('slides out: collapsed, it goes offcanvas and stays mounted, inert, until its margin transition ends', () => {
     const { rerender } = render(sidebarAt(false, true))
 
     rerender(sidebarAt(true, true))
-    const slot = screen.getByTestId('sidebar-slot')
-    expect(slot.style.width).toBe('0px')
-    expect(screen.getByTestId('sidebar')).toHaveAttribute('inert')
-
-    // A row's own transition ending changes nothing; the slot's width does.
-    fireEvent.transitionEnd(screen.getByText('rows'), { propertyName: 'width' })
-    fireEvent.transitionEnd(slot, { propertyName: 'padding-left' })
+    expect(document.querySelector('[data-slot="sidebar"]')).toHaveAttribute('data-collapsible', 'offcanvas')
+    expect(container()).toHaveAttribute('inert')
     expect(screen.getByTestId('sidebar')).toBeInTheDocument()
-    fireEvent.transitionEnd(slot, { propertyName: 'width' })
+
+    // A row's own transition ending changes nothing; the sidebar's margin does.
+    fireEvent.transitionEnd(screen.getByText('rows'), { propertyName: 'margin-left' })
+    fireEvent.transitionEnd(container(), { propertyName: 'width' })
+    expect(screen.getByTestId('sidebar')).toBeInTheDocument()
+    fireEvent.transitionEnd(container(), { propertyName: 'margin-left' })
     expect(screen.queryByTestId('sidebar')).toBeNull()
 
     rerender(sidebarAt(false, true))
-    expect(screen.getByTestId('sidebar')).not.toHaveAttribute('inert')
-    expect(slot.style.width).toBe('260px')
+    expect(container()).not.toHaveAttribute('inert')
+    expect(screen.getByTestId('sidebar')).toBeInTheDocument()
+    expect(document.querySelector('[data-slot="sidebar"]')).toHaveAttribute('data-collapsible', '')
   })
 
   it('snaps shut on a collapse that does not slide, as a restored Session', () => {
@@ -49,7 +73,7 @@ describe('Sidebar', () => {
 
     rerender(sidebarAt(true, false))
     expect(screen.queryByTestId('sidebar')).toBeNull()
-    expect(screen.getByTestId('sidebar-slot').style.width).toBe('0px')
+    expect(document.querySelector('[data-slot="sidebar"]')).toHaveAttribute('data-state', 'collapsed')
   })
 
   it('follows the pointer while its edge is dragged and reports the width once at release', () => {
@@ -58,12 +82,14 @@ describe('Sidebar', () => {
 
     fireEvent.pointerDown(edge, { pointerId: 1, clientX: 260, button: 0 })
     fireEvent.pointerMove(edge, { pointerId: 1, clientX: 300 })
-    expect(screen.getByTestId('sidebar').style.width).toBe('300px')
+    expect(drawnWidth()).toBe('300px')
+    expect(container()).toHaveAttribute('data-resizing')
     expect(onWidthChange).not.toHaveBeenCalled()
     fireEvent.pointerMove(edge, { pointerId: 1, clientX: 340 })
     fireEvent.pointerUp(edge, { pointerId: 1, clientX: 340 })
 
     expect(onWidthChange).toHaveBeenCalledExactlyOnceWith(340)
+    expect(container()).not.toHaveAttribute('data-resizing')
   })
 
   it('stays inside the sidebar range while dragged', () => {
@@ -72,7 +98,7 @@ describe('Sidebar', () => {
 
     fireEvent.pointerDown(edge, { pointerId: 1, clientX: 260, button: 0 })
     fireEvent.pointerMove(edge, { pointerId: 1, clientX: 900 })
-    expect(screen.getByTestId('sidebar').style.width).toBe('480px')
+    expect(drawnWidth()).toBe('480px')
   })
 
   it('resizes by keyboard from the edge as well', () => {
@@ -89,12 +115,12 @@ describe('Sidebar', () => {
     const onFirst = vi.fn()
     const onSecond = vi.fn()
     render(
-      <TooltipProvider>
-        <Sidebar collapsed={false} slides={false} width={260} onWidthChange={vi.fn()}>
+      <Shell>
+        <Sidebar slides={false} width={260} onWidthChange={vi.fn()}>
           <div onClick={onFirst}>Projects</div>
           <div onClick={onSecond}>Notes</div>
         </Sidebar>
-      </TooltipProvider>,
+      </Shell>,
     )
 
     fireEvent.click(screen.getByText('Projects'), { detail: 1 })
@@ -103,5 +129,19 @@ describe('Sidebar', () => {
 
     expect(onFirst).toHaveBeenCalledTimes(2)
     expect(onSecond).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps no shortcut of its own: ⌘B is not the sidebar\'s, app-command-manifest.json owns shortcuts', () => {
+    const onOpenChange = vi.fn()
+    render(
+      <TooltipProvider>
+        <SidebarProvider open onOpenChange={onOpenChange}>
+          <Sidebar slides={false} width={260} onWidthChange={vi.fn()}><div>rows</div></Sidebar>
+        </SidebarProvider>
+      </TooltipProvider>,
+    )
+
+    fireEvent.keyDown(window, { key: 'b', metaKey: true })
+    expect(onOpenChange).not.toHaveBeenCalled()
   })
 })
