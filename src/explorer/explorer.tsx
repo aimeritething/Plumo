@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, type DragEvent, type RefObject } from 'react'
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent } from 'react'
 import { ContextMenu, ContextMenuTrigger } from '@/ui/context-menu'
 import type { SidebarSelection } from '@/types'
 import { holdsDocument, type ExplorerNode } from '@/folder/explorer'
@@ -18,9 +18,10 @@ import { EXPLORER_ROW_ICONS, explorerRowIndent } from './explorer-row'
 import { ExplorerDisclosure } from './explorer-disclosure'
 import type { ExplorerMenuAction, ExplorerMenuTargetKind } from './explorer-menu-items'
 import { Button } from '@/ui/button'
+import { Collapsible, CollapsibleContent } from '@/ui/collapsible'
 import { Kbd } from '@/ui/kbd'
 import { ScrollArea } from '@/ui/scroll-area'
-import { SidebarRow, SidebarRowIcon, SidebarRowName } from '@/shell/sidebar-row'
+import { SidebarGroup, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/ui/sidebar'
 
 const NO_FOLDER_SELECTION: SidebarSelection = { kind: 'filter', filter: 'all' }
 
@@ -65,18 +66,14 @@ type LoadedProps = ExplorerProps & { folder: string; tree: ExplorerNode }
  * Trash and the drag-and-drop move, all reached from the Linear-styled context
  * menu or the row itself. It is headed by the Folder's name; the Folder itself
  * is not a row (CONTEXT.md, Explorer), so the tree starts at the Folder's top
- * level. The section is a named `group` so the header's hover-only actions can
- * read the pointer over any of it, and it takes the rest of the sidebar so the
- * empty area below the tree reaches the bottom.
+ * level. The section is a `SidebarGroup` so the header's hover-only actions
+ * and caret can read the pointer over any of it, and it takes the rest of the
+ * sidebar so the empty area below the tree reaches the bottom.
  */
 export const Explorer = memo(function Explorer(props: ExplorerProps) {
   const { folder, tree, error, onOpenFolder } = props
   if (!folder || !tree) return <NoFolder error={error} onOpenFolder={onOpenFolder} />
-  return (
-    <section className="group/explorer mt-3 flex min-h-0 flex-1 flex-col" data-testid="explorer">
-      <ExplorerBody key={folder} {...props} folder={folder} tree={tree} />
-    </section>
-  )
+  return <ExplorerBody key={folder} {...props} folder={folder} tree={tree} />
 })
 
 /**
@@ -115,12 +112,30 @@ function folderKeys(node: ExplorerNode, folder: string, keys: string[] = []): st
   return keys
 }
 
-const SCROLL_VIEWPORT_SELECTOR = '[data-slot="scroll-area-viewport"]'
+/**
+ * The rows the tree shows, in order, each with its depth: every top-level
+ * entry, and the children of each open folder under it.
+ */
+function visibleRows(nodes: readonly ExplorerNode[], folder: string, expanded: Record<string, boolean>, depth = 0, rows: { node: ExplorerNode; depth: number }[] = []) {
+  for (const node of nodes) {
+    rows.push({ node, depth })
+    if (node.kind === 'folder' && expanded[node.path.slice(folder.length + 1)]) visibleRows(node.children, folder, expanded, depth + 1, rows)
+  }
+  return rows
+}
 
-/** The tree's scroll position, put back when the sidebar, or the folded tree, is shown again. */
-function useRememberedScroll(treeRef: RefObject<HTMLDivElement | null>, view: ExplorerMemory['view'], shown: boolean) {
+const SCROLL_VIEWPORT_SELECTOR = '[data-slot="scroll-area-viewport"]'
+/** The selected row, once it is listed. */
+const SELECTED_ROW_SELECTOR = '[data-testid^="explorer-row:"][data-active="true"]'
+
+/**
+ * The tree's scroll position, put back when the sidebar, or the folded tree,
+ * is shown again. `tree` is the tree's scroll area while it is mounted: the
+ * folded tree's `CollapsibleContent` mounts it a render after the fold opens.
+ */
+function useRememberedScroll(tree: HTMLDivElement | null, view: ExplorerMemory['view']) {
   useLayoutEffect(() => {
-    const viewport = treeRef.current?.querySelector<HTMLElement>(SCROLL_VIEWPORT_SELECTOR)
+    const viewport = tree?.querySelector<HTMLElement>(SCROLL_VIEWPORT_SELECTOR)
     if (!viewport) return
     viewport.scrollTop = view().scrollTop
     const remember = () => { view().scrollTop = viewport.scrollTop }
@@ -130,7 +145,7 @@ function useRememberedScroll(treeRef: RefObject<HTMLDivElement | null>, view: Ex
       if (viewport.isConnected) remember()
       viewport.removeEventListener('scroll', remember)
     }
-  }, [shown, treeRef, view])
+  }, [tree, view])
 }
 
 /**
@@ -140,7 +155,7 @@ function useRememberedScroll(treeRef: RefObject<HTMLDivElement | null>, view: Ex
  * Document just created goes to the editor instead, and a blur goes nowhere:
  * focus went where the click went.
  */
-function useRowFocusAfterRename(treeRef: RefObject<HTMLDivElement | null>, actions: ExplorerActions, tree: ExplorerNode, onFocusEditor: (() => void) | undefined) {
+function useRowFocusAfterRename(treeElement: HTMLDivElement | null, actions: ExplorerActions, tree: ExplorerNode, onFocusEditor: (() => void) | undefined) {
   const pendingRef = useRef(false)
   const { selected, editing } = actions
 
@@ -151,17 +166,18 @@ function useRowFocusAfterRename(treeRef: RefObject<HTMLDivElement | null>, actio
 
   useEffect(() => {
     if (!pendingRef.current || editing) return
-    const row = treeRef.current?.querySelector<HTMLElement>('[role="treeitem"][aria-selected="true"] > [tabindex]')
+    const row = treeElement?.querySelector<HTMLElement>(SELECTED_ROW_SELECTOR)
     if (!row) return
     pendingRef.current = false
     row.focus({ preventScroll: true })
-  }, [editing, selected, tree, treeRef])
+  }, [editing, selected, tree, treeElement])
 
   return onRenameKeyboardEnd
 }
 
 interface RowIntoViewOptions {
-  treeRef: RefObject<HTMLDivElement | null>
+  /** The tree's scroll area, null while the tree is folded away: a row waits for it to open again. */
+  treeElement: HTMLDivElement | null
   folder: string
   tree: ExplorerNode
   selected: string | null
@@ -169,8 +185,6 @@ interface RowIntoViewOptions {
   expanded: Record<string, boolean>
   expandFolder: (key: string) => void
   view: ExplorerMemory['view']
-  /** The tree folded away under the header: a row waits for it to open again. */
-  collapsed: boolean
 }
 
 /**
@@ -182,7 +196,7 @@ interface RowIntoViewOptions {
  * shutting, not a refresh from the watcher, not a rename ending, and not the
  * sidebar coming back with the same rows it left with.
  */
-function useRowBroughtIntoView({ treeRef, folder, tree, selected, editingPath, expanded, expandFolder, view, collapsed }: RowIntoViewOptions) {
+function useRowBroughtIntoView({ treeElement, folder, tree, selected, editingPath, expanded, expandFolder, view }: RowIntoViewOptions) {
   const pendingRef = useRef<'selected' | 'editing' | null>(null)
 
   useEffect(() => {
@@ -203,20 +217,27 @@ function useRowBroughtIntoView({ treeRef, folder, tree, selected, editingPath, e
   useEffect(() => {
     const pending = pendingRef.current
     if (!pending) return
-    const row = treeRef.current?.querySelector(pending === 'editing' ? '[data-testid="explorer-rename-input"]' : '[aria-selected="true"]')
+    const row = treeElement?.querySelector(pending === 'editing' ? '[data-testid="explorer-rename-input"]' : SELECTED_ROW_SELECTOR)
     if (!row) return
     pendingRef.current = null
     row.scrollIntoView?.({ block: 'nearest' })
-  }, [collapsed, editingPath, expanded, selected, tree, treeRef])
+  }, [editingPath, expanded, selected, tree, treeElement])
 }
 
 /**
  * The Folder's header and tree, remounted per Folder so the disclosure state
- * starts fresh when the Folder changes. The tree scrolls inside a
- * `ScrollArea`; the section shrinks to give it the room. The header and the
- * empty area below the tree are one drop target, the Folder's top level,
- * which the header marks while a file is over either (or over a top-level
- * file row).
+ * starts fresh when the Folder changes. The header is the trigger of a
+ * controlled `Collapsible` whose content is the tree; the fold itself is kept
+ * in the Session. The tree scrolls inside a `ScrollArea`; the section shrinks
+ * to give it the room. The header and the empty area below the tree are one
+ * drop target, the Folder's top level, which the header marks while a file is
+ * over either (or over a top-level file row).
+ *
+ * The tree is one flat `SidebarMenu` of buttons, each row indented by its
+ * depth (`explorerRowIndent`), not nested `SidebarMenuSub`s with a
+ * `Collapsible` per folder: which folders are open already lives in
+ * `useFolderTreeDisclosure`, a nested list would change the rows' look, and
+ * one flat list keeps operations over a run of rows simple.
  */
 function ExplorerBody(props: LoadedProps) {
   const { folder, tree, actions, memory, onCloseFolder, error, collapsed = false, onToggleCollapsed, onExpand } = props
@@ -224,11 +245,12 @@ function ExplorerBody(props: LoadedProps) {
     selection: NO_FOLDER_SELECTION,
     expandedState: [memory.manualExpanded, memory.setManualExpanded],
   })
-  const treeRef = useRef<HTMLDivElement>(null)
+  // State, not a ref, so the effects below run again when the folded tree's scroll area mounts.
+  const [treeElement, setTreeElement] = useState<HTMLDivElement | null>(null)
   const keys = useMemo(() => folderKeys(tree, folder), [folder, tree])
+  const rows = useMemo(() => visibleRows(tree.children, folder, expanded), [expanded, folder, tree])
   const handleCollapseAll = useCallback(() => collapseAll(keys), [collapseAll, keys])
   const drop = useFolderDropTarget(actions.moveInto)
-  const treeId = useId()
   const editingPath = actions.editing?.path ?? null
 
   useEffect(() => {
@@ -244,46 +266,48 @@ function ExplorerBody(props: LoadedProps) {
     onToggleCollapsed?.()
   }, [cancelRename, collapsed, editing, onToggleCollapsed])
 
-  useRememberedScroll(treeRef, memory.view, !collapsed)
-  const onRenameKeyboardEnd = useRowFocusAfterRename(treeRef, actions, tree, props.onFocusEditor)
+  useRememberedScroll(treeElement, memory.view)
+  const onRenameKeyboardEnd = useRowFocusAfterRename(treeElement, actions, tree, props.onFocusEditor)
   useRowBroughtIntoView({
-    treeRef, folder, tree, expanded, expandFolder, collapsed,
+    treeElement, folder, tree, expanded, expandFolder,
     selected: actions.selected,
     editingPath,
     view: memory.view,
   })
 
   return (
-    <>
-      <ExplorerHeader
-        folder={folder}
-        name={tree.name}
-        collapsed={collapsed}
-        onToggleCollapsed={handleToggleCollapsed}
-        treeId={treeId}
-        actions={actions}
-        onCollapseAll={handleCollapseAll}
-        onCloseFolder={onCloseFolder}
-        drop={drop}
-      />
-      {!collapsed && (
-        // The bar sits in the sidebar's right padding, beside the rows rather than over them.
-        <ScrollArea ref={treeRef} id={treeId} className="-mr-3 min-h-0" viewportClassName="pr-3" role="tree" aria-label={tree.name}>
-          {tree.children.map((child) => (
-            <ExplorerRow key={child.path} {...props} node={child} depth={0} expanded={expanded} onToggle={toggleFolder} expandFolder={expandFolder}
-              drop={drop} onRenameKeyboardEnd={onRenameKeyboardEnd} />
-          ))}
-          {/* The empty-Folder line: no `.md` anywhere in the Folder. It goes with the first ⌘N. */}
-          {!holdsDocument(tree) && (
-            <div className="cursor-default py-1 pr-2 pl-4 font-mono text-2xs font-normal text-subtle-foreground" data-testid="explorer-no-documents">
-              No documents yet · ⌘N
-            </div>
-          )}
-        </ScrollArea>
-      )}
-      {error && <div className="p-2 text-xs leading-normal wrap-anywhere" role="status">{error}</div>}
-      <EmptyArea actions={actions} folder={folder} dropProps={drop.dropProps(folder)} />
-    </>
+    <Collapsible open={!collapsed} onOpenChange={handleToggleCollapsed} asChild>
+      <SidebarGroup className="mt-3 min-h-0 flex-1" data-testid="explorer">
+        <ExplorerHeader
+          folder={folder}
+          name={tree.name}
+          collapsed={collapsed}
+          actions={actions}
+          onCollapseAll={handleCollapseAll}
+          onCloseFolder={onCloseFolder}
+          drop={drop}
+        />
+        <CollapsibleContent className="flex min-h-0 flex-col">
+          {/* The bar sits in the sidebar's right padding, beside the rows rather than over them. */}
+          <ScrollArea ref={setTreeElement} className="-mr-3 min-h-0" viewportClassName="pr-3" data-testid="explorer-tree">
+            <SidebarMenu aria-label={tree.name}>
+              {rows.map(({ node, depth }) => (
+                <ExplorerRow key={node.path} {...props} node={node} depth={depth} expanded={expanded} onToggle={toggleFolder} expandFolder={expandFolder}
+                  drop={drop} onRenameKeyboardEnd={onRenameKeyboardEnd} />
+              ))}
+            </SidebarMenu>
+            {/* The empty-Folder line: no `.md` anywhere in the Folder. It goes with the first ⌘N. */}
+            {!holdsDocument(tree) && (
+              <div className="cursor-default py-1 pr-2 pl-4 font-mono text-2xs font-normal text-subtle-foreground" data-testid="explorer-no-documents">
+                No documents yet · ⌘N
+              </div>
+            )}
+          </ScrollArea>
+        </CollapsibleContent>
+        {error && <div className="p-2 text-xs leading-normal wrap-anywhere" role="status">{error}</div>}
+        <EmptyArea actions={actions} folder={folder} dropProps={drop.dropProps(folder)} />
+      </SidebarGroup>
+    </Collapsible>
   )
 }
 
@@ -357,7 +381,7 @@ function useRowDragAndDrop(node: ExplorerNode, isFolder: boolean, isExpanded: bo
 
   const dragProps = useMemo(() => (isFolder ? {} : {
     draggable: true,
-    onDragStart: (event: DragEvent<HTMLDivElement>) => writeNoteDragData(event.dataTransfer, node.path),
+    onDragStart: (event: DragEvent<HTMLElement>) => writeNoteDragData(event.dataTransfer, node.path),
     onDragEnd: () => {
       clearDraggedNotePath()
       endDrag()
@@ -367,6 +391,11 @@ function useRowDragAndDrop(node: ExplorerNode, isFolder: boolean, isExpanded: bo
   return { dragProps, dropProps, isDropTarget: isFolder && drop.target === node.path }
 }
 
+/**
+ * One row of the flat tree: a button, so Tab reaches it and Enter or Space
+ * does what a click does. A folder's row says whether it is open with
+ * `aria-expanded`. Right-click opens the row's menu and selects nothing.
+ */
 function ExplorerRow(props: RowProps) {
   const { node, folder, depth, expanded, onToggle, expandFolder, drop, onOpenFile, actions, pins, onRenameKeyboardEnd } = props
   const isFolder = node.kind === 'folder'
@@ -387,15 +416,9 @@ function ExplorerRow(props: RowProps) {
     else onOpenFile(node.path)
   }
 
-  const children = isFolder && isExpanded && (
-    <div role="group">
-      {node.children.map((child) => <ExplorerRow key={child.path} {...props} node={child} depth={depth + 1} />)}
-    </div>
-  )
-
   if (editing) {
     return (
-      <div role="treeitem" aria-label={node.name} aria-level={depth + 1}>
+      <SidebarMenuItem>
         <ExplorerNameInput
           stem={editing.stem}
           extension={editing.extension}
@@ -407,47 +430,39 @@ function ExplorerRow(props: RowProps) {
           onEdit={actions.clearError}
           onKeyboardEnd={() => onRenameKeyboardEnd(editing.created)}
         />
-        {children}
-      </div>
+      </SidebarMenuItem>
     )
   }
 
-  // The selection is the treeitem's `aria-selected`, right above the row. The
-  // row reads that parent and only that parent (`in-aria-selected:` would match
-  // any ancestor, and a selected folder's children sit inside its treeitem).
   // The folder row a dragged file would land in takes the selected colours and
   // an inset ring, so it is clear which folder that is.
   return (
-    <div role="treeitem" aria-label={node.name} aria-selected={selected} aria-expanded={isFolder ? isExpanded : undefined}
-      aria-level={depth + 1}>
+    <SidebarMenuItem>
       <ContextMenu>
         <ContextMenuTrigger asChild>
-          <SidebarRow
+          <SidebarMenuButton
+            isActive={selected}
+            aria-current={selected || undefined}
+            aria-expanded={isFolder ? isExpanded : undefined}
             className={cn(
-              'mb-0.5 [[aria-selected=true]>&]:bg-sidebar-selected [[aria-selected=true]>&]:text-foreground',
               'data-drop-target:bg-sidebar-selected data-drop-target:text-foreground data-drop-target:ring-1 data-drop-target:ring-primary data-drop-target:ring-inset',
               // WebKit will not start an HTML5 drag from inside `user-select: none` (the whole shell) without this.
               !isFolder && '[-webkit-user-drag:element]',
             )}
             style={{ paddingLeft: explorerRowIndent(depth) }}
             data-drop-target={isDropTarget || undefined}
-            data-testid={`explorer-row:${node.path}`} tabIndex={0}
+            data-testid={`explorer-row:${node.path}`}
             {...dragProps} {...dropProps}
-            onClick={select} onKeyDown={(event) => {
-              if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); select() }
-              if (isFolder && ((event.key === 'ArrowRight' && !isExpanded) || (event.key === 'ArrowLeft' && isExpanded))) {
-                event.preventDefault(); onToggle(relative)
-              }
-            }}>
+            onClick={select}
+          >
             {isFolder
-              ? <ExplorerDisclosure name={node.name} expanded={isExpanded} onToggle={() => onToggle(relative)} />
-              : <SidebarRowIcon icon={Icon} className="[[aria-selected=true]>*>&]:text-foreground" />}
-            <SidebarRowName>{node.name}</SidebarRowName>
-          </SidebarRow>
+              ? <ExplorerDisclosure expanded={isExpanded} onToggle={() => onToggle(relative)} />
+              : <Icon aria-hidden="true" />}
+            <span>{node.name}</span>
+          </SidebarMenuButton>
         </ContextMenuTrigger>
         <ExplorerContextMenu target={target} pinned={!isFolder && (pins?.isPinned(node.path) ?? false)} onAction={onMenuAction} />
       </ContextMenu>
-      {children}
-    </div>
+    </SidebarMenuItem>
   )
 }

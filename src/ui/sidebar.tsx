@@ -18,6 +18,10 @@
 // `sidebar-slide`, which runs only on a toggle and shares its curve with the
 // tab bar. A current item is `sidebar-selected`, not the hover fill
 // (ADR-0012).
+// The groups, labels, menus and rows take Plumo's values under shadcn's
+// names: the sidebar pads its column once, so a group adds no padding of its
+// own; a label is 28px and its icon is the group's fold caret; a row is the
+// 32px row described at `sidebarMenuButtonVariants`.
 
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
@@ -297,7 +301,7 @@ function SidebarGroup({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="sidebar-group"
       data-sidebar="group"
-      className={cn("relative flex w-full min-w-0 flex-col p-2", className)}
+      className={cn("group/sidebar-group relative flex w-full min-w-0 flex-col", className)}
       {...props}
     />
   )
@@ -315,7 +319,11 @@ function SidebarGroupLabel({
       data-slot="sidebar-group-label"
       data-sidebar="group-label"
       className={cn(
-        "flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-muted-foreground outline-none transition-[margin,opacity] duration-200 ease-linear focus-visible:focus-ring [&>svg]:size-4 [&>svg]:shrink-0",
+        "flex h-7 shrink-0 cursor-default items-center gap-1 rounded-md px-2 text-left text-xs font-medium text-muted-foreground outline-none transition-[margin,opacity] duration-200 ease-linear focus-visible:focus-ring [&>span]:truncate",
+        // The icon after a label is its group's fold caret (Pinned, the
+        // Explorer): quiet, and shown only while the pointer is over the
+        // group or the focus is in it.
+        "[&>svg]:size-2.5 [&>svg]:shrink-0 [&>svg]:text-subtle-foreground [&>svg]:opacity-0 [&>svg]:transition-opacity [&>svg]:duration-150 [&>svg]:ease-out group-focus-within/sidebar-group:[&>svg]:opacity-100 group-hover/sidebar-group:[&>svg]:opacity-100",
         "group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0",
         className
       )}
@@ -364,7 +372,7 @@ function SidebarMenu({ className, ...props }: React.ComponentProps<"ul">) {
     <ul
       data-slot="sidebar-menu"
       data-sidebar="menu"
-      className={cn("flex w-full min-w-0 flex-col gap-1", className)}
+      className={cn("flex w-full min-w-0 flex-col gap-0.5", className)}
       {...props}
     />
   )
@@ -381,8 +389,24 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<"li">) {
   )
 }
 
+// Plumo's sidebar row (Pinned, the Explorer, the Recent Folders, the Folder
+// switcher, the Settings sections): 32px, an 8px radius, regular weight, a
+// 16px icon and a name that ellipsises. Hover is `sidebar-accent`, the current
+// item (`isActive`) `sidebar-selected`. A row whose menu is open
+// (`data-state="open"`, from a context menu's or a dropdown's trigger) keeps
+// the hover look while the pointer is in the menu: a right-click does not
+// select, so this is the only mark on the row the menu acts on, and it must
+// not look like the current row. The icons are muted, a step quieter than the
+// name, until the row is hovered, current or holds its menu open; a nested
+// icon (the Explorer's folder caret) follows too. No pressed fill and no
+// medium weight on the current row, which shadcn has.
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:focus-ring active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-selected data-[active=true]:font-medium data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
+  [
+    "peer/menu-button group/menu-button flex w-full cursor-default items-center gap-1.5 overflow-hidden rounded-lg pr-1.5 pl-2 text-left whitespace-nowrap text-sidebar-foreground outline-none transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:focus-ring disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50",
+    "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-selected data-[active=true]:text-sidebar-foreground",
+    "[&>span]:min-w-0 [&>span]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
+    "[&_svg]:text-muted-foreground hover:[&_svg]:text-foreground data-[state=open]:[&_svg]:text-foreground data-[active=true]:[&_svg]:text-foreground",
+  ],
   {
     variants: {
       variant: {
@@ -393,7 +417,8 @@ const sidebarMenuButtonVariants = cva(
       size: {
         default: "h-8 text-sm",
         sm: "h-7 text-xs",
-        lg: "h-12 text-sm group-data-[collapsible=icon]:p-0!",
+        // Two lines, a name over a quieter path (the Recent Folders).
+        lg: "h-10 gap-2 text-sm group-data-[collapsible=icon]:p-0!",
       },
     },
     defaultVariants: {

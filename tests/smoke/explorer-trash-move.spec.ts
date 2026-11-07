@@ -81,7 +81,7 @@ test('an unsaved edit reaches disk before the Document is trashed', async ({ pag
 test('trashing a folder closes every Tab inside it', async ({ page }) => {
   await openFolder(page)
   await externalChange(page, { write: [`${MOCK_FOLDER}/Projects/Plan.md`, '# Plan\n'] }, [`${MOCK_FOLDER}/Projects/Plan.md`])
-  await page.getByRole('button', { name: 'Expand Projects' }).click()
+  await page.getByTestId('explorer-tree').getByRole('button', { name: 'Projects', exact: true }).getByTestId('explorer-disclosure').click()
   await page.getByTestId(`explorer-row:${MOCK_FOLDER}/Projects/Plumo.md`).click()
   await expect(page.locator('.bn-editor h1')).toHaveText('Plumo')
   await page.getByTestId(`explorer-row:${MOCK_FOLDER}/Projects/Plan.md`).click()
@@ -110,13 +110,13 @@ test('dragging a Document onto a folder moves it, and its Tab follows without a 
 
   // The row re-sorted into the folder, which the active Tab keeps revealed,
   // and it is still the selected row.
-  await expect(page.getByTestId(`explorer-row:${MOCK_FOLDER}/Projects/Welcome.md`).locator('..'))
-    .toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByTestId(`explorer-row:${MOCK_FOLDER}/Projects/Welcome.md`))
+    .toHaveAttribute('data-active', 'true')
 })
 
 test("dragging a Document onto the Folder's name moves it to the top level", async ({ page }) => {
   await openFolder(page)
-  await page.getByRole('button', { name: 'Expand Projects' }).click()
+  await page.getByTestId('explorer-tree').getByRole('button', { name: 'Projects', exact: true }).getByTestId('explorer-disclosure').click()
 
   await page.getByTestId(`explorer-row:${MOCK_FOLDER}/Projects/Plumo.md`)
     .dragTo(page.getByTestId('explorer-header'))
@@ -134,7 +134,7 @@ test('a name the folder already holds refuses the move and says so', async ({ pa
     { write: [`${MOCK_FOLDER}/Projects/Welcome.md`, '# Another Welcome\n'] },
     [`${MOCK_FOLDER}/Projects/Welcome.md`],
   )
-  await page.getByRole('button', { name: 'Expand Projects' }).click()
+  await page.getByTestId('explorer-tree').getByRole('button', { name: 'Projects', exact: true }).getByTestId('explorer-disclosure').click()
   await expect(page.getByTestId(`explorer-row:${MOCK_FOLDER}/Projects/Welcome.md`)).toBeVisible()
 
   await page.getByTestId(`explorer-row:${MOCK_FOLDER}/Welcome.md`)
@@ -190,7 +190,7 @@ test('moving the open Document in Finder retargets its Tab, renaming it closes t
 test('renaming a folder in Finder retargets every Tab under it', async ({ page }) => {
   await openFolder(page)
   await externalChange(page, { write: [`${MOCK_FOLDER}/Projects/Plan.md`, '# Plan\n'] }, [`${MOCK_FOLDER}/Projects/Plan.md`])
-  await page.getByRole('button', { name: 'Expand Projects' }).click()
+  await page.getByTestId('explorer-tree').getByRole('button', { name: 'Projects', exact: true }).getByTestId('explorer-disclosure').click()
   await page.getByTestId(`explorer-row:${MOCK_FOLDER}/Projects/Plumo.md`).click()
   await expect(page.locator('.bn-editor h1')).toHaveText('Plumo')
   await page.getByTestId(`explorer-row:${MOCK_FOLDER}/Projects/Plan.md`).click()

@@ -36,7 +36,7 @@ test('the Explorer\'s menu duplicates a Document beside it, opens the copy and s
 
   await expect(explorerRow(page, WELCOME_COPY)).toBeVisible()
   await expect(activeTab(page)).toHaveAttribute('data-testid', `tab:${WELCOME_COPY}`)
-  await expect(page.getByRole('treeitem', { name: 'Welcome copy.md' })).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByTestId('explorer-tree').getByRole('button', { name: 'Welcome copy.md', exact: true })).toHaveAttribute('data-active', 'true')
   await expect(page.locator('.bn-editor h1')).toHaveText('Welcome')
   expect(await savedContent(page, WELCOME_COPY)).toBe(await savedContent(page, WELCOME))
 
@@ -50,7 +50,7 @@ test('the Explorer\'s menu duplicates a Document beside it, opens the copy and s
 
 test('an Image file duplicates from a Pinned row, and the copy is not pinned', async ({ page }) => {
   await openFolder(page)
-  await page.getByLabel('Expand Attachments').click()
+  await page.getByTestId('explorer-tree').getByRole('button', { name: 'Attachments', exact: true }).getByTestId('explorer-disclosure').click()
   await explorerRow(page, LAKE).click({ button: 'right' })
   await page.getByRole('menuitem', { name: 'Pin', exact: true }).click()
 

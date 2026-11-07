@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { ListedFile } from '@/folder/explorer'
-import { TooltipProvider } from '@/ui/tooltip'
+import { SidebarTestProvider } from '@/ui/sidebar.test-utils'
 import { FolderSwitcher } from './folder-switcher'
 import { RecentFolderList } from './recent-folder-list'
 
@@ -22,7 +22,7 @@ function renderSwitcher() {
     onCloseFolder: vi.fn(),
     onOpenSettings: vi.fn(),
   }
-  render(<FolderSwitcher {...props} />, { wrapper: TooltipProvider })
+  render(<FolderSwitcher {...props} />, { wrapper: SidebarTestProvider })
   return props
 }
 
@@ -91,13 +91,13 @@ describe('FolderSwitcher', () => {
 
 describe('RecentFolderList', () => {
   it('is not rendered with no Recent Folder', () => {
-    render(<RecentFolderList paths={[]} home={HOME} onOpen={vi.fn()} />)
+    render(<RecentFolderList paths={[]} home={HOME} onOpen={vi.fn()} />, { wrapper: SidebarTestProvider })
     expect(screen.queryByTestId('recent-folders')).toBeNull()
   })
 
   it('lists each Recent Folder by name and path, and opens the one clicked', () => {
     const onOpen = vi.fn()
-    render(<RecentFolderList paths={[WORK_NOTES, PERSONAL_NOTES]} home={HOME} onOpen={onOpen} />)
+    render(<RecentFolderList paths={[WORK_NOTES, PERSONAL_NOTES]} home={HOME} onOpen={onOpen} />, { wrapper: SidebarTestProvider })
 
     const list = screen.getByRole('region', { name: 'Recent Folders' })
     expect(within(list).getAllByRole('button').map((row) => row.textContent)).toEqual(['notes~/work/notes', 'notes~/personal/notes'])

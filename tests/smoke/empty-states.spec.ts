@@ -40,7 +40,7 @@ test('clicking Open Folder ⌘O opens the dialog, and the Folder-open-no-Tab sta
 
   await page.getByRole('button', { name: 'Open Folder ⌘O' }).click()
 
-  await expect(page.getByRole('tree')).toBeVisible()
+  await expect(page.getByTestId('explorer-tree')).toBeVisible()
   await expect(page.getByTestId('explorer-no-folder')).toHaveCount(0)
   await expect(page.getByTestId('pinned')).toHaveCount(0)
   expect(await hints(page)).toEqual(['⌘NNew document', '⌘PQuick Open'])
@@ -56,7 +56,7 @@ test('a Folder with no .md under it says No documents yet, and the line goes wit
 
   const line = page.getByTestId('explorer-no-documents')
   await expect(line).toHaveText('No documents yet · ⌘N')
-  await expect(page.getByRole('tree')).toContainText('lake.png')
+  await expect(page.getByTestId('explorer-tree')).toContainText('lake.png')
   await expect(page.getByRole('button', { name: /Open Folder/ })).toHaveCount(0)
 
   await page.keyboard.press('Meta+n')
@@ -113,6 +113,6 @@ test('the Tabs of a Folder-less window open into a collapsed sidebar, which hold
 
   const sidebar = page.getByTestId('sidebar')
   await expect(page.getByTestId('explorer-no-folder')).toBeVisible()
-  await expect(sidebar.getByRole('option')).toHaveCount(0)
+  await expect(sidebar.locator('[data-testid^="pinned-row:"]')).toHaveCount(0)
   await expect(page.getByTestId('pinned')).toHaveCount(0)
 })

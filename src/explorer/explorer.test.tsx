@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { TooltipProvider } from '@/ui/tooltip'
+import { SidebarTestProvider } from '@/ui/sidebar.test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Explorer, type ExplorerPins } from './explorer'
 import { useExplorerMemory } from './use-explorer-memory'
@@ -77,7 +77,7 @@ function ExplorerHarness({ actions, onOpenFile = vi.fn(), folder = FOLDER, tree 
 }
 
 function renderExplorer(actions: ExplorerActions, onOpenFile = vi.fn(), pins?: ExplorerPins, fold: Pick<HarnessProps, 'collapsed' | 'onToggleCollapsed' | 'onExpand' | 'onFocusEditor'> = {}) {
-  const view = render(<ExplorerHarness actions={actions} onOpenFile={onOpenFile} pins={pins} {...fold} />, { wrapper: TooltipProvider })
+  const view = render(<ExplorerHarness actions={actions} onOpenFile={onOpenFile} pins={pins} {...fold} />, { wrapper: SidebarTestProvider })
   const rerender = (props: Partial<HarnessProps>) => view.rerender(<ExplorerHarness actions={actions} onOpenFile={onOpenFile} pins={pins} {...props} />)
   return { onOpenFile, rerender }
 }
@@ -92,7 +92,7 @@ describe('the empty states', () => {
           memory={memory} onCloseFolder={vi.fn()} onOpenFolder={onOpenFolder} error={error} />
       )
     }
-    render(<NoFolderHarness />, { wrapper: TooltipProvider })
+    render(<NoFolderHarness />, { wrapper: SidebarTestProvider })
     return { onOpenFolder }
   }
 
@@ -105,7 +105,7 @@ describe('the empty states', () => {
     expect(block).toHaveTextContent('No folder open')
     expect(block).toHaveTextContent('or drop a .md file onto the window')
     expect(screen.queryByTestId('explorer-folder-missing')).toBeNull()
-    expect(screen.queryByRole('tree')).toBeNull()
+    expect(screen.queryByTestId('explorer-tree')).toBeNull()
 
     fireEvent.click(screen.getByRole('button', { name: 'Open Folder ⌘O' }))
     expect(onOpenFolder).toHaveBeenCalledTimes(1)
@@ -127,7 +127,7 @@ describe('the empty states', () => {
     const { rerender } = renderExplorer(stubActions())
     rerender({ tree: emptyTree })
 
-    expect(screen.getByRole('tree')).toContainElement(screen.getByTestId('explorer-no-documents'))
+    expect(screen.getByTestId('explorer-tree')).toContainElement(screen.getByTestId('explorer-no-documents'))
     expect(screen.getByTestId('explorer-no-documents')).toHaveTextContent('No documents yet · ⌘N')
     expect(screen.queryByRole('button', { name: /Open Folder/ })).toBeNull()
 
@@ -136,8 +136,14 @@ describe('the empty states', () => {
   })
 })
 
-const viewport = () => screen.getByRole('tree').querySelector('[data-slot="scroll-area-viewport"]') as HTMLElement
-const isExpanded = (name: string) => screen.getByRole('treeitem', { name }).getAttribute('aria-expanded') === 'true'
+const viewport = () => screen.getByTestId('explorer-tree').querySelector('[data-slot="scroll-area-viewport"]') as HTMLElement
+/** A row is a button named by its file or folder. */
+const rowButton = (name: string) => screen.getByRole('button', { name })
+const isExpanded = (name: string) => rowButton(name).getAttribute('aria-expanded') === 'true'
+/** A folder row's icon, which is its caret on hover: a click there opens or shuts the folder alone. */
+const disclosure = (name: string) => within(rowButton(name)).getByTestId('explorer-disclosure')
+/** The rows listed, in order, by name. */
+const rowNames = () => within(screen.getByRole('list', { name: 'Notes' })).getAllByRole('button').map((row) => row.textContent)
 
 /** Radix opens a context menu from a right-click on its trigger. */
 function rightClick(element: Element) {
@@ -164,7 +170,7 @@ describe('the context menu', () => {
     const pins = { isPinned: (path: string) => path === `${FOLDER}/Welcome.md`, toggle: vi.fn() }
     renderExplorer(stubActions(), vi.fn(), pins)
 
-    fireEvent.click(screen.getByLabelText('Expand Projects'))
+    fireEvent.click(disclosure('Projects'))
     rightClick(screen.getByTestId(`explorer-row:${FOLDER}/Projects/lake.png`))
     const imageMenu = await screen.findByTestId('explorer-menu:image')
     expect(menuLabels(imageMenu)[0]).toBe('Pin')
@@ -244,7 +250,7 @@ describe('the context menu', () => {
     const actions = stubActions()
     renderExplorer(actions)
 
-    fireEvent.click(screen.getByLabelText('Expand Projects'))
+    fireEvent.click(disclosure('Projects'))
     rightClick(screen.getByTestId(`explorer-row:${FOLDER}/Projects/lake.png`))
     const menu = await screen.findByTestId('explorer-menu:image')
     fireEvent.click(within(menu).getByText('Rename…'))
@@ -481,9 +487,7 @@ describe('the header', () => {
     expect(screen.getByTestId('explorer-toggle')).toHaveTextContent('Notes')
     expect(screen.getByTestId('explorer')).not.toHaveTextContent(/Explorer/)
     expect(screen.queryByTestId(`explorer-row:${FOLDER}`)).toBeNull()
-    const tree = screen.getByRole('tree')
-    expect(within(tree).getAllByRole('treeitem').map((item) => [item.getAttribute('aria-label'), item.getAttribute('aria-level')]))
-      .toEqual([['Projects', '1'], ['Welcome.md', '1']])
+    expect(rowNames()).toEqual(['Projects', 'Welcome.md'])
   })
 
   it('starts the top level at the first indent, with its folders shut', () => {
@@ -491,7 +495,7 @@ describe('the header', () => {
 
     expect(screen.getByTestId(`explorer-row:${FOLDER}/Projects`)).toHaveStyle({ paddingLeft: '8px' })
     expect(isExpanded('Projects')).toBe(false)
-    fireEvent.click(screen.getByLabelText('Expand Projects'))
+    fireEvent.click(disclosure('Projects'))
     expect(screen.getByTestId(`explorer-row:${FOLDER}/Projects/Plumo.md`)).toHaveStyle({ paddingLeft: '20px' })
   })
 
@@ -505,7 +509,7 @@ describe('the header', () => {
     expect(onToggleCollapsed).toHaveBeenCalledTimes(1)
 
     rerender({ collapsed: true, onToggleCollapsed })
-    expect(screen.queryByRole('tree')).toBeNull()
+    expect(screen.queryByTestId('explorer-tree')).toBeNull()
     expect(screen.getByTestId('explorer-toggle')).toHaveAttribute('aria-expanded', 'false')
     expect(screen.getByTestId('explorer-new-document')).toBeInTheDocument()
   })
@@ -544,14 +548,22 @@ describe('the header', () => {
     expect(onToggleCollapsed).toHaveBeenCalledTimes(1)
   })
 
-  it('opens and shuts a top-level folder from the keyboard', () => {
+  // A list of buttons, not a tree (ADR-0013): Tab reaches each row, Enter
+  // and Space click it, and there is no arrow-key navigation.
+  it('lists its rows as buttons in one flat list, the folders saying whether they are open', () => {
     renderExplorer(stubActions())
-    const row = screen.getByTestId(`explorer-row:${FOLDER}/Projects`)
+    fireEvent.click(disclosure('Projects'))
 
-    fireEvent.keyDown(row, { key: 'ArrowRight' })
+    expect(screen.queryByRole('tree')).toBeNull()
+    expect(rowNames()).toEqual(['Projects', 'lake.png', 'Plumo.md', 'Welcome.md'])
+    const folder = rowButton('Projects')
+    expect(folder.tagName).toBe('BUTTON')
+    expect(folder).toHaveAttribute('aria-expanded', 'true')
+    expect(rowButton('Welcome.md')).not.toHaveAttribute('aria-expanded')
+    expect(rowButton('Welcome.md')).not.toHaveAttribute('tabindex', '-1')
+
+    fireEvent.keyDown(folder, { key: 'ArrowLeft' })
     expect(isExpanded('Projects')).toBe(true)
-    fireEvent.keyDown(row, { key: 'ArrowLeft' })
-    expect(isExpanded('Projects')).toBe(false)
   })
 
   it('opens and shuts a folder from a click on its name, and selects it', () => {
@@ -601,7 +613,7 @@ describe('the header actions', () => {
 
   it('Collapse All shuts the folders and leaves the top level listed', async () => {
     renderExplorer(stubActions())
-    fireEvent.click(screen.getByLabelText('Expand Projects'))
+    fireEvent.click(disclosure('Projects'))
     expect(isExpanded('Projects')).toBe(true)
 
     fireEvent.pointerDown(
@@ -611,8 +623,7 @@ describe('the header actions', () => {
     fireEvent.click(within(await screen.findByTestId('explorer-header-menu')).getByRole('menuitem', { name: 'Collapse All' }))
 
     await waitFor(() => expect(isExpanded('Projects')).toBe(false))
-    expect(within(screen.getByRole('tree')).getAllByRole('treeitem').map((item) => item.getAttribute('aria-label')))
-      .toEqual(['Projects', 'Welcome.md'])
+    expect(rowNames()).toEqual(['Projects', 'Welcome.md'])
   })
 })
 
@@ -629,7 +640,7 @@ function dataTransfer(readable = true) {
 
 /** The tree opens with every folder shut, so nested rows are revealed first. */
 function expandProjects() {
-  fireEvent.click(screen.getByLabelText('Expand Projects'))
+  fireEvent.click(disclosure('Projects'))
 }
 
 describe('Move to Trash', () => {
@@ -872,15 +883,29 @@ describe('drag-and-drop', () => {
 describe('collapsing and expanding the sidebar', () => {
   it('keeps the folders that were opened and the scroll position', () => {
     const { rerender } = renderExplorer(stubActions())
-    fireEvent.click(screen.getByLabelText('Expand Projects'))
+    fireEvent.click(disclosure('Projects'))
     viewport().scrollTop = 120
     fireEvent.scroll(viewport())
 
     rerender({ shown: false })
-    expect(screen.queryByRole('tree')).toBeNull()
+    expect(screen.queryByTestId('explorer-tree')).toBeNull()
     rerender({ shown: true })
 
     expect(isExpanded('Projects')).toBe(true)
+    expect(viewport().scrollTop).toBe(120)
+  })
+
+  // The tree's scroll area mounts a render after the fold opens (the
+  // Collapsible's content), and the position still comes back.
+  it('keeps the scroll position while the tree is folded away under the header', () => {
+    const { rerender } = renderExplorer(stubActions())
+    viewport().scrollTop = 120
+    fireEvent.scroll(viewport())
+
+    rerender({ collapsed: true })
+    expect(screen.queryByTestId('explorer-tree')).toBeNull()
+    rerender({ collapsed: false })
+
     expect(viewport().scrollTop).toBe(120)
   })
 
@@ -888,7 +913,7 @@ describe('collapsing and expanding the sidebar', () => {
     const actions = stubActions({ selected: `${FOLDER}/Projects/Plumo.md` })
     const { rerender } = renderExplorer(actions)
     expect(isExpanded('Projects')).toBe(true)
-    fireEvent.click(screen.getByLabelText('Collapse Projects'))
+    fireEvent.click(disclosure('Projects'))
 
     rerender({ shown: false })
     rerender({ shown: true })
@@ -898,7 +923,7 @@ describe('collapsing and expanding the sidebar', () => {
 
   it('starts fresh in another Folder', () => {
     const { rerender } = renderExplorer(stubActions())
-    fireEvent.click(screen.getByLabelText('Expand Projects'))
+    fireEvent.click(disclosure('Projects'))
     viewport().scrollTop = 120
     fireEvent.scroll(viewport())
 
@@ -919,14 +944,14 @@ describe('bringing a row into view', () => {
   beforeEach(() => scrollIntoView.mockClear())
 
   it('opens the folders above a newly selected Document and scrolls to its row, once', () => {
-    const view = render(<ExplorerHarness actions={stubActions()} />, { wrapper: TooltipProvider })
+    const view = render(<ExplorerHarness actions={stubActions()} />, { wrapper: SidebarTestProvider })
     scrollIntoView.mockClear()
 
     view.rerender(<ExplorerHarness actions={stubActions({ selected: `${FOLDER}/Projects/Plumo.md` })} />)
 
     expect(isExpanded('Projects')).toBe(true)
     expect(scrollIntoView).toHaveBeenCalledTimes(1)
-    expect(scrollIntoView.mock.contexts[0]).toBe(screen.getByRole('treeitem', { name: 'Plumo.md' }))
+    expect(scrollIntoView.mock.contexts[0]).toBe(rowButton('Plumo.md'))
   })
 
   it('waits for a row that is not listed yet', () => {
@@ -943,8 +968,8 @@ describe('bringing a row into view', () => {
     renderExplorer(stubActions({ selected: `${FOLDER}/Welcome.md` }))
     scrollIntoView.mockClear()
 
-    fireEvent.click(screen.getByLabelText('Expand Projects'))
-    fireEvent.click(screen.getByLabelText('Collapse Projects'))
+    fireEvent.click(disclosure('Projects'))
+    fireEvent.click(disclosure('Projects'))
 
     expect(scrollIntoView).not.toHaveBeenCalled()
   })
@@ -970,7 +995,7 @@ describe('bringing a row into view', () => {
 
   it('scrolls to the row that enters rename, and not back to the selected row when the rename ends', () => {
     const selected = `${FOLDER}/Welcome.md`
-    const view = render(<ExplorerHarness actions={stubActions({ selected })} />, { wrapper: TooltipProvider })
+    const view = render(<ExplorerHarness actions={stubActions({ selected })} />, { wrapper: SidebarTestProvider })
     scrollIntoView.mockClear()
 
     const editing = { path: `${FOLDER}/Projects/Plumo.md`, kind: 'note' as const, stem: 'Plumo', extension: '.md' , created: false }

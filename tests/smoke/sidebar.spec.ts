@@ -115,7 +115,7 @@ test('⌘⇧O with no Folder collapses the sidebar; with a Folder open it leaves
   await expectExpanded(page)
 
   await page.evaluate(() => window.__plumoTest?.dispatchBrowserMenuCommand?.('file-close-vault'))
-  await expect(page.getByRole('tree')).toHaveCount(0)
+  await expect(page.getByTestId('explorer-tree')).toHaveCount(0)
   await expectExpanded(page)
   await openDocumentThroughDialog(page, WELCOME_PATH)
   await expect(page.locator('.bn-editor h1')).toHaveText('Welcome')
@@ -155,7 +155,7 @@ test('dragging the sidebar edge resizes it, and the width and collapsed state su
   await page.keyboard.press('Meta+BracketLeft')
   await expectExpanded(page)
   await expect(sidebar(page)).toHaveCSS('width', '320px')
-  await expect(page.getByRole('tree')).toBeVisible()
+  await expect(page.getByTestId('explorer-tree')).toBeVisible()
   expect(errors.pageErrors).toEqual([])
   expect(errors.consoleErrors).toEqual([])
 })

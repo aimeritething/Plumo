@@ -124,7 +124,7 @@ test('the "…" menu hands the Document to Finder and to its default app, its Fi
   await page.goto('/')
   await page.evaluate((folder) => window.__plumoMockVault?.queueDialogSelection([folder]), MOCK_FOLDER)
   await page.keyboard.press('Meta+o')
-  await expect(page.getByRole('tree')).toBeVisible()
+  await expect(page.getByTestId('explorer-tree')).toBeVisible()
   await openDocumentThroughDialog(page, WELCOME_PATH)
   await expect(page.locator('.bn-editor h1')).toHaveText('Welcome')
 

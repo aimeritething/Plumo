@@ -1,5 +1,6 @@
 import { createEvent, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
+import { SidebarTestProvider } from '@/ui/sidebar.test-utils'
 import { Pinned, PINNED_DRAG_MIME_TYPE, type PinnedProps } from './pinned'
 
 const A = '/Notes/Reading list.md'
@@ -18,7 +19,7 @@ function renderPinned(overrides: Partial<PinnedProps> = {}) {
     onMove: vi.fn(),
     ...overrides,
   }
-  const view = render(<Pinned {...props} />)
+  const view = render(<Pinned {...props} />, { wrapper: SidebarTestProvider })
   return { ...props, rerender: (next: Partial<PinnedProps>) => view.rerender(<Pinned {...props} {...next} />) }
 }
 
@@ -54,24 +55,27 @@ describe('Pinned', () => {
     renderPinned()
 
     expect(screen.getByTestId('pinned-toggle')).toHaveTextContent('Pinned')
-    const list = screen.getByRole('listbox', { name: 'Pinned' })
-    expect(within(list).getAllByRole('option').map((option) => option.textContent)).toEqual(['Reading list.md', 'Everything.md', 'lake.png'])
+    const list = screen.getByRole('list', { name: 'Pinned' })
+    expect(within(list).getAllByRole('button').map((button) => button.textContent)).toEqual(['Reading list.md', 'Everything.md', 'lake.png'])
   })
 
-  it('selects the row whose file is the active Tab', () => {
+  it('marks the row whose file is the active Tab as current', () => {
     renderPinned({ activeTabPath: B })
 
-    expect(row(B)).toHaveAttribute('aria-selected', 'true')
-    expect(row(A)).toHaveAttribute('aria-selected', 'false')
+    expect(row(B)).toHaveAttribute('data-active', 'true')
+    expect(row(B)).toHaveAttribute('aria-current', 'true')
+    expect(row(A)).toHaveAttribute('data-active', 'false')
+    expect(row(A)).not.toHaveAttribute('aria-current')
   })
 
-  it('opens a row\'s file on click, Enter and Space', () => {
+  // A button: Tab reaches it, and Enter and Space click it.
+  it('opens a row\'s file from its button', () => {
     const { onOpen } = renderPinned()
 
+    expect(row(A).tagName).toBe('BUTTON')
+    expect(row(A)).not.toHaveAttribute('tabindex', '-1')
     fireEvent.click(row(A))
-    fireEvent.keyDown(row(LAKE), { key: 'Enter' })
-    fireEvent.keyDown(row(B), { key: ' ' })
-    expect(onOpen.mock.calls).toEqual([[A], [LAKE], [B]])
+    expect(onOpen.mock.calls).toEqual([[A]])
   })
 
   it('names the parent folder of two pins that share a name', () => {
@@ -86,14 +90,15 @@ describe('Pinned', () => {
     const { onToggleCollapsed, rerender } = renderPinned()
     const toggle = screen.getByTestId('pinned-toggle')
     expect(toggle).toHaveAttribute('aria-expanded', 'true')
-    expect(screen.getByTestId('pinned-caret')).toHaveClass('opacity-0', 'group-hover/pinned:opacity-100')
+    expect(toggle).toHaveClass('[&>svg]:opacity-0', 'group-hover/sidebar-group:[&>svg]:opacity-100')
+    expect(screen.getByTestId('pinned-caret').parentElement).toBe(toggle)
 
     fireEvent.click(toggle)
     expect(onToggleCollapsed).toHaveBeenCalledTimes(1)
 
     rerender({ collapsed: true })
     expect(screen.getByTestId('pinned-toggle')).toHaveAttribute('aria-expanded', 'false')
-    expect(screen.queryByRole('listbox')).toBeNull()
+    expect(screen.queryByRole('list')).toBeNull()
   })
 
   it('unpins from a row\'s context menu', async () => {
@@ -115,14 +120,19 @@ describe('Pinned', () => {
     await waitFor(() => expect(onDuplicate).toHaveBeenCalledWith(LAKE))
   })
 
-  it('reorders with ⌥↑ and ⌥↓', () => {
-    const { onMove } = renderPinned()
+  // The only way to reorder without a pointer (ADR-0013): it stays on the focused row's button.
+  it('reorders the focused row with ⌥↑ and ⌥↓, and leaves a plain arrow alone', () => {
+    const { onMove, onOpen } = renderPinned()
 
+    row(LAKE).focus()
+    expect(row(LAKE)).toHaveFocus()
     fireEvent.keyDown(row(LAKE), { key: 'ArrowUp', altKey: true })
     fireEvent.keyDown(row(A), { key: 'ArrowDown', altKey: true })
     fireEvent.keyDown(row(B), { key: 'ArrowDown', altKey: true })
     fireEvent.keyDown(row(A), { key: 'ArrowUp', altKey: true })
+    fireEvent.keyDown(row(A), { key: 'ArrowDown' })
     expect(onMove.mock.calls).toEqual([[LAKE, B], [A, LAKE], [B, null]])
+    expect(onOpen).not.toHaveBeenCalled()
   })
 
   describe('the drag', () => {
@@ -133,7 +143,7 @@ describe('Pinned', () => {
       fireEvent.dragStart(row(LAKE), { dataTransfer: transfer })
       expect(transfer.getData(PINNED_DRAG_MIME_TYPE)).toBe(LAKE)
       dragAt(row(A), 'dragOver', 5, transfer)
-      expect(within(row(A)).getByTestId('pinned-drop-indicator')).toHaveAttribute('data-at', 'before')
+      expect(within(row(A).parentElement!).getByTestId('pinned-drop-indicator')).toHaveAttribute('data-at', 'before')
 
       dragAt(row(A), 'drop', 5, transfer)
       expect(onMove).toHaveBeenCalledWith(LAKE, A)
@@ -146,7 +156,7 @@ describe('Pinned', () => {
 
       fireEvent.dragStart(row(A), { dataTransfer: transfer })
       dragAt(row(LAKE), 'dragOver', 25, transfer)
-      expect(within(row(LAKE)).getByTestId('pinned-drop-indicator')).toHaveAttribute('data-at', 'after')
+      expect(within(row(LAKE).parentElement!).getByTestId('pinned-drop-indicator')).toHaveAttribute('data-at', 'after')
       dragAt(row(LAKE), 'drop', 25, transfer)
 
       expect(onMove).toHaveBeenCalledWith(A, null)

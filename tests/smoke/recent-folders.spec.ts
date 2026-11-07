@@ -24,7 +24,7 @@ test('a Folder switched away from and back to gets its Tabs and its active Tab b
   await page.goto('/')
   await openFolderThroughDialog(page, MOCK_FOLDER)
   await page.getByTestId(`explorer-row:${WELCOME_PATH}`).click()
-  await page.getByLabel('Expand Projects').click()
+  await page.getByTestId('explorer-tree').getByRole('button', { name: 'Projects', exact: true }).getByTestId('explorer-disclosure').click()
   await page.getByTestId(`explorer-row:${PLUMO_PATH}`).click()
   await page.getByTestId(`tab:${WELCOME_PATH}`).click()
   await expect(activeTab(page)).toHaveText('Welcome.md')
@@ -79,7 +79,7 @@ test('with no Folder open the Recent Folders sit under Open Folder, and one that
   await expect(page.getByTestId('explorer-folder-missing')).toHaveCount(0)
 
   await recent.getByTestId(`recent-folder:${MOCK_FOLDER}`).click()
-  await expect(page.getByRole('tree')).toBeVisible()
+  await expect(page.getByTestId('explorer-tree')).toBeVisible()
   await expect(page.getByTestId('recent-folders')).toHaveCount(0)
   expect(errors.pageErrors).toEqual([])
   expect(errors.consoleErrors).toEqual([])
