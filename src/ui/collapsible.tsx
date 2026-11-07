@@ -3,10 +3,17 @@
 import type * as React from "react"
 import { Collapsible as CollapsiblePrimitive } from "radix-ui"
 
+import { renderAsChild, type RenderProp } from "./render"
+
 function Collapsible({
   ...props
-}: React.ComponentProps<typeof CollapsiblePrimitive.Root>) {
-  return <CollapsiblePrimitive.Root data-slot="collapsible" {...props} />
+}: React.ComponentProps<typeof CollapsiblePrimitive.Root> & RenderProp) {
+  return (
+    <CollapsiblePrimitive.Root
+      data-slot="collapsible"
+      {...renderAsChild(props)}
+    />
+  )
 }
 
 function CollapsibleTrigger({

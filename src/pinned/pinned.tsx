@@ -51,41 +51,37 @@ export const Pinned = memo(function Pinned({ paths, activeTabPath, collapsed, on
   return (
     // At most half the sidebar, its rows scrolling past that, so a long Pinned
     // list leaves the Explorer and the Folder switcher their room.
-    <Collapsible open={!collapsed} onOpenChange={onToggleCollapsed} asChild>
-      <SidebarGroup className="max-h-1/2 min-h-0 flex-none gap-0.5 pt-0.5" data-testid="pinned">
-        <SidebarGroupLabel asChild>
-          <CollapsibleTrigger data-testid="pinned-toggle">
-            {LABEL}
-            <Caret aria-hidden="true" data-testid="pinned-caret" />
-          </CollapsibleTrigger>
-        </SidebarGroupLabel>
-        <CollapsibleContent className="flex min-h-0 flex-col">
-          <ScrollArea className="-mr-3 min-h-0" viewportClassName="pr-3">
-            <SidebarMenu aria-label={LABEL} {...listDropProps}>
-              {paths.map((path, index) => (
-                <PinnedRow
-                  key={path}
-                  path={path}
-                  parentHint={hints.get(path)}
-                  active={path === activeTabPath}
-                  dragging={path === dragging}
-                  dropMark={dropMarkFor(dropSpot, path, index === paths.length - 1)}
-                  dragProps={rowDragProps(path)}
-                  onOpen={onOpen}
-                  onUnpin={onUnpin}
-                  onDuplicate={onDuplicate}
-                  onKeyboardMove={(offset) => {
-                    const target = index + offset
-                    if (target < 0 || target >= paths.length) return
-                    // Moving down one place is moving before the row two further on.
-                    onMove(path, offset < 0 ? paths[target] : paths[target + 1] ?? null)
-                  }}
-                />
-              ))}
-            </SidebarMenu>
-          </ScrollArea>
-        </CollapsibleContent>
-      </SidebarGroup>
+    <Collapsible open={!collapsed} onOpenChange={onToggleCollapsed} render={<SidebarGroup className="max-h-1/2 min-h-0 flex-none gap-0.5 pt-0.5" data-testid="pinned" />}>
+      <SidebarGroupLabel render={<CollapsibleTrigger data-testid="pinned-toggle" />}>
+        {LABEL}
+        <Caret aria-hidden="true" data-testid="pinned-caret" />
+      </SidebarGroupLabel>
+      <CollapsibleContent className="flex min-h-0 flex-col">
+        <ScrollArea className="-mr-3 min-h-0" viewportClassName="pr-3">
+          <SidebarMenu aria-label={LABEL} {...listDropProps}>
+            {paths.map((path, index) => (
+              <PinnedRow
+                key={path}
+                path={path}
+                parentHint={hints.get(path)}
+                active={path === activeTabPath}
+                dragging={path === dragging}
+                dropMark={dropMarkFor(dropSpot, path, index === paths.length - 1)}
+                dragProps={rowDragProps(path)}
+                onOpen={onOpen}
+                onUnpin={onUnpin}
+                onDuplicate={onDuplicate}
+                onKeyboardMove={(offset) => {
+                  const target = index + offset
+                  if (target < 0 || target >= paths.length) return
+                  // Moving down one place is moving before the row two further on.
+                  onMove(path, offset < 0 ? paths[target] : paths[target + 1] ?? null)
+                }}
+              />
+            ))}
+          </SidebarMenu>
+        </ScrollArea>
+      </CollapsibleContent>
     </Collapsible>
   )
 })
@@ -178,23 +174,25 @@ function PinnedRow({ path, parentHint, active, dragging, dropMark, dragProps, on
   return (
     <SidebarMenuItem>
       <ContextMenu>
-        <ContextMenuTrigger asChild>
-          <SidebarMenuButton
-            isActive={active}
-            aria-current={active || undefined}
-            // WebKit will not start an HTML5 drag from inside `user-select: none` (the whole shell) without this.
-            className="[-webkit-user-drag:element] data-dragging:opacity-50"
-            data-testid={`pinned-row:${path}`}
-            data-dragging={dragging || undefined}
-            data-drop={dropMark}
-            {...dragProps}
-            onClick={() => onOpen(path)}
-            onKeyDown={onKeyDown}
-          >
-            <Icon aria-hidden="true" />
-            <span>{filename}</span>
-            {parentHint && <span className="ms-auto flex-none text-2xs text-muted-foreground" data-testid="pinned-parent">{parentHint}</span>}
-          </SidebarMenuButton>
+        <ContextMenuTrigger
+          render={(
+            <SidebarMenuButton
+              isActive={active}
+              aria-current={active || undefined}
+              // WebKit will not start an HTML5 drag from inside `user-select: none` (the whole shell) without this.
+              className="[-webkit-user-drag:element] data-dragging:opacity-50"
+              data-testid={`pinned-row:${path}`}
+              data-dragging={dragging || undefined}
+              data-drop={dropMark}
+              {...dragProps}
+              onClick={() => onOpen(path)}
+              onKeyDown={onKeyDown}
+            />
+          )}
+        >
+          <Icon aria-hidden="true" />
+          <span>{filename}</span>
+          {parentHint && <span className="ms-auto flex-none text-2xs text-muted-foreground" data-testid="pinned-parent">{parentHint}</span>}
         </ContextMenuTrigger>
         <ContextMenuContent data-testid="pinned-menu">
           <ContextMenuItem onSelect={() => onUnpin(path)}>Unpin</ContextMenuItem>

@@ -66,10 +66,9 @@ function IconButton({ label, disabled, onClick, children }: { label: string; dis
 }
 
 function OptionToggle({ label, pressed, onPressedChange, children }: { label: string; pressed: boolean; onPressedChange: (pressed: boolean) => void; children: ReactNode }) {
-  // The tooltip's trigger hands the Toggle its own data-state; the Toggle's on / off is the one to keep.
   return (
     <SimpleTooltip label={label} side="bottom">
-      <Toggle pressed={pressed} data-state={pressed ? 'on' : 'off'} aria-label={label} onPressedChange={onPressedChange}>
+      <Toggle pressed={pressed} aria-label={label} onPressedChange={onPressedChange}>
         {children}
       </Toggle>
     </SimpleTooltip>

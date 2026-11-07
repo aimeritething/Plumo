@@ -3,6 +3,7 @@
 import type * as React from "react"
 import { cn } from "@/lib/cn"
 import { ScrollArea } from "./scroll-area"
+import { renderAsChild, type RenderProp } from "./render"
 import { surfaceVariants } from "./surface"
 import { CaretRight as ChevronRightIcon, Check as CheckIcon, Circle as CircleIcon } from "@phosphor-icons/react"
 import { DropdownMenu as DropdownMenuPrimitive, Slot } from "radix-ui"
@@ -54,18 +55,20 @@ function DropdownMenuPortal({
 function DropdownMenuTrigger({
   openOnPress = true,
   ...props
-}: React.ComponentProps<typeof DropdownMenuPrimitive.Trigger> & {
-  openOnPress?: boolean
-}) {
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Trigger> &
+  RenderProp & {
+    openOnPress?: boolean
+  }) {
   if (openOnPress) {
     return (
       <DropdownMenuPrimitive.Trigger
         data-slot="dropdown-menu-trigger"
-        {...props}
+        {...renderAsChild(props)}
       />
     )
   }
-  const { asChild, children, onPointerDown, ...triggerProps } = props
+  const { asChild, children, onPointerDown, ...triggerProps } =
+    renderAsChild(props)
   return (
     <DropdownMenuPrimitive.Trigger
       data-slot="dropdown-menu-trigger"

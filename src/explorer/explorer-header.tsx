@@ -49,30 +49,30 @@ export function ExplorerHeader(props: ExplorerHeaderProps) {
 
   return (
     <ContextMenu>
-      <ContextMenuTrigger asChild>
-        <div
-          className={cn(
-            'flex items-center rounded-lg pr-2',
-            'data-drop-target:bg-sidebar-selected data-drop-target:ring-1 data-drop-target:ring-primary data-drop-target:ring-inset',
-          )}
-          data-testid="explorer-header"
-          data-drop-target={drop.target === folder || undefined}
-          {...drop.dropProps(folder)}
-        >
-          <SidebarGroupLabel asChild className="min-w-0 flex-1 in-data-drop-target:text-foreground">
-            <CollapsibleTrigger data-testid="explorer-toggle">
-              <span>{name}</span>
-              <Caret aria-hidden="true" data-testid="explorer-caret" />
-            </CollapsibleTrigger>
-          </SidebarGroupLabel>
-          <ExplorerHeaderActions
-            onNewDocument={actions.createDocument}
-            onNewFolder={actions.createFolder}
-            onCollapseAll={onCollapseAll}
-            onReveal={() => actions.reveal(folder)}
-            onCloseFolder={onCloseFolder}
+      <ContextMenuTrigger
+        render={(
+          <div
+            className={cn(
+              'flex items-center rounded-lg pr-2',
+              'data-drop-target:bg-sidebar-selected data-drop-target:ring-1 data-drop-target:ring-primary data-drop-target:ring-inset',
+            )}
+            data-testid="explorer-header"
+            data-drop-target={drop.target === folder || undefined}
+            {...drop.dropProps(folder)}
           />
-        </div>
+        )}
+      >
+        <SidebarGroupLabel className="min-w-0 flex-1 in-data-drop-target:text-foreground" render={<CollapsibleTrigger data-testid="explorer-toggle" />}>
+          <span>{name}</span>
+          <Caret aria-hidden="true" data-testid="explorer-caret" />
+        </SidebarGroupLabel>
+        <ExplorerHeaderActions
+          onNewDocument={actions.createDocument}
+          onNewFolder={actions.createFolder}
+          onCollapseAll={onCollapseAll}
+          onReveal={() => actions.reveal(folder)}
+          onCloseFolder={onCloseFolder}
+        />
       </ContextMenuTrigger>
       <ExplorerContextMenu target="root" onAction={onMenuAction} />
     </ContextMenu>

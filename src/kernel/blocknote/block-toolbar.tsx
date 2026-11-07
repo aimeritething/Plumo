@@ -104,10 +104,8 @@ export function BlockToolbarMenu({ items, label, shown, testId, onPopupOpenChang
       }}
     >
       <SimpleTooltip label={label} side="bottom">
-        <DropdownMenuTrigger asChild>
-          <ToolbarButton aria-label={label} data-testid={testId} size="sm" {...hiddenFromTab(shown)}>
-            <DotsThree aria-hidden="true" weight="bold" />
-          </ToolbarButton>
+        <DropdownMenuTrigger render={<ToolbarButton aria-label={label} data-testid={testId} size="sm" {...hiddenFromTab(shown)} />}>
+          <DotsThree aria-hidden="true" weight="bold" />
         </DropdownMenuTrigger>
       </SimpleTooltip>
       <DropdownMenuContent
@@ -221,24 +219,26 @@ export function BlockCornerToolbar({ children, field, fieldContent, label, name,
 }) {
   return (
     <Popover open={field.open} onOpenChange={(next) => { if (!next) field.close(true) }}>
-      <PopoverAnchor asChild>
-        <div
-          className={cn(
-            'absolute z-raised transition-opacity duration-150 ease-out',
-            PLACEMENT_CLASS[placement],
-            shown ? 'opacity-100' : 'pointer-events-none opacity-0',
-          )}
-          {...{ [`data-${name}`]: placement }}
-          data-testid={name}
-          contentEditable={false}
-          suppressContentEditableWarning
-          onMouseDown={holdSelection}
-          onDoubleClick={holdSelection}
-        >
-          <Toolbar aria-hidden={!shown} aria-label={label} {...hiddenFromTab(shown)}>
-            {children}
-          </Toolbar>
-        </div>
+      <PopoverAnchor
+        render={(
+          <div
+            className={cn(
+              'absolute z-raised transition-opacity duration-150 ease-out',
+              PLACEMENT_CLASS[placement],
+              shown ? 'opacity-100' : 'pointer-events-none opacity-0',
+            )}
+            {...{ [`data-${name}`]: placement }}
+            data-testid={name}
+            contentEditable={false}
+            suppressContentEditableWarning
+            onMouseDown={holdSelection}
+            onDoubleClick={holdSelection}
+          />
+        )}
+      >
+        <Toolbar aria-hidden={!shown} aria-label={label} {...hiddenFromTab(shown)}>
+          {children}
+        </Toolbar>
       </PopoverAnchor>
       <PopoverContent
         align="end"

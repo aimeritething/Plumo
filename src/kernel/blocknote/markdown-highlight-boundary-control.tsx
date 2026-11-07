@@ -67,7 +67,7 @@ export function HighlightBoundaryColorControl({ editor }: { editor: HighlightEdi
         sideOffset={CONTROL_GAP}
         variant="menu"
       >
-        {/* The tooltip sits inside the menu trigger, so the menu's open / closed data-state is the one the button keeps. */}
+        {/* The tooltip sits inside the menu trigger, so the menu's open / closed state is the one the button keeps. */}
         <MarkdownHighlightColorMenu
           currentColor={state.color}
           editor={editor}

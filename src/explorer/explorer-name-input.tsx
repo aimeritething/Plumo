@@ -47,25 +47,23 @@ export function ExplorerNameInput(props: ExplorerNameInputProps) {
   // cannot sit inside a button.
   return (
     <>
-      <SidebarMenuButton asChild>
-        <div style={{ paddingLeft: explorerRowIndent(depth) }}>
-          <Icon aria-hidden="true" />
-          <Input
-            ref={inputRef}
-            size="compact"
-            data-testid="explorer-rename-input"
-            aria-label="Name"
-            aria-invalid={error ? true : undefined}
-            value={value}
-            onChange={(event) => {
-              setValue(stripBlockedNameCharacters(event.target.value))
-              if (error) onEdit()
-            }}
-            onBlur={handleBlur}
-            onKeyDown={handleKeyDown}
-          />
-          {extension && <span className="flex-none text-subtle-foreground">{extension}</span>}
-        </div>
+      <SidebarMenuButton render={<div style={{ paddingLeft: explorerRowIndent(depth) }} />}>
+        <Icon aria-hidden="true" />
+        <Input
+          ref={inputRef}
+          size="compact"
+          data-testid="explorer-rename-input"
+          aria-label="Name"
+          aria-invalid={error ? true : undefined}
+          value={value}
+          onChange={(event) => {
+            setValue(stripBlockedNameCharacters(event.target.value))
+            if (error) onEdit()
+          }}
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
+        />
+        {extension && <span className="flex-none text-subtle-foreground">{extension}</span>}
       </SidebarMenuButton>
       {error && (
         <div

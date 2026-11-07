@@ -44,7 +44,7 @@ describe('Sidebar', () => {
     renderSidebar(300)
 
     expect(drawnWidth()).toBe('300px')
-    expect(document.querySelector('[data-slot="sidebar"]')).toHaveAttribute('data-state', 'expanded')
+    expect(document.querySelector('[data-slot="sidebar"]')).toHaveAttribute('data-collapsible', '')
   })
 
   it('slides out: collapsed, it goes offcanvas and stays mounted, inert, until its margin transition ends', () => {
@@ -73,7 +73,7 @@ describe('Sidebar', () => {
 
     rerender(sidebarAt(true, false))
     expect(screen.queryByTestId('sidebar')).toBeNull()
-    expect(document.querySelector('[data-slot="sidebar"]')).toHaveAttribute('data-state', 'collapsed')
+    expect(document.querySelector('[data-slot="sidebar"]')).toHaveAttribute('data-collapsible', 'offcanvas')
   })
 
   it('follows the pointer while its edge is dragged and reports the width once at release', () => {

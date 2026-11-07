@@ -160,14 +160,16 @@ function DocumentMenu({ menu }: { menu: DocumentMenuActions }) {
   const onFind = menu.onFind
   return (
     <DropdownMenu>
-      {/* The tooltip trigger sits inside the menu trigger, so the menu's open / closed data-state is the one the button keeps. */}
-      <DropdownMenuTrigger asChild>
-        <SimpleTooltip label="More" side="bottom">
-          <Button variant="icon" size="icon-xs" aria-label="More" data-testid="tab-more">
-            <DotsThree aria-hidden="true" />
-          </Button>
-        </SimpleTooltip>
-      </DropdownMenuTrigger>
+      {/* The tooltip sits inside the menu trigger, so the menu's open / closed state is the one the button keeps. */}
+      <DropdownMenuTrigger
+        render={(
+          <SimpleTooltip label="More" side="bottom">
+            <Button variant="icon" size="icon-xs" aria-label="More" data-testid="tab-more">
+              <DotsThree aria-hidden="true" />
+            </Button>
+          </SimpleTooltip>
+        )}
+      />
       <DropdownMenuContent
         align="end"
         className="min-w-50"

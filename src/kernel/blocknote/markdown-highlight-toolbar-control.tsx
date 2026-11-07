@@ -30,7 +30,7 @@ export function ToolbarHighlightColorControl({
   }) ?? DEFAULT_MARKDOWN_HIGHLIGHT_COLOR
   const label = translate(locale, 'editor.formatting.highlightColor')
 
-  // The tooltip sits inside the menu trigger, so the menu's open / closed data-state is the one the button keeps.
+  // The tooltip sits inside the menu trigger, so the menu's open / closed state is the one the button keeps.
   return (
     <MarkdownHighlightColorMenu
       currentColor={currentColor}

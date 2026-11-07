@@ -5,6 +5,7 @@ import { cn } from "@/lib/cn"
 import { Tooltip as TooltipPrimitive } from "radix-ui"
 
 import { Kbd } from "./kbd"
+import { renderAsChild, type RenderProp } from "./render"
 import { markRecoveredTooltipError } from "./tooltip-recovery"
 
 // 400ms before a tooltip shows, so a pointer passing over a row of icons does
@@ -33,8 +34,13 @@ function Tooltip({
 
 function TooltipTrigger({
   ...props
-}: ComponentProps<typeof TooltipPrimitive.Trigger>) {
-  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />
+}: ComponentProps<typeof TooltipPrimitive.Trigger> & RenderProp) {
+  return (
+    <TooltipPrimitive.Trigger
+      data-slot="tooltip-trigger"
+      {...renderAsChild(props)}
+    />
+  )
 }
 
 // Radix's tooltip content can throw when BlockNote unmounts its trigger
@@ -99,11 +105,11 @@ function TooltipContent({
 
 /**
  * The common tooltip: one trigger, a label, an optional shortcut and side.
- * Props a parent Slot hands down (a menu, popover or dialog trigger with
- * `asChild`, wrapping this) go on to the trigger, so that parent's handlers,
- * ref and open / closed `data-state` reach the button underneath. A child that
- * keeps a `data-state` of its own (a `Toggle`) has to restate it as a prop:
- * otherwise the tooltip's open / closed state is written over it.
+ * Props a parent trigger hands down (a menu, popover or dialog trigger whose
+ * `render` is this) go on to the trigger, so that parent's handlers, ref and
+ * open / closed state reach the button underneath. A child with an on / off
+ * state of its own (`Toggle`, `ToggleGroupItem`, a pressed `ToolbarButton`)
+ * keeps it over the tooltip's open / closed one.
  */
 function SimpleTooltip({
   label,

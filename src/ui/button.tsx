@@ -5,9 +5,11 @@ import { Slot } from "radix-ui"
 
 // The icon button: tertiary at rest, hover and an open menu both take the
 // tertiary-hover fill and the secondary colour, disabled goes muted without
-// fading. `icon-quiet` rests one step lighter, for the block side menu.
+// fading. `icon-quiet` rests one step lighter, for the block side menu. The
+// open menu is read off `aria-expanded`, which a menu trigger sets and a
+// button that opens its menu by hand (the block side menu's grip) sets too.
 const ICON_BUTTON_STATES =
-  "transition-colors duration-150 ease-out hover:bg-accent hover:text-muted-foreground data-[state=open]:bg-accent data-[state=open]:text-muted-foreground disabled:text-subtle-foreground disabled:opacity-100"
+  "transition-colors duration-150 ease-out hover:bg-accent hover:text-muted-foreground aria-expanded:bg-accent aria-expanded:text-muted-foreground disabled:text-subtle-foreground disabled:opacity-100"
 
 // shadcn's names, Plumo's values: 28px controls, 13px, `rounded-sm`, the 1px
 // focus ring. default is Linear's primary, secondary its filled secondary,

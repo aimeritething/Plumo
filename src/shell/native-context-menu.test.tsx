@@ -15,7 +15,7 @@ describe('installNativeContextMenuSuppression', () => {
     uninstall = installNativeContextMenuSuppression(document)
     render(
       <ContextMenu>
-        <ContextMenuTrigger asChild><div>row</div></ContextMenuTrigger>
+        <ContextMenuTrigger render={<div />}>row</ContextMenuTrigger>
         <ContextMenuContent data-testid="menu">
           <ContextMenuItem>Rename</ContextMenuItem>
         </ContextMenuContent>

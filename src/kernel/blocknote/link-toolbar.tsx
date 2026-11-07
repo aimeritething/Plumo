@@ -43,36 +43,36 @@ export function LinkToolbar({
 
   return (
     <Popover open={editing} onOpenChange={setEditOpen}>
-      <PopoverAnchor asChild>
-        <Toolbar aria-label={translate('en', 'editor.link.toolbar')} data-link-toolbar="" variant="floating">
-          <SimpleTooltip label={openLabel}>
-            <ToolbarButton aria-label={openLabel} data-test="openLink" onClick={() => onOpenLink(url)}>
-              <Globe aria-hidden="true" />
-              <span className="max-w-60 truncate">{url}</span>
-            </ToolbarButton>
-          </SimpleTooltip>
-          <ToolbarSeparator />
-          {/* The tooltip sits inside the popover trigger, so the popover's open / closed data-state is the one the button keeps. */}
-          <PopoverTrigger asChild>
+      <PopoverAnchor render={<Toolbar aria-label={translate('en', 'editor.link.toolbar')} data-link-toolbar="" variant="floating" />}>
+        <SimpleTooltip label={openLabel}>
+          <ToolbarButton aria-label={openLabel} data-test="openLink" onClick={() => onOpenLink(url)}>
+            <Globe aria-hidden="true" />
+            <span className="max-w-60 truncate">{url}</span>
+          </ToolbarButton>
+        </SimpleTooltip>
+        <ToolbarSeparator />
+        {/* The tooltip sits inside the popover trigger, so the popover's open / closed state is the one the button keeps. */}
+        <PopoverTrigger
+          render={(
             <SimpleTooltip label={editLabel}>
               <ToolbarButton aria-label={editLabel} data-test="editLink">
                 <PencilSimple aria-hidden="true" />
               </ToolbarButton>
             </SimpleTooltip>
-          </PopoverTrigger>
-          <SimpleTooltip label={removeLabel}>
-            <ToolbarButton
-              aria-label={removeLabel}
-              data-test="removeLink"
-              onClick={() => {
-                deleteLink(range.from)
-                setToolbarOpen?.(false)
-              }}
-            >
-              <LinkBreak aria-hidden="true" />
-            </ToolbarButton>
-          </SimpleTooltip>
-        </Toolbar>
+          )}
+        />
+        <SimpleTooltip label={removeLabel}>
+          <ToolbarButton
+            aria-label={removeLabel}
+            data-test="removeLink"
+            onClick={() => {
+              deleteLink(range.from)
+              setToolbarOpen?.(false)
+            }}
+          >
+            <LinkBreak aria-hidden="true" />
+          </ToolbarButton>
+        </SimpleTooltip>
       </PopoverAnchor>
       <PopoverContent align="start" variant="compact">
         <LinkForm

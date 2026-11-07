@@ -49,9 +49,7 @@ export const FolderSwitcher = memo(function FolderSwitcher(props: FolderSwitcher
     <SidebarMenu className="flex-none pt-2.5 pb-0.5" data-testid="folder-switcher">
       <SidebarMenuItem>
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SwitcherRow name={folderName(folder)} path={tildePath(folder, home)} summary={summary} />
-          </DropdownMenuTrigger>
+          <DropdownMenuTrigger render={<SwitcherRow name={folderName(folder)} path={tildePath(folder, home)} summary={summary} />} />
           <DropdownMenuContent
             side="top"
             align="start"
@@ -94,18 +92,16 @@ export const FolderSwitcher = memo(function FolderSwitcher(props: FolderSwitcher
 })
 
 /**
- * The row, with its tooltip. As the menu trigger's Slot child it hands the
- * trigger's props on to the row's button, so the menu's `data-state` is the
- * one kept and the open menu holds the row in its hover colours.
+ * The row, with its tooltip. As the menu trigger's `render` it hands the
+ * trigger's props on to the row's button, so the menu's open / closed state is
+ * the one kept and the open menu holds the row in its hover colours.
  */
 function SwitcherRow({ name, path, summary, ...props }: ComponentProps<typeof SidebarMenuButton> & { name: string; path: string; summary: string }) {
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <SidebarMenuButton data-testid="folder-switcher-row" {...props}>
-          <CaretUpDown aria-hidden="true" />
-          <span>{name}</span>
-        </SidebarMenuButton>
+      <TooltipTrigger render={<SidebarMenuButton data-testid="folder-switcher-row" {...props} />}>
+        <CaretUpDown aria-hidden="true" />
+        <span>{name}</span>
       </TooltipTrigger>
       <TooltipContent side="top" align="start" sideOffset={POPUP_OFFSET} className="flex-col gap-0.5" data-testid="folder-switcher-tooltip">
         <span className="wrap-anywhere">{path}</span>

@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { holdsOpenMenu } from '@/ui/open-layer.test-utils'
 import { SidebarTestProvider } from '@/ui/sidebar.test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Explorer, type ExplorerPins } from './explorer'
@@ -234,16 +235,15 @@ describe('the context menu', () => {
   it('marks the row its menu is open on, and only while it is open', async () => {
     renderExplorer(stubActions({ selected: `${FOLDER}/Welcome.md` }))
     const row = screen.getByTestId(`explorer-row:${FOLDER}/Projects`)
-    expect(row).toHaveClass('data-[state=open]:bg-sidebar-accent')
-    expect(row).not.toHaveAttribute('data-state', 'open')
+    expect(holdsOpenMenu(row)).toBe(false)
 
     rightClick(row)
     const menu = await screen.findByTestId('explorer-menu:folder')
-    expect(row).toHaveAttribute('data-state', 'open')
-    expect(screen.getByTestId(`explorer-row:${FOLDER}/Welcome.md`)).not.toHaveAttribute('data-state', 'open')
+    expect(holdsOpenMenu(row)).toBe(true)
+    expect(holdsOpenMenu(screen.getByTestId(`explorer-row:${FOLDER}/Welcome.md`))).toBe(false)
 
     fireEvent.keyDown(menu, { key: 'Escape' })
-    await waitFor(() => expect(row).not.toHaveAttribute('data-state', 'open'))
+    await waitFor(() => expect(holdsOpenMenu(row)).toBe(false))
   })
 
   it('starts the rename on the row under the cursor', async () => {

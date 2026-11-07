@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './dropdown-menu'
+import { Toggle } from './toggle'
 import { SimpleTooltip, TooltipProvider } from './tooltip'
 
 describe('SimpleTooltip', () => {
@@ -25,11 +26,13 @@ describe('SimpleTooltip', () => {
   it('passes the props of a menu trigger around it on to the button', async () => {
     render(
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <SimpleTooltip label="More">
-            <button type="button">More</button>
-          </SimpleTooltip>
-        </DropdownMenuTrigger>
+        <DropdownMenuTrigger
+          render={(
+            <SimpleTooltip label="More">
+              <button type="button">More</button>
+            </SimpleTooltip>
+          )}
+        />
         <DropdownMenuContent data-testid="menu">
           <DropdownMenuItem>Close Tab</DropdownMenuItem>
         </DropdownMenuContent>
@@ -45,5 +48,20 @@ describe('SimpleTooltip', () => {
     expect(await screen.findByTestId('menu')).toBeInTheDocument()
     expect(button).toHaveAttribute('aria-expanded', 'true')
     expect(button).toHaveAttribute('data-state', 'open')
+  })
+
+  // The tooltip's trigger writes its own open / closed `data-state` on the
+  // toggle under it; the toggle keeps its on / off.
+  it('leaves a toggle under it its on / off state', () => {
+    render(
+      <SimpleTooltip label="Match case">
+        <Toggle pressed aria-label="Match case" />
+      </SimpleTooltip>,
+      { wrapper: TooltipProvider },
+    )
+
+    const toggle = screen.getByRole('button', { name: 'Match case' })
+    expect(toggle).toHaveAttribute('aria-pressed', 'true')
+    expect(toggle).toHaveAttribute('data-state', 'on')
   })
 })

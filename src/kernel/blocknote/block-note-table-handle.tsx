@@ -110,63 +110,66 @@ export function TableHandle({ orientation, hideOtherElements }: TableHandleProps
           isColumn ? 'h-3.5 w-5.5 -translate-y-[5px]' : 'h-5.5 w-3.5 -translate-x-[3px]',
         )}
       >
-        <DropdownMenuTrigger asChild openOnPress={false}>
-          <Button
-            ref={buttonRef}
-            variant="bare"
-            size="fill"
-            className="group relative"
-            data-table-handle={orientation}
-            data-dragging={isDragging || undefined}
-            draggable={isDraggable}
-            onPointerDownCapture={() => {
-              openAtPressRef.current = openRef.current
-            }}
-            onClick={(event) => {
-              // A click with no press before it (assistive technology) toggles
-              // from the menu's state now; the keys are the trigger's own.
-              const wasOpen = event.detail === 0 ? openRef.current : openAtPressRef.current
-              setMenuOpen(!wasOpen)
-            }}
-            onPointerEnter={() => hideOtherElements(true)}
-            onPointerLeave={() => {
-              if (!holdsFocusRef.current) hideOtherElements(false)
-            }}
-            onDragStart={(event) => {
-              holdsFocusRef.current = true
-              setIsDragging(true)
-              hideOtherElements(true)
-              if (isColumn) tableHandles.colDragStart(event)
-              else tableHandles.rowDragStart(event)
-            }}
-            onDragEnd={() => {
-              holdsFocusRef.current = false
-              tableHandles.dragEnd()
-              hideOtherElements(false)
-              setIsDragging(false)
-            }}
-          >
-            <span
-              aria-hidden
-              className={cn(
-                'rounded-sm border-2 border-background bg-subtle-foreground',
-                'group-hover:opacity-0 group-focus-visible:opacity-0 group-aria-expanded:opacity-0 group-data-dragging:opacity-0',
-                isColumn ? 'h-1.5 w-4.5' : 'h-4.5 w-1.5',
-              )}
+        <DropdownMenuTrigger
+          openOnPress={false}
+          render={(
+            <Button
+              ref={buttonRef}
+              variant="bare"
+              size="fill"
+              className="group relative"
+              data-table-handle={orientation}
+              data-dragging={isDragging || undefined}
+              draggable={isDraggable}
+              onPointerDownCapture={() => {
+                openAtPressRef.current = openRef.current
+              }}
+              onClick={(event) => {
+                // A click with no press before it (assistive technology) toggles
+                // from the menu's state now; the keys are the trigger's own.
+                const wasOpen = event.detail === 0 ? openRef.current : openAtPressRef.current
+                setMenuOpen(!wasOpen)
+              }}
+              onPointerEnter={() => hideOtherElements(true)}
+              onPointerLeave={() => {
+                if (!holdsFocusRef.current) hideOtherElements(false)
+              }}
+              onDragStart={(event) => {
+                holdsFocusRef.current = true
+                setIsDragging(true)
+                hideOtherElements(true)
+                if (isColumn) tableHandles.colDragStart(event)
+                else tableHandles.rowDragStart(event)
+              }}
+              onDragEnd={() => {
+                holdsFocusRef.current = false
+                tableHandles.dragEnd()
+                hideOtherElements(false)
+                setIsDragging(false)
+              }}
             />
-            <span
-              aria-hidden
-              className={cn(
-                'absolute inset-0 flex scale-90 items-center justify-center rounded-sm border border-input bg-popover text-muted-foreground opacity-0',
-                'transition-[opacity,scale] duration-100 ease-out',
-                'group-hover:scale-100 group-hover:opacity-100 group-focus-visible:scale-100 group-focus-visible:opacity-100',
-                'group-data-dragging:scale-100 group-data-dragging:opacity-100',
-                'group-aria-expanded:scale-100 group-aria-expanded:border-primary group-aria-expanded:bg-primary group-aria-expanded:text-primary-foreground group-aria-expanded:opacity-100',
-              )}
-            >
-              <Dots className="size-4" weight="bold" />
-            </span>
-          </Button>
+          )}
+        >
+          <span
+            aria-hidden
+            className={cn(
+              'rounded-sm border-2 border-background bg-subtle-foreground',
+              'group-hover:opacity-0 group-focus-visible:opacity-0 group-aria-expanded:opacity-0 group-data-dragging:opacity-0',
+              isColumn ? 'h-1.5 w-4.5' : 'h-4.5 w-1.5',
+            )}
+          />
+          <span
+            aria-hidden
+            className={cn(
+              'absolute inset-0 flex scale-90 items-center justify-center rounded-sm border border-input bg-popover text-muted-foreground opacity-0',
+              'transition-[opacity,scale] duration-100 ease-out',
+              'group-hover:scale-100 group-hover:opacity-100 group-focus-visible:scale-100 group-focus-visible:opacity-100',
+              'group-data-dragging:scale-100 group-data-dragging:opacity-100',
+              'group-aria-expanded:scale-100 group-aria-expanded:border-primary group-aria-expanded:bg-primary group-aria-expanded:text-primary-foreground group-aria-expanded:opacity-100',
+            )}
+          >
+            <Dots className="size-4" weight="bold" />
+          </span>
         </DropdownMenuTrigger>
       </span>
       <DropdownMenuContent

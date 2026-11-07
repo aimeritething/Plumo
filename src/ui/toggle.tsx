@@ -32,9 +32,15 @@ function Toggle({
   className,
   variant,
   size,
+  // A tooltip around the toggle (`SimpleTooltip`) hands down its open / closed
+  // `data-state`, which would be written over the toggle's on / off one.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- dropped on purpose
+  "data-state": _tooltipState,
   ...props
 }: React.ComponentProps<typeof TogglePrimitive.Root> &
-  VariantProps<typeof toggleVariants>) {
+  VariantProps<typeof toggleVariants> & {
+    "data-state"?: string
+  }) {
   return (
     <TogglePrimitive.Root
       data-slot="toggle"

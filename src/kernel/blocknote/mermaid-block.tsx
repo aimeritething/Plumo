@@ -229,10 +229,8 @@ function MermaidLightbox({ svg }: { svg: string }) {
   return (
     <Dialog>
       <SimpleTooltip label="Open diagram" side="bottom">
-        <DialogTrigger asChild>
-          <ToolbarButton aria-label="Open Mermaid diagram" size="sm">
-            <Maximize2 aria-hidden="true" />
-          </ToolbarButton>
+        <DialogTrigger render={<ToolbarButton aria-label="Open Mermaid diagram" size="sm" />}>
+          <Maximize2 aria-hidden="true" />
         </DialogTrigger>
       </SimpleTooltip>
       <DialogContent variant="bare" showCloseButton>

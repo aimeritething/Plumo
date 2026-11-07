@@ -6,6 +6,7 @@ import {
   type AppCommandId,
   type AppCommandHandlers,
 } from './app-command-dispatcher'
+import { openLayerSelector } from '@/ui/open-layer'
 
 export type KeyboardActions = Pick<
   AppCommandHandlers,
@@ -148,7 +149,7 @@ function handleCommandMenuModalCommand(event: KeyboardEvent, commandId: AppComma
  * during the exit animation. A popover or a tooltip is not one.
  */
 const MODAL_LAYER_SELECTOR = ['dialog-content', 'context-menu-content', 'dropdown-menu-content', 'select-content']
-  .map((slot) => `[data-slot="${slot}"][data-state="open"]`)
+  .map(openLayerSelector)
   .join(',')
 
 /** What a modal layer lets through: Quit, which settles unsaved work itself. */

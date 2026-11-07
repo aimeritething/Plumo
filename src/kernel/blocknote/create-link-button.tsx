@@ -99,20 +99,22 @@ export function CreateLinkButton() {
 
   const label = dict.formatting_toolbar.link.tooltip
 
-  // The tooltip sits inside the popover trigger, so the popover's open / closed data-state is the one the button keeps.
+  // The tooltip sits inside the popover trigger, so the popover's open / closed state is the one the button keeps.
   return (
     <Popover open={opened} onOpenChange={setOpened}>
-      <PopoverTrigger asChild>
-        <SimpleTooltip label={label} shortcut={CREATE_LINK_SHORTCUT}>
-          <ToolbarButton
-            aria-label={label}
-            data-test="createLink"
-            onClick={toggle}
-          >
-            <LinkSimple aria-hidden="true" />
-          </ToolbarButton>
-        </SimpleTooltip>
-      </PopoverTrigger>
+      <PopoverTrigger
+        render={(
+          <SimpleTooltip label={label} shortcut={CREATE_LINK_SHORTCUT}>
+            <ToolbarButton
+              aria-label={label}
+              data-test="createLink"
+              onClick={toggle}
+            >
+              <LinkSimple aria-hidden="true" />
+            </ToolbarButton>
+          </SimpleTooltip>
+        )}
+      />
       <PopoverContent align="start" variant="compact">
         <LinkForm
           key={`${state.range.from}:${state.range.to}`}

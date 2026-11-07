@@ -3,6 +3,7 @@
 import type * as React from "react"
 import { cn } from "@/lib/cn"
 import { ScrollArea } from "./scroll-area"
+import { renderAsChild, type RenderProp } from "./render"
 import { surfaceVariants } from "./surface"
 import { CaretRight as ChevronRightIcon, Check as CheckIcon, Circle as CircleIcon } from "@phosphor-icons/react"
 import { ContextMenu as ContextMenuPrimitive } from "radix-ui"
@@ -15,9 +16,12 @@ function ContextMenu({
 
 function ContextMenuTrigger({
   ...props
-}: React.ComponentProps<typeof ContextMenuPrimitive.Trigger>) {
+}: React.ComponentProps<typeof ContextMenuPrimitive.Trigger> & RenderProp) {
   return (
-    <ContextMenuPrimitive.Trigger data-slot="context-menu-trigger" {...props} />
+    <ContextMenuPrimitive.Trigger
+      data-slot="context-menu-trigger"
+      {...renderAsChild(props)}
+    />
   )
 }
 

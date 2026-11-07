@@ -153,18 +153,20 @@ export function BlockTypeSelect() {
       open={menuState.opened}
       onOpenChange={handleMenuChange}
     >
-      <DropdownMenuTrigger asChild>
-        <ToolbarButton
-          data-test="blockTypeSelect"
-          onMouseDown={(event) => {
-            captureSelectedBlockIds()
-            event.preventDefault()
-            event.currentTarget.focus()
-          }}
-        >
-          {selectedItem.name}
-          <CaretDown aria-hidden="true" className="size-3" />
-        </ToolbarButton>
+      <DropdownMenuTrigger
+        render={(
+          <ToolbarButton
+            data-test="blockTypeSelect"
+            onMouseDown={(event) => {
+              captureSelectedBlockIds()
+              event.preventDefault()
+              event.currentTarget.focus()
+            }}
+          />
+        )}
+      >
+        {selectedItem.name}
+        <CaretDown aria-hidden="true" className="size-3" />
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="start"

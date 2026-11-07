@@ -364,7 +364,6 @@ function DragHandleButton({ locale = 'en' }: { locale?: AppLocale }) {
             aria-expanded={open}
             aria-haspopup="menu"
             aria-label={dict.side_menu.drag_handle_label}
-            data-state={open ? 'open' : 'closed'}
             draggable={false}
             onDragEnd={sideMenu.blockDragEnd}
             onDragStart={(event) => event.preventDefault()}
@@ -380,9 +379,7 @@ function DragHandleButton({ locale = 'en' }: { locale?: AppLocale }) {
             <GripVertical data-test="dragHandle" />
           </Button>
         </SimpleTooltip>
-        <DropdownMenuTrigger asChild>
-          <span aria-hidden="true" className="pointer-events-none absolute inset-0" tabIndex={-1} />
-        </DropdownMenuTrigger>
+        <DropdownMenuTrigger render={<span aria-hidden="true" className="pointer-events-none absolute inset-0" tabIndex={-1} />} />
       </span>
       <DropdownMenuContent
         align="start"

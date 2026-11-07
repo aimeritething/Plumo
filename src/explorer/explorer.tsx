@@ -276,37 +276,35 @@ function ExplorerBody(props: LoadedProps) {
   })
 
   return (
-    <Collapsible open={!collapsed} onOpenChange={handleToggleCollapsed} asChild>
-      <SidebarGroup className="mt-3 min-h-0 flex-1" data-testid="explorer">
-        <ExplorerHeader
-          folder={folder}
-          name={tree.name}
-          collapsed={collapsed}
-          actions={actions}
-          onCollapseAll={handleCollapseAll}
-          onCloseFolder={onCloseFolder}
-          drop={drop}
-        />
-        <CollapsibleContent className="flex min-h-0 flex-col">
-          {/* The bar sits in the sidebar's right padding, beside the rows rather than over them. */}
-          <ScrollArea ref={setTreeElement} className="-mr-3 min-h-0" viewportClassName="pr-3" data-testid="explorer-tree">
-            <SidebarMenu aria-label={tree.name}>
-              {rows.map(({ node, depth }) => (
-                <ExplorerRow key={node.path} {...props} node={node} depth={depth} expanded={expanded} onToggle={toggleFolder} expandFolder={expandFolder}
-                  drop={drop} onRenameKeyboardEnd={onRenameKeyboardEnd} />
-              ))}
-            </SidebarMenu>
-            {/* The empty-Folder line: no `.md` anywhere in the Folder. It goes with the first ⌘N. */}
-            {!holdsDocument(tree) && (
-              <div className="cursor-default py-1 pr-2 pl-4 font-mono text-2xs font-normal text-subtle-foreground" data-testid="explorer-no-documents">
-                No documents yet · ⌘N
-              </div>
-            )}
-          </ScrollArea>
-        </CollapsibleContent>
-        {error && <div className="p-2 text-xs leading-normal wrap-anywhere" role="status">{error}</div>}
-        <EmptyArea actions={actions} folder={folder} dropProps={drop.dropProps(folder)} />
-      </SidebarGroup>
+    <Collapsible open={!collapsed} onOpenChange={handleToggleCollapsed} render={<SidebarGroup className="mt-3 min-h-0 flex-1" data-testid="explorer" />}>
+      <ExplorerHeader
+        folder={folder}
+        name={tree.name}
+        collapsed={collapsed}
+        actions={actions}
+        onCollapseAll={handleCollapseAll}
+        onCloseFolder={onCloseFolder}
+        drop={drop}
+      />
+      <CollapsibleContent className="flex min-h-0 flex-col">
+        {/* The bar sits in the sidebar's right padding, beside the rows rather than over them. */}
+        <ScrollArea ref={setTreeElement} className="-mr-3 min-h-0" viewportClassName="pr-3" data-testid="explorer-tree">
+          <SidebarMenu aria-label={tree.name}>
+            {rows.map(({ node, depth }) => (
+              <ExplorerRow key={node.path} {...props} node={node} depth={depth} expanded={expanded} onToggle={toggleFolder} expandFolder={expandFolder}
+                drop={drop} onRenameKeyboardEnd={onRenameKeyboardEnd} />
+            ))}
+          </SidebarMenu>
+          {/* The empty-Folder line: no `.md` anywhere in the Folder. It goes with the first ⌘N. */}
+          {!holdsDocument(tree) && (
+            <div className="cursor-default py-1 pr-2 pl-4 font-mono text-2xs font-normal text-subtle-foreground" data-testid="explorer-no-documents">
+              No documents yet · ⌘N
+            </div>
+          )}
+        </ScrollArea>
+      </CollapsibleContent>
+      {error && <div className="p-2 text-xs leading-normal wrap-anywhere" role="status">{error}</div>}
+      <EmptyArea actions={actions} folder={folder} dropProps={drop.dropProps(folder)} />
     </Collapsible>
   )
 }
@@ -331,9 +329,7 @@ function EmptyArea({ actions, folder, dropProps }: EmptyAreaProps) {
 
   return (
     <ContextMenu>
-      <ContextMenuTrigger asChild>
-        <div className="flex-1" data-testid="explorer-empty-area" {...dropProps} />
-      </ContextMenuTrigger>
+      <ContextMenuTrigger render={<div className="flex-1" data-testid="explorer-empty-area" {...dropProps} />} />
       <ExplorerContextMenu target="empty" onAction={onAction} />
     </ContextMenu>
   )
@@ -439,27 +435,29 @@ function ExplorerRow(props: RowProps) {
   return (
     <SidebarMenuItem>
       <ContextMenu>
-        <ContextMenuTrigger asChild>
-          <SidebarMenuButton
-            isActive={selected}
-            aria-current={selected || undefined}
-            aria-expanded={isFolder ? isExpanded : undefined}
-            className={cn(
-              'data-drop-target:bg-sidebar-selected data-drop-target:text-foreground data-drop-target:ring-1 data-drop-target:ring-primary data-drop-target:ring-inset',
-              // WebKit will not start an HTML5 drag from inside `user-select: none` (the whole shell) without this.
-              !isFolder && '[-webkit-user-drag:element]',
-            )}
-            style={{ paddingLeft: explorerRowIndent(depth) }}
-            data-drop-target={isDropTarget || undefined}
-            data-testid={`explorer-row:${node.path}`}
-            {...dragProps} {...dropProps}
-            onClick={select}
-          >
-            {isFolder
-              ? <ExplorerDisclosure expanded={isExpanded} onToggle={() => onToggle(relative)} />
-              : <Icon aria-hidden="true" />}
-            <span>{node.name}</span>
-          </SidebarMenuButton>
+        <ContextMenuTrigger
+          render={(
+            <SidebarMenuButton
+              isActive={selected}
+              aria-current={selected || undefined}
+              aria-expanded={isFolder ? isExpanded : undefined}
+              className={cn(
+                'data-drop-target:bg-sidebar-selected data-drop-target:text-foreground data-drop-target:ring-1 data-drop-target:ring-primary data-drop-target:ring-inset',
+                // WebKit will not start an HTML5 drag from inside `user-select: none` (the whole shell) without this.
+                !isFolder && '[-webkit-user-drag:element]',
+              )}
+              style={{ paddingLeft: explorerRowIndent(depth) }}
+              data-drop-target={isDropTarget || undefined}
+              data-testid={`explorer-row:${node.path}`}
+              {...dragProps} {...dropProps}
+              onClick={select}
+            />
+          )}
+        >
+          {isFolder
+            ? <ExplorerDisclosure expanded={isExpanded} onToggle={() => onToggle(relative)} />
+            : <Icon aria-hidden="true" />}
+          <span>{node.name}</span>
         </ContextMenuTrigger>
         <ExplorerContextMenu target={target} pinned={!isFolder && (pins?.isPinned(node.path) ?? false)} onAction={onMenuAction} />
       </ContextMenu>

@@ -7,6 +7,7 @@ import { X as XIcon } from "@phosphor-icons/react"
 import { Dialog as DialogPrimitive } from "radix-ui"
 
 import { Button } from "./button"
+import { renderAsChild, type RenderProp } from "./render"
 import { surfaceVariants } from "./surface"
 import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip"
 
@@ -18,8 +19,13 @@ function Dialog({
 
 function DialogTrigger({
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Trigger>) {
-  return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />
+}: React.ComponentProps<typeof DialogPrimitive.Trigger> & RenderProp) {
+  return (
+    <DialogPrimitive.Trigger
+      data-slot="dialog-trigger"
+      {...renderAsChild(props)}
+    />
+  )
 }
 
 function DialogPortal({
@@ -30,8 +36,10 @@ function DialogPortal({
 
 function DialogClose({
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Close>) {
-  return <DialogPrimitive.Close data-slot="dialog-close" {...props} />
+}: React.ComponentProps<typeof DialogPrimitive.Close> & RenderProp) {
+  return (
+    <DialogPrimitive.Close data-slot="dialog-close" {...renderAsChild(props)} />
+  )
 }
 
 function DialogOverlay({

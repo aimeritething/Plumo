@@ -31,6 +31,7 @@ import { Slot } from "radix-ui"
 
 import { Button } from "./button"
 import { Input } from "./input"
+import { renderAsChild, type RenderProp } from "./render"
 import { Separator } from "./separator"
 import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip"
 
@@ -309,9 +310,9 @@ function SidebarGroup({ className, ...props }: React.ComponentProps<"div">) {
 
 function SidebarGroupLabel({
   className,
-  asChild = false,
   ...props
-}: React.ComponentProps<"div"> & { asChild?: boolean }) {
+}: React.ComponentProps<"div"> & { asChild?: boolean } & RenderProp) {
+  const { asChild = false, ...labelProps } = renderAsChild(props)
   const Comp = asChild ? Slot.Root : "div"
 
   return (
@@ -327,7 +328,7 @@ function SidebarGroupLabel({
         "group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0",
         className
       )}
-      {...props}
+      {...labelProps}
     />
   )
 }
@@ -429,7 +430,6 @@ const sidebarMenuButtonVariants = cva(
 )
 
 function SidebarMenuButton({
-  asChild = false,
   isActive = false,
   variant = "default",
   size = "default",
@@ -440,7 +440,9 @@ function SidebarMenuButton({
   asChild?: boolean
   isActive?: boolean
   tooltip?: string | React.ComponentProps<typeof TooltipContent>
-} & VariantProps<typeof sidebarMenuButtonVariants>) {
+} & RenderProp &
+  VariantProps<typeof sidebarMenuButtonVariants>) {
+  const { asChild = false, ...buttonProps } = renderAsChild(props)
   const Comp = asChild ? Slot.Root : "button"
   const { state } = useSidebar()
 
@@ -451,7 +453,7 @@ function SidebarMenuButton({
       data-size={size}
       data-active={isActive}
       className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
-      {...props}
+      {...buttonProps}
     />
   )
 

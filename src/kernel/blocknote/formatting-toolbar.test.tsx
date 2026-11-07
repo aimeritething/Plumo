@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { ReactNode } from 'react'
+import { cloneElement, type ReactElement, type ReactNode } from 'react'
 
 const COVERAGE_SHARD_TEST_TIMEOUT_MS = 30_000
 
@@ -75,7 +75,10 @@ vi.mock('@blocknote/core/extensions', () => ({
 
 vi.mock('@/ui/dropdown-menu', () => ({
   DropdownMenu: ({ children }: { children?: ReactNode }) => <div data-testid="block-type-menu">{children}</div>,
-  DropdownMenuTrigger: ({ children }: { children?: ReactNode }) => <>{children}</>,
+  // Draws the trigger's `render` element, holding the trigger's children, as the real one does.
+  DropdownMenuTrigger: ({ children, render }: { children?: ReactNode; render?: ReactElement }) => (
+    render === undefined ? <>{children}</> : children === undefined ? render : cloneElement(render, undefined, children)
+  ),
   DropdownMenuContent: ({ children, onCloseAutoFocus, ...props }: { children?: ReactNode; onCloseAutoFocus?: unknown }) => {
     void onCloseAutoFocus
     return <div {...props}>{children}</div>

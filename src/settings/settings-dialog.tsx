@@ -81,10 +81,8 @@ export function SettingsDialog({ open, onClose, theme, onThemeChange, primaryCol
           <header className="flex h-17 flex-none items-center justify-between pr-4 pl-10 max-[760px]:pl-6">
             <h2 id="settings-section-title" className="text-lg font-semibold tracking-[-0.01em] text-foreground">{section.label}</h2>
             <SimpleTooltip label="Close" side="bottom">
-              <DialogClose asChild>
-                <Button variant="icon" size="icon-xs" aria-label="Close">
-                  <XIcon />
-                </Button>
+              <DialogClose render={<Button variant="icon" size="icon-xs" aria-label="Close" />}>
+                <XIcon />
               </DialogClose>
             </SimpleTooltip>
           </header>

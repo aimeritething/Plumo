@@ -1,6 +1,6 @@
 import { Check } from '@phosphor-icons/react'
 import { cva } from 'class-variance-authority'
-import type { ReactNode } from 'react'
+import type { ReactElement } from 'react'
 import type { AppLocale } from '@/lib/i18n'
 import {
   MARKDOWN_HIGHLIGHT_COLORS,
@@ -45,7 +45,7 @@ interface MarkdownHighlightColorMenuProps {
   // Which side of the trigger the menu opens on; below it unless given.
   side?: 'top' | 'bottom'
   source: HighlightControlSource
-  trigger: ReactNode
+  trigger: ReactElement
 }
 
 // Non-modal, as the block type menu: a modal menu would take the pointer
@@ -55,7 +55,7 @@ export function MarkdownHighlightColorMenu(props: MarkdownHighlightColorMenuProp
 
   return (
     <DropdownMenu modal={false} onOpenChange={onOpenChange} open={open}>
-      <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
+      <DropdownMenuTrigger render={trigger} />
       <DropdownMenuContent
         align="end"
         className="min-w-36"

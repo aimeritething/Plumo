@@ -4,6 +4,7 @@ import type * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/cn"
 import { Popover as PopoverPrimitive } from "radix-ui"
+import { renderAsChild, type RenderProp } from "./render"
 import { surfaceVariants } from "./surface"
 
 function Popover({
@@ -14,8 +15,13 @@ function Popover({
 
 function PopoverTrigger({
   ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Trigger>) {
-  return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />
+}: React.ComponentProps<typeof PopoverPrimitive.Trigger> & RenderProp) {
+  return (
+    <PopoverPrimitive.Trigger
+      data-slot="popover-trigger"
+      {...renderAsChild(props)}
+    />
+  )
 }
 
 // `compact` is the inset of a popover that holds one small form (a link, an
@@ -62,8 +68,13 @@ function PopoverContent({
 
 function PopoverAnchor({
   ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Anchor>) {
-  return <PopoverPrimitive.Anchor data-slot="popover-anchor" {...props} />
+}: React.ComponentProps<typeof PopoverPrimitive.Anchor> & RenderProp) {
+  return (
+    <PopoverPrimitive.Anchor
+      data-slot="popover-anchor"
+      {...renderAsChild(props)}
+    />
+  )
 }
 
 function PopoverHeader({ className, ...props }: React.ComponentProps<"div">) {

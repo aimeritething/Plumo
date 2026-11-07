@@ -27,8 +27,8 @@ interface ExplorerHeaderActionsProps {
 
 /**
  * An 18px icon button on the label row with its tooltip; the open menu keeps
- * it in its hover colours. As a menu trigger's Slot child it hands the
- * trigger's props on to the button, so the menu's data-state is the one kept.
+ * it in its hover colours. As a menu trigger's `render` it hands the
+ * trigger's props on to the button, so the button says the menu is open.
  */
 function HeaderAction({ label, ...props }: ComponentProps<'button'> & { label: string }) {
   return (
@@ -42,15 +42,13 @@ export function ExplorerHeaderActions(props: ExplorerHeaderActionsProps) {
   const { onNewDocument, onNewFolder, onCollapseAll, onReveal, onCloseFolder } = props
 
   return (
-    <div className="flex flex-none items-center gap-0.5 opacity-0 transition-opacity duration-150 ease-out group-hover/sidebar-group:opacity-100 focus-within:opacity-100 has-data-[state=open]:opacity-100">
+    <div className="flex flex-none items-center gap-0.5 opacity-0 transition-opacity duration-150 ease-out group-hover/sidebar-group:opacity-100 focus-within:opacity-100 has-aria-expanded:opacity-100">
       <HeaderAction data-testid="explorer-new-document" label="New Document" onClick={(event) => { if (event.detail <= 1) onNewDocument() }}>
         <Plus aria-hidden="true" />
       </HeaderAction>
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <HeaderAction data-testid="explorer-more-actions" label="More actions">
-            <DotsThree aria-hidden="true" />
-          </HeaderAction>
+        <DropdownMenuTrigger render={<HeaderAction data-testid="explorer-more-actions" label="More actions" />}>
+          <DotsThree aria-hidden="true" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-50" data-testid="explorer-header-menu">
           <DropdownMenuItem onSelect={onNewFolder}>New Folder</DropdownMenuItem>
