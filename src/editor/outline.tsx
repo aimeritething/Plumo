@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react'
+import { useCallback, useLayoutEffect, useRef, useState, type RefObject } from 'react'
 import { cn } from '@/lib/cn'
 import { translate, type AppLocale } from '@/lib/i18n'
 import type { RichEditor } from '@/kernel/blocknote/block-note-dom'
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/ui/hover-card'
 import { ScrollArea } from '@/ui/scroll-area'
 import { railLayout, type OutlineEntry } from './outline-entries'
 import { useOutline, type Outline as OutlineState } from './use-outline'
@@ -12,33 +13,19 @@ const OPEN_DELAY_MS = 100
 const CLOSE_DELAY_MS = 150
 /** Dash length by depth: the deeper the heading, the shorter. */
 const DASH_WIDTHS = [10, 7, 5, 4] as const
+/** The rail's inset around its dashes: room for the pointer to land on it. */
+const RAIL_INSET = 16
+/**
+ * The card opens over the rail, 8px in from the editor area's left edge, so
+ * it sits back from the rail's right edge (the rail is as wide as its longest
+ * dash and its inset on both sides).
+ */
+const CARD_OFFSET = 8 - (RAIL_INSET * 2 + DASH_WIDTHS[0])
 /** How far the rail fades at an end where it leaves entries out. */
 const RAIL_FADE = '16px'
 
 function dashWidth(depth: number): number {
   return DASH_WIDTHS[Math.min(depth, DASH_WIDTHS.length - 1)]
-}
-
-function useHoverIntent() {
-  const [open, setOpen] = useState(false)
-  const timer = useRef<number | undefined>(undefined)
-  const settle = useCallback((next: boolean, delay: number) => {
-    window.clearTimeout(timer.current)
-    timer.current = window.setTimeout(() => setOpen(next), delay)
-  }, [])
-  const close = useCallback(() => {
-    window.clearTimeout(timer.current)
-    setOpen(false)
-  }, [])
-  useEffect(() => () => window.clearTimeout(timer.current), [])
-  return {
-    open,
-    close,
-    hover: {
-      onPointerEnter: () => settle(true, open ? 0 : OPEN_DELAY_MS),
-      onPointerLeave: () => settle(false, CLOSE_DELAY_MS),
-    },
-  }
 }
 
 function railMask(clippedTop: boolean, clippedBottom: boolean): string | undefined {
@@ -55,7 +42,8 @@ function OutlineRail({ outline }: { outline: OutlineState }) {
   const mask = railMask(start > 0, end < entries.length)
 
   return (
-    <div className="flex flex-col" style={{ maskImage: mask, WebkitMaskImage: mask }}>
+    // As wide as the longest dash, whatever the Document's top depth, so the card always lands at the same place over it.
+    <div className="flex flex-col" style={{ width: DASH_WIDTHS[0], maskImage: mask, WebkitMaskImage: mask }}>
       {entries.slice(start, end).map((entry) => (
         <div key={entry.id} className="flex items-center" style={{ height: pitch }}>
           <span
@@ -98,12 +86,40 @@ function OutlineRow({ entry, active, hidden, onPick }: {
   )
 }
 
+/** The card's headings: mounted as the card opens, which shows the current Section's row, however long the list. */
+function OutlineList({ outline, onPick }: { outline: OutlineState, onPick: (id: string) => void }) {
+  const listRef = useRef<HTMLDivElement>(null)
+  const { activeId } = outline
+
+  useLayoutEffect(() => {
+    const list = listRef.current
+    if (!list || !activeId) return
+    const row = list.querySelector<HTMLElement>(`[data-outline-entry="${activeId}"]`)
+    if (row) list.scrollTop = row.offsetTop - (list.clientHeight - row.offsetHeight) / 2
+  }, [activeId])
+
+  return (
+    <ScrollArea className="min-h-0" viewportRef={listRef} viewportClassName="p-1.5 [&>div]:flex! [&>div]:flex-col [&>div]:gap-px">
+      {outline.entries.map((entry) => (
+        <OutlineRow
+          key={entry.id}
+          entry={entry}
+          active={entry.id === activeId}
+          hidden={outline.hiddenIds.has(entry.id)}
+          onPick={onPick}
+        />
+      ))}
+    </ScrollArea>
+  )
+}
+
 /**
  * The Outline: a rail of dashes at the left of the Rich surface, one per
  * heading, that opens into a card of the headings on hover. Picking one
  * jumps there with the caret. It sits beside the scroll area, not in it, so
  * it stays put while the Document scrolls, and above the side menu, which
- * the pointer over it leaves where it was.
+ * the pointer over it leaves where it was. The card is not portaled, so it
+ * stays in that place too.
  */
 export function Outline({ editor, scrollAreaRef, locale = 'en' }: {
   editor: RichEditor
@@ -111,57 +127,40 @@ export function Outline({ editor, scrollAreaRef, locale = 'en' }: {
   locale?: AppLocale
 }) {
   const outline = useOutline(editor, scrollAreaRef)
-  const { open, close, hover } = useHoverIntent()
-  const listRef = useRef<HTMLDivElement>(null)
-  const { activeId, jumpTo } = outline
-
-  // Opening shows the current Section's row, however long the list.
-  useLayoutEffect(() => {
-    const list = listRef.current
-    if (!open || !list || !activeId) return
-    const row = list.querySelector<HTMLElement>(`[data-outline-entry="${activeId}"]`)
-    if (row) list.scrollTop = row.offsetTop - (list.clientHeight - row.offsetHeight) / 2
-  }, [activeId, open])
+  const [open, setOpen] = useState(false)
+  const { jumpTo } = outline
 
   const pick = useCallback((id: string) => {
-    close()
+    setOpen(false)
     jumpTo(id)
-  }, [close, jumpTo])
+  }, [jumpTo])
 
   if (!outline.shown) return null
 
   return (
     // `data-side-menu-inert`: the Kernel's side menu stays where it is while the pointer is over the Outline.
     <div className="pointer-events-none absolute inset-y-0 left-0 z-overlay" data-side-menu-inert="">
-      <div {...hover} className="pointer-events-auto absolute top-1/2 left-0 -translate-y-1/2 py-3 pr-4 pl-4" aria-hidden="true">
-        <OutlineRail outline={outline} />
-      </div>
-      <nav
-        {...hover}
-        aria-label={translate(locale, 'editor.outline.label')}
-        data-open={open || undefined}
-        inert={!open}
-        className={cn(
+      <HoverCard open={open} onOpenChange={setOpen} openDelay={OPEN_DELAY_MS} closeDelay={CLOSE_DELAY_MS}>
+        <HoverCardTrigger
+          className="pointer-events-auto absolute top-1/2 left-0 -translate-y-1/2 py-3"
+          style={{ paddingInline: RAIL_INSET }}
+          aria-hidden="true"
+        >
+          <OutlineRail outline={outline} />
+        </HoverCardTrigger>
+        <HoverCardContent
+          portal={false}
+          side="right"
+          sideOffset={CARD_OFFSET}
           // As wide as its longest heading, within bounds, so short headings leave the text beside it uncovered.
-          'absolute top-1/2 left-2 flex w-max max-w-64 min-w-40 origin-left -translate-y-1/2 flex-col overflow-hidden',
-          'rounded-xl border-hairline border-border bg-popover shadow-md',
-          'pointer-events-none scale-95 opacity-0 transition-[opacity,scale] duration-150 ease-out motion-reduce:scale-100',
-          'data-open:pointer-events-auto data-open:scale-100 data-open:opacity-100',
-        )}
-        style={{ maxHeight: outline.maxHeight }}
-      >
-        <ScrollArea className="min-h-0" viewportRef={listRef} viewportClassName="p-1.5 [&>div]:flex! [&>div]:flex-col [&>div]:gap-px">
-          {outline.entries.map((entry) => (
-            <OutlineRow
-              key={entry.id}
-              entry={entry}
-              active={entry.id === activeId}
-              hidden={outline.hiddenIds.has(entry.id)}
-              onPick={pick}
-            />
-          ))}
-        </ScrollArea>
-      </nav>
+          className="pointer-events-auto flex w-max max-w-64 min-w-40 flex-col overflow-hidden p-0"
+          style={{ maxHeight: outline.maxHeight }}
+        >
+          <nav aria-label={translate(locale, 'editor.outline.label')} className="flex min-h-0 flex-col">
+            <OutlineList outline={outline} onPick={pick} />
+          </nav>
+        </HoverCardContent>
+      </HoverCard>
     </div>
   )
 }
