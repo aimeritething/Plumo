@@ -83,12 +83,13 @@ describe('CommandMenu', () => {
     expect(screen.getByTestId('command-menu-empty')).toHaveTextContent('No matches')
   })
 
-  it('↓ and ↑ move the selection, wrapping at both ends, and ↵ runs the selected command', () => {
+  it('↓ and ↑ move the selection past a greyed command, wrapping at both ends, and ↵ runs the selected command', () => {
     const { props } = renderMenu()
-    expect(activeRow()).toHaveTextContent('Save')
+    expect(activeRow()).toHaveTextContent('Toggle Sidebar')
+    fireEvent.keyDown(input(), { key: 'ArrowDown' })
+    expect(activeRow()).toHaveTextContent('Toggle Rich/Raw')
     fireEvent.keyDown(input(), { key: 'ArrowDown' })
     expect(activeRow()).toHaveTextContent('Toggle Sidebar')
-    fireEvent.keyDown(input(), { key: 'ArrowUp' })
     fireEvent.keyDown(input(), { key: 'ArrowUp' })
     expect(activeRow()).toHaveTextContent('Toggle Rich/Raw')
 
@@ -102,7 +103,6 @@ describe('CommandMenu', () => {
     { name: 'ending a composition (keyCode 229)', init: { keyCode: 229 } },
   ])('leaves ↵, the arrows and Esc to the input method $name', ({ init }) => {
     const { props } = renderMenu()
-    fireEvent.keyDown(input(), { key: 'ArrowDown' })
     expect(activeRow()).toHaveTextContent('Toggle Sidebar')
 
     expect(fireEvent.keyDown(input(), { key: 'ArrowDown', ...init })).toBe(true)
@@ -113,9 +113,13 @@ describe('CommandMenu', () => {
     expect(props.onClose).not.toHaveBeenCalled()
   })
 
-  it('↵ on a greyed command does nothing', () => {
+  it('↵ and a click on a greyed command do nothing', () => {
     const { props } = renderMenu()
+    fireEvent.change(input(), { target: { value: 'save' } })
+    expect(rowNames()).toEqual(['Save'])
+    expect(screen.queryByRole('option', { selected: true })).toBeNull()
     fireEvent.keyDown(input(), { key: 'Enter' })
+    fireEvent.click(rows()[0])
     expect(props.onRunCommand).not.toHaveBeenCalled()
   })
 
@@ -133,13 +137,15 @@ describe('CommandMenu', () => {
     expect(props.onOpenFile).toHaveBeenLastCalledWith('/Notes/Attachments/lake.png', { raw: false })
   })
 
-  it('a click opens the row under the pointer, and hovering moves the selection', () => {
+  it('a click opens the row under the pointer, ⌘-click a Document in Raw, and hovering moves the selection', () => {
     const { props } = renderMenu({ mode: 'files' })
     const welcome = rows()[2]
-    fireEvent.mouseMove(welcome)
+    fireEvent.pointerMove(welcome)
     expect(activeRow()).toHaveTextContent('Welcome.md')
     fireEvent.click(welcome)
-    expect(props.onOpenFile).toHaveBeenCalledWith('/Notes/Welcome.md', { raw: false })
+    expect(props.onOpenFile).toHaveBeenLastCalledWith('/Notes/Welcome.md', { raw: false })
+    fireEvent.click(welcome, { metaKey: true })
+    expect(props.onOpenFile).toHaveBeenLastCalledWith('/Notes/Welcome.md', { raw: true })
   })
 
   it('typing resets the selection to the best match', () => {
