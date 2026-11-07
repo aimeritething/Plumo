@@ -307,10 +307,12 @@ function SectionControlButton({ locale }: { locale: AppLocale }) {
  * The grip: a press that moves starts the pointer reorder (block-reorder.ts);
  * a press that does not opens the Block's menu, on the pointer's release as
  * BlockNote's menu did, so the reorder and the menu never start together. A
- * second press closes it. Enter, Space and ↓ open it from the keyboard.
+ * second press closes it. Enter, Space and ↓ open it from the keyboard, as any
+ * menu trigger's keys do.
  *
- * The menu is anchored on a box laid over the grip, not on the grip: Radix's
- * trigger would open on the press itself.
+ * The grip is the menu's trigger, but one that leaves the press alone
+ * (`openOnPress={false}`), as a Table handle is: a menu trigger opens on the
+ * press and cancels it, which would cancel the reorder the press starts.
  */
 function DragHandleButton({ locale = 'en' }: { locale?: AppLocale }) {
   const dict = useDictionary()
@@ -338,7 +340,7 @@ function DragHandleButton({ locale = 'en' }: { locale?: AppLocale }) {
   return (
     <DropdownMenu modal={false} open={open} onOpenChange={setMenuOpen}>
       <span
-        className="relative inline-flex items-center justify-center"
+        className="inline-flex items-center justify-center"
         onPointerDownCapture={() => {
           openAtPressRef.current = openRef.current
           releaseHandledRef.current = false
@@ -359,27 +361,24 @@ function DragHandleButton({ locale = 'en' }: { locale?: AppLocale }) {
           setMenuOpen(!openRef.current)
         }}
       >
-        <SimpleTooltip label={dict.side_menu.drag_handle_label} side="bottom">
-          <Button
-            aria-expanded={open}
-            aria-haspopup="menu"
-            aria-label={dict.side_menu.drag_handle_label}
-            draggable={false}
-            onDragEnd={sideMenu.blockDragEnd}
-            onDragStart={(event) => event.preventDefault()}
-            onKeyDown={(event) => {
-              if (event.key !== 'ArrowDown') return
-              event.preventDefault()
-              setMenuOpen(true)
-            }}
-            ref={buttonRef}
-            size="icon-xs"
-            variant="icon-quiet"
-          >
-            <GripVertical data-test="dragHandle" />
-          </Button>
-        </SimpleTooltip>
-        <DropdownMenuTrigger render={<span aria-hidden="true" className="pointer-events-none absolute inset-0" tabIndex={-1} />} />
+        <DropdownMenuTrigger
+          openOnPress={false}
+          render={(
+            <SimpleTooltip label={dict.side_menu.drag_handle_label} side="bottom">
+              <Button
+                aria-label={dict.side_menu.drag_handle_label}
+                draggable={false}
+                onDragEnd={sideMenu.blockDragEnd}
+                onDragStart={(event) => event.preventDefault()}
+                ref={buttonRef}
+                size="icon-xs"
+                variant="icon-quiet"
+              >
+                <GripVertical data-test="dragHandle" />
+              </Button>
+            </SimpleTooltip>
+          )}
+        />
       </span>
       <DropdownMenuContent
         align="start"

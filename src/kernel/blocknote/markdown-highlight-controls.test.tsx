@@ -1,5 +1,6 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { TooltipProvider } from '@/ui/tooltip'
+import { isLayerPositioner } from '@/ui/open-layer.test-utils'
 import { BlockNoteEditor } from '@blocknote/core'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { schema } from './editor-schema'
@@ -66,7 +67,7 @@ const mountedEditors: Array<Awaited<ReturnType<typeof editorFromMarkdown>>> = []
 // square, the scroll area its bounds, and the window 1024×768.
 function layOutForThePopover() {
   const sizeOf = (element: Element, axis: 'width' | 'height') => {
-    if (element.hasAttribute('data-radix-popper-content-wrapper')) return 24
+    if (isLayerPositioner(element)) return 24
     if (element.classList.contains('editor-scroll-area')) return SCROLL_AREA_BOUNDS[axis]
     if (element === document.documentElement) return axis === 'width' ? 1024 : 768
     return 0

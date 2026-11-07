@@ -11,3 +11,23 @@ export function layerAttributes(slot: string, state: "open" | "closing" = "open"
 export function holdsOpenMenu(element: Element): boolean {
   return element.getAttribute("data-state") === "open"
 }
+
+/**
+ * The box that places one of src/ui's popovers (its position and size, which
+ * a test gives the overlay since jsdom lays nothing out). It is the primitive
+ * library's own wrapper around the content, so it is named here and not by
+ * the tests that measure it.
+ */
+const LAYER_POSITIONER = "[data-radix-popper-content-wrapper]"
+
+/** Whether an element is the box that places a src/ui popover. */
+export function isLayerPositioner(element: Element): boolean {
+  return element.matches(LAYER_POSITIONER)
+}
+
+/** The box that places the src/ui popover holding `element`. */
+export function layerPositioner(element: Element): HTMLElement {
+  const positioner = element.closest<HTMLElement>(LAYER_POSITIONER)
+  if (!positioner) throw new Error("Expected the element to sit in a src/ui popover")
+  return positioner
+}

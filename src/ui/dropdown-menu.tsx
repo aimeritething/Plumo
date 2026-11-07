@@ -99,12 +99,17 @@ function TriggerWithoutPress({
   return <Comp {...props} onPointerDown={onPress} />
 }
 
+// `matchTriggerWidth`: the menu is as wide as its trigger (the Folder
+// switcher's menu, as wide as its row), not as wide as its rows.
 function DropdownMenuContent({
   className,
   sideOffset = 4,
+  matchTriggerWidth = false,
   children,
   ...props
-}: React.ComponentProps<typeof DropdownMenuPrimitive.Content>) {
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Content> & {
+  matchTriggerWidth?: boolean
+}) {
   return (
     <DropdownMenuPrimitive.Portal>
       <DropdownMenuPrimitive.Content
@@ -113,6 +118,7 @@ function DropdownMenuContent({
         className={cn(
           surfaceVariants(),
           "z-popover flex max-h-(--radix-dropdown-menu-content-available-height) min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) flex-col overflow-hidden data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
+          matchTriggerWidth && "w-(--radix-dropdown-menu-trigger-width)",
           className
         )}
         {...props}

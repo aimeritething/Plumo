@@ -54,7 +54,7 @@ export const FolderSwitcher = memo(function FolderSwitcher(props: FolderSwitcher
             side="top"
             align="start"
             sideOffset={POPUP_OFFSET}
-            className="w-(--radix-dropdown-menu-trigger-width)"
+            matchTriggerWidth
             data-testid="folder-switcher-menu"
           >
             {recentFolders.map((path) => (

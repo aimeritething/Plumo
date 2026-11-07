@@ -4,6 +4,7 @@ import type * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/cn"
 import { Popover as PopoverPrimitive } from "radix-ui"
+import { escapeKeyDownHandler } from "./escape"
 import { renderAsChild, type RenderProp } from "./render"
 import { surfaceVariants } from "./surface"
 
@@ -44,14 +45,21 @@ const popoverContentVariants = cva(
   }
 )
 
+// `leaveEscapeUnmarked`: for a popover that never holds the focus (one that
+// only places a control beside the editor), the Esc that would close it is
+// left unmarked for the editor that has the focus (ui/escape).
 function PopoverContent({
   className,
   align = "center",
   sideOffset = 4,
   variant = "default",
+  leaveEscapeUnmarked = false,
+  onEscapeKeyDown,
   ...props
 }: React.ComponentProps<typeof PopoverPrimitive.Content> &
-  VariantProps<typeof popoverContentVariants>) {
+  VariantProps<typeof popoverContentVariants> & {
+    leaveEscapeUnmarked?: boolean
+  }) {
   return (
     <PopoverPrimitive.Portal>
       <PopoverPrimitive.Content
@@ -60,18 +68,35 @@ function PopoverContent({
         sideOffset={sideOffset}
         data-variant={variant}
         className={cn(popoverContentVariants({ variant }), className)}
+        onEscapeKeyDown={escapeKeyDownHandler(
+          onEscapeKeyDown,
+          leaveEscapeUnmarked
+        )}
         {...props}
       />
     </PopoverPrimitive.Portal>
   )
 }
 
+/** A box the popover is placed against that is not an element: a line box, a row the caller measures. */
+interface PopoverAnchorBox {
+  getBoundingClientRect(): DOMRect
+}
+
+// `anchor`: the popover is placed against a box the caller measures instead of
+// an element (Radix's `virtualRef` now, Base UI's positioner `anchor` later),
+// read each time the popover is placed.
 function PopoverAnchor({
+  anchor,
   ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Anchor> & RenderProp) {
+}: Omit<React.ComponentProps<typeof PopoverPrimitive.Anchor>, "virtualRef"> &
+  RenderProp & {
+    anchor?: React.RefObject<PopoverAnchorBox | null>
+  }) {
   return (
     <PopoverPrimitive.Anchor
       data-slot="popover-anchor"
+      virtualRef={anchor as React.RefObject<PopoverAnchorBox> | undefined}
       {...renderAsChild(props)}
     />
   )
@@ -118,4 +143,5 @@ export {
   PopoverHeader,
   PopoverTitle,
   PopoverDescription,
+  type PopoverAnchorBox,
 }

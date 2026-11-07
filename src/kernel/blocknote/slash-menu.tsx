@@ -253,7 +253,7 @@ export function SlashMenu({
           all "outside" the popover, and none of them may close it. The content
           drops the popover's dialog role: what it holds is the menu. */}
       <Popover open={submenuOpen}>
-        <PopoverAnchor virtualRef={submenuAnchor} />
+        <PopoverAnchor anchor={submenuAnchor} />
         <PopoverContent
           align="start"
           collisionPadding={SUBMENU_VIEWPORT_PADDING_PX}

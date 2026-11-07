@@ -19,17 +19,6 @@ function keepFocusInEditor(event: Event) {
   event.preventDefault()
 }
 
-// The popover's layer marks an Esc as handled (preventDefault) right after
-// this as it closes on it, and the editor then ignores that Esc (it selects
-// the caret's Block, the find bar closes). This popover never closes on Esc
-// (it has no onOpenChange), so that one mark is skipped; the next listener's
-// preventDefault is the event's own again.
-function leaveEscapeToEditor(event: KeyboardEvent) {
-  event.preventDefault = () => {
-    Reflect.deleteProperty(event, 'preventDefault')
-  }
-}
-
 // Shown while the focus is in the editor, or in the button or its colour menu
 // (the menu is portaled, so it counts while open). A popover anchored on the
 // highlight end's line places it, above the line or below it, inside the
@@ -53,14 +42,15 @@ export function HighlightBoundaryColorControl({ editor }: { editor: HighlightEdi
     // editor, the editor's focus and Esc are all "outside" the popover, and
     // none of them may close it.
     <Popover open>
-      <PopoverAnchor virtualRef={anchor} />
+      <PopoverAnchor anchor={anchor} />
       <PopoverContent
         ref={controlRef}
         align="center"
         collisionBoundary={state.boundary}
         data-test="highlightBoundaryControl"
+        // It never closes on Esc (it has no onOpenChange), so the Esc stays the editor's.
+        leaveEscapeUnmarked
         onCloseAutoFocus={keepFocusInEditor}
-        onEscapeKeyDown={leaveEscapeToEditor}
         onOpenAutoFocus={keepFocusInEditor}
         role={undefined}
         side={state.side}

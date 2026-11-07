@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it, onTestFinished, vi } from 'vitest'
+import { isLayerPositioner, layerPositioner } from '@/ui/open-layer.test-utils'
 
 const editorElement = document.createElement('div')
 document.body.appendChild(editorElement)
@@ -124,7 +125,7 @@ describe('SlashMenu', () => {
       const box = { bottom: 0, height: 0, left: 0, right: 0, top: 0, width: 0, x: 0, y: 0, ...overrides }
       return { ...box, toJSON: () => box } as DOMRect
     }
-    const isPopper = (element: HTMLElement) => element.hasAttribute('data-radix-popper-content-wrapper')
+    const isPopper = (element: HTMLElement) => isLayerPositioner(element)
     vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
       if (this.getAttribute('role') === 'option') return rect({ bottom: 732, height: 32, left: 12, right: 300, top: 700, width: 288, x: 12, y: 700 })
       return isPopper(this) ? rect({ height: 400, width: 160 }) : rect({})
@@ -142,7 +143,7 @@ describe('SlashMenu', () => {
     render(<SlashMenu items={[calloutItem()]} loadingState="loaded" selectedIndex={0} onItemClick={vi.fn()} />)
     fireEvent.mouseEnter(screen.getByRole('option', { name: 'Callout' }))
 
-    const popper = screen.getByRole('menu', { name: 'Callout' }).closest<HTMLElement>('[data-radix-popper-content-wrapper]')!
+    const popper = layerPositioner(screen.getByRole('menu', { name: 'Callout' }))
     await waitFor(() => { expect(popper.style.transform).toBe('translate(304px, 392px)') })
   })
 

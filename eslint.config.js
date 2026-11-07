@@ -29,10 +29,13 @@ export default defineConfig([
       'react-hooks/set-state-in-effect': 'error',
     },
   },
-  // `asChild` and the `data-state` attribute are Radix's. Outside src/ui a
-  // feature composes with a src/ui component's `render` and reads its state
-  // off aria (`aria-expanded:`) or a src/ui variant, so the move to Base UI
-  // touches src/ui only (ADR-0013).
+  // `asChild` and the `data-state` attribute are Radix's, and so are its
+  // `--radix-` CSS variables, its `data-radix-` attributes and its packages.
+  // Outside src/ui a feature composes with a src/ui component's `render`, reads
+  // its state off aria (`aria-expanded:`) or a src/ui variant, and asks a src/ui
+  // option, helper or test util for the rest, so the move to Base UI touches
+  // src/ui only (ADR-0013). Test files are held to it too: a test of src/ui
+  // sits in src/ui.
   {
     files: ['src/**/*.{ts,tsx}'],
     ignores: ['src/ui/**'],
@@ -54,6 +57,31 @@ export default defineConfig([
         {
           selector: 'TemplateElement[value.raw=/data-\\[?state/]',
           message: 'No `data-state` or `data-[state=…]` outside src/ui: use aria (`aria-expanded:`) or a src/ui variant or helper (ADR-0013).',
+        },
+        {
+          selector: 'Literal[value=/--radix-|data-radix-/]',
+          message: 'No `--radix-` variable or `data-radix-` attribute outside src/ui: they are Radix\'s; use a src/ui option, helper or test util (ADR-0013).',
+        },
+        {
+          selector: 'TemplateElement[value.raw=/--radix-|data-radix-/]',
+          message: 'No `--radix-` variable or `data-radix-` attribute outside src/ui: they are Radix\'s; use a src/ui option, helper or test util (ADR-0013).',
+        },
+      ],
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'radix-ui',
+              message: 'No Radix import outside src/ui: compose the src/ui component instead (ADR-0013).',
+            },
+          ],
+          patterns: [
+            {
+              group: ['@radix-ui/*', 'radix-ui/*'],
+              message: 'No Radix import outside src/ui: compose the src/ui component instead (ADR-0013).',
+            },
+          ],
         },
       ],
     },
