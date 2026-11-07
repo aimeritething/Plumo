@@ -430,8 +430,7 @@ function ExplorerRow(props: RowProps) {
     )
   }
 
-  // The folder row a dragged file would land in takes the selected colours and
-  // an inset ring, so it is clear which folder that is.
+  // The folder row a dragged file would land in is marked as the drop target.
   return (
     <SidebarMenuItem>
       <ContextMenu>
@@ -441,11 +440,8 @@ function ExplorerRow(props: RowProps) {
               isActive={selected}
               aria-current={selected || undefined}
               aria-expanded={isFolder ? isExpanded : undefined}
-              className={cn(
-                'data-drop-target:bg-sidebar-selected data-drop-target:text-foreground data-drop-target:ring-1 data-drop-target:ring-primary data-drop-target:ring-inset',
-                // WebKit will not start an HTML5 drag from inside `user-select: none` (the whole shell) without this.
-                !isFolder && '[-webkit-user-drag:element]',
-              )}
+              // WebKit will not start an HTML5 drag from inside `user-select: none` (the whole shell) without this.
+              className={cn(!isFolder && '[-webkit-user-drag:element]')}
               style={{ paddingLeft: explorerRowIndent(depth) }}
               data-drop-target={isDropTarget || undefined}
               data-testid={`explorer-row:${node.path}`}

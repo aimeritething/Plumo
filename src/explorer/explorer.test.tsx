@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { holdsOpenMenu } from '@/ui/open-layer.test-utils'
+import { sidebarDropTargetClassName } from '@/ui/sidebar'
 import { SidebarTestProvider } from '@/ui/sidebar.test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Explorer, type ExplorerPins } from './explorer'
@@ -707,6 +708,17 @@ describe('drag-and-drop', () => {
 
     expect(moveInto).toHaveBeenCalledWith(`${FOLDER}/Projects/Plumo.md`, FOLDER)
     expect(screen.getByTestId('explorer-header')).not.toHaveAttribute('data-drop-target')
+  })
+
+  it('marks a folder row and the header as a drop target with one look, the header\'s label following its colour', () => {
+    renderExplorer(stubActions())
+    const recipe = sidebarDropTargetClassName.split(' ')
+
+    expect(screen.getByTestId(`explorer-row:${FOLDER}/Projects`)).toHaveClass(...recipe)
+    expect(screen.getByTestId('explorer-header')).toHaveClass(...recipe)
+    // The label has a colour of its own, so it inherits the drop target's rather than setting one.
+    expect(screen.getByTestId('explorer-toggle')).toHaveClass('in-data-drop-target:text-inherit')
+    expect(screen.getByTestId('explorer-toggle').className).not.toMatch(/in-data-drop-target:text-foreground/)
   })
 
   it('takes the top-level drop on the header while the tree is folded', () => {

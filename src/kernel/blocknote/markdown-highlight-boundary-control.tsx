@@ -70,11 +70,10 @@ export function HighlightBoundaryColorControl({ editor }: { editor: HighlightEdi
             <SimpleTooltip label={label} side={state.side}>
               <Button
                 aria-label={label}
-                className="bg-popover text-foreground border-hairline border-border shadow-md"
                 data-test="highlightBoundaryColorMenu"
                 onMouseDown={event => event.preventDefault()}
                 size="icon-xs"
-                variant="ghost"
+                variant="surface"
               >
                 <Highlighter aria-hidden="true" />
               </Button>

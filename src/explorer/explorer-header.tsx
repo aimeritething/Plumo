@@ -3,7 +3,7 @@ import { CaretDown, CaretRight } from '@phosphor-icons/react'
 import { cn } from '@/lib/cn'
 import { CollapsibleTrigger } from '@/ui/collapsible'
 import { ContextMenu, ContextMenuTrigger } from '@/ui/context-menu'
-import { SidebarGroupLabel } from '@/ui/sidebar'
+import { SidebarGroupLabel, sidebarDropTargetClassName } from '@/ui/sidebar'
 import type { ExplorerActions } from './use-explorer-actions'
 import { ExplorerContextMenu } from './explorer-context-menu'
 import { ExplorerHeaderActions } from './explorer-header-actions'
@@ -52,17 +52,14 @@ export function ExplorerHeader(props: ExplorerHeaderProps) {
       <ContextMenuTrigger
         render={(
           <div
-            className={cn(
-              'flex items-center rounded-lg pr-2',
-              'data-drop-target:bg-sidebar-selected data-drop-target:ring-1 data-drop-target:ring-primary data-drop-target:ring-inset',
-            )}
+            className={cn('flex items-center pr-2', sidebarDropTargetClassName)}
             data-testid="explorer-header"
             data-drop-target={drop.target === folder || undefined}
             {...drop.dropProps(folder)}
           />
         )}
       >
-        <SidebarGroupLabel className="min-w-0 flex-1 in-data-drop-target:text-foreground" render={<CollapsibleTrigger data-testid="explorer-toggle" />}>
+        <SidebarGroupLabel className="min-w-0 flex-1" render={<CollapsibleTrigger data-testid="explorer-toggle" />}>
           <span>{name}</span>
           <Caret aria-hidden="true" data-testid="explorer-caret" />
         </SidebarGroupLabel>

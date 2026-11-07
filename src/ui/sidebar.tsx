@@ -308,6 +308,15 @@ function SidebarGroup({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+// A drop target: the folder a dragged file would land in (an Explorer row, or
+// the Explorer's header, which stands in for the Folder) takes the selected
+// fill, the foreground colour and an inset Primary ring, so it is clear which
+// folder that is. The element that takes the drop carries `data-drop-target`;
+// a row has this built in, and any other element (the Explorer's header) takes
+// these classes. A group label inside one follows its colour.
+const sidebarDropTargetClassName =
+  "rounded-lg data-drop-target:bg-sidebar-selected data-drop-target:text-foreground data-drop-target:ring-1 data-drop-target:ring-primary data-drop-target:ring-inset"
+
 function SidebarGroupLabel({
   className,
   ...props
@@ -326,6 +335,7 @@ function SidebarGroupLabel({
         // group or the focus is in it.
         "[&>svg]:size-2.5 [&>svg]:shrink-0 [&>svg]:text-subtle-foreground [&>svg]:opacity-0 [&>svg]:transition-opacity [&>svg]:duration-150 [&>svg]:ease-out group-focus-within/sidebar-group:[&>svg]:opacity-100 group-hover/sidebar-group:[&>svg]:opacity-100",
         "group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0",
+        "in-data-drop-target:text-inherit",
         className
       )}
       {...labelProps}
@@ -397,7 +407,8 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<"li">) {
 // (`data-state="open"`, from a context menu's or a dropdown's trigger) keeps
 // the hover look while the pointer is in the menu: a right-click does not
 // select, so this is the only mark on the row the menu acts on, and it must
-// not look like the current row. The icons are muted, a step quieter than the
+// not look like the current row. A row a dragged file would land in is a drop
+// target (`sidebarDropTargetClassName`). The icons are muted, a step quieter than the
 // name, until the row is hovered, current or holds its menu open; a nested
 // icon (the Explorer's folder caret) follows too. No pressed fill and no
 // medium weight on the current row, which shadcn has.
@@ -407,6 +418,7 @@ const sidebarMenuButtonVariants = cva(
     "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-selected data-[active=true]:text-sidebar-foreground",
     "[&>span]:min-w-0 [&>span]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
     "[&_svg]:text-muted-foreground hover:[&_svg]:text-foreground data-[state=open]:[&_svg]:text-foreground data-[active=true]:[&_svg]:text-foreground",
+    sidebarDropTargetClassName,
   ],
   {
     variants: {
@@ -615,6 +627,8 @@ export {
   SidebarProvider,
   SidebarSeparator,
   SidebarTrigger,
+  // eslint-disable-next-line react-refresh/only-export-components -- a class recipe for a drop target that is not a row
+  sidebarDropTargetClassName,
   // eslint-disable-next-line react-refresh/only-export-components -- shadcn/ui pattern
   useSidebar,
 }

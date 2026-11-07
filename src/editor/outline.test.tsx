@@ -161,7 +161,8 @@ describe('Outline', () => {
     act(() => { toggleCollapsedHeading(editor, 'setup') })
     expect(isCollapsedBlock(editor, 'setup')).toBe(true)
     await openCard()
-    await waitFor(() => expect(row('One: create the repository')).toHaveClass('text-subtle-foreground'))
+    await waitFor(() => expect(row('One: create the repository')).toHaveAttribute('data-dimmed'))
+    expect(row('Setting it up')).not.toHaveAttribute('data-dimmed')
 
     fireEvent.click(row('One: create the repository'))
 

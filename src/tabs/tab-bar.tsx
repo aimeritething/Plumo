@@ -6,6 +6,7 @@ import { tabParentHints } from './tab-labels'
 import { CloseAffordance } from './close-affordance'
 import { APP_COMMAND_DEFINITIONS, APP_COMMAND_IDS } from '@/shell/app-command-catalog'
 import { Button } from '@/ui/button'
+import { DocumentTab, DocumentTabList } from '@/ui/document-tabs'
 import { SimpleTooltip } from '@/ui/tooltip'
 
 const MIDDLE_BUTTON = 1
@@ -53,12 +54,7 @@ export const TabBar = memo(function TabBar({ tabs, activeTabPath, onActivate, on
       data-collapsed={sidebarCollapsed || undefined}
       data-tauri-drag-region
     >
-      <div
-        ref={stripRef}
-        className="flex min-w-0 flex-initial items-center gap-1 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        role="tablist"
-        aria-label="Tabs"
-      >
+      <DocumentTabList ref={stripRef} aria-label="Tabs">
         {tabs.map(({ entry }) => (
           <TabPill
             key={entry.path}
@@ -70,7 +66,7 @@ export const TabBar = memo(function TabBar({ tabs, activeTabPath, onActivate, on
             onClose={onClose}
           />
         ))}
-      </div>
+      </DocumentTabList>
       {onNewDocument && <NewDocumentButton onNewDocument={onNewDocument} />}
       {actions && <div className="ml-auto flex flex-none items-center pl-3" data-testid="tab-bar-actions">{actions}</div>}
     </div>
@@ -137,8 +133,7 @@ interface TabPillProps {
 }
 
 /**
- * One tab: 30px, 6px radius, 12px in from either side. The selected one is
- * told apart by its fill alone. Its × appears only under the pointer, after
+ * One tab, ui/document-tabs' Tab. Its × appears only under the pointer, after
  * the name, and the Tab grows by its width, so it never covers the name or
  * the parent folder that tells two same-name Tabs apart. However many Tabs
  * are open it keeps 96px, enough for a name to stay recognisable, cut short
@@ -147,14 +142,11 @@ interface TabPillProps {
 function TabPill({ path, filename, parentHint, active, onActivate, onClose }: TabPillProps) {
   const isImage = isImageFilePath(path)
   return (
-    <div
-      className="group flex h-7.5 max-w-55 min-w-24 flex-initial cursor-default items-center gap-1.5 rounded-md px-3 text-sm whitespace-nowrap text-muted-foreground outline-none hover:bg-accent hover:text-foreground aria-selected:bg-selected aria-selected:text-foreground focus-visible:focus-ring"
-      role="tab"
-      aria-selected={active}
+    <DocumentTab
+      selected={active}
       aria-label={parentHint ? `${filename}, ${parentHint}` : filename}
-      tabIndex={active ? 0 : -1}
       data-testid={`tab:${path}`}
-      onClick={() => onActivate(path)}
+      onSelect={() => onActivate(path)}
       // A middle-click closes the Tab through the same close as its ×. Both
       // halves are prevented, so the press starts no autoscroll and the click
       // pastes nothing.
@@ -166,14 +158,11 @@ function TabPill({ path, filename, parentHint, active, onActivate, onClose }: Ta
         event.preventDefault()
         onClose(path)
       }}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') onActivate(path)
-      }}
     >
       {isImage && <Image size={13} className="flex-none text-muted-foreground" aria-hidden="true" />}
       <span className="min-w-0 truncate" data-testid="tab-name">{filename}</span>
       {parentHint && <span className="min-w-0 flex-initial truncate text-subtle-foreground" data-testid="tab-parent">{parentHint}</span>}
       <CloseAffordance name={filename} onClose={() => onClose(path)} />
-    </div>
+    </DocumentTab>
   )
 }

@@ -2,6 +2,7 @@ import { useCallback, useLayoutEffect, useRef, useState, type RefObject } from '
 import { cn } from '@/lib/cn'
 import { translate, type AppLocale } from '@/lib/i18n'
 import type { RichEditor } from '@/kernel/blocknote/block-note-dom'
+import { Button } from '@/ui/button'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/ui/hover-card'
 import { ScrollArea } from '@/ui/scroll-area'
 import { railLayout, type OutlineEntry } from './outline-entries'
@@ -67,22 +68,20 @@ function OutlineRow({ entry, active, hidden, onPick }: {
   onPick: (id: string) => void
 }) {
   return (
-    <button
+    <Button
       type="button"
+      variant="list"
+      size="list"
       data-outline-entry={entry.id}
+      data-dimmed={hidden || undefined}
       aria-current={active ? 'location' : undefined}
       // The editor keeps its focus until the jump moves the caret.
       onMouseDown={(event) => event.preventDefault()}
       onClick={() => onPick(entry.id)}
-      className={cn(
-        'flex h-7 shrink-0 cursor-default items-center rounded-md pr-2 text-left text-[13px] outline-none',
-        'hover:bg-accent hover:text-foreground focus-visible:bg-accent',
-        active ? 'font-medium text-foreground' : hidden ? 'text-subtle-foreground' : 'text-muted-foreground',
-      )}
       style={{ paddingLeft: 8 + entry.depth * 12 }}
     >
       <span className="min-w-0 truncate">{entry.text}</span>
-    </button>
+    </Button>
   )
 }
 
