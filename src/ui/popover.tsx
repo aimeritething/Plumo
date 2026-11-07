@@ -1,6 +1,7 @@
 "use client"
 
 import type * as React from "react"
+import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/cn"
 import { Popover as PopoverPrimitive } from "radix-ui"
 
@@ -17,16 +18,33 @@ function PopoverTrigger({
 }
 
 // `compact` is the inset of a popover that holds one small form (a link, an
-// alt text): the inputs sit 8px from the edge instead of 16px.
+// alt text): the inputs sit 8px from the edge instead of 16px. `menu` draws
+// no card at all: it only places what it holds, a ui/menu-list that is its own
+// card (the Slash menu's submenu), so the card is not drawn twice.
+const popoverContentVariants = cva(
+  "z-popover origin-(--radix-popover-content-transform-origin) outline-hidden data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
+  {
+    variants: {
+      variant: {
+        default: "w-72 rounded-xl border-hairline border-border bg-popover p-4 text-foreground shadow-md",
+        compact: "w-72 rounded-xl border-hairline border-border bg-popover p-2 text-foreground shadow-md",
+        menu: "",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+)
+
 function PopoverContent({
   className,
   align = "center",
   sideOffset = 4,
   variant = "default",
   ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Content> & {
-  variant?: "default" | "compact"
-}) {
+}: React.ComponentProps<typeof PopoverPrimitive.Content> &
+  VariantProps<typeof popoverContentVariants>) {
   return (
     <PopoverPrimitive.Portal>
       <PopoverPrimitive.Content
@@ -34,11 +52,7 @@ function PopoverContent({
         align={align}
         sideOffset={sideOffset}
         data-variant={variant}
-        className={cn(
-          "z-popover w-72 origin-(--radix-popover-content-transform-origin) rounded-xl border-hairline border-border bg-popover text-foreground shadow-md outline-hidden data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
-          variant === "compact" ? "p-2" : "p-4",
-          className
-        )}
+        className={cn(popoverContentVariants({ variant }), className)}
         {...props}
       />
     </PopoverPrimitive.Portal>
