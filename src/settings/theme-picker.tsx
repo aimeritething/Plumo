@@ -1,6 +1,6 @@
-import { useRef, type KeyboardEvent } from 'react'
 import { cn } from '@/lib/cn'
 import type { ResolvedThemeMode, ThemeMode } from '@/shell/theme-mode'
+import { ToggleGroup, ToggleGroupItem, ToggleGroupItemPreview } from '@/ui/toggle-group'
 
 /** The View ▸ Appearance order. */
 const THEME_CHOICES: readonly { mode: ThemeMode; label: string }[] = [
@@ -9,9 +9,6 @@ const THEME_CHOICES: readonly { mode: ThemeMode; label: string }[] = [
   { mode: 'light', label: 'Light' },
 ]
 
-const NEXT_KEYS = new Set(['ArrowRight', 'ArrowDown'])
-const PREVIOUS_KEYS = new Set(['ArrowLeft', 'ArrowUp'])
-
 interface ThemePickerProps {
   theme: ThemeMode
   onChange: (theme: ThemeMode) => void
@@ -19,21 +16,16 @@ interface ThemePickerProps {
 
 /**
  * The Theme setting: a card per choice, each a small Plumo window drawn in
- * that theme (System's half light, half dark), the chosen one ringed. It is a
- * radio group: one tab stop, the arrows move the choice as they do between
- * native radio buttons, and a change applies at once.
+ * that theme (System's half light, half dark), the chosen one ringed. A
+ * single toggle group: one tab stop, the arrows move the focus, Space or a
+ * click chooses, and a change applies at once. A click on the chosen card,
+ * which the group reads as clearing the choice, is ignored: there is always
+ * a theme.
  */
 export function ThemePicker({ theme, onChange }: ThemePickerProps) {
-  const cards = useRef<(HTMLButtonElement | null)[]>([])
-
-  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    const step = NEXT_KEYS.has(event.key) ? 1 : PREVIOUS_KEYS.has(event.key) ? -1 : 0
-    if (step === 0) return
-    event.preventDefault()
-    const current = THEME_CHOICES.findIndex((choice) => choice.mode === theme)
-    const next = (current + step + THEME_CHOICES.length) % THEME_CHOICES.length
-    onChange(THEME_CHOICES[next].mode)
-    cards.current[next]?.focus()
+  const choose = (next: string) => {
+    const choice = THEME_CHOICES.find(({ mode }) => mode === next)
+    if (choice) onChange(choice.mode)
   }
 
   return (
@@ -42,32 +34,17 @@ export function ThemePicker({ theme, onChange }: ThemePickerProps) {
         <span id="settings-theme-label" className="text-sm font-medium text-foreground">Theme</span>
         <span className="text-xs text-muted-foreground">System follows macOS, switching with it.</span>
       </div>
-      <div
-        role="radiogroup"
+      <ToggleGroup
+        type="single"
+        variant="card"
+        value={theme}
+        onValueChange={choose}
         aria-labelledby="settings-theme-label"
-        className="flex gap-4 max-[760px]:gap-3"
-        onKeyDown={onKeyDown}
         data-testid="settings-theme"
       >
-        {THEME_CHOICES.map(({ mode, label }, index) => (
-          <button
-            key={mode}
-            ref={(card) => { cards.current[index] = card }}
-            type="button"
-            role="radio"
-            aria-checked={mode === theme}
-            tabIndex={mode === theme ? 0 : -1}
-            className="group flex min-w-0 flex-1 cursor-default flex-col gap-2 text-left outline-none"
-            onClick={() => onChange(mode)}
-            data-testid={`settings-theme:${mode}`}
-          >
-            <span
-              className={cn(
-                'relative block aspect-[17/11] w-full overflow-hidden rounded-lg ring-1 ring-border',
-                'group-aria-checked:ring-2 group-aria-checked:ring-foreground group-aria-checked:ring-offset-2 group-aria-checked:ring-offset-popover',
-                'group-focus-visible:ring-2 group-focus-visible:ring-ring group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-popover',
-              )}
-            >
+        {THEME_CHOICES.map(({ mode, label }) => (
+          <ToggleGroupItem key={mode} value={mode} data-testid={`settings-theme:${mode}`}>
+            <ToggleGroupItemPreview className="aspect-[17/11]">
               {mode === 'system' ? (
                 <>
                   <MiniWindow theme="light" className="absolute inset-0" />
@@ -78,13 +55,11 @@ export function ThemePicker({ theme, onChange }: ThemePickerProps) {
               ) : (
                 <MiniWindow theme={mode} className="absolute inset-0" />
               )}
-            </span>
-            <span className="truncate pl-0.5 text-xs text-muted-foreground group-aria-checked:font-medium group-aria-checked:text-foreground">
-              {label}
-            </span>
-          </button>
+            </ToggleGroupItemPreview>
+            <span className="truncate pl-0.5">{label}</span>
+          </ToggleGroupItem>
         ))}
-      </div>
+      </ToggleGroup>
     </div>
   )
 }

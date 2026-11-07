@@ -74,7 +74,7 @@ describe('DocumentTabActions', () => {
   })
 
   describe('the Rich | Raw control', () => {
-    it('shows both segments with the current one checked and asks for the other on click', () => {
+    it('shows both segments with the current one checked, asks for the other on click and never clears the mode', () => {
       const onChange = vi.fn()
       renderDocument({ mode: richMode({ onChange }) })
 
@@ -105,6 +105,8 @@ describe('DocumentTabActions', () => {
 
       const rich = screen.getByRole('radio', { name: 'Rich' })
       expect(rich).toHaveAttribute('aria-disabled', 'true')
+      // Not the disabled attribute: a disabled button takes no pointer or focus, and the tooltip would never show.
+      expect(rich).not.toBeDisabled()
       fireEvent.click(rich)
       expect(onChange).not.toHaveBeenCalled()
 

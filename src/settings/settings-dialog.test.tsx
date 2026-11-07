@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { ThemeMode } from '@/shell/theme-mode'
 import { TooltipProvider } from '@/ui/tooltip'
@@ -30,8 +30,6 @@ describe('SettingsDialog', () => {
     expect(within(group).getAllByRole('radio').map((radio) => radio.textContent)).toEqual(['System', 'Dark', 'Light'])
     expect(themeCard('dark')).toHaveAttribute('aria-checked', 'true')
     expect(themeCard('light')).toHaveAttribute('aria-checked', 'false')
-    expect(themeCard('dark')).toHaveAttribute('tabindex', '0')
-    expect(themeCard('system')).toHaveAttribute('tabindex', '-1')
   })
 
   it('draws each card in its own theme, System in both', () => {
@@ -44,17 +42,26 @@ describe('SettingsDialog', () => {
     expect(themesIn('light')).toEqual(['light'])
   })
 
-  it('applies a choice at once, by click or by arrow key', () => {
+  it('applies a choice at once on click, and never clears it', () => {
     const props = renderDialog('light')
 
     fireEvent.click(themeCard('system'))
     expect(props.onThemeChange).toHaveBeenLastCalledWith('system')
 
-    fireEvent.keyDown(themeCard('light'), { key: 'ArrowLeft' })
-    expect(props.onThemeChange).toHaveBeenLastCalledWith('dark')
+    fireEvent.click(themeCard('light'))
+    expect(props.onThemeChange).toHaveBeenCalledOnce()
+  })
 
+  it('moves the focus between the cards with the arrows, wrapping, without choosing', async () => {
+    const props = renderDialog('light')
+
+    act(() => themeCard('light').focus())
     fireEvent.keyDown(themeCard('light'), { key: 'ArrowRight' })
-    expect(props.onThemeChange).toHaveBeenLastCalledWith('system')
+    await waitFor(() => expect(themeCard('system')).toHaveFocus())
+    fireEvent.keyDown(themeCard('system'), { key: 'ArrowRight' })
+    await waitFor(() => expect(themeCard('dark')).toHaveFocus())
+
+    expect(props.onThemeChange).not.toHaveBeenCalled()
   })
 
   it('closes on Esc and on its close button', () => {
@@ -87,17 +94,29 @@ describe('SettingsDialog', () => {
     expect(swatch).toHaveAccessibleName('Green')
   })
 
-  it('applies a preset on click and on the arrows, and any colour from the panel', () => {
+  it('applies a preset on click, never clears it, and takes any colour from the panel', () => {
     const props = renderDialog()
 
     fireEvent.click(screen.getByTestId('settings-primary-color:green'))
     expect(props.onPrimaryColorChange).toHaveBeenLastCalledWith('#30a46c')
 
-    fireEvent.keyDown(screen.getByTestId('settings-primary-color:blue'), { key: 'ArrowRight' })
-    expect(props.onPrimaryColorChange).toHaveBeenLastCalledWith('#8e4ec6')
+    fireEvent.click(screen.getByTestId('settings-primary-color:blue'))
+    expect(props.onPrimaryColorChange).toHaveBeenCalledOnce()
 
     fireEvent.change(screen.getByTestId('settings-primary-color-panel'), { target: { value: '#123456' } })
     expect(props.onPrimaryColorChange).toHaveBeenLastCalledWith('#123456')
+  })
+
+  it('opens the colour panel from Custom without changing the colour', () => {
+    const props = renderDialog()
+    const panel = screen.getByTestId('settings-primary-color-panel')
+    const opened = vi.fn()
+    panel.addEventListener('click', opened)
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Custom' }))
+    expect(opened).toHaveBeenCalledOnce()
+    expect(props.onPrimaryColorChange).not.toHaveBeenCalled()
+    expect(screen.getByRole('radio', { name: 'Blue' })).toHaveAttribute('aria-checked', 'true')
   })
 
   it('checks Custom, and names the colour, for a colour that is no preset', () => {

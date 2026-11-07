@@ -65,7 +65,11 @@ test('the Folder switcher\'s menu ends with Settings, which opens the dialog', a
   await page.keyboard.press('Tab')
   await page.keyboard.press('Tab')
   await expect(themeCard(page, 'light')).toBeFocused()
+  // The arrows move the focus; Space chooses.
   await page.keyboard.press('ArrowLeft')
+  await expect(themeCard(page, 'dark')).toBeFocused()
+  await expect(themeCard(page, 'light')).toHaveAttribute('aria-checked', 'true')
+  await page.keyboard.press('Space')
   await expect(themeCard(page, 'dark')).toHaveAttribute('aria-checked', 'true')
   await expect(themeCard(page, 'dark')).toBeFocused()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')

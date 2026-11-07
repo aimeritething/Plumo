@@ -12,6 +12,7 @@ import {
 } from '@/ui/dropdown-menu'
 import { Button } from '@/ui/button'
 import { SimpleTooltip } from '@/ui/tooltip'
+import { ToggleGroup, ToggleGroupItem } from '@/ui/toggle-group'
 
 /** A shortcut as the manifest writes it (`⌘\\`): Plumo v0.1 is a macOS app, like the sidebar toggle's `⌘[`. */
 const shortcutOf = (id: AppCommandId) => APP_COMMAND_DEFINITIONS[id].shortcut?.display
@@ -113,42 +114,42 @@ function CopyPathButton({ onCopyPath }: { onCopyPath: () => void }) {
 }
 
 /**
- * `Rich | Raw`: a pill track on the shade surface, two icon segments (Aa for
- * Rich, </> for Raw), the current one a raised white pill, each with a
- * tooltip naming the mode and the shortcut as a chip. Invalid Frontmatter
- * leaves the Rich segment in place but unavailable, faded, its tooltip saying
- * why. It is marked with aria-disabled rather than the disabled attribute so
- * it still takes the pointer and can show that tooltip; `aria-checked` is the
- * one source of which segment is current.
+ * `Rich | Raw`: the segmented toggle group, two icon segments (Aa for Rich,
+ * </> for Raw), each with a tooltip naming the mode and the shortcut as a
+ * chip. Invalid Frontmatter leaves the Rich segment in place but unavailable,
+ * faded, its tooltip saying why. It is marked with aria-disabled rather than
+ * the disabled attribute so it still takes the pointer and the focus and can
+ * show that tooltip; choosing it is refused here instead. A click on the
+ * current segment, which a single toggle group reads as clearing the choice,
+ * is refused too: a Tab is always in one mode.
  */
 function ModeControl({ mode }: { mode: TabMode }) {
+  const choose = (next: string) => {
+    const segment = MODES.find((candidate) => candidate === next)
+    if (segment === undefined) return
+    if (segment === 'rich' && mode.richDisabledReason !== null) return
+    mode.onChange(segment)
+  }
+
   return (
-    <div className="flex h-6.5 flex-none items-center gap-0.5 rounded-full bg-muted p-0.5" role="radiogroup" aria-label="Editor mode" data-testid="tab-mode">
+    <ToggleGroup type="single" variant="segmented" value={mode.value} onValueChange={choose} aria-label="Editor mode" data-testid="tab-mode">
       {MODES.map((segment) => {
-        const active = segment === mode.value
         const disabledReason = segment === 'rich' ? mode.richDisabledReason : null
         const SegmentIcon = MODE_ICONS[segment]
         return (
           <SimpleTooltip key={segment} label={disabledReason ?? MODE_LABELS[segment]} shortcut={disabledReason === null ? TOGGLE_SHORTCUT : undefined} side="bottom">
-            <button
-              type="button"
-              role="radio"
-              className="grid h-5.5 w-7 place-items-center rounded-full text-muted-foreground transition-colors duration-150 ease-out hover:text-muted-foreground focus-visible:focus-ring aria-checked:bg-popover aria-checked:text-foreground aria-checked:shadow-xs aria-disabled:text-subtle-foreground"
+            <ToggleGroupItem
+              value={segment}
               aria-label={MODE_LABELS[segment]}
-              aria-checked={active}
               aria-disabled={disabledReason !== null || undefined}
               data-testid={`tab-mode-${segment}`}
-              onClick={() => {
-                if (active || disabledReason !== null) return
-                mode.onChange(segment)
-              }}
             >
-              <SegmentIcon size={16} aria-hidden="true" />
-            </button>
+              <SegmentIcon aria-hidden="true" />
+            </ToggleGroupItem>
           </SimpleTooltip>
         )
       })}
-    </div>
+    </ToggleGroup>
   )
 }
 
