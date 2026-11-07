@@ -130,6 +130,23 @@ describe('Outline', () => {
     await waitFor(() => expect(card()).toBeNull())
   })
 
+  it('leaves an Esc pressed in the editor to the editor while the card is open, and closes the card', async () => {
+    const { card, editor, rail, scrollArea, openCard } = mountOutline()
+    await waitFor(() => expect(rail()).not.toBeNull())
+    await openCard()
+    // Whether the Esc was already marked handled on its way down into the editor.
+    let markedBeforeEditor: boolean | undefined
+    const listener = (event: KeyboardEvent) => { markedBeforeEditor = event.defaultPrevented }
+    scrollArea.addEventListener('keydown', listener, { capture: true })
+    onTestFinished(() => { scrollArea.removeEventListener('keydown', listener, { capture: true }) })
+
+    // The editor handles Esc itself and marks it (fireEvent returns false), so
+    // its own preventDefault is not swallowed either.
+    expect(fireEvent.keyDown(editor.domElement!, { key: 'Escape' })).toBe(false)
+    expect(markedBeforeEditor).toBe(false)
+    await waitFor(() => expect(card()).toBeNull())
+  })
+
   it('leaves the focus where it is when a row is pressed', async () => {
     const { rail, row, openCard } = mountOutline()
     await waitFor(() => expect(rail()).not.toBeNull())

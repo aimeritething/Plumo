@@ -44,6 +44,15 @@ describe('CommandMenu', () => {
     expect(screen.getByTestId('command-menu-footer')).toHaveTextContent('↵ open · ⌘↵ open in Raw · esc close')
   })
 
+  it('names the results listbox after the mode, not cmdk’s default', () => {
+    const { rerender, props } = renderMenu()
+    expect(screen.getByRole('listbox', { name: 'Command Menu' })).toBeInTheDocument()
+    expect(screen.queryByRole('listbox', { name: 'Suggestions' })).toBeNull()
+
+    rerender(<CommandMenu {...props} mode="files" />)
+    expect(screen.getByRole('listbox', { name: 'Quick Open' })).toBeInTheDocument()
+  })
+
   it('renders nothing while closed', () => {
     renderMenu({ open: false })
     expect(screen.queryByTestId('command-menu')).toBeNull()

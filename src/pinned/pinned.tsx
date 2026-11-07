@@ -191,8 +191,9 @@ function PinnedRow({ path, parentHint, active, dragging, dropMark, dragProps, on
           )}
         >
           <Icon aria-hidden="true" />
-          <span>{filename}</span>
-          {parentHint && <span className="ms-auto flex-none text-2xs text-muted-foreground" data-testid="pinned-parent">{parentHint}</span>}
+          {/* The name takes the room the hint leaves, and both shrink with an ellipsis (the button truncates its spans), as Tabs do. */}
+          <span className="flex-1" data-testid="pinned-name">{filename}</span>
+          {parentHint && <span className="flex-initial text-2xs text-muted-foreground" data-testid="pinned-parent">{parentHint}</span>}
         </ContextMenuTrigger>
         <ContextMenuContent data-testid="pinned-menu">
           <ContextMenuItem onSelect={() => onUnpin(path)}>Unpin</ContextMenuItem>

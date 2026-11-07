@@ -1,7 +1,9 @@
 import { createEvent, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import { SidebarTestProvider } from '@/ui/sidebar.test-utils'
 import { Pinned, PINNED_DRAG_MIME_TYPE, type PinnedProps } from './pinned'
+import { movePinned } from './pinned-list'
 
 const A = '/Notes/Reading list.md'
 const B = '/Notes/Everything.md'
@@ -133,6 +135,61 @@ describe('Pinned', () => {
     fireEvent.keyDown(row(A), { key: 'ArrowDown' })
     expect(onMove.mock.calls).toEqual([[LAKE, B], [A, LAKE], [B, null]])
     expect(onOpen).not.toHaveBeenCalled()
+  })
+
+  // React reorders the rows by moving their elements, and moving the focused
+  // one drops its focus to the body (jsdom does this as the browsers do); the
+  // moved row must have it back, through a real re-render of the list.
+  it('keeps the focus on the moved row, so ⌥↑ and ⌥↓ can be pressed again and again', () => {
+    const C = '/Notes/Ideas.md'
+    function MovablePinned() {
+      const [paths, setPaths] = useState<readonly string[]>([A, B, LAKE, C])
+      return (
+        <Pinned
+          paths={paths}
+          activeTabPath={null}
+          collapsed={false}
+          onToggleCollapsed={vi.fn()}
+          onOpen={vi.fn()}
+          onUnpin={vi.fn()}
+          onDuplicate={vi.fn()}
+          onMove={(path, before) => setPaths((current) => movePinned(current, path, before))}
+        />
+      )
+    }
+    render(<MovablePinned />, { wrapper: SidebarTestProvider })
+    const order = () => screen.getAllByTestId('pinned-name').map((name) => name.textContent)
+    const press = (key: 'ArrowUp' | 'ArrowDown') => fireEvent.keyDown(document.activeElement!, { key, altKey: true })
+
+    row(A).focus()
+    press('ArrowDown')
+    press('ArrowDown')
+    press('ArrowDown')
+    expect(order()).toEqual(['Everything.md', 'lake.png', 'Ideas.md', 'Reading list.md'])
+    expect(row(A)).toHaveFocus()
+
+    press('ArrowUp')
+    press('ArrowUp')
+    press('ArrowUp')
+    expect(order()).toEqual(['Reading list.md', 'Everything.md', 'lake.png', 'Ideas.md'])
+    expect(row(A)).toHaveFocus()
+
+    row(LAKE).focus()
+    press('ArrowUp')
+    press('ArrowDown')
+    press('ArrowDown')
+    expect(order()).toEqual(['Reading list.md', 'Everything.md', 'Ideas.md', 'lake.png'])
+    expect(row(LAKE)).toHaveFocus()
+  })
+
+  it('lets the name take the row\'s room, and the parent hint shrink with an ellipsis instead of pushing it out', () => {
+    renderPinned({ paths: [A, '/Notes/A very long archive folder name/Reading list.md'] })
+
+    const name = within(row(A)).getByTestId('pinned-name')
+    const hint = within(row(A)).getByTestId('pinned-parent')
+    expect(name).toHaveClass('flex-1')
+    expect(hint).toHaveClass('flex-initial')
+    expect(hint).not.toHaveClass('flex-none')
   })
 
   describe('the drag', () => {

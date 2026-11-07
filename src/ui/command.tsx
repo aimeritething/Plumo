@@ -119,8 +119,13 @@ function CommandInput({
   )
 }
 
+// cmdk names its listbox from its own `label` prop (default "Suggestions")
+// and writes that over any `aria-label`, so a caller's `aria-label` is passed
+// on as the `label`.
 function CommandList({
   className,
+  label,
+  "aria-label": ariaLabel,
   ...props
 }: React.ComponentProps<typeof CommandPrimitive.List>) {
   return (
@@ -128,6 +133,7 @@ function CommandList({
       <CommandPrimitive.List
         data-slot="command-list"
         className={cn("scroll-py-1.5 p-1.5", className)}
+        label={label ?? ariaLabel}
         {...props}
       />
     </ScrollArea>
