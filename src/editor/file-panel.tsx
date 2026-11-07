@@ -140,7 +140,7 @@ function UploadTab({ blockId, loading, replacing, setLoading }: UploadTabProps &
         <UploadSimple />
         {filePanelPlaceholder(dictionary, block.type)}
       </Button>
-      {uploadFailed && <p className="text-xs text-feedback-error-text">{dictionary.file_panel.upload.upload_error}</p>}
+      {uploadFailed && <p className="text-xs text-destructive-text">{dictionary.file_panel.upload.upload_error}</p>}
     </div>
   )
 }
@@ -211,7 +211,7 @@ export function FilePanel({ blockId }: FilePanelProps) {
       data-testid="file-panel"
       className={cn(menuSurfaceClassName, 'w-[min(24rem,calc(100vw-2rem))] gap-0')}
     >
-      <TabsList variant="line" className="h-9 w-full justify-start gap-3 rounded-none border-b border-border-popover px-3">
+      <TabsList variant="line" className="h-9 w-full justify-start gap-3 rounded-none border-b border-border px-3">
         {canUpload && <TabsTrigger value={UPLOAD_TAB} className="flex-none px-0">{dictionary.file_panel.upload.title}</TabsTrigger>}
         <TabsTrigger value={EMBED_TAB} className="flex-none px-0">{dictionary.file_panel.embed.title}</TabsTrigger>
       </TabsList>

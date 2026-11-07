@@ -24,12 +24,12 @@ import { isWindows } from '@/platform/os'
 
 const FONT_FAMILY = 'var(--font-mono)'
 const RAW_EDITOR_COLORS = {
-  activeLineBackground: 'var(--state-hover-subtle)',
-  background: 'var(--surface-card)',
-  foreground: 'var(--text-primary)',
-  gutterBackground: 'var(--surface-card)',
-  gutterBorder: 'var(--border-default)',
-  gutterText: 'var(--text-muted)',
+  activeLineBackground: 'var(--accent)',
+  background: 'var(--background)',
+  foreground: 'var(--foreground)',
+  gutterBackground: 'var(--background)',
+  gutterBorder: 'var(--border)',
+  gutterText: 'var(--subtle-foreground)',
 }
 
 const AUTO_TEXT_DIRECTION_LINE = Decoration.line({

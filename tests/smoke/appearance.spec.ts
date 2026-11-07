@@ -39,17 +39,18 @@ async function openSample(page: Page) {
   await expect(page.locator('.bn-editor h1')).toHaveText('Title')
 }
 
-test('first launch is light: the sidebar, the editor pane and the body text sample to the neutral values', async ({ page }) => {
+test('first launch is light: the sidebar, the editor pane and the body text sample to the Radix gray roles', async ({ page }) => {
   const errors = watchForErrors(page)
   await openWelcome(page)
 
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
   await page.keyboard.press('Meta+BracketLeft') // a lone Document collapsed the sidebar
-  await expect(page.getByTestId('sidebar')).toHaveCSS('color', 'rgb(77, 77, 77)')
-  await expect(page.getByTestId('shell')).toHaveCSS('background-color', 'rgb(250, 250, 250)')
+  await expect(page.getByTestId('sidebar')).toHaveCSS('color', 'rgb(32, 32, 32)')
+  await expect(page.getByTestId('shell')).toHaveCSS('background-color', 'rgb(255, 255, 255)')
   await expect(page.getByTestId('editor-pane')).toHaveCSS('background-color', 'rgb(255, 255, 255)')
-  await expect(page.locator('.bn-editor')).toHaveCSS('color', 'rgb(72, 72, 72)')
-  await expect(page.locator('.bn-editor h1')).toHaveCSS('color', 'rgb(38, 38, 38)')
+  // --document-foreground: 60% gray-12 over gray-11, a little softer than the UI's text.
+  await expect(page.locator('.bn-editor')).toHaveCSS('color', /^oklab\(0\.347/)
+  await expect(page.locator('.bn-editor h1')).toHaveCSS('color', 'rgb(32, 32, 32)')
   expect(errors.pageErrors).toEqual([])
   expect(errors.consoleErrors).toEqual([])
 })
@@ -72,15 +73,15 @@ test('a sample Document measures at the specified typography', async ({ page }) 
   const inlineCode = editor.locator('.bn-inline-content code').first()
   await expect(inlineCode).toHaveCSS('font-size', '14px')
   await expect(inlineCode).toHaveCSS('font-family', /^ui-monospace,/)
-  await expect(inlineCode).toHaveCSS('background-color', 'rgb(245, 245, 245)')
+  await expect(inlineCode).toHaveCSS('background-color', 'rgba(0, 0, 0, 0.06)')
   await expect(editor.locator('[data-content-type="codeBlock"]')).toHaveCSS('font-size', '13px')
-  await expect(editor.locator('[data-content-type="codeBlock"]')).toHaveCSS('background-color', 'rgb(250, 250, 250)')
+  await expect(editor.locator('[data-content-type="codeBlock"]')).toHaveCSS('background-color', 'rgb(255, 255, 255)')
   await expect(editor.locator('[data-content-type="codeBlock"]')).toHaveCSS('border-top-left-radius', '6px')
   await expect(editor.locator('blockquote').first()).toHaveCSS('border-left-width', '4px')
-  await expect(editor.locator('blockquote').first()).toHaveCSS('border-left-color', 'rgb(229, 229, 229)')
+  await expect(editor.locator('blockquote').first()).toHaveCSS('border-left-color', 'rgba(0, 0, 0, 0.12)')
   await expect(editor.locator('input[type="checkbox"]').first()).toHaveCSS('width', '14px')
   await expect(editor.locator('input[type="checkbox"]').first()).toHaveCSS('border-top-width', '1px')
-  await expect(editor.locator('th').first()).toHaveCSS('background-color', 'rgb(240, 240, 240)')
+  await expect(editor.locator('th').first()).toHaveCSS('background-color', 'rgba(0, 0, 0, 0.06)')
   await expect(editor.locator('hr')).toHaveCSS('border-top-width', '1px')
   expect(errors.pageErrors).toEqual([])
   expect(errors.consoleErrors).toEqual([])
@@ -93,11 +94,11 @@ test('View → Appearance → Dark switches the document, persists in the Settin
   await chooseAppearance(page, 'dark')
 
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
-  await expect(page.getByTestId('shell')).toHaveCSS('background-color', 'rgb(10, 10, 10)')
-  await expect(page.getByTestId('editor-pane')).toHaveCSS('background-color', 'rgb(23, 23, 23)')
-  await expect(page.locator('.bn-editor')).toHaveCSS('color', 'rgb(229, 229, 229)')
-  await expect(page.locator('.bn-editor h1')).toHaveCSS('color', 'rgb(250, 250, 250)')
-  await expect.poll(() => storedSettings(page)).toEqual({ version: 1, theme: 'dark' })
+  await expect(page.getByTestId('shell')).toHaveCSS('background-color', 'rgb(17, 17, 17)')
+  await expect(page.getByTestId('editor-pane')).toHaveCSS('background-color', 'rgb(17, 17, 17)')
+  await expect(page.locator('.bn-editor')).toHaveCSS('color', /^oklab\(0\.877/)
+  await expect(page.locator('.bn-editor h1')).toHaveCSS('color', 'rgb(238, 238, 238)')
+  await expect.poll(() => storedSettings(page)).toEqual({ version: 1, theme: 'dark', primaryColor: '#0a6cff' })
   expect(await storedSession(page)).not.toHaveProperty('theme')
 
   await page.reload()
@@ -160,4 +161,29 @@ test('no text face is fetched: the sans and mono faces are the system\'s', async
   await page.evaluate(() => document.fonts.ready)
 
   expect(fontRequests.filter((url) => /jetbrains|inter|plex|mantine|fontsource/i.test(url))).toEqual([])
+})
+
+test('a Primary color chosen in Settings repaints the page, persists and is painted again before the bundle on relaunch', async ({ page }) => {
+  const errors = watchForErrors(page)
+  await openWelcome(page)
+  const primary = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--primary-9').trim())
+  expect(await primary()).toBe('#0a6cff')
+
+  await page.evaluate((eventName) => window.dispatchEvent(new CustomEvent(eventName, { detail: 'app-settings' })), APP_COMMAND_EVENT_NAME)
+  await page.getByTestId('settings-primary-color:purple').click()
+
+  await expect.poll(primary).toBe('#8e4ec6')
+  await expect.poll(() => storedSettings(page)).toMatchObject({ primaryColor: '#8e4ec6' })
+
+  await page.reload()
+  // index.html's pre-paint script lays the mirrored style sheet over the page.
+  expect(await page.evaluate(() => document.getElementById('plumo-primary-color')?.textContent ?? '')).toContain('--primary-9: #8e4ec6;')
+  await expect.poll(primary).toBe('#8e4ec6')
+
+  await page.evaluate((eventName) => window.dispatchEvent(new CustomEvent(eventName, { detail: 'app-settings' })), APP_COMMAND_EVENT_NAME)
+  await page.getByTestId('settings-primary-color:blue').click()
+  await expect.poll(primary).toBe('#0a6cff')
+  await expect(page.locator('#plumo-primary-color')).toHaveCount(0)
+  expect(errors.pageErrors).toEqual([])
+  expect(errors.consoleErrors).toEqual([])
 })

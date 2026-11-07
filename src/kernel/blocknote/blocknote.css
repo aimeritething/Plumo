@@ -63,16 +63,16 @@
   .bn-container {
     width: 100%;
     height: 100%;
-    background: var(--surface-card);
-    color: var(--text-primary);
+    background: var(--background);
+    color: var(--foreground);
     font-size: var(--editor-font-size);
     /* The BlockNote colour variables its editor CSS reads (the editor, the
        nesting line, the placeholder), pointed at Plumo's tokens. Its menu
        and tooltip colours dressed BlockNote's own UI, which Plumo does not
        render. */
-    --bn-colors-editor-background: var(--surface-card);
-    --bn-colors-editor-text: var(--text-document);
-    --bn-colors-side-menu: var(--text-muted);
+    --bn-colors-editor-background: var(--background);
+    --bn-colors-editor-text: var(--document-foreground);
+    --bn-colors-side-menu: var(--subtle-foreground);
   }
 
   .bn-editor {
@@ -87,8 +87,8 @@
     font-weight: var(--editor-font-weight);
     line-height: var(--editor-line-height);
     letter-spacing: var(--editor-letter-spacing);
-    color: var(--text-document);
-    caret-color: var(--text-document);
+    color: var(--document-foreground);
+    caret-color: var(--document-foreground);
     /* The platform's own smoothing, not the app's antialiased: fuller strokes for reading. */
     -webkit-font-smoothing: auto;
     -moz-osx-font-smoothing: auto;
@@ -108,7 +108,7 @@
   }
 
   .bn-editor ::selection {
-    background: var(--state-selection);
+    background: var(--selection);
   }
 
   .bn-editor :is(.bn-block-group, .bn-block-outer, .bn-block, .bn-block-content)::selection,
@@ -148,7 +148,7 @@
   [data-plumo-text-direction="rtl"]:is(blockquote),
   [data-plumo-text-direction="rtl"] blockquote {
     border-left-width: 0;
-    border-inline-start: var(--blockquote-border-left-width) solid var(--border-default);
+    border-inline-start: var(--blockquote-border-left-width) solid var(--border);
     padding-inline-start: var(--blockquote-padding-left);
   }
 
@@ -172,7 +172,7 @@
   }
 
   .bn-block-outer.plumo-rich-editor-block-selected::after {
-    background: color-mix(in srgb, var(--state-selection) var(--_block-selection-mix), transparent);
+    background: color-mix(in srgb, var(--selection) var(--_block-selection-mix), transparent);
     border-radius: var(--radius-md);
     content: "";
     inset:
@@ -199,7 +199,7 @@
   }
 
   .bn-block.plumo-rich-editor-block-selected {
-    background: color-mix(in srgb, var(--state-selection) var(--_block-selection-mix), transparent);
+    background: color-mix(in srgb, var(--selection) var(--_block-selection-mix), transparent);
     border-radius: var(--radius-md);
     box-decoration-break: clone;
   }
@@ -276,7 +276,7 @@
     font-size: var(--headings-h1-font-size);
     font-weight: var(--headings-h1-font-weight);
     line-height: var(--headings-h1-line-height);
-    color: var(--text-document-heading);
+    color: var(--document-heading);
     letter-spacing: var(--headings-h1-letter-spacing);
   }
 
@@ -289,7 +289,7 @@
     font-size: var(--headings-h2-font-size);
     font-weight: var(--headings-h2-font-weight);
     line-height: var(--headings-h2-line-height);
-    color: var(--text-document-heading);
+    color: var(--document-heading);
     letter-spacing: var(--headings-h2-letter-spacing);
   }
 
@@ -302,7 +302,7 @@
     font-size: var(--headings-h3-font-size);
     font-weight: var(--headings-h3-font-weight);
     line-height: var(--headings-h3-line-height);
-    color: var(--text-document-heading);
+    color: var(--document-heading);
     letter-spacing: var(--headings-h3-letter-spacing);
   }
 
@@ -316,7 +316,7 @@
     font-size: var(--headings-h4-font-size);
     font-weight: var(--headings-h4-font-weight);
     line-height: var(--headings-h4-line-height);
-    color: var(--text-document-heading);
+    color: var(--document-heading);
     letter-spacing: var(--headings-h4-letter-spacing);
   }
 
@@ -328,14 +328,14 @@
     --_lists-marker: radial-gradient(
       circle,
       transparent 0 var(--_lists-marker-inner-radius),
-      var(--text-document) var(--_lists-marker-inner-radius) var(--_lists-marker-radius),
+      var(--document-foreground) var(--_lists-marker-inner-radius) var(--_lists-marker-radius),
       transparent var(--_lists-marker-fade-radius)
     );
   }
 
   .bn-block-group .bn-block-group .bn-block-group {
     --_lists-marker:
-      linear-gradient(var(--text-document), var(--text-document))
+      linear-gradient(var(--document-foreground), var(--document-foreground))
       center / var(--_lists-marker-size) var(--_lists-marker-size) no-repeat;
   }
 
@@ -353,7 +353,7 @@
   [data-content-type="bulletListItem"]::before {
     background: var(--_lists-marker, radial-gradient(
       circle,
-      var(--text-document) 0 var(--_lists-marker-radius),
+      var(--document-foreground) 0 var(--_lists-marker-radius),
       transparent var(--_lists-marker-fade-radius)
     ));
     color: transparent;
@@ -373,7 +373,7 @@
   }
 
   [data-content-type="numberedListItem"]::before {
-    color: var(--text-document);
+    color: var(--document-foreground);
     font-size: var(--editor-font-size);
     min-width: var(--lists-indent-size);
     width: var(--lists-indent-size);
@@ -383,8 +383,8 @@
   }
 
   /* Check list. BlockNote renders div > input[type=checkbox]; the box is drawn
-     here rather than by the platform: 14px, a 1px faint border, filled with
-     the body colour when checked, the tick cut from the editor surface. */
+     here rather than by the platform: 14px, a 1px input border, filled with
+     the Primary color when checked, the tick in the text on it. */
   [data-content-type="checkListItem"] {
     margin-bottom: var(--lists-item-spacing);
     gap: var(--checkboxes-gap);
@@ -400,14 +400,14 @@
     min-height: var(--checkboxes-size);
     margin: 0;
     border-radius: var(--checkboxes-border-radius);
-    border: 1px solid var(--text-muted);
+    border: 1px solid var(--input);
     background: transparent;
     cursor: pointer;
   }
 
   [data-content-type="checkListItem"] input[type="checkbox"]:checked {
-    border-color: var(--text-document);
-    background: var(--text-document);
+    border-color: var(--primary);
+    background: var(--primary);
   }
 
   [data-content-type="checkListItem"] input[type="checkbox"]:checked::after {
@@ -417,14 +417,14 @@
     top: var(--_checkbox-tick-top);
     width: var(--_checkbox-tick-width);
     height: var(--_checkbox-tick-height);
-    border: solid var(--surface-card);
+    border: solid var(--primary-foreground);
     border-width: 0 var(--_checkbox-tick-stroke) var(--_checkbox-tick-stroke) 0;
     transform: rotate(45deg);
   }
 
   [data-content-type="checkListItem"] input[type="checkbox"]:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 1px var(--state-focus-ring);
+    box-shadow: 0 0 0 1px var(--ring);
   }
 
   /* The box's container: one marker box wide, centred on the first line. */
@@ -440,7 +440,7 @@
 
   /* Blockquote: a 4px rounded bar, the text colour unchanged. */
   [data-content-type="quote"] blockquote {
-    border-inline-start: var(--blockquote-border-left-width) solid var(--border-default);
+    border-inline-start: var(--blockquote-border-left-width) solid var(--border);
     border-start-start-radius: var(--radius-sm);
     border-end-start-radius: var(--radius-sm);
     padding-inline-start: var(--blockquote-padding-left);
@@ -478,15 +478,15 @@
   [data-content-type="table"] table {
     border-collapse: separate;
     border-spacing: 0;
-    border: var(--hairline) solid var(--border-default);
+    border: var(--hairline) solid var(--border);
     border-radius: var(--radius-md);
     font-size: var(--table-font-size);
   }
 
   [data-content-type="table"] :is(th, td) {
     border-width: 0;
-    border-inline-start: var(--hairline) solid var(--border-default);
-    border-color: var(--border-default);
+    border-inline-start: var(--hairline) solid var(--border);
+    border-color: var(--border);
   }
 
   [data-content-type="table"] :is(th, td):first-child {
@@ -494,7 +494,7 @@
   }
 
   [data-content-type="table"] tr:not(:first-child) :is(th, td) {
-    border-top: var(--hairline) solid var(--border-default);
+    border-top: var(--hairline) solid var(--border);
   }
 
   [data-content-type="table"] tr:first-child :is(th, td):first-child {
@@ -515,7 +515,7 @@
   }
 
   [data-content-type="table"] th {
-    background: var(--surface-shade);
+    background: var(--muted);
     font-weight: var(--inline-bold-font-weight);
     padding: var(--table-cell-padding-vertical) var(--table-cell-padding-horizontal);
   }
@@ -535,7 +535,7 @@
      overlay, tinted with the accent. */
   [data-content-type="table"] .selectedCell::after {
     inset: var(--hairline);
-    background: var(--accent-bg);
+    background: var(--primary-muted);
   }
 
   /* A Table handle's open menu marks its column or row without selecting it
@@ -544,7 +544,7 @@
      column or row. Each cell's ::after lies over its own grid lines and
      draws the sides the attribute names. */
   [data-content-type="table"] td[data-table-handle-tint] {
-    background: var(--state-hover);
+    background: var(--accent);
   }
 
   /* prosemirror-tables clips the table to its padding box, which would cut
@@ -563,7 +563,7 @@
     position: absolute;
     inset: calc(var(--hairline) * -1);
     z-index: 2;
-    border: 0 solid var(--accent-base);
+    border: 0 solid var(--primary);
     border-radius: inherit;
     pointer-events: none;
   }
@@ -587,7 +587,7 @@
   /* Horizontal rule */
   .bn-editor hr {
     border: none;
-    border-top: var(--hr-thickness) solid var(--border-strong);
+    border-top: var(--hr-thickness) solid var(--border);
     margin: var(--hr-margin-vertical) 0;
   }
 
@@ -599,10 +599,10 @@
      13px / 1.4 in the mono face, instead of BlockNote's fixed dark shell. */
   [data-content-type="codeBlock"] {
     position: relative;
-    background-color: var(--surface-app);
-    border: var(--hairline) solid var(--border-default);
+    background-color: var(--background);
+    border: var(--hairline) solid var(--border);
     border-radius: var(--radius-md);
-    color: var(--text-document);
+    color: var(--document-foreground);
     font-family: var(--inline-code-font-family);
     font-size: var(--text-sm);
     line-height: var(--_code-block-line-height);
@@ -630,11 +630,11 @@
     min-height: calc(var(--spacing) * 7);
     max-width: min(var(--_select-max-width), 100%);
     padding: var(--_select-padding-vertical) calc(var(--spacing) * 7) var(--_select-padding-vertical) calc(var(--spacing) * 2);
-    border: 1px solid color-mix(in srgb, var(--text-secondary) var(--_select-border-mix), transparent);
+    border: 1px solid color-mix(in srgb, var(--muted-foreground) var(--_select-border-mix), transparent);
     border-radius: var(--radius-md);
     appearance: auto;
-    background-color: var(--surface-app);
-    color: var(--text-secondary);
+    background-color: var(--background);
+    color: var(--muted-foreground);
     cursor: pointer;
     font: inherit;
     font-size: var(--text-xs);
@@ -643,12 +643,12 @@
   }
 
   [data-content-type="codeBlock"] select > option {
-    background: var(--surface-popover);
-    color: var(--text-primary);
+    background: var(--popover);
+    color: var(--foreground);
   }
 
   [data-content-type="codeBlock"] select:is(:hover, :focus-visible) {
-    border-color: var(--text-secondary);
+    border-color: var(--muted-foreground);
     outline: 0;
   }
 
@@ -707,7 +707,7 @@
   }
 
   :is(.bn-block-content.ProseMirror-selectednode, .ProseMirror-selectednode > .bn-block-content)[data-content-type="image"] .bn-visual-media-wrapper::before {
-    background: color-mix(in srgb, var(--state-selection) var(--_block-selection-mix), transparent);
+    background: color-mix(in srgb, var(--selection) var(--_block-selection-mix), transparent);
     border-radius: var(--radius-sm);
     content: "";
     inset: 0;
@@ -720,7 +720,7 @@
      --------------------------------------------------------------- */
   .bn-editor strong {
     font-weight: var(--inline-bold-font-weight);
-    color: var(--text-document-heading);
+    color: var(--document-heading);
   }
 
   .bn-editor em {
@@ -729,7 +729,7 @@
   }
 
   .bn-editor :is(s, del) {
-    color: var(--text-secondary);
+    color: var(--muted-foreground);
     text-decoration: line-through;
   }
 
@@ -737,8 +737,8 @@
     font-family: var(--inline-code-font-family);
     font-size: var(--inline-code-font-size);
     line-height: var(--_inline-code-line-height);
-    background-color: var(--inline-code-bg);
-    box-shadow: inset 0 0 0 var(--hairline) var(--inline-code-border);
+    background-color: var(--muted);
+    box-shadow: inset 0 0 0 var(--hairline) var(--border);
     padding: var(--inline-code-padding-vertical) var(--inline-code-padding-horizontal);
     border-radius: var(--inline-code-border-radius);
     color: inherit;
@@ -746,8 +746,8 @@
 
   /* Markdown highlight: the chromatic roles, yellow by default. */
   .bn-editor mark.markdown-highlight {
-    background-color: var(--chroma-yellow-bg);
-    color: var(--text-document);
+    background-color: var(--yellow-muted);
+    color: var(--document-foreground);
     border-radius: var(--radius-sm);
   }
 
@@ -755,33 +755,33 @@
   [data-style-type="backgroundColor"][data-value="green"]:has(mark.markdown-highlight),
   [data-style-type="backgroundColor"][data-value="green"] mark.markdown-highlight,
   mark.markdown-highlight [data-style-type="backgroundColor"][data-value="green"] {
-    background-color: var(--chroma-green-bg);
+    background-color: var(--green-muted);
   }
 
   mark.markdown-highlight:has([data-style-type="backgroundColor"][data-value="red"]),
   [data-style-type="backgroundColor"][data-value="red"]:has(mark.markdown-highlight),
   [data-style-type="backgroundColor"][data-value="red"] mark.markdown-highlight,
   mark.markdown-highlight [data-style-type="backgroundColor"][data-value="red"] {
-    background-color: var(--chroma-red-bg);
+    background-color: var(--red-muted);
   }
 
   mark.markdown-highlight:has([data-style-type="backgroundColor"][data-value="blue"]),
   [data-style-type="backgroundColor"][data-value="blue"]:has(mark.markdown-highlight),
   [data-style-type="backgroundColor"][data-value="blue"] mark.markdown-highlight,
   mark.markdown-highlight [data-style-type="backgroundColor"][data-value="blue"] {
-    background-color: var(--chroma-blue-bg);
+    background-color: var(--blue-muted);
   }
 
   mark.markdown-highlight:has([data-style-type="backgroundColor"][data-value="purple"]),
   [data-style-type="backgroundColor"][data-value="purple"]:has(mark.markdown-highlight),
   [data-style-type="backgroundColor"][data-value="purple"] mark.markdown-highlight,
   mark.markdown-highlight [data-style-type="backgroundColor"][data-value="purple"] {
-    background-color: var(--chroma-purple-bg);
+    background-color: var(--purple-muted);
   }
 
   /* Links: underline on hover only; the pointer while ⌘ is held (data-follow-links). */
   .bn-editor a {
-    color: var(--text-link);
+    color: var(--link);
     text-decoration: none;
     cursor: text;
   }
@@ -799,13 +799,13 @@
   /* Find in Rich mode: every match tinted, the current one stronger. */
   .bn-editor .plumo-rich-find-match {
     border-radius: var(--radius-sm);
-    background: var(--chroma-yellow-bg);
-    box-shadow: 0 0 0 1px var(--chroma-yellow-bg);
+    background: var(--yellow-muted);
+    box-shadow: 0 0 0 1px var(--yellow-muted);
   }
 
   .bn-editor .plumo-rich-find-match--active {
-    background: color-mix(in srgb, var(--chroma-orange) var(--_find-match-active-mix), transparent);
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--chroma-orange) var(--_find-match-active-mix), transparent);
+    background: color-mix(in srgb, var(--orange) var(--_find-match-active-mix), transparent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--orange) var(--_find-match-active-mix), transparent);
   }
 
   /* ---------------------------------------------------------------
@@ -821,7 +821,7 @@
      tldraw inside a whiteboard block
      --------------------------------------------------------------- */
   [data-content-type="tldrawBlock"] .tl-container {
-    --color-background: var(--surface-card);
+    --color-background: var(--background);
     /* tldraw's own layer ladder, compressed: .tl-container is no stacking
        context, so these compete with the block's own elements, which sit at
        z-raised (the resize handles, beneath tldraw's UI as before) and
@@ -868,7 +868,7 @@
      token where BlockNote has a literal blue. */
   .ProseMirror-selectednode > [data-content-type="mathBlock"] > * {
     border-radius: var(--radius-sm);
-    outline: var(--spacing) solid var(--state-focus-ring);
+    outline: var(--spacing) solid var(--ring);
   }
 }
 

@@ -33,7 +33,7 @@ function MathRender({ latex, displayMode }: { latex: string; displayMode: boolea
     <SafeHtmlSpan
       aria-label={`Math: ${latex}`}
       className={cn(
-        'cursor-text text-text-document',
+        'cursor-text text-document-foreground',
         displayMode ? 'block min-w-max text-center' : 'inline-flex max-w-full align-baseline',
       )}
       data-latex={latex}
@@ -153,7 +153,7 @@ export function MathBlockEditor({ block, editor }: MathBlockEditorProps) {
           <Textarea
             ref={textareaRef}
             aria-label={`Math: ${currentLatex}`}
-            className="min-h-24 font-mono text-sm selection:bg-state-selection selection:text-text-primary focus-visible:ring-0"
+            className="min-h-24 font-mono text-sm selection:bg-selection selection:text-foreground focus-visible:ring-0"
             value={draftLatex}
             onBlur={finishEditing}
             onChange={(event) => setDraftLatex(event.target.value)}

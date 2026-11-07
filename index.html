@@ -33,13 +33,13 @@
          Tauri WebView can paint app chrome before the React chunk loads. */
       :root {
         color-scheme: light;
-        background: #fafafa;
-        color: #171717;
+        background: #ffffff;
+        color: #202020;
       }
       :root[data-theme="dark"] {
         color-scheme: dark;
-        background: #0a0a0a;
-        color: #e5e5e5;
+        background: #111111;
+        color: #eeeeee;
       }
       html,
       body,
@@ -85,6 +85,17 @@
         } catch {
           applyTheme('light');
         }
+        // The Primary color, when it is not the default: the style sheet the
+        // app last laid over the page (src/shell/use-primary-color.ts).
+        try {
+          var primaryColorStyle = localStorage.getItem('plumo:primary-color-style');
+          if (primaryColorStyle) {
+            var style = document.createElement('style');
+            style.id = 'plumo-primary-color';
+            style.textContent = primaryColorStyle;
+            document.head.appendChild(style);
+          }
+        } catch {}
       })();
     </script>
     <div id="root"></div>

@@ -71,7 +71,7 @@ function styleDragPreview(preview: HTMLElement, rect: DOMRect) {
   preview.style.zIndex = '14000'
   preview.style.boxSizing = 'border-box'
   preview.style.borderRadius = '6px'
-  preview.style.background = 'var(--surface-card)'
+  preview.style.background = 'var(--popover)'
   preview.style.boxShadow = '0 10px 26px rgba(15, 23, 42, 0.18)'
 }
 
@@ -155,9 +155,9 @@ function createDropIndicator(ownerDocument: Document): HTMLElement {
   indicator.style.position = 'fixed'
   indicator.style.height = '2px'
   indicator.style.pointerEvents = 'none'
-  indicator.style.background = 'var(--accent-base)'
+  indicator.style.background = 'var(--primary)'
   indicator.style.borderRadius = '999px'
-  indicator.style.boxShadow = '0 0 0 1px var(--accent-bg)'
+  indicator.style.boxShadow = '0 0 0 1px var(--primary-muted)'
   indicator.style.zIndex = '14001'
   indicator.style.display = 'none'
   ownerDocument.body.appendChild(indicator)

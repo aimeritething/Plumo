@@ -53,7 +53,7 @@ export function ExplorerHeader(props: ExplorerHeaderProps) {
         <SidebarLabel
           className={cn(
             'justify-between gap-2 rounded-lg',
-            'data-drop-target:bg-sidebar-row-active data-drop-target:text-text-heading data-drop-target:ring-1 data-drop-target:ring-accent-base data-drop-target:ring-inset',
+            'data-drop-target:bg-sidebar-selected data-drop-target:text-foreground data-drop-target:ring-1 data-drop-target:ring-primary data-drop-target:ring-inset',
           )}
           data-testid="explorer-header"
           data-drop-target={drop.target === folder || undefined}
@@ -72,7 +72,7 @@ export function ExplorerHeader(props: ExplorerHeaderProps) {
             <Caret
               size={10}
               aria-hidden="true"
-              className="flex-none text-text-muted opacity-0 transition-opacity duration-150 ease-out group-hover/explorer:opacity-100 group-focus-within/explorer:opacity-100"
+              className="flex-none text-subtle-foreground opacity-0 transition-opacity duration-150 ease-out group-hover/explorer:opacity-100 group-focus-within/explorer:opacity-100"
               data-testid="explorer-caret"
             />
           </button>

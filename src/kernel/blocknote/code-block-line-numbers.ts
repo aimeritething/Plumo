@@ -5,7 +5,7 @@ import { Decoration, DecorationSet, type EditorView } from '@tiptap/pm/view'
 const CODE_BLOCK_TYPE = 'codeBlock'
 // The marker sits in the gutter blocknote.css leaves on the code block's pre
 // (--_code-line-numbers-gutter): pulled back into it, right-aligned, inert.
-const LINE_NUMBER_CLASS = 'pointer-events-none inline-block w-7 -ms-10.5 me-3.5 text-right text-text-muted select-none before:content-[attr(data-code-line-number)]'
+const LINE_NUMBER_CLASS = 'pointer-events-none inline-block w-7 -ms-10.5 me-3.5 text-right text-subtle-foreground select-none before:content-[attr(data-code-line-number)]'
 const lineNumberPluginKey = new PluginKey<DecorationSet>('code-block-line-numbers')
 
 function lineStartOffsets(source: string): number[] {

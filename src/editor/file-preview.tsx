@@ -39,10 +39,10 @@ export interface FilePreviewFallbackProps {
 export function FilePreviewFallback({ title, description, onOpenExternal }: FilePreviewFallbackProps) {
   return (
     <div className="flex flex-col items-center justify-center gap-4 px-8 text-center" data-testid="file-preview-fallback">
-      <WarningCircle size={34} className="text-text-secondary" aria-hidden="true" />
+      <WarningCircle size={34} className="text-muted-foreground" aria-hidden="true" />
       <div className="space-y-1">
-        <h2 className="m-0 text-[15px] font-semibold text-text-primary">{title}</h2>
-        <p className="m-0 max-w-md text-[13px] leading-6 text-text-secondary">{description}</p>
+        <h2 className="m-0 text-[15px] font-semibold text-foreground">{title}</h2>
+        <p className="m-0 max-w-md text-[13px] leading-6 text-muted-foreground">{description}</p>
       </div>
       <Button type="button" variant="outline" size="sm" onClick={onOpenExternal}>
         <ArrowSquareOut size={15} />

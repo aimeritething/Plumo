@@ -8,6 +8,10 @@ interface UseSettingsOptions {
   theme: ThemeMode
   /** Puts the saved theme back. */
   restoreTheme: (theme: ThemeMode) => void
+  /** The Primary color, `#rrggbb`. */
+  primaryColor: string
+  /** Puts the saved Primary color back. */
+  restorePrimaryColor: (color: string) => void
 }
 
 /**
@@ -17,11 +21,12 @@ interface UseSettingsOptions {
  * it puts a file with a bad field or an unknown version back in the current
  * schema.
  */
-export function useSettings({ theme, restoreTheme }: UseSettingsOptions) {
+export function useSettings({ theme, restoreTheme, primaryColor, restorePrimaryColor }: UseSettingsOptions) {
   const [restored, setRestored] = useState(false)
   const restore = useEffectEvent(async () => {
     const settings = parseSettings(await readSettingsFile())
     restoreTheme(settings.theme)
+    restorePrimaryColor(settings.primaryColor)
   })
 
   useEffect(() => {
@@ -40,10 +45,10 @@ export function useSettings({ theme, restoreTheme }: UseSettingsOptions) {
 
   useEffect(() => {
     if (!restored) return
-    updateSettingsFile({ version: SETTINGS_VERSION, theme }).catch((error: unknown) => {
+    updateSettingsFile({ version: SETTINGS_VERSION, theme, primaryColor }).catch((error: unknown) => {
       console.warn('[settings] Failed to write the Settings:', error)
     })
-  }, [restored, theme])
+  }, [restored, theme, primaryColor])
 
   return { restored }
 }

@@ -63,7 +63,7 @@ function emphasised(name: string, ranges: readonly CommandMenuRange[]): ReactNod
   let cursor = 0
   for (const [start, end] of ranges) {
     if (start > cursor) parts.push(name.slice(cursor, start))
-    parts.push(<mark key={start} className="bg-transparent font-semibold text-text-heading">{name.slice(start, end)}</mark>)
+    parts.push(<mark key={start} className="bg-transparent font-semibold text-foreground">{name.slice(start, end)}</mark>)
     cursor = end
   }
   if (cursor < name.length) parts.push(name.slice(cursor))
@@ -101,23 +101,23 @@ function CommandMenuRow({ match, index, active, onHover, onPick }: CommandMenuRo
       role="option"
       aria-selected={active}
       aria-disabled={enabled ? undefined : true}
-      className="group flex h-10 cursor-default items-center gap-2.5 rounded-lg px-2.5 text-sm whitespace-nowrap aria-selected:bg-menu-item-hover aria-selected:text-text-heading aria-disabled:opacity-45"
+      className="group flex h-10 cursor-default items-center gap-2.5 rounded-lg px-2.5 text-sm whitespace-nowrap aria-selected:bg-accent aria-selected:text-foreground aria-disabled:opacity-45"
       data-testid="command-menu-row"
       data-kind={entry.kind}
       data-id={entry.id}
       onMouseMove={() => onHover(index)}
       onClick={(event) => onPick(entry, event)}
     >
-      <RowIcon size={16} className="flex-none text-text-secondary group-aria-selected:text-text-primary" aria-hidden="true" />
+      <RowIcon size={16} className="flex-none text-muted-foreground group-aria-selected:text-foreground" aria-hidden="true" />
       <span className="min-w-0 flex-initial truncate" data-testid="command-menu-row-name">{emphasised(entry.name, ranges)}</span>
       {entry.detail && (
-        <span className="min-w-0 flex-auto truncate text-xs text-text-muted" data-testid="command-menu-row-detail">{entry.detail}</span>
+        <span className="min-w-0 flex-auto truncate text-xs text-subtle-foreground" data-testid="command-menu-row-detail">{entry.detail}</span>
       )}
       {entry.shortcut && (
-        <span className="ml-auto flex-none font-sans text-2xs font-medium text-menu-shortcut" data-testid="command-menu-row-shortcut">{entry.shortcut}</span>
+        <span className="ml-auto flex-none font-sans text-2xs font-medium text-subtle-foreground" data-testid="command-menu-row-shortcut">{entry.shortcut}</span>
       )}
       {/* Without a shortcut the type column pushes itself to the right edge. */}
-      <span className={cn('w-16 flex-none text-right text-2xs text-text-muted', !entry.shortcut && 'ml-auto')} data-testid="command-menu-row-type">
+      <span className={cn('w-16 flex-none text-right text-2xs text-subtle-foreground', !entry.shortcut && 'ml-auto')} data-testid="command-menu-row-type">
         {TYPE_LABELS[entry.kind]}
       </span>
     </li>
@@ -170,7 +170,7 @@ function CommandMenuPanel({ mode, entries, onRunCommand, onOpenFile }: CommandMe
       <DialogTitle className="sr-only">{TITLES[mode]}</DialogTitle>
       <input
         // 17px light with a touch of negative tracking: the palette's one display size, outside the four-tier UI scale.
-        className="h-14 flex-none border-b-hairline border-border-popover bg-transparent px-5 text-[17px] font-light tracking-[-0.01em] text-text-heading outline-none placeholder:text-text-tertiary"
+        className="h-14 flex-none border-b-hairline border-border bg-transparent px-5 text-[17px] font-light tracking-[-0.01em] text-foreground outline-none placeholder:text-muted-foreground"
         data-testid="command-menu-input"
         role="combobox"
         aria-expanded="true"
@@ -192,7 +192,7 @@ function CommandMenuPanel({ mode, entries, onRunCommand, onOpenFile }: CommandMe
       <ScrollArea className="max-h-100 min-h-0 flex-auto">
         <ul id={LIST_ID} ref={listRef} role="listbox" aria-label={TITLES[mode]} className="list-none p-1.5">
           {matches.length === 0 && (
-            <li className="flex h-10 items-center px-2.5 text-sm text-text-tertiary" data-testid="command-menu-empty" aria-disabled="true">No matches</li>
+            <li className="flex h-10 items-center px-2.5 text-sm text-muted-foreground" data-testid="command-menu-empty" aria-disabled="true">No matches</li>
           )}
           {matches.map((match, index) => (
             <CommandMenuRow
@@ -206,7 +206,7 @@ function CommandMenuPanel({ mode, entries, onRunCommand, onOpenFile }: CommandMe
           ))}
         </ul>
       </ScrollArea>
-      <footer className="flex h-8 flex-none items-center border-t-hairline border-border-popover px-4 font-mono text-2xs text-text-secondary" data-testid="command-menu-footer">
+      <footer className="flex h-8 flex-none items-center border-t-hairline border-border px-4 font-mono text-2xs text-muted-foreground" data-testid="command-menu-footer">
         {FOOTER}
       </footer>
     </>

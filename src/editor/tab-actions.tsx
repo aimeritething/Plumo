@@ -86,11 +86,11 @@ export function ImageTabActions({ metadata, onOpenExternal, onCopyPath }: ImageT
   return (
     <div className="flex items-center gap-1.5" data-testid="image-tab-actions">
       {metadata && (
-        <span className="cursor-default pr-1.5 font-mono text-2xs tracking-normal whitespace-nowrap text-text-tertiary tabular-nums" data-testid="image-meta">{metadata}</span>
+        <span className="cursor-default pr-1.5 font-mono text-2xs tracking-normal whitespace-nowrap text-muted-foreground tabular-nums" data-testid="image-meta">{metadata}</span>
       )}
       <button
         type="button"
-        className="flex h-6.5 flex-none items-center rounded-full px-2.5 text-sm font-medium whitespace-nowrap text-text-primary inset-ring inset-ring-border-default hover:bg-control-secondary-hover focus-visible:focus-ring"
+        className="flex h-6.5 flex-none items-center rounded-full px-2.5 text-sm font-medium whitespace-nowrap text-foreground inset-ring inset-ring-border hover:bg-accent focus-visible:focus-ring"
         data-testid="image-open-external"
         onClick={onOpenExternal}
       >
@@ -123,7 +123,7 @@ function CopyPathButton({ onCopyPath }: { onCopyPath: () => void }) {
  */
 function ModeControl({ mode }: { mode: TabMode }) {
   return (
-    <div className="flex h-6.5 flex-none items-center gap-0.5 rounded-full bg-surface-shade p-0.5" role="radiogroup" aria-label="Editor mode" data-testid="tab-mode">
+    <div className="flex h-6.5 flex-none items-center gap-0.5 rounded-full bg-muted p-0.5" role="radiogroup" aria-label="Editor mode" data-testid="tab-mode">
       {MODES.map((segment) => {
         const active = segment === mode.value
         const disabledReason = segment === 'rich' ? mode.richDisabledReason : null
@@ -133,7 +133,7 @@ function ModeControl({ mode }: { mode: TabMode }) {
             <button
               type="button"
               role="radio"
-              className="grid h-5.5 w-7 place-items-center rounded-full text-text-tertiary transition-colors duration-150 ease-out hover:text-text-secondary focus-visible:focus-ring aria-checked:bg-surface-popover aria-checked:text-text-heading aria-checked:shadow-raised aria-disabled:text-text-muted"
+              className="grid h-5.5 w-7 place-items-center rounded-full text-muted-foreground transition-colors duration-150 ease-out hover:text-muted-foreground focus-visible:focus-ring aria-checked:bg-popover aria-checked:text-foreground aria-checked:shadow-xs aria-disabled:text-subtle-foreground"
               aria-label={MODE_LABELS[segment]}
               aria-checked={active}
               aria-disabled={disabledReason !== null || undefined}

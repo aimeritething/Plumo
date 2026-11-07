@@ -44,7 +44,7 @@ function pasteAsOneLine(event: ClipboardEvent<HTMLInputElement>, onDraftChange: 
   requestAnimationFrame(() => input.setSelectionRange(caret, caret))
 }
 
-const CAPTION_TEXT_CLASS = 'block w-full bg-transparent px-0 py-1 text-sm text-text-muted'
+const CAPTION_TEXT_CLASS = 'block w-full bg-transparent px-0 py-1 text-sm text-subtle-foreground'
 
 export function ImageCaption({ caption, draft, editable, editing, onDraftChange, onEnd, onStart }: ImageCaptionProps) {
   const inputRef = useRef<HTMLInputElement>(null)
@@ -74,7 +74,7 @@ export function ImageCaption({ caption, draft, editable, editing, onDraftChange,
         ref={inputRef}
         aria-hidden={!editing}
         aria-label={translate('en', 'editor.image.caption')}
-        className={cn(CAPTION_TEXT_CLASS, 'outline-none placeholder:text-text-tertiary', !editing && 'hidden')}
+        className={cn(CAPTION_TEXT_CLASS, 'outline-none placeholder:text-muted-foreground', !editing && 'hidden')}
         data-testid="image-caption-input"
         placeholder={translate('en', 'editor.image.captionPlaceholder')}
         tabIndex={editing ? 0 : -1}

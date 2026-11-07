@@ -217,12 +217,12 @@ function ResizeHandle({ shown, side, onMouseDown }: {
 function FileName({ icon, name }: { icon: ReactNode; name: string }) {
   return (
     <div
-      className="flex h-8 w-full min-w-0 items-center gap-1.5 rounded-sm px-1 text-text-primary transition-colors duration-150 ease-out hover:bg-state-hover"
+      className="flex h-8 w-full min-w-0 items-center gap-1.5 rounded-sm px-1 text-foreground transition-colors duration-150 ease-out hover:bg-accent"
       contentEditable={false}
       draggable={false}
       suppressContentEditableWarning
     >
-      <span className="flex shrink-0 text-text-tertiary [&_svg]:size-4.5">{icon}</span>
+      <span className="flex shrink-0 text-muted-foreground [&_svg]:size-4.5">{icon}</span>
       <span className="min-w-0 cursor-pointer truncate" data-file-name="">
         {name}
       </span>
@@ -293,7 +293,7 @@ function FileBlockFigure({ block, editor, icon, kind }: {
         <div
           aria-hidden="true"
           className={cn(
-            'pointer-events-none absolute inset-0 rounded-sm bg-[color-mix(in_srgb,var(--state-selection)_var(--_block-selection-mix),transparent)]',
+            'pointer-events-none absolute inset-0 rounded-sm bg-[color-mix(in_srgb,var(--selection)_var(--_block-selection-mix),transparent)]',
             !selected && 'hidden',
           )}
           data-file-block-selection=""

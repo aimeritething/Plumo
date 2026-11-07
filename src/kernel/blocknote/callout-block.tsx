@@ -34,12 +34,12 @@ const calloutVariants = cva(
   {
     variants: {
       family: {
-        note: 'border-chroma-teal/20 bg-chroma-teal/2 text-chroma-teal-text',
-        success: 'border-chroma-green/20 bg-chroma-green/2 text-chroma-green-text',
-        warning: 'border-chroma-orange/20 bg-chroma-orange/2 text-chroma-orange-text',
-        error: 'border-chroma-red/20 bg-chroma-red/2 text-chroma-red-text',
-        example: 'border-chroma-purple/20 bg-chroma-purple/2 text-chroma-purple-text',
-        quote: 'border-text-secondary/20 bg-text-secondary/2 text-text-secondary',
+        note: 'border-teal/20 bg-teal/2 text-teal-text',
+        success: 'border-green/20 bg-green/2 text-green-text',
+        warning: 'border-orange/20 bg-orange/2 text-orange-text',
+        error: 'border-red/20 bg-red/2 text-red-text',
+        example: 'border-purple/20 bg-purple/2 text-purple-text',
+        quote: 'border-muted-foreground/20 bg-muted-foreground/2 text-muted-foreground',
       },
     },
   },
@@ -79,7 +79,7 @@ function CalloutBlockView({ block, contentRef }: CalloutBlockViewProps) {
           heading={heading}
         />
       </div>
-      <div ref={contentRef} className="px-2.5 pt-0.5 pb-2 text-text-document" />
+      <div ref={contentRef} className="px-2.5 pt-0.5 pb-2 text-document-foreground" />
     </aside>
   )
 }

@@ -100,8 +100,8 @@ describe('MathBlockEditor', () => {
     fireEvent.doubleClick(screen.getByRole('img'))
     const source = screen.getByRole('textbox')
 
-    expect(source).toHaveClass('selection:bg-state-selection')
-    expect(source).toHaveClass('selection:text-text-primary')
+    expect(source).toHaveClass('selection:bg-selection')
+    expect(source).toHaveClass('selection:text-foreground')
     expect(source).toHaveClass('focus-visible:ring-0')
     expect(source).not.toHaveClass('focus-visible:ring-[3px]')
   })

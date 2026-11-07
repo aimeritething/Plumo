@@ -182,7 +182,7 @@ export function RichEditorFindBar({ editor, path, request, find, locale = 'en' }
 
   return (
     <div
-      className="sticky top-0 z-raised flex shrink-0 items-center gap-1.5 border-b border-border-default bg-surface-card px-3 py-2"
+      className="sticky top-0 z-raised flex shrink-0 items-center gap-1.5 border-b border-border bg-background px-3 py-2"
       data-testid="rich-editor-find-bar"
       onKeyDown={onBarKeyDown}
     >
@@ -200,7 +200,7 @@ export function RichEditorFindBar({ editor, path, request, find, locale = 'en' }
         className="h-7 min-w-[12rem] flex-1 rounded px-2 text-xs"
         data-testid="rich-editor-find-input"
       />
-      <span className="min-w-[4.75rem] text-right text-xs text-text-secondary" aria-live="polite" data-testid="rich-editor-find-count">
+      <span className="min-w-[4.75rem] text-right text-xs text-muted-foreground" aria-live="polite" data-testid="rich-editor-find-count">
         {statusText(locale, result, currentIndex)}
       </span>
       <FindTooltip label={translate(locale, 'editor.find.previousMatch')}>

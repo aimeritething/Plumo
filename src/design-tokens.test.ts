@@ -2,12 +2,13 @@ import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
-// The shape of the token contract, read from the stylesheets as text. Colour
-// values are asserted only for the neutral theme's fixed points (no indigo, the
-// accent, the link blue, the faces); the appearance baseline holds the rest.
+// The shape of the two token levels (index.css, color-scales.css), read from
+// the stylesheets as text: scales at the bottom, roles over them, the
+// Tailwind bridge over the roles, and components on the roles only.
 
 const SRC = join(process.cwd(), 'src')
 const appCss = readFileSync(join(SRC, 'index.css'), 'utf8')
+const scalesCss = readFileSync(join(SRC, 'color-scales.css'), 'utf8')
 
 function declarations(block: string): Record<string, string> {
   return Object.fromEntries(
@@ -16,33 +17,33 @@ function declarations(block: string): Record<string, string> {
 }
 
 /** The text between the braces that follow `selector`, brace depth respected. */
-function blockAfter(selector: string, from = 0): { body: string; start: number; end: number } {
-  const start = appCss.indexOf(selector, from)
+function blockAfter(css: string, selector: string, from = 0): { body: string; start: number; end: number } {
+  const start = css.indexOf(selector, from)
   expect(start, `${selector} block`).toBeGreaterThan(-1)
-  const open = appCss.indexOf('{', start)
+  const open = css.indexOf('{', start)
   let depth = 0
-  for (let i = open; i < appCss.length; i += 1) {
-    if (appCss[i] === '{') depth += 1
-    if (appCss[i] === '}') depth -= 1
-    if (depth === 0) return { body: appCss.slice(open + 1, i), start, end: i + 1 }
+  for (let i = open; i < css.length; i += 1) {
+    if (css[i] === '{') depth += 1
+    if (css[i] === '}') depth -= 1
+    if (depth === 0) return { body: css.slice(open + 1, i), start, end: i + 1 }
   }
   throw new Error(`unterminated ${selector} block`)
 }
 
-const lightBlock = blockAfter(':root,\n[data-theme="light"]')
-const darkBlock = blockAfter('[data-theme="dark"] {')
-const aliasBlock = blockAfter('\n:root {', darkBlock.end)
-const bridgeBlock = blockAfter('@theme inline')
+const scalesLight = blockAfter(scalesCss, ':root,\n[data-theme="light"]')
+const scalesDark = blockAfter(scalesCss, '[data-theme="dark"] {')
+const scalesPrimary = blockAfter(scalesCss, ':root,\n[data-theme] {')
+const themeLight = blockAfter(appCss, ':root,\n[data-theme="light"]')
+const themeDark = blockAfter(appCss, '[data-theme="dark"] {')
+const roleBlock = blockAfter(appCss, ':root,\n[data-theme] {', themeDark.end)
+const bridgeBlock = blockAfter(appCss, '@theme inline')
 
-const light = declarations(lightBlock.body)
-const dark = declarations(darkBlock.body)
-const aliases = declarations(aliasBlock.body)
-
-const SHADCN_NAMES = [
-  'background', 'foreground', 'card', 'card-foreground', 'popover', 'popover-foreground',
-  'primary', 'primary-foreground', 'secondary', 'secondary-foreground', 'muted', 'muted-foreground',
-  'accent', 'accent-foreground', 'destructive', 'destructive-foreground', 'border', 'input', 'ring',
-]
+const scales = declarations(scalesLight.body)
+const theme = declarations(themeLight.body)
+const roles = declarations(roleBlock.body)
+const bridge = declarations(bridgeBlock.body)
+const SCALE_NAMES = ['gray', 'red', 'orange', 'yellow', 'green', 'teal', 'purple', 'blue']
+const SCALE_STEP = new RegExp(`--(?:${[...SCALE_NAMES, 'primary'].join('|')})-(?:a?\\d+|contrast)\\b`)
 
 function sourceFiles(dir: string): string[] {
   return readdirSync(dir).flatMap((entry) => {
@@ -52,51 +53,89 @@ function sourceFiles(dir: string): string[] {
   })
 }
 
-describe('the theme blocks', () => {
-  it('declare exactly the same names in light and in dark', () => {
-    expect(Object.keys(light).length).toBeGreaterThan(0)
-    expect(Object.keys(dark).sort()).toEqual(Object.keys(light).sort())
+describe('the scales', () => {
+  it('are twelve solid steps and twelve see-through ones each, the same names in light and dark', () => {
+    for (const name of SCALE_NAMES) {
+      for (let step = 1; step <= 12; step += 1) {
+        expect(scales, `--${name}-${step}`).toHaveProperty(`--${name}-${step}`)
+        expect(scales, `--${name}-a${step}`).toHaveProperty(`--${name}-a${step}`)
+      }
+    }
+    expect(Object.keys(declarations(scalesDark.body)).sort()).toEqual(Object.keys(scales).sort())
+  })
+
+  it('give the Primary color the default blue, step by step', () => {
+    for (const [name, value] of Object.entries(declarations(scalesPrimary.body))) {
+      expect(value).toBe(`var(${name.replace('--primary-', '--blue-')})`)
+    }
   })
 })
 
-describe('the shadcn aliases', () => {
-  it('are the nineteen names, each a var() of a semantic name and nothing else', () => {
-    expect(Object.keys(aliases).map((name) => name.slice(2)).sort()).toEqual([...SHADCN_NAMES].sort())
-    for (const [name, value] of Object.entries(aliases)) {
-      expect(value, name).toMatch(/^var\(--[\w-]+\)$/)
-      expect(light, `${name} points at a declared token`).toHaveProperty(value.slice(4, -1))
+describe('the roles', () => {
+  it('declare the same names in the light and the dark theme block', () => {
+    expect(Object.keys(declarations(themeDark.body)).sort()).toEqual(Object.keys(theme).sort())
+  })
+
+  it('are written without a literal colour, on scale steps and other roles', () => {
+    for (const [name, value] of Object.entries(roles)) {
+      expect(value, name).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(|oklch\(/i)
+      for (const [, used] of value.matchAll(/var\((--[\w-]+)\)/g)) {
+        expect(SCALE_STEP.test(used) || used in roles || used in theme, `${name} reads ${used}`).toBe(true)
+      }
     }
   })
 
-  it('appear nowhere in src/ outside ui/, in any form, the bridged `--color-*` spelling included', () => {
-    const names = SHADCN_NAMES.join('|')
-    const asVariable = new RegExp(`var\\(--(?:color-)?(${names})\\)`)
-    // A colour utility built on one of the names, with or without variants and an
-    // opacity modifier, terminated so that `border-border-default` and `text-text-primary` do not match.
-    // `shadow-card` is Plumo's own shadow token (`--shadow-card`), not the `card` alias.
-    const shadowNames = SHADCN_NAMES.filter((name) => name !== 'card').join('|')
-    const asUtility = new RegExp(`(?:^|[\\s"'\`(:])(?:[\\w[\\]=-]+:)*(?:(?:bg|text|border|ring|outline|fill|stroke|divide|placeholder|from|to|via|decoration|caret)-(${names})|shadow-(${shadowNames}))(?:/\\d+)?(?=[\\s"'\`)\\]/]|$)`, 'm')
-    const offenders: string[] = []
-    for (const file of sourceFiles(SRC)) {
-      const path = relative(SRC, file)
-      if (path.startsWith('ui/')) continue
-      let text = readFileSync(file, 'utf8')
-      if (path === 'index.css') {
-        // The alias block and the bridge are where the names are defined; the rest of the file is scanned.
-        text = text.slice(0, aliasBlock.start) + text.slice(aliasBlock.end, bridgeBlock.start) + text.slice(bridgeBlock.end)
-      }
-      const hit = text.match(asVariable) ?? text.match(asUtility)
-      if (hit) offenders.push(`${path}: ${hit[0].trim()}`)
-    }
+  it('are each bridged to Tailwind as --color-*, and the bridge names nothing else but white and black', () => {
+    const colorRoles = [...Object.keys(roles), ...Object.keys(theme).filter((name) => !name.startsWith('--elevation-'))]
+    for (const name of colorRoles) expect(bridge[`--color-${name.slice(2)}`], name).toBe(`var(${name})`)
+    const bridged = Object.keys(bridge).filter((name) => name.startsWith('--color-') && name !== '--color-*')
+    expect(bridged.filter((name) => !colorRoles.includes(`--${name.slice('--color-'.length)}`)).sort())
+      .toEqual(['--color-black', '--color-white'])
+    expect(bridgeBlock.body).toContain('--color-*: initial;')
+  })
+
+  it('give the Primary color its four jobs: the solid, focus, links and the selection', () => {
+    expect(roles['--primary']).toBe('var(--primary-9)')
+    expect(roles['--ring']).toBe('var(--primary-8)')
+    expect(roles['--link']).toBe('var(--primary-11)')
+    expect(roles['--selection']).toBe('var(--primary-a5)')
+  })
+})
+
+describe('components', () => {
+  it('read roles, never a scale step', () => {
+    const allowed = new Set(['index.css', 'color-scales.css'])
+    const offenders = sourceFiles(SRC)
+      .map((file) => relative(SRC, file))
+      .filter((path) => !allowed.has(path) && !path.endsWith('.test.ts') && !path.endsWith('.test.tsx'))
+      .flatMap((path) => {
+        const hit = readFileSync(join(SRC, path), 'utf8').match(SCALE_STEP)
+        return hit && !path.startsWith('shell/primary-color') ? [`${path}: ${hit[0]}`] : []
+      })
+    expect(offenders).toEqual([])
+  })
+
+  it('use none of the retired names', () => {
+    const names = 'surface-(?:app|card|popover|shade|overlay)|text-(?:heading|primary|secondary|tertiary|muted|inverse|link|document|document-heading)|state-(?:hover|hover-subtle|selected|focus-ring|drag-target|selection)|accent-(?:base|hover|bg)|control-(?:secondary|secondary-hover|secondary-selected|tertiary-hover)|sidebar-row-(?:hover|active)|tab-(?:hover|active)|menu-(?:item-hover|shortcut)|chroma-[a-z]+(?:-text|-bg)?|feedback-[a-z]+-(?:text|bg)|inline-code-(?:bg|border)|border-(?:default|strong|popover)|shadow-(?:card|menu|dialog|raised)'
+    const prefixes = 'bg|text|border|ring|outline|fill|stroke|divide|placeholder|decoration|caret|from|to|via|accent'
+    const retired = new RegExp(`(?:--|\\b(?:${prefixes})-)(?:${names})(?![\\w-])|\\bshadow-(?:card|menu|dialog|raised)(?![\\w-])`)
+    const offenders = sourceFiles(SRC)
+      .map((file) => relative(SRC, file))
+      .filter((path) => path !== 'design-tokens.test.ts')
+      .flatMap((path) => {
+        const hit = readFileSync(join(SRC, path), 'utf8').match(retired)
+        return hit ? [`${path}: ${hit[0].trim()}`] : []
+      })
     expect(offenders).toEqual([])
   })
 })
 
 describe('literal colours', () => {
-  it('appear only inside the two theme blocks', () => {
+  it('appear only in the scales and the two theme blocks', () => {
     const literal = /#[0-9a-f]{3,8}\b|rgba?\(/i
+    const bridgeWithoutWhiteAndBlack = appCss.slice(bridgeBlock.start, bridgeBlock.end).replace(/--color-(?:white|black): #[0-9a-f]+;/g, '')
     const checks: Array<[string, string]> = [
-      ['index.css', appCss.slice(0, lightBlock.start) + appCss.slice(lightBlock.end, darkBlock.start) + appCss.slice(darkBlock.end)],
+      ['index.css', appCss.slice(0, themeLight.start) + appCss.slice(themeLight.end, themeDark.start) + appCss.slice(themeDark.end, bridgeBlock.start) + bridgeWithoutWhiteAndBlack + appCss.slice(bridgeBlock.end)],
       ['kernel/blocknote/blocknote.css', readFileSync(join(SRC, 'kernel', 'blocknote', 'blocknote.css'), 'utf8')],
     ]
     for (const [name, text] of checks) {
@@ -106,17 +145,8 @@ describe('literal colours', () => {
   })
 })
 
-describe('the neutral theme', () => {
-  it('has no indigo: the accent is near-black in light, and blue is only the link', () => {
-    expect(appCss).not.toMatch(/#6d78d5|#5e69d1|#5e6ad2/i)
-    expect(light['--accent-base']).toBe('#171717')
-    expect(light['--text-link']).toBe('#2563eb')
-    const blue = Object.entries(light).filter(([, value]) => /#2563eb/i.test(value)).map(([name]) => name)
-    expect(blue).toEqual(['--text-link'])
-  })
-
-  it('sets the UI, the Document and code in the system faces, with no bundled font', () => {
-    const bridge = declarations(bridgeBlock.body)
+describe('the faces', () => {
+  it('set the UI, the Document and code in the system faces, with no bundled font', () => {
     expect(bridge['--font-sans']).toMatch(/^system-ui,/)
     expect(bridge['--font-mono']).toMatch(/^ui-monospace,/)
     expect(appCss).toMatch(/--editor-font-family:\s*var\(--font-sans\);/)

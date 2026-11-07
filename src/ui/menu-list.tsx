@@ -110,7 +110,7 @@ function MenuListItem({
       aria-selected={selected || undefined}
       className={cn(
         menuItemClassName,
-        "hover:bg-menu-item-hover aria-selected:bg-menu-item-hover",
+        "hover:bg-accent aria-selected:bg-accent",
         className
       )}
       onMouseDown={(event) => {
@@ -132,7 +132,7 @@ function MenuListEmpty({ className, ...props }: ComponentProps<"div">) {
   return (
     <div
       data-slot="menu-list-empty"
-      className={cn(menuItemClassName, "text-text-muted", className)}
+      className={cn(menuItemClassName, "text-subtle-foreground", className)}
       {...props}
     />
   )

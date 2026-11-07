@@ -101,7 +101,7 @@ function RawEditorYamlErrorBanner({ error }: { error: string | null }) {
 
   return (
     <div
-      className="flex shrink-0 items-center gap-2 border-b border-chroma-orange bg-feedback-warning-bg px-4 py-2 text-xs text-feedback-warning-text"
+      className="flex shrink-0 items-center gap-2 border-b border-orange bg-warning-muted px-4 py-2 text-xs text-warning-text"
       role="alert"
       data-testid="raw-editor-yaml-error"
     >
@@ -326,7 +326,7 @@ interface RawEditorSurfaceProps {
 function RawEditorSurface(options: RawEditorSurfaceProps) {
   const { containerRef, find, findRequest, isDragOver, locale, path, pendingChanges, rawDoc, replaceOpen, rootRef, setReplaceOpen, showFrontmatterWarning, viewRef } = options
   return (
-    <div ref={rootRef} className="relative flex min-h-0 flex-1 flex-col bg-surface-app">
+    <div ref={rootRef} className="relative flex min-h-0 flex-1 flex-col bg-background">
       <RawEditorYamlErrorBanner error={showFrontmatterWarning ? pendingChanges.yamlError : null} />
       <RawEditorFindBar doc={rawDoc} find={find} locale={locale} onReplaceOpenChange={setReplaceOpen} path={path} replaceOpen={replaceOpen} request={findRequest} viewRef={viewRef} />
       {/* CodeMirror owns the host's children, so the drop affordance is laid over it from beside it. */}

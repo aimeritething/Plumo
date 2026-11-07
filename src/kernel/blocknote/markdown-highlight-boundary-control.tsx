@@ -45,7 +45,7 @@ export function HighlightBoundaryColorControl({ editor }: { editor: HighlightEdi
             <TooltipTrigger asChild>
               <Button
                 aria-label={label}
-                className="bg-surface-popover text-text-primary border-hairline border-border-popover shadow-menu"
+                className="bg-popover text-foreground border-hairline border-border shadow-md"
                 data-test="highlightBoundaryColorMenu"
                 onMouseDown={event => event.preventDefault()}
                 size="icon-xs"

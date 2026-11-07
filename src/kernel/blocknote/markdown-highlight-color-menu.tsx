@@ -25,11 +25,11 @@ import {
 const swatchVariants = cva('size-3.5 shrink-0 rounded-full border border-current', {
   variants: {
     color: {
-      yellow: 'bg-chroma-yellow-bg text-chroma-yellow',
-      green: 'bg-chroma-green-bg text-chroma-green',
-      red: 'bg-chroma-red-bg text-chroma-red',
-      blue: 'bg-chroma-blue-bg text-chroma-blue',
-      purple: 'bg-chroma-purple-bg text-chroma-purple',
+      yellow: 'bg-yellow-muted text-yellow',
+      green: 'bg-green-muted text-green',
+      red: 'bg-red-muted text-red',
+      blue: 'bg-blue-muted text-blue',
+      purple: 'bg-purple-muted text-purple',
     } satisfies Record<MarkdownHighlightColor, string>,
   },
 })

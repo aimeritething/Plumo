@@ -21,7 +21,7 @@ export function ExplorerDisclosure({ name, expanded, onToggle }: ExplorerDisclos
   return (
     <button
       type="button"
-      className={cn('flex h-5 w-4 flex-none items-center justify-center', SIDEBAR_ROW_ICON_COLORS, '[[aria-selected=true]>*>&]:text-text-primary')}
+      className={cn('flex h-5 w-4 flex-none items-center justify-center', SIDEBAR_ROW_ICON_COLORS, '[[aria-selected=true]>*>&]:text-foreground')}
       tabIndex={-1}
       aria-label={`${expanded ? 'Collapse' : 'Expand'} ${name}`}
       onClick={(event) => { event.stopPropagation(); onToggle() }}

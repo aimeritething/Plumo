@@ -587,7 +587,7 @@ export function renderMathToHtml({ latex, displayMode }: MathRenderRequest): str
       displayMode,
       // KaTeX writes this colour inline on its error span, where no stylesheet
       // rule reaches it; the token keeps it Plumo's red in both themes.
-      errorColor: 'var(--chroma-red)',
+      errorColor: 'var(--red)',
       throwOnError: false,
       trust: false,
     })

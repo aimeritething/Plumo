@@ -420,7 +420,7 @@ function FindControls(options: FindControlsProps) {
         data-testid="raw-editor-find-input"
       />
       <span
-        className="min-w-[4.75rem] text-right text-xs text-text-secondary"
+        className="min-w-[4.75rem] text-right text-xs text-muted-foreground"
         aria-live="polite"
         data-testid="raw-editor-find-count"
       >
@@ -503,7 +503,7 @@ export function RawEditorFindBar(props: RawEditorFindBarProps) {
 
   return (
     <div
-      className="flex shrink-0 flex-col gap-1.5 border-b border-border-default bg-surface-card px-3 py-2"
+      className="flex shrink-0 flex-col gap-1.5 border-b border-border bg-background px-3 py-2"
       data-testid="raw-editor-find-bar"
       onKeyDown={onBarKeyDown}
     >

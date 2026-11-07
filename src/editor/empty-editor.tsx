@@ -19,11 +19,11 @@ export function EmptyEditor({ hasFolder }: EmptyEditorProps) {
     <>
       <div className="h-13 flex-none" data-tauri-drag-region />
       <div className="flex flex-1 cursor-default flex-col items-center justify-center gap-4 pb-13" data-testid="editor-empty-state">
-        <span className="text-sm font-medium text-text-muted">Plumo</span>
+        <span className="text-sm font-medium text-subtle-foreground">Plumo</span>
         <div className="flex gap-5">
           {hints.map(([keys, action]) => (
-            <span key={keys} className="flex items-center gap-2 text-sm text-text-tertiary" data-testid="empty-hint">
-              <kbd className="rounded-sm bg-state-hover px-1.5 py-px font-mono text-2xs font-normal tracking-normal text-text-secondary inset-ring inset-ring-border-default">{keys}</kbd>
+            <span key={keys} className="flex items-center gap-2 text-sm text-muted-foreground" data-testid="empty-hint">
+              <kbd className="rounded-sm bg-accent px-1.5 py-px font-mono text-2xs font-normal tracking-normal text-muted-foreground inset-ring inset-ring-border">{keys}</kbd>
               {action}
             </span>
           ))}

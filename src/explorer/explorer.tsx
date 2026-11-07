@@ -89,17 +89,17 @@ function NoFolder({ error, onOpenFolder }: { error?: string | null; onOpenFolder
   return (
     <section className="flex min-h-0 flex-col pt-1" data-testid="explorer">
       <div className="flex cursor-default flex-col items-start px-2 pt-1" data-testid="explorer-no-folder">
-        <h4 className="text-sm leading-5 font-medium text-text-heading">No folder open</h4>
-        <p className="pt-1 text-sm leading-5 font-normal text-text-tertiary">Plumo reads Markdown from one folder at a time. Open one to browse it here.</p>
+        <h4 className="text-sm leading-5 font-medium text-foreground">No folder open</h4>
+        <p className="pt-1 text-sm leading-5 font-normal text-muted-foreground">Plumo reads Markdown from one folder at a time. Open one to browse it here.</p>
         {error && (
-          <p className="pt-2 font-mono text-2xs leading-normal font-normal text-chroma-red-text wrap-anywhere" role="status" data-testid="explorer-folder-missing">
+          <p className="pt-2 font-mono text-2xs leading-normal font-normal text-red-text wrap-anywhere" role="status" data-testid="explorer-folder-missing">
             {error}
           </p>
         )}
         <Button type="button" className="mt-3.5 h-7.5 rounded-lg pr-2 pl-3" aria-label="Open Folder ⌘O" onClick={onOpenFolder} data-testid="explorer-open-folder">
-          Open Folder<Kbd className="bg-text-inverse/12 px-1.25 font-normal text-text-inverse/80">⌘O</Kbd>
+          Open Folder<Kbd className="bg-primary-foreground/12 px-1.25 font-normal text-primary-foreground/80">⌘O</Kbd>
         </Button>
-        <p className="flex items-center gap-1 pt-3 text-xs leading-4 font-normal text-text-muted">
+        <p className="flex items-center gap-1 pt-3 text-xs leading-4 font-normal text-subtle-foreground">
           or drop a <code className="font-mono text-2xs">.md</code> file onto the window
         </p>
       </div>
@@ -275,7 +275,7 @@ function ExplorerBody(props: LoadedProps) {
           ))}
           {/* The empty-Folder line: no `.md` anywhere in the Folder. It goes with the first ⌘N. */}
           {!holdsDocument(tree) && (
-            <div className="cursor-default py-1 pr-2 pl-4 font-mono text-2xs font-normal text-text-muted" data-testid="explorer-no-documents">
+            <div className="cursor-default py-1 pr-2 pl-4 font-mono text-2xs font-normal text-subtle-foreground" data-testid="explorer-no-documents">
               No documents yet · ⌘N
             </div>
           )}
@@ -424,8 +424,8 @@ function ExplorerRow(props: RowProps) {
         <ContextMenuTrigger asChild>
           <SidebarRow
             className={cn(
-              'mb-0.5 [[aria-selected=true]>&]:bg-sidebar-row-active [[aria-selected=true]>&]:text-text-heading',
-              'data-drop-target:bg-sidebar-row-active data-drop-target:text-text-heading data-drop-target:ring-1 data-drop-target:ring-accent-base data-drop-target:ring-inset',
+              'mb-0.5 [[aria-selected=true]>&]:bg-sidebar-selected [[aria-selected=true]>&]:text-foreground',
+              'data-drop-target:bg-sidebar-selected data-drop-target:text-foreground data-drop-target:ring-1 data-drop-target:ring-primary data-drop-target:ring-inset',
               // WebKit will not start an HTML5 drag from inside `user-select: none` (the whole shell) without this.
               !isFolder && '[-webkit-user-drag:element]',
             )}
@@ -441,7 +441,7 @@ function ExplorerRow(props: RowProps) {
             }}>
             {isFolder
               ? <ExplorerDisclosure name={node.name} expanded={isExpanded} onToggle={() => onToggle(relative)} />
-              : <SidebarRowIcon icon={Icon} className="[[aria-selected=true]>*>&]:text-text-primary" />}
+              : <SidebarRowIcon icon={Icon} className="[[aria-selected=true]>*>&]:text-foreground" />}
             <SidebarRowName>{node.name}</SidebarRowName>
           </SidebarRow>
         </ContextMenuTrigger>

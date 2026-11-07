@@ -108,7 +108,7 @@ function SwitcherRow({ name, path, summary, className, ...props }: ComponentProp
       </TooltipTrigger>
       <TooltipContent side="top" align="start" sideOffset={POPUP_OFFSET} className="flex-col gap-0.5" data-testid="folder-switcher-tooltip">
         <span className="wrap-anywhere">{path}</span>
-        <span className="text-text-tertiary">{summary}</span>
+        <span className="text-muted-foreground">{summary}</span>
       </TooltipContent>
     </Tooltip>
   )

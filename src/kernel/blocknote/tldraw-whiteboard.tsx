@@ -657,7 +657,7 @@ export function TldrawWhiteboard({
   return (
     <div
       ref={boardRef}
-      className="group relative h-[var(--whiteboard-height,520px)] w-[min(var(--whiteboard-width,100%),100%)] max-w-full overflow-hidden rounded-lg border-hairline border-border-default bg-surface-card select-none data-fullscreen:fixed data-fullscreen:inset-2 data-fullscreen:z-popover data-fullscreen:h-auto data-fullscreen:w-auto data-fullscreen:max-w-none data-fullscreen:rounded-xl data-fullscreen:shadow-dialog"
+      className="group relative h-[var(--whiteboard-height,520px)] w-[min(var(--whiteboard-width,100%),100%)] max-w-full overflow-hidden rounded-lg border-hairline border-border bg-background select-none data-fullscreen:fixed data-fullscreen:inset-2 data-fullscreen:z-popover data-fullscreen:h-auto data-fullscreen:w-auto data-fullscreen:max-w-none data-fullscreen:rounded-xl data-fullscreen:shadow-lg"
       contentEditable={false}
       data-board-id={boardId}
       data-fullscreen={fullscreen || undefined}
@@ -674,10 +674,10 @@ export function TldrawWhiteboard({
       {platformPermissionDenied ? (
         <div
           role="alert"
-          className="absolute right-3 bottom-3 left-3 z-sticky grid gap-1 rounded-lg border-hairline border-[color-mix(in_srgb,var(--chroma-red)_34%,var(--border-default))] bg-[color-mix(in_srgb,var(--surface-app)_94%,var(--chroma-red))] px-3 py-2.5 text-xs leading-snug text-text-primary shadow-menu"
+          className="absolute right-3 bottom-3 left-3 z-sticky grid gap-1 rounded-lg border-hairline border-[color-mix(in_srgb,var(--red)_34%,var(--border))] bg-[color-mix(in_srgb,var(--background)_94%,var(--red))] px-3 py-2.5 text-xs leading-snug text-foreground shadow-md"
           data-testid="tldraw-whiteboard-permission-error"
         >
-          <strong className="text-xs text-chroma-red">{translate(locale, 'editor.whiteboard.permissionDeniedTitle')}</strong>
+          <strong className="text-xs text-red">{translate(locale, 'editor.whiteboard.permissionDeniedTitle')}</strong>
           <span>{translate(locale, 'editor.whiteboard.permissionDeniedBody')}</span>
         </div>
       ) : null}
@@ -714,7 +714,7 @@ export function TldrawWhiteboard({
       <button
         type="button"
         aria-label="Resize whiteboard"
-        className={`${RESIZE_HANDLE_CLASS} right-0 bottom-0 size-4.5 cursor-nwse-resize after:absolute after:right-1 after:bottom-1 after:size-2 after:border-r-2 after:border-b-2 after:border-text-primary/42`}
+        className={`${RESIZE_HANDLE_CLASS} right-0 bottom-0 size-4.5 cursor-nwse-resize after:absolute after:right-1 after:bottom-1 after:size-2 after:border-r-2 after:border-b-2 after:border-foreground/42`}
         data-resize-mode="both"
         onPointerDown={startResize}
       />

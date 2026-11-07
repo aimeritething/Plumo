@@ -72,7 +72,7 @@ function TooltipContent({
           data-slot="tooltip-content"
           sideOffset={sideOffset}
           className={cn(
-            "z-popover flex w-fit items-center gap-2 origin-(--radix-tooltip-content-transform-origin) rounded-lg border-hairline border-border-popover bg-surface-popover px-2 py-[5px] text-2xs font-medium text-balance text-text-primary shadow-menu",
+            "z-popover flex w-fit items-center gap-2 origin-(--radix-tooltip-content-transform-origin) rounded-lg border-hairline border-border bg-popover px-2 py-[5px] text-2xs font-medium text-balance text-foreground shadow-md",
             // Only a tooltip that waited animates in, 100ms from its trigger; one
             // reached from a neighbour within the skip delay (`instant-open`) is
             // instant, and none animates out.

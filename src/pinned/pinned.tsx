@@ -61,7 +61,7 @@ export const Pinned = memo(function Pinned({ paths, activeTabPath, collapsed, on
           <Caret
             size={10}
             aria-hidden="true"
-            className="text-text-muted opacity-0 transition-opacity duration-150 ease-out group-hover/pinned:opacity-100 group-focus-within/pinned:opacity-100"
+            className="text-subtle-foreground opacity-0 transition-opacity duration-150 ease-out group-hover/pinned:opacity-100 group-focus-within/pinned:opacity-100"
             data-testid="pinned-caret"
           />
         </button>
@@ -200,11 +200,11 @@ function PinnedRow({ path, parentHint, active, dragging, dropMark, dragProps, on
         >
           <SidebarRowIcon icon={isImageFilePath(path) ? Image : FileText} />
           <SidebarRowName>{filename}</SidebarRowName>
-          {parentHint && <span className="flex-initial truncate text-2xs text-text-tertiary" data-testid="pinned-parent">{parentHint}</span>}
+          {parentHint && <span className="flex-initial truncate text-2xs text-muted-foreground" data-testid="pinned-parent">{parentHint}</span>}
           {dropMark && (
             <span
               aria-hidden="true"
-              className="pointer-events-none absolute inset-x-2 h-0.5 rounded-full bg-accent-base data-[at=after]:-bottom-px data-[at=before]:-top-px"
+              className="pointer-events-none absolute inset-x-2 h-0.5 rounded-full bg-primary data-[at=after]:-bottom-px data-[at=before]:-top-px"
               data-at={dropMark}
               data-testid="pinned-drop-indicator"
             />

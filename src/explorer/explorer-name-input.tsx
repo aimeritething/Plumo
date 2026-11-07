@@ -48,7 +48,7 @@ export function ExplorerNameInput(props: ExplorerNameInputProps) {
         <SidebarRowIcon icon={Icon} />
         <input
           ref={inputRef}
-          className="h-5 min-w-0 flex-1 rounded-sm border-hairline border-border-default bg-surface-card px-1 text-text-primary outline-none focus:border-state-focus-ring aria-invalid:border-chroma-red"
+          className="h-5 min-w-0 flex-1 rounded-sm border-hairline border-border bg-background px-1 text-foreground outline-none focus:border-ring aria-invalid:border-red"
           data-testid="explorer-rename-input"
           aria-label="Name"
           aria-invalid={error ? true : undefined}
@@ -60,11 +60,11 @@ export function ExplorerNameInput(props: ExplorerNameInputProps) {
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
         />
-        {extension && <span className="flex-none text-text-muted">{extension}</span>}
+        {extension && <span className="flex-none text-subtle-foreground">{extension}</span>}
       </SidebarRow>
       {error && (
         <div
-          className="pr-2 pb-0.5 text-2xs text-text-muted wrap-anywhere"
+          className="pr-2 pb-0.5 text-2xs text-subtle-foreground wrap-anywhere"
           role="alert"
           data-testid="explorer-rename-error"
           style={{ paddingLeft: explorerNameIndent(depth) }}
