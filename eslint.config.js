@@ -92,4 +92,29 @@ export default defineConfig([
       ],
     },
   },
+  // Inside src/ui every control is on Base UI. The one Radix import is the
+  // Dialog root tldraw's own dialog parts need (ui/tldraw-dialog-scope).
+  {
+    files: ['src/ui/**/*.{ts,tsx}'],
+    ignores: ['src/ui/tldraw-dialog-scope.tsx'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'radix-ui',
+              message: 'No Radix in src/ui: build the control on Base UI, as shadcn\'s Base UI components are (ADR-0013).',
+            },
+          ],
+          patterns: [
+            {
+              group: ['@radix-ui/*', 'radix-ui/*'],
+              message: 'No Radix in src/ui: build the control on Base UI, as shadcn\'s Base UI components are (ADR-0013).',
+            },
+          ],
+        },
+      ],
+    },
+  },
 ])

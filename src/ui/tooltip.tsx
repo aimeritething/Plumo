@@ -1,12 +1,11 @@
 "use client"
 
-import { Component, type ReactNode } from "react"
+import type { ReactNode } from "react"
 import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip"
 import { cn } from "@/lib/cn"
 
 import { escapeOpenChangeHandler } from "./escape"
 import { Kbd } from "./kbd"
-import { markRecoveredTooltipError } from "./tooltip-recovery"
 
 // 400ms before a tooltip shows, so a pointer passing over a row of icons does
 // not flash one per icon; a hover that pauses is asking. Within 300ms of one
@@ -43,24 +42,6 @@ function TooltipTrigger({ ...props }: TooltipPrimitive.Trigger.Props) {
   return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />
 }
 
-// The tooltip's content can throw when BlockNote unmounts its trigger
-// mid-render; the boundary drops the content and keeps the trigger mounted.
-class TooltipBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
-  state = { failed: false }
-
-  static getDerivedStateFromError() {
-    return { failed: true }
-  }
-
-  componentDidCatch(error: unknown) {
-    markRecoveredTooltipError(error)
-  }
-
-  render() {
-    return this.state.failed ? null : this.props.children
-  }
-}
-
 // Radix's placement: no padding from the window's edge, a flip to the other
 // side of the same axis and a shift along it, never an alignment flip.
 const TOOLTIP_COLLISION_AVOIDANCE = { align: "shift", fallbackAxisSide: "none" } as const
@@ -86,45 +67,43 @@ function TooltipContent({
     shortcut?: string
   }) {
   return (
-    <TooltipBoundary>
-      <TooltipPrimitive.Portal>
-        <TooltipPrimitive.Positioner
-          data-slot="tooltip-positioner"
-          align={align}
-          alignOffset={alignOffset}
-          side={side}
-          sideOffset={sideOffset}
-          collisionPadding={collisionPadding}
-          collisionAvoidance={collisionAvoidance}
-          className="isolate z-popover"
+    <TooltipPrimitive.Portal>
+      <TooltipPrimitive.Positioner
+        data-slot="tooltip-positioner"
+        align={align}
+        alignOffset={alignOffset}
+        side={side}
+        sideOffset={sideOffset}
+        collisionPadding={collisionPadding}
+        collisionAvoidance={collisionAvoidance}
+        className="isolate z-popover"
+      >
+        <TooltipPrimitive.Popup
+          data-slot="tooltip-content"
+          role="tooltip"
+          className={cn(
+            "flex w-fit items-center gap-2 origin-(--transform-origin) rounded-lg border-hairline border-border bg-popover px-2 py-[5px] text-2xs font-medium text-balance text-foreground shadow-md",
+            // Only a tooltip that waited animates in, 100ms from its trigger; one
+            // reached from a neighbour within the timeout, or shown on focus
+            // (`data-instant`), is instant, and none animates out.
+            "data-open:not-data-instant:animate-in data-open:not-data-instant:fade-in-0 data-open:not-data-instant:zoom-in-95 duration-100",
+            className
+          )}
+          {...props}
         >
-          <TooltipPrimitive.Popup
-            data-slot="tooltip-content"
-            role="tooltip"
-            className={cn(
-              "flex w-fit items-center gap-2 origin-(--transform-origin) rounded-lg border-hairline border-border bg-popover px-2 py-[5px] text-2xs font-medium text-balance text-foreground shadow-md",
-              // Only a tooltip that waited animates in, 100ms from its trigger; one
-              // reached from a neighbour within the timeout, or shown on focus
-              // (`data-instant`), is instant, and none animates out.
-              "data-open:not-data-instant:animate-in data-open:not-data-instant:fade-in-0 data-open:not-data-instant:zoom-in-95 duration-100",
-              className
-            )}
-            {...props}
-          >
-            {children}
-            {/* The space keeps the text reading `label shortcut`; flex never draws it. */}
-            {shortcut && (
-              <>
-                {" "}
-                <span className="flex gap-1">
-                  {Array.from(shortcut).map((key, index) => <Kbd key={index}>{key}</Kbd>)}
-                </span>
-              </>
-            )}
-          </TooltipPrimitive.Popup>
-        </TooltipPrimitive.Positioner>
-      </TooltipPrimitive.Portal>
-    </TooltipBoundary>
+          {children}
+          {/* The space keeps the text reading `label shortcut`; flex never draws it. */}
+          {shortcut && (
+            <>
+              {" "}
+              <span className="flex gap-1">
+                {Array.from(shortcut).map((key, index) => <Kbd key={index}>{key}</Kbd>)}
+              </span>
+            </>
+          )}
+        </TooltipPrimitive.Popup>
+      </TooltipPrimitive.Positioner>
+    </TooltipPrimitive.Portal>
   )
 }
 
