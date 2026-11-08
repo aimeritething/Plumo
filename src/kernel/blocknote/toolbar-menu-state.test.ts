@@ -1,6 +1,5 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
-  keepFocusWhenLeavingClosingMenuItem,
   returnFocusAfterMenuClose,
   toolbarMenuAfter,
 } from './toolbar-menu-state'
@@ -32,15 +31,5 @@ describe('returnFocusAfterMenuClose', () => {
     expect(returnFocusAfterMenuClose(editorElement)).toBe(true)
     expect(returnFocusAfterMenuClose(null)).toBe(true)
     editorElement.remove()
-  })
-})
-
-describe('keepFocusWhenLeavingClosingMenuItem', () => {
-  it('only stops the leave on a menu that is closing', () => {
-    const event = { preventBaseUIHandler: vi.fn() }
-    keepFocusWhenLeavingClosingMenuItem(true, event)
-    expect(event.preventBaseUIHandler).not.toHaveBeenCalled()
-    keepFocusWhenLeavingClosingMenuItem(false, event)
-    expect(event.preventBaseUIHandler).toHaveBeenCalledTimes(1)
   })
 })

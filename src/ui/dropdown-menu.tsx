@@ -6,6 +6,7 @@ import { mergeProps } from "@base-ui/react/merge-props"
 import { cn } from "@/lib/cn"
 import { ScrollArea } from "./scroll-area"
 import { renderWithClickAfterMenu } from "./menu-item-click"
+import { keepFocusWhenLeavingClosingMenu, keepTabInMenu } from "./menu-keys"
 import { MenuOpenedFrom, useMenuReturnFocus } from "./menu-return-focus"
 import { surfaceVariants } from "./surface"
 import { CaretRight as ChevronRightIcon, Check as CheckIcon, Circle as CircleIcon } from "@phosphor-icons/react"
@@ -46,7 +47,7 @@ function DropdownMenuPortal({ ...props }: MenuPrimitive.Portal.Props) {
 // owner opens the menu on the release or the click instead, through a
 // controlled `open`. Base UI opens the menu on the press (and toggles it on a
 // click with no press before it), so the menu would open as the press starts
-// a drag (a Table handle and the block grip are dragged and open a menu).
+// a drag (a Table handle and a Block handle are dragged and open a menu).
 // ArrowDown still opens it, Enter and Space reach the element's own click,
 // and the trigger keeps aria-expanded and its open state.
 function DropdownMenuTrigger({
@@ -59,12 +60,21 @@ function DropdownMenuTrigger({
   return (
     <MenuPrimitive.Trigger
       data-slot="dropdown-menu-trigger"
-      render={openOnPress || typeof render === "function"
+      render={openOnPress
         ? render
-        : (triggerProps) => <TriggerWithoutPress element={render} {...triggerProps} />}
+        : typeof render === "function"
+          ? (triggerProps, state) => render(withoutPress(triggerProps), state)
+          : (triggerProps) => <TriggerWithoutPress element={render} {...triggerProps} />}
       {...props}
     />
   )
+}
+
+// Base UI's trigger props, all but its press and click handlers.
+function withoutPress<Props extends React.HTMLAttributes<HTMLElement>>(props: Props) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- dropped on purpose
+  const { onMouseDown: _press, onPointerDown: _pointerPress, onClick: _click, ...rest } = props
+  return rest
 }
 
 type TriggerWithoutPressProps = React.HTMLAttributes<HTMLElement> & {
@@ -83,14 +93,9 @@ function setRef<T>(ref: React.Ref<T> | undefined, value: T | null) {
 function TriggerWithoutPress({
   element,
   ref,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- dropped on purpose
-  onMouseDown: _press,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- dropped on purpose
-  onPointerDown: _pointerPress,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- dropped on purpose
-  onClick: _click,
-  ...props
+  ...triggerProps
 }: TriggerWithoutPressProps) {
+  const props = withoutPress(triggerProps)
   const elementRef = (element?.props as { ref?: React.Ref<HTMLElement> } | undefined)?.ref
   const setRefs = React.useCallback((node: HTMLElement | null) => {
     setRef(ref, node)
@@ -125,6 +130,7 @@ function DropdownMenuContent({
   collisionAvoidance = MENU_COLLISION_AVOIDANCE,
   matchTriggerWidth = false,
   finalFocus,
+  onKeyDown,
   children,
   ...props
 }: MenuPrimitive.Popup.Props &
@@ -146,6 +152,7 @@ function DropdownMenuContent({
       >
         <MenuPrimitive.Popup
           data-slot="dropdown-menu-content"
+          onKeyDown={keepTabInMenu(onKeyDown)}
           finalFocus={finalFocus ?? returnFocus.finalFocus}
           className={cn(
             surfaceVariants(),
@@ -179,6 +186,7 @@ function DropdownMenuItem({
   inset,
   variant = "default",
   onClick,
+  onPointerLeave,
   render,
   ...props
 }: MenuPrimitive.Item.Props & {
@@ -196,6 +204,7 @@ function DropdownMenuItem({
         className
       )}
       render={renderWithClickAfterMenu(onClick, render)}
+      onPointerLeave={keepFocusWhenLeavingClosingMenu(onPointerLeave)}
       {...props}
     />
   )
@@ -356,6 +365,7 @@ function DropdownMenuSubContent({
   sideOffset = 0,
   collisionPadding = 0,
   collisionAvoidance = MENU_COLLISION_AVOIDANCE,
+  onKeyDown,
   ...props
 }: MenuPrimitive.Popup.Props & MenuPlacementProps) {
   return (
@@ -372,6 +382,7 @@ function DropdownMenuSubContent({
       >
         <MenuPrimitive.Popup
           data-slot="dropdown-menu-sub-content"
+          onKeyDown={keepTabInMenu(onKeyDown)}
           className={cn(
             surfaceVariants(),
             "min-w-[8rem] origin-(--transform-origin) overflow-hidden p-1.5 outline-none data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95",

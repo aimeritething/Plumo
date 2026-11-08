@@ -310,9 +310,9 @@ function SectionControlButton({ locale }: { locale: AppLocale }) {
  * second press closes it. Enter, Space and ↓ open it from the keyboard, as any
  * menu trigger's keys do.
  *
- * The grip is the menu's trigger, but one that leaves the press alone
+ * The Block handle is the menu's trigger, but one that leaves the press alone
  * (`openOnPress={false}`), as a Table handle is: a menu trigger opens on the
- * press and cancels it, which would cancel the reorder the press starts.
+ * press, so the menu would open as the press starts the reorder.
  */
 function DragHandleButton({ locale = 'en' }: { locale?: AppLocale }) {
   const dict = useDictionary()

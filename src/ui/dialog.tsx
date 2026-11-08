@@ -108,8 +108,11 @@ function useFocusHeldInDialog(
         if (target !== popup) lastInside = target
         return
       }
-      // Base UI marks what the open dialog covers; not during its exit.
+      // Base UI marks what the open dialog covers; not during its exit. Its
+      // focus guards sit outside the popup too, and Tab through one is the
+      // trap wrapping the focus round, not the page taking it.
       if (!popup.hasAttribute("data-open") || !target.closest("[data-base-ui-inert]")) return
+      if (target.hasAttribute("data-base-ui-focus-guard")) return
       ;(lastInside?.isConnected ? lastInside : firstTarget()).focus({ preventScroll: true })
     }
     doc.addEventListener("focusin", onFocusIn)

@@ -89,18 +89,66 @@ const ToggleGroupContext = React.createContext<
   spacing: 0,
 })
 
+// Tab into a single-choice group lands on the chosen item, as Radix's did;
+// Base UI's tab stop is the item the focus last left, the first at the start.
+// A press is left alone (the focus goes to the item pressed), and so is the
+// focus the arrows move within the group: the group still holds it when the
+// next item takes it.
+function useTabLandsOnChosenItem(
+  multiple: boolean | undefined,
+  {
+    onFocus,
+    onBlur,
+    onPointerDown,
+  }: Pick<ToggleGroupPrimitive.Props, "onFocus" | "onBlur" | "onPointerDown">
+) {
+  const pressedRef = React.useRef(false)
+  const holdsFocusRef = React.useRef(false)
+  return {
+    onPointerDown: (event: Parameters<NonNullable<typeof onPointerDown>>[0]) => {
+      onPointerDown?.(event)
+      pressedRef.current = true
+      setTimeout(() => { pressedRef.current = false })
+    },
+    onBlur: (event: Parameters<NonNullable<typeof onBlur>>[0]) => {
+      onBlur?.(event)
+      const group = event.currentTarget
+      setTimeout(() => {
+        holdsFocusRef.current = group.contains(group.ownerDocument.activeElement)
+      })
+    },
+    onFocus: (event: Parameters<NonNullable<typeof onFocus>>[0]) => {
+      onFocus?.(event)
+      const group = event.currentTarget
+      const fromInside = holdsFocusRef.current || group.contains(event.relatedTarget as Node | null)
+      const fromPress = pressedRef.current
+      holdsFocusRef.current = true
+      pressedRef.current = false
+      if (multiple || fromPress || fromInside) return
+      const chosen = group.querySelector<HTMLElement>(
+        '[data-slot="toggle-group-item"][aria-pressed="true"]:not(:disabled)'
+      )
+      if (chosen && chosen !== event.target) chosen.focus()
+    },
+  }
+}
+
 function ToggleGroup({
   className,
   variant,
   size,
   spacing = 0,
   children,
+  onFocus,
+  onBlur,
+  onPointerDown,
   ...props
 }: ToggleGroupPrimitive.Props &
   Omit<VariantProps<typeof toggleVariants>, "variant"> & {
     variant?: ToggleGroupVariant | null
     spacing?: number
   }) {
+  const focusHandlers = useTabLandsOnChosenItem(props.multiple, { onFocus, onBlur, onPointerDown })
   return (
     <ToggleGroupPrimitive
       data-slot="toggle-group"
@@ -109,6 +157,7 @@ function ToggleGroup({
       data-spacing={spacing}
       style={{ "--gap": spacing } as React.CSSProperties}
       className={cn(toggleGroupVariants({ variant }), className)}
+      {...focusHandlers}
       {...props}
     >
       <ToggleGroupContext.Provider value={{ variant, size, spacing }}>

@@ -55,14 +55,3 @@ export function returnFocusAfterMenuClose(editorElement: HTMLElement | null | un
   const active = editorElement?.ownerDocument.activeElement
   return !(editorElement && active && editorElement.contains(active))
 }
-
-// Base UI hands the focus to the menu when the pointer leaves an item (so no
-// item stays highlighted). After a choice the menu is closing and the editor
-// has the focus, and a choice that changes the block moves the layout under
-// the pointer: the leave it causes must not take the focus back from the text.
-export function keepFocusWhenLeavingClosingMenuItem(
-  opened: boolean,
-  event: { preventBaseUIHandler(): void },
-) {
-  if (!opened) event.preventBaseUIHandler()
-}

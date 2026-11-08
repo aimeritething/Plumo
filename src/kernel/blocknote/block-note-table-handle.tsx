@@ -46,8 +46,8 @@ import { setTableHandleTint, type TableHandleTint } from './table-handle-tint'
  * the header toggle on the first one, Delete last); dragging the handle is
  * BlockNote's column or row drag. The handle is the menu's trigger, but one
  * that leaves the press alone (`openOnPress={false}`): a menu trigger opens on
- * the press and cancels it, which would cancel the drag the press starts. So
- * the click opens the menu here, and the keys open it as any trigger's do.
+ * the press, so the menu would open as the press starts the drag. So the
+ * click opens the menu here, and the keys open it as any trigger's do.
  */
 export function TableHandle({ orientation, hideOtherElements }: TableHandleProps) {
   const editor = useBlockNoteEditor()

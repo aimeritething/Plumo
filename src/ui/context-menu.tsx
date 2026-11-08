@@ -5,6 +5,7 @@ import { ContextMenu as ContextMenuPrimitive } from "@base-ui/react/context-menu
 import { cn } from "@/lib/cn"
 import { ScrollArea } from "./scroll-area"
 import { renderWithClickAfterMenu } from "./menu-item-click"
+import { keepTabInMenu } from "./menu-keys"
 import { MenuOpenedFrom, useMenuReturnFocus } from "./menu-return-focus"
 import { surfaceVariants } from "./surface"
 import { CaretRight as ChevronRightIcon, Check as CheckIcon, Circle as CircleIcon } from "@phosphor-icons/react"
@@ -95,6 +96,7 @@ function ContextMenuSubContent({
   sideOffset = 0,
   collisionPadding = 0,
   collisionAvoidance = MENU_COLLISION_AVOIDANCE,
+  onKeyDown,
   ...props
 }: ContextMenuPrimitive.Popup.Props & MenuPlacementProps) {
   return (
@@ -111,6 +113,7 @@ function ContextMenuSubContent({
       >
         <ContextMenuPrimitive.Popup
           data-slot="context-menu-sub-content"
+          onKeyDown={keepTabInMenu(onKeyDown)}
           className={cn(
             surfaceVariants(),
             "min-w-[8rem] origin-(--transform-origin) overflow-hidden p-1.5 outline-none data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95",
@@ -133,6 +136,7 @@ function ContextMenuContent({
   collisionPadding = 0,
   collisionAvoidance = MENU_COLLISION_AVOIDANCE,
   finalFocus,
+  onKeyDown,
   children,
   ...props
 }: ContextMenuPrimitive.Popup.Props & MenuPlacementProps) {
@@ -151,6 +155,7 @@ function ContextMenuContent({
       >
         <ContextMenuPrimitive.Popup
           data-slot="context-menu-content"
+          onKeyDown={keepTabInMenu(onKeyDown)}
           finalFocus={finalFocus ?? returnFocus.finalFocus}
           className={cn(
             surfaceVariants(),

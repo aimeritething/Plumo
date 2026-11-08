@@ -38,7 +38,6 @@ import {
 } from './rich-editor-block-types'
 import { turnBlocksIntoType } from './rich-editor-block-type-commands'
 import {
-  keepFocusWhenLeavingClosingMenuItem,
   returnFocusAfterMenuClose,
   useToolbarMenu,
 } from './toolbar-menu-state'
@@ -180,7 +179,6 @@ export function BlockTypeSelect() {
               onClick={() => {
                 handleBlockTypeChange(item)
               }}
-              onPointerLeave={(event) => keepFocusWhenLeavingClosingMenuItem(menuState.opened, event)}
             >
               <Icon className="size-4" />
               {item.name}

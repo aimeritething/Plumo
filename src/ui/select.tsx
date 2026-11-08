@@ -60,9 +60,11 @@ function SelectTrigger({
   )
 }
 
-// Radix's placement, which Plumo's pickers were laid out with: no padding from
-// the window's edge, a flip to the other side of the same axis and a shift
-// along it, never an alignment flip.
+// Radix's placement, which Plumo's pickers were laid out with: 10px from the
+// window's edge (Radix's Select kept that margin, where its other popups kept
+// none), a flip to the other side of the same axis and a shift along it,
+// never an alignment flip.
+const SELECT_COLLISION_PADDING = 10
 const SELECT_COLLISION_AVOIDANCE = { align: "shift", fallbackAxisSide: "none" } as const
 
 // `alignItemWithTrigger` (the default) lays the chosen item over the trigger,
@@ -75,7 +77,7 @@ function SelectContent({
   sideOffset = 4,
   align = "center",
   alignOffset = 0,
-  collisionPadding = 0,
+  collisionPadding = SELECT_COLLISION_PADDING,
   collisionAvoidance = SELECT_COLLISION_AVOIDANCE,
   alignItemWithTrigger = true,
   ...props
