@@ -67,13 +67,13 @@ test('an Image file duplicates from a Pinned row, and the copy is not pinned', a
 test('File ▸ Duplicate copies the active Tab and opens the copy in the same Raw mode', async ({ page }) => {
   await openFolder(page)
   await explorerRow(page, WELCOME).click()
-  await page.getByRole('radio', { name: 'Raw' }).click()
+  await page.getByRole('button', { name: 'Raw', exact: true }).click()
   await expect(page.locator('.cm-content')).toBeVisible()
 
   await page.evaluate(() => window.__plumoTest?.dispatchBrowserMenuCommand?.('file-duplicate'))
 
   await expect(activeTab(page)).toHaveAttribute('data-testid', `tab:${WELCOME_COPY}`)
-  await expect(page.getByRole('radio', { name: 'Raw' })).toHaveAttribute('aria-checked', 'true')
+  await expect(page.getByRole('button', { name: 'Raw', exact: true })).toHaveAttribute('aria-pressed', 'true')
 })
 
 test('the "…" menu copies what the Tab shows, the unsaved edit under a Write failure included', async ({ page }) => {

@@ -119,7 +119,7 @@ function CopyPathButton({ onCopyPath }: { onCopyPath: () => void }) {
  * is refused too: a Tab is always in one mode.
  */
 function ModeControl({ mode }: { mode: TabMode }) {
-  const choose = (next: string) => {
+  const choose = (next: string | undefined) => {
     const segment = MODES.find((candidate) => candidate === next)
     if (segment === undefined) return
     if (segment === 'rich' && mode.richDisabledReason !== null) return
@@ -127,7 +127,7 @@ function ModeControl({ mode }: { mode: TabMode }) {
   }
 
   return (
-    <ToggleGroup type="single" variant="segmented" value={mode.value} onValueChange={choose} aria-label="Editor mode" data-testid="tab-mode">
+    <ToggleGroup variant="segmented" value={[mode.value]} onValueChange={(value) => choose(value[0])} aria-label="Editor mode" data-testid="tab-mode">
       {MODES.map((segment) => {
         const disabledReason = segment === 'rich' ? mode.richDisabledReason : null
         const SegmentIcon = MODE_ICONS[segment]

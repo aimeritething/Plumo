@@ -4,10 +4,10 @@ import { ToggleGroup, ToggleGroupItem } from './toggle-group'
 import { SimpleTooltip, TooltipProvider } from './tooltip'
 
 describe('ToggleGroupItem', () => {
-  it('keeps its on / off state under a tooltip, whose open / closed state would otherwise be written over it', async () => {
+  it('keeps its chosen state under a tooltip, whose open / closed state is its own', async () => {
     render(
       <TooltipProvider>
-        <ToggleGroup type="single" variant="segmented" value="a" aria-label="Choice">
+        <ToggleGroup variant="segmented" value={['a']} aria-label="Choice">
           <SimpleTooltip label="A">
             <ToggleGroupItem value="a" aria-label="A" />
           </SimpleTooltip>
@@ -18,11 +18,11 @@ describe('ToggleGroupItem', () => {
       </TooltipProvider>,
     )
 
-    const a = screen.getByRole('radio', { name: 'A' })
+    const a = screen.getByRole('button', { name: 'A' })
     fireEvent.focus(a)
     expect(await screen.findByRole('tooltip')).toHaveTextContent('A')
 
-    expect(a).toHaveAttribute('data-state', 'on')
-    expect(screen.getByRole('radio', { name: 'B' })).toHaveAttribute('data-state', 'off')
+    expect(a).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'B' })).toHaveAttribute('aria-pressed', 'false')
   })
 })

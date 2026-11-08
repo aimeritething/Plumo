@@ -28,7 +28,7 @@ describe('ImageTabActions', () => {
     expect(screen.getByTestId('image-meta')).toHaveTextContent('1920 × 1080 · 240 KB')
     expect(screen.getByRole('button', { name: 'Open ↗' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Copy path' })).toBeInTheDocument()
-    expect(screen.queryByRole('radiogroup')).toBeNull()
+    expect(screen.queryByRole('group', { name: 'Editor mode' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'More' })).toBeNull()
   })
 
@@ -74,14 +74,14 @@ describe('DocumentTabActions', () => {
   })
 
   describe('the Rich | Raw control', () => {
-    it('shows both segments with the current one checked, asks for the other on click and never clears the mode', () => {
+    it('shows both segments with the current one pressed, asks for the other on click and never clears the mode', () => {
       const onChange = vi.fn()
       renderDocument({ mode: richMode({ onChange }) })
 
-      const rich = screen.getByRole('radio', { name: 'Rich' })
-      const raw = screen.getByRole('radio', { name: 'Raw' })
-      expect(rich).toBeChecked()
-      expect(raw).not.toBeChecked()
+      const rich = screen.getByRole('button', { name: 'Rich' })
+      const raw = screen.getByRole('button', { name: 'Raw' })
+      expect(rich).toHaveAttribute('aria-pressed', 'true')
+      expect(raw).toHaveAttribute('aria-pressed', 'false')
 
       fireEvent.click(raw)
       expect(onChange).toHaveBeenCalledWith('raw')
@@ -92,7 +92,7 @@ describe('DocumentTabActions', () => {
     it('names the shortcut as a chip in the tooltip', async () => {
       renderDocument()
 
-      fireEvent.focus(screen.getByRole('radio', { name: 'Raw' }))
+      fireEvent.focus(screen.getByRole('button', { name: 'Raw' }))
 
       const tip = await screen.findByRole('tooltip')
       expect(tip).toHaveTextContent('Raw ⌘\\')
@@ -103,7 +103,7 @@ describe('DocumentTabActions', () => {
       const onChange = vi.fn()
       renderDocument({ mode: richMode({ value: 'raw', onChange, richDisabledReason: 'Fix the frontmatter to use Rich mode' }) })
 
-      const rich = screen.getByRole('radio', { name: 'Rich' })
+      const rich = screen.getByRole('button', { name: 'Rich' })
       expect(rich).toHaveAttribute('aria-disabled', 'true')
       // Not the disabled attribute: a disabled button takes no pointer or focus, and the tooltip would never show.
       expect(rich).not.toBeDisabled()

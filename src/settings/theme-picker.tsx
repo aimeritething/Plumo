@@ -23,7 +23,7 @@ interface ThemePickerProps {
  * a theme.
  */
 export function ThemePicker({ theme, onChange }: ThemePickerProps) {
-  const choose = (next: string) => {
+  const choose = (next: string | undefined) => {
     const choice = THEME_CHOICES.find(({ mode }) => mode === next)
     if (choice) onChange(choice.mode)
   }
@@ -35,10 +35,9 @@ export function ThemePicker({ theme, onChange }: ThemePickerProps) {
         <span className="text-xs text-muted-foreground">System follows macOS, switching with it.</span>
       </div>
       <ToggleGroup
-        type="single"
         variant="card"
-        value={theme}
-        onValueChange={choose}
+        value={[theme]}
+        onValueChange={(value) => choose(value[0])}
         aria-labelledby="settings-theme-label"
         data-testid="settings-theme"
       >

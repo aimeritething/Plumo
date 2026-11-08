@@ -23,13 +23,13 @@ describe('SettingsDialog', () => {
     expect(within(dialog).queryByRole('tab')).not.toBeInTheDocument()
   })
 
-  it('offers the theme as System, Dark and Light, the current one checked', () => {
+  it('offers the theme as System, Dark and Light, the current one pressed', () => {
     renderDialog('dark')
 
-    const group = screen.getByRole('radiogroup', { name: 'Theme' })
-    expect(within(group).getAllByRole('radio').map((radio) => radio.textContent)).toEqual(['System', 'Dark', 'Light'])
-    expect(themeCard('dark')).toHaveAttribute('aria-checked', 'true')
-    expect(themeCard('light')).toHaveAttribute('aria-checked', 'false')
+    const group = screen.getByRole('group', { name: 'Theme' })
+    expect(within(group).getAllByRole('button').map((card) => card.textContent)).toEqual(['System', 'Dark', 'Light'])
+    expect(themeCard('dark')).toHaveAttribute('aria-pressed', 'true')
+    expect(themeCard('light')).toHaveAttribute('aria-pressed', 'false')
   })
 
   it('draws each card in its own theme, System in both', () => {
@@ -74,20 +74,20 @@ describe('SettingsDialog', () => {
     expect(props.onClose).toHaveBeenCalledTimes(2)
   })
 
-  it('offers the Primary color as the eight presets and Custom, the current one checked', () => {
+  it('offers the Primary color as the eight presets and Custom, the current one pressed', () => {
     renderDialog('light', '#8e4ec6')
 
-    const group = screen.getByRole('radiogroup', { name: 'Primary color' })
-    expect(within(group).getAllByRole('radio').map((radio) => radio.getAttribute('aria-label'))).toEqual(
+    const group = screen.getByRole('group', { name: 'Primary color' })
+    expect(within(group).getAllByRole('button').map((swatch) => swatch.getAttribute('aria-label'))).toEqual(
       ['Blue', 'Purple', 'Pink', 'Red', 'Orange', 'Yellow', 'Green', 'Graphite', 'Custom'],
     )
-    expect(within(group).getByRole('radio', { checked: true })).toHaveAccessibleName('Purple')
+    expect(within(group).getByRole('button', { pressed: true })).toHaveAccessibleName('Purple')
   })
 
   it('names a swatch in a tooltip, not a native title, and keeps its accessible name', async () => {
     renderDialog()
 
-    const swatch = screen.getByRole('radio', { name: 'Green' })
+    const swatch = screen.getByRole('button', { name: 'Green' })
     expect(swatch).not.toHaveAttribute('title')
     fireEvent.focus(swatch)
     expect(await screen.findByRole('tooltip')).toHaveTextContent('Green')
@@ -113,16 +113,16 @@ describe('SettingsDialog', () => {
     const opened = vi.fn()
     panel.addEventListener('click', opened)
 
-    fireEvent.click(screen.getByRole('radio', { name: 'Custom' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Custom' }))
     expect(opened).toHaveBeenCalledOnce()
     expect(props.onPrimaryColorChange).not.toHaveBeenCalled()
-    expect(screen.getByRole('radio', { name: 'Blue' })).toHaveAttribute('aria-checked', 'true')
+    expect(screen.getByRole('button', { name: 'Blue' })).toHaveAttribute('aria-pressed', 'true')
   })
 
-  it('checks Custom, and names the colour, for a colour that is no preset', () => {
+  it('presses Custom, and names the colour, for a colour that is no preset', () => {
     renderDialog('light', '#123456')
 
-    expect(screen.getByRole('radio', { name: 'Custom' })).toHaveAttribute('aria-checked', 'true')
+    expect(screen.getByRole('button', { name: 'Custom' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByTestId('settings-primary-color')).toHaveTextContent('#123456')
   })
 

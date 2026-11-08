@@ -50,8 +50,8 @@ describe('SimpleTooltip', () => {
     expect(button).toHaveAttribute('data-state', 'open')
   })
 
-  // The tooltip's trigger writes its own open / closed `data-state` on the
-  // toggle under it; the toggle keeps its on / off.
+  // The tooltip's trigger hands its own open / closed state to the toggle
+  // under it; the toggle keeps its on / off, which its look reads.
   it('leaves a toggle under it its on / off state', () => {
     render(
       <SimpleTooltip label="Match case">
@@ -62,6 +62,6 @@ describe('SimpleTooltip', () => {
 
     const toggle = screen.getByRole('button', { name: 'Match case' })
     expect(toggle).toHaveAttribute('aria-pressed', 'true')
-    expect(toggle).toHaveAttribute('data-state', 'on')
+    expect(toggle).toHaveAttribute('data-pressed')
   })
 })

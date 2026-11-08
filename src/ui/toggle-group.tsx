@@ -4,13 +4,16 @@
 // default and outline: `segmented` is the Rich | Raw pill track, `card` the
 // Theme setting's pictures and `swatch` the Primary color's dots. A look is
 // set on the group and its items take it from the context, as shadcn's
-// variant and size are. Radix's roving focus gives the group one tab stop and
-// moves the focus with the arrows; Space or Enter chooses.
+// variant and size are. Base UI's composite gives the group one tab stop and
+// moves the focus with the arrows, wrapping; Space or Enter chooses. A group
+// holds an array of the chosen values, one at most unless it is `multiple`,
+// and an item that is chosen has `aria-pressed`.
 
 import * as React from "react"
+import { Toggle as TogglePrimitive } from "@base-ui/react/toggle"
+import { ToggleGroup as ToggleGroupPrimitive } from "@base-ui/react/toggle-group"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/cn"
-import { ToggleGroup as ToggleGroupPrimitive } from "radix-ui"
 
 import { toggleVariants } from "@/ui/toggle"
 
@@ -38,8 +41,8 @@ const toggleGroupItemLookVariants = cva("", {
   variants: {
     variant: {
       segmented:
-        "grid h-5.5 w-7 place-items-center rounded-full text-muted-foreground transition-colors duration-150 ease-out outline-none focus-visible:focus-ring data-[state=on]:bg-popover data-[state=on]:text-foreground data-[state=on]:shadow-xs aria-disabled:text-subtle-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-      card: "group/toggle-group-item flex min-w-0 flex-1 cursor-default flex-col gap-2 text-left text-xs text-muted-foreground outline-none data-[state=on]:font-medium data-[state=on]:text-foreground",
+        "grid h-5.5 w-7 place-items-center rounded-full text-muted-foreground transition-colors duration-150 ease-out outline-none focus-visible:focus-ring aria-pressed:bg-popover aria-pressed:text-foreground aria-pressed:shadow-xs aria-disabled:text-subtle-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+      card: "group/toggle-group-item flex min-w-0 flex-1 cursor-default flex-col gap-2 text-left text-xs text-muted-foreground outline-none aria-pressed:font-medium aria-pressed:text-foreground",
       swatch:
         "group/toggle-group-item relative size-6 flex-none cursor-default rounded-full outline-none",
     },
@@ -52,7 +55,7 @@ const toggleGroupItemLookVariants = cva("", {
 // ring in the focus colour on an item that is not chosen. It sits on the
 // picture, not the item, so a card's name stays outside it.
 const toggleGroupItemPreviewVariants = cva(
-  "block group-focus-visible/toggle-group-item:ring-2 group-focus-visible/toggle-group-item:ring-ring group-focus-visible/toggle-group-item:ring-offset-2 group-focus-visible/toggle-group-item:ring-offset-popover group-data-[state=on]/toggle-group-item:ring-2 group-data-[state=on]/toggle-group-item:ring-(--selection-ring) group-data-[state=on]/toggle-group-item:ring-offset-2 group-data-[state=on]/toggle-group-item:ring-offset-popover",
+  "block group-focus-visible/toggle-group-item:ring-2 group-focus-visible/toggle-group-item:ring-ring group-focus-visible/toggle-group-item:ring-offset-2 group-focus-visible/toggle-group-item:ring-offset-popover group-aria-pressed/toggle-group-item:ring-2 group-aria-pressed/toggle-group-item:ring-(--selection-ring) group-aria-pressed/toggle-group-item:ring-offset-2 group-aria-pressed/toggle-group-item:ring-offset-popover",
   {
     variants: {
       variant: {
@@ -93,13 +96,13 @@ function ToggleGroup({
   spacing = 0,
   children,
   ...props
-}: React.ComponentProps<typeof ToggleGroupPrimitive.Root> &
+}: ToggleGroupPrimitive.Props &
   Omit<VariantProps<typeof toggleVariants>, "variant"> & {
     variant?: ToggleGroupVariant | null
     spacing?: number
   }) {
   return (
-    <ToggleGroupPrimitive.Root
+    <ToggleGroupPrimitive
       data-slot="toggle-group"
       data-variant={variant}
       data-size={size}
@@ -111,7 +114,7 @@ function ToggleGroup({
       <ToggleGroupContext.Provider value={{ variant, size, spacing }}>
         {children}
       </ToggleGroupContext.Provider>
-    </ToggleGroupPrimitive.Root>
+    </ToggleGroupPrimitive>
   )
 }
 
@@ -120,21 +123,16 @@ function ToggleGroupItem({
   children,
   variant,
   size,
-  // A tooltip around the item (`SimpleTooltip`) hands down its open / closed
-  // `data-state`, which would be written over the item's on / off one.
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- dropped on purpose
-  "data-state": _tooltipState,
   ...props
-}: React.ComponentProps<typeof ToggleGroupPrimitive.Item> &
+}: TogglePrimitive.Props &
   Omit<VariantProps<typeof toggleVariants>, "variant"> & {
     variant?: ToggleGroupVariant | null
-    "data-state"?: string
   }) {
   const context = React.useContext(ToggleGroupContext)
   const itemVariant = context.variant || variant
 
   return (
-    <ToggleGroupPrimitive.Item
+    <TogglePrimitive
       data-slot="toggle-group-item"
       data-variant={itemVariant}
       data-size={context.size || size}
@@ -155,7 +153,7 @@ function ToggleGroupItem({
       {...props}
     >
       {children}
-    </ToggleGroupPrimitive.Item>
+    </TogglePrimitive>
   )
 }
 

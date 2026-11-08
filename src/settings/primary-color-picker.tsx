@@ -33,7 +33,7 @@ export function PrimaryColorPicker({ color, onChange }: PrimaryColorPickerProps)
   const preset = PRIMARY_COLOR_PRESETS.find(({ hex }) => hex === current)
   const checked = preset?.id ?? CUSTOM
 
-  const choose = (next: string) => {
+  const choose = (next: string | undefined) => {
     const chosen = PRIMARY_COLOR_PRESETS.find(({ id }) => id === next)
     if (chosen) onChange(chosen.hex)
   }
@@ -45,10 +45,9 @@ export function PrimaryColorPicker({ color, onChange }: PrimaryColorPickerProps)
         <span className="text-xs text-muted-foreground">Buttons, links, focus and the text selection.</span>
       </div>
       <ToggleGroup
-        type="single"
         variant="swatch"
-        value={checked}
-        onValueChange={choose}
+        value={[checked]}
+        onValueChange={(value) => choose(value[0])}
         aria-labelledby="settings-primary-color-label"
         data-testid="settings-primary-color"
       >
