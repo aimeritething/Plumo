@@ -3,16 +3,31 @@
 import * as React from "react"
 import { PreviewCard as PreviewCardPrimitive } from "@base-ui/react/preview-card"
 import { cn } from "@/lib/cn"
-import { escapeOpenChangeHandler } from "./escape"
+import { escapeOpenChangeHandler, useEscapeClosesFirst } from "./escape"
 import { surfaceVariants } from "./surface"
 
-// A hover card never takes the focus, so the Esc that closes it is left
-// unmarked for the place that has it (ui/escape).
-function HoverCard({ onOpenChange, ...props }: PreviewCardPrimitive.Root.Props) {
+// A hover card never takes the focus, so the Esc that closes it, wherever
+// the focus is, is left unmarked for the place that has it (ui/escape).
+function HoverCard({
+  open,
+  onOpenChange,
+  actionsRef,
+  ...props
+}: PreviewCardPrimitive.Root.Props) {
+  const ownActionsRef = React.useRef<PreviewCardPrimitive.Root.Actions | null>(null)
+  const actions = actionsRef ?? ownActionsRef
+  const [shown, setShown] = React.useState(false)
+  useEscapeClosesFirst(open ?? shown, actions, true)
+  const handleOpenChange = escapeOpenChangeHandler(onOpenChange, true)
   return (
     <PreviewCardPrimitive.Root
       data-slot="hover-card"
-      onOpenChange={escapeOpenChangeHandler(onOpenChange, true)}
+      open={open}
+      actionsRef={actions}
+      onOpenChange={(next, details) => {
+        handleOpenChange(next, details)
+        if (!details.isCanceled) setShown(next)
+      }}
       {...props}
     />
   )

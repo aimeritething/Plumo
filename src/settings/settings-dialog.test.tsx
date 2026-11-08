@@ -54,6 +54,8 @@ describe('SettingsDialog', () => {
 
   it('moves the focus between the cards with the arrows, wrapping, without choosing', async () => {
     const props = renderDialog('light')
+    // The dialog takes the focus as it opens; the card takes it after.
+    await waitFor(() => expect(screen.getByRole('dialog')).toHaveFocus())
 
     act(() => themeCard('light').focus())
     fireEvent.keyDown(themeCard('light'), { key: 'ArrowRight' })

@@ -105,3 +105,21 @@ test('the colour button beside a highlight the cursor is in recolours it', async
   await page.keyboard.type(' tail')
   await expect.poll(() => savedContent(page, WELCOME_PATH)).toContain('the page. tail')
 })
+
+test('Esc in the link field hands the caret back to the text, the selection kept', async ({ page }) => {
+  const errors = watchForErrors(page)
+  await openWelcome(page)
+  await selectEndOfFirstParagraph(page, 'page.')
+
+  await page.locator('[data-test="createLink"]').click()
+  await expect(page.locator('[data-test="linkUrl"]')).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(page.locator('[data-test="linkUrl"]')).toHaveCount(0)
+  await expect.poll(() => activeElement(page)).toBe('editor')
+  await expect.poll(() => page.evaluate(() => String(window.getSelection()))).toBe('page.')
+
+  await page.keyboard.type('Z')
+  await expect(page.locator('.bn-editor p').first()).toHaveText('This Folder lives in memory. Edits stay for the life of the Z')
+  expect(errors.pageErrors).toEqual([])
+  expect(errors.consoleErrors).toEqual([])
+})

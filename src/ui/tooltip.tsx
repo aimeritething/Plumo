@@ -1,10 +1,10 @@
 "use client"
 
-import type { ReactNode } from "react"
+import * as React from "react"
 import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip"
 import { cn } from "@/lib/cn"
 
-import { escapeOpenChangeHandler } from "./escape"
+import { useEscapeClosesFirst } from "./escape"
 import { Kbd } from "./kbd"
 
 // 400ms before a tooltip shows, so a pointer passing over a row of icons does
@@ -26,13 +26,29 @@ function TooltipProvider({
 }
 
 // The one Provider sits in main.tsx, so tooltips share its delays; a Tooltip
-// does not wrap its own. A tooltip never takes the focus, so the Esc that
-// hides it is left to the place that has it (ui/escape).
-function Tooltip({ onOpenChange, ...props }: TooltipPrimitive.Root.Props) {
+// does not wrap its own. Esc hides a tooltip wherever the focus is and is
+// marked handled, as Radix's was (ui/escape), and still goes on past the
+// document.
+function Tooltip({
+  open,
+  onOpenChange,
+  actionsRef,
+  ...props
+}: TooltipPrimitive.Root.Props) {
+  const ownActionsRef = React.useRef<TooltipPrimitive.Root.Actions | null>(null)
+  const actions = actionsRef ?? ownActionsRef
+  const [shown, setShown] = React.useState(false)
+  useEscapeClosesFirst(open ?? shown, actions, false)
   return (
     <TooltipPrimitive.Root
       data-slot="tooltip"
-      onOpenChange={escapeOpenChangeHandler(onOpenChange, true)}
+      open={open}
+      actionsRef={actions}
+      onOpenChange={(next, details) => {
+        onOpenChange?.(next, details)
+        if (!details.isCanceled) setShown(next)
+        if (details.reason === "escape-key") details.allowPropagation()
+      }}
       {...props}
     />
   )
@@ -45,6 +61,20 @@ function TooltipTrigger({ ...props }: TooltipPrimitive.Trigger.Props) {
 // Radix's placement: no padding from the window's edge, a flip to the other
 // side of the same axis and a shift along it, never an alignment flip.
 const TOOLTIP_COLLISION_AVOIDANCE = { align: "shift", fallbackAxisSide: "none" } as const
+
+// A label that fails to render drops the tooltip, not the toolbar or row
+// its trigger sits in: the error stops here and the trigger stays.
+class TooltipBoundary extends React.Component<{ children: React.ReactNode }, { failed: boolean }> {
+  state = { failed: false }
+
+  static getDerivedStateFromError() {
+    return { failed: true }
+  }
+
+  render() {
+    return this.state.failed ? null : this.props.children
+  }
+}
 
 // `role="tooltip"`: Base UI's popup has no role of its own; the label is one.
 function TooltipContent({
@@ -67,43 +97,45 @@ function TooltipContent({
     shortcut?: string
   }) {
   return (
-    <TooltipPrimitive.Portal>
-      <TooltipPrimitive.Positioner
-        data-slot="tooltip-positioner"
-        align={align}
-        alignOffset={alignOffset}
-        side={side}
-        sideOffset={sideOffset}
-        collisionPadding={collisionPadding}
-        collisionAvoidance={collisionAvoidance}
-        className="isolate z-popover"
-      >
-        <TooltipPrimitive.Popup
-          data-slot="tooltip-content"
-          role="tooltip"
-          className={cn(
-            "flex w-fit items-center gap-2 origin-(--transform-origin) rounded-lg border-hairline border-border bg-popover px-2 py-[5px] text-2xs font-medium text-balance text-foreground shadow-md",
-            // Only a tooltip that waited animates in, 100ms from its trigger; one
-            // reached from a neighbour within the timeout, or shown on focus
-            // (`data-instant`), is instant, and none animates out.
-            "data-open:not-data-instant:animate-in data-open:not-data-instant:fade-in-0 data-open:not-data-instant:zoom-in-95 duration-100",
-            className
-          )}
-          {...props}
+    <TooltipBoundary>
+      <TooltipPrimitive.Portal>
+        <TooltipPrimitive.Positioner
+          data-slot="tooltip-positioner"
+          align={align}
+          alignOffset={alignOffset}
+          side={side}
+          sideOffset={sideOffset}
+          collisionPadding={collisionPadding}
+          collisionAvoidance={collisionAvoidance}
+          className="isolate z-popover"
         >
-          {children}
-          {/* The space keeps the text reading `label shortcut`; flex never draws it. */}
-          {shortcut && (
-            <>
-              {" "}
-              <span className="flex gap-1">
-                {Array.from(shortcut).map((key, index) => <Kbd key={index}>{key}</Kbd>)}
-              </span>
-            </>
-          )}
-        </TooltipPrimitive.Popup>
-      </TooltipPrimitive.Positioner>
-    </TooltipPrimitive.Portal>
+          <TooltipPrimitive.Popup
+            data-slot="tooltip-content"
+            role="tooltip"
+            className={cn(
+              "flex w-fit items-center gap-2 origin-(--transform-origin) rounded-lg border-hairline border-border bg-popover px-2 py-[5px] text-2xs font-medium text-balance text-foreground shadow-md",
+              // Only a tooltip that waited animates in, 100ms from its trigger; one
+              // reached from a neighbour within the timeout, or shown on focus
+              // (`data-instant`), is instant, and none animates out.
+              "data-open:not-data-instant:animate-in data-open:not-data-instant:fade-in-0 data-open:not-data-instant:zoom-in-95 duration-100",
+              className
+            )}
+            {...props}
+          >
+            {children}
+            {/* The space keeps the text reading `label shortcut`; flex never draws it. */}
+            {shortcut && (
+              <>
+                {" "}
+                <span className="flex gap-1">
+                  {Array.from(shortcut).map((key, index) => <Kbd key={index}>{key}</Kbd>)}
+                </span>
+              </>
+            )}
+          </TooltipPrimitive.Popup>
+        </TooltipPrimitive.Positioner>
+      </TooltipPrimitive.Portal>
+    </TooltipBoundary>
   )
 }
 
@@ -122,7 +154,7 @@ function SimpleTooltip({
   children,
   ...triggerProps
 }: Omit<TooltipPrimitive.Trigger.Props, "render" | "children"> & {
-  label: ReactNode
+  label: React.ReactNode
   shortcut?: string
   side?: TooltipPrimitive.Positioner.Props["side"]
   children: TooltipPrimitive.Trigger.Props["render"]

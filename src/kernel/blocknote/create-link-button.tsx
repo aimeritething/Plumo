@@ -100,8 +100,16 @@ export function CreateLinkButton() {
   const label = dict.formatting_toolbar.link.tooltip
 
   // The tooltip sits inside the popover trigger, so the popover's open / closed state is the one the button keeps.
+  // Esc in the field goes on to the toolbar, which closes too and hands the
+  // caret back to the text with the selection (formatting-toolbar-controller).
   return (
-    <Popover open={opened} onOpenChange={setOpened}>
+    <Popover
+      open={opened}
+      onOpenChange={(open, details) => {
+        setOpened(open)
+        if (details.reason === 'escape-key') details.allowPropagation()
+      }}
+    >
       <PopoverTrigger
         render={(
           <SimpleTooltip label={label} shortcut={CREATE_LINK_SHORTCUT}>

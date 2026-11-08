@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { useState } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { holdsOpenMenu, hoverToOpen, pressToOpen } from './open-layer.test-utils'
@@ -90,9 +90,48 @@ describe('TooltipContent', () => {
   })
 })
 
-// On Radix the content sat in an error boundary against a throw when BlockNote
-// unmounted an open tooltip's trigger mid-render. Base UI's tooltip does not
-// throw there, so there is no boundary; these hold that.
+describe('Tooltip', () => {
+  // The editor handles its Esc and stops it short of the document, where
+  // Base UI listens; the tooltip still goes, and the Esc is marked handled,
+  // as Radix's tooltip left it.
+  it('hides on an Esc pressed where the focus is, which stops it', async () => {
+    render(
+      <>
+        <div data-testid="editor" tabIndex={-1} onKeyDown={(event) => event.stopPropagation()} />
+        <SimpleTooltip label="More">
+          <button type="button">More</button>
+        </SimpleTooltip>
+      </>,
+      { wrapper: TooltipProvider },
+    )
+    fireEvent.focus(screen.getByRole('button', { name: 'More' }))
+    expect(await screen.findByRole('tooltip')).toBeInTheDocument()
+
+    expect(fireEvent.keyDown(screen.getByTestId('editor'), { key: 'Escape' })).toBe(false)
+    await waitFor(() => expect(screen.queryByRole('tooltip')).not.toBeInTheDocument())
+  })
+
+  it('drops a label that fails to render and keeps its trigger', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    function Boom(): never {
+      throw new Error('label failed')
+    }
+    render(
+      <Tooltip open>
+        <TooltipTrigger render={<button type="button">Bold</button>} />
+        <TooltipContent>Bold <Boom /></TooltipContent>
+      </Tooltip>,
+      { wrapper: TooltipProvider },
+    )
+
+    expect(screen.getByRole('button', { name: 'Bold' })).toBeInTheDocument()
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
+  })
+})
+
+// On Radix the content could throw when BlockNote unmounted an open
+// tooltip's trigger mid-render. Base UI's tooltip does not throw there;
+// these hold that.
 describe('a tooltip whose trigger goes while it is open', () => {
   it('logs no error when the toolbar holding it unmounts', () => {
     vi.useFakeTimers()

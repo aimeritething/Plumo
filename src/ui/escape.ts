@@ -1,3 +1,5 @@
+import * as React from "react"
+
 /**
  * For an overlay that does not hold the focus (a hover card, a tooltip, a
  * popover that only places a control beside the editor), the Esc that closes
@@ -44,4 +46,31 @@ function escapeOpenChangeHandler<Details extends EscapeChangeDetails>(
   }
 }
 
-export { escapeOpenChangeHandler }
+/**
+ * Radix dismissed a tooltip or a hover card from an Esc listener in the
+ * document's capture phase, so the Esc closed it wherever the focus was.
+ * Base UI's listener is in the bubble phase, and an Esc the editor handles
+ * stops before it gets there, leaving the overlay up. While the overlay is
+ * `open`, this closes it through its Root's `actionsRef` from the capture
+ * phase instead: a tooltip marks the Esc handled, as Radix's did, so the
+ * editor leaves it alone; an `unmarked` one (a hover card) leaves it to the
+ * editor.
+ */
+function useEscapeClosesFirst(
+  open: boolean,
+  actionsRef: React.RefObject<{ close(): void } | null>,
+  unmarked: boolean
+) {
+  React.useEffect(() => {
+    if (!open) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.isComposing) return
+      if (!unmarked) event.preventDefault()
+      actionsRef.current?.close()
+    }
+    document.addEventListener("keydown", onKeyDown, true)
+    return () => document.removeEventListener("keydown", onKeyDown, true)
+  }, [open, actionsRef, unmarked])
+}
+
+export { escapeOpenChangeHandler, useEscapeClosesFirst }
