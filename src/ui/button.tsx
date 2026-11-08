@@ -1,7 +1,6 @@
-import type * as React from "react"
+import { Button as ButtonPrimitive } from "@base-ui/react/button"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/cn"
-import { Slot } from "radix-ui"
 import { surfaceVariants } from "./surface"
 
 // The icon button: tertiary at rest, hover and an open menu both take the
@@ -45,14 +44,14 @@ const buttonVariants = cva(
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-selected",
         ghost:
-          "hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground",
+          "hover:bg-accent hover:text-accent-foreground aria-expanded:bg-accent aria-expanded:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
         icon: `text-muted-foreground ${ICON_BUTTON_STATES}`,
         "icon-quiet": `text-subtle-foreground ${ICON_BUTTON_STATES}`,
         placeholder:
           "bg-muted font-normal text-muted-foreground hover:bg-selected hover:text-foreground data-[selected=true]:bg-selected",
         bare: "",
-        surface: `${surfaceVariants()} hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground`,
+        surface: `${surfaceVariants()} hover:bg-accent hover:text-accent-foreground aria-expanded:bg-accent aria-expanded:text-accent-foreground`,
         list: "font-normal text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:bg-accent focus-visible:ring-0 aria-[current]:font-medium aria-[current]:text-foreground data-dimmed:not-hover:not-aria-[current]:text-subtle-foreground",
       },
       size: {
@@ -82,16 +81,10 @@ function Button({
   className,
   variant = "default",
   size = "default",
-  asChild = false,
   ...props
-}: React.ComponentProps<"button"> &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean
-  }) {
-  const Comp = asChild ? Slot.Root : "button"
-
+}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
   return (
-    <Comp
+    <ButtonPrimitive
       data-slot="button"
       data-variant={variant}
       data-size={size}
