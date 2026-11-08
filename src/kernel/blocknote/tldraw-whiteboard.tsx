@@ -686,7 +686,6 @@ export function TldrawWhiteboard({
           <ToolbarButton
             size="sm"
             aria-label={fullscreenLabel}
-            aria-pressed={fullscreen}
             data-testid="tldraw-whiteboard-fullscreen-toggle"
             onClick={toggleFullscreen}
           >

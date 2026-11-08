@@ -1,10 +1,10 @@
 import type * as React from "react"
+import { Toolbar as ToolbarPrimitive } from "@base-ui/react/toolbar"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/cn"
-import { Toolbar as ToolbarPrimitive } from "radix-ui"
 
 // A row of icon buttons on a card, Notion's toolbar: one tab stop, the arrow
-// keys move between the buttons (Radix Toolbar). Two cards:
+// keys move between the buttons, wrapping (Base UI Toolbar). Two cards:
 // - raised: the card a toolbar sits on over the thing it acts on (a picture,
 //   a code block, a board), the popover surface and the raised shadow;
 // - floating: a toolbar that floats over the text, the menu material (the
@@ -37,14 +37,28 @@ function Toolbar({
   className,
   variant,
   reveal,
+  onKeyDown,
+  onFocus,
   ...props
-}: React.ComponentProps<typeof ToolbarPrimitive.Root> &
-  VariantProps<typeof toolbarVariants>) {
+}: ToolbarPrimitive.Root.Props & VariantProps<typeof toolbarVariants>) {
   return (
     <ToolbarPrimitive.Root
       data-slot="toolbar"
       data-variant={variant ?? "raised"}
       className={cn(toolbarVariants({ variant, reveal, className }))}
+      // A menu or popover a button opens (the link field, the block type
+      // menu) sits elsewhere in the page but inside the toolbar in React's
+      // tree, so its keys and focus reach the toolbar too. They are the
+      // popup's: an arrow at the field's edge does not move along the
+      // toolbar, and focusing the field does not select its text.
+      onKeyDown={(event) => {
+        onKeyDown?.(event)
+        if (!event.currentTarget.contains(event.target as Node)) event.preventBaseUIHandler()
+      }}
+      onFocus={(event) => {
+        onFocus?.(event)
+        if (!event.currentTarget.contains(event.target as Node)) event.preventBaseUIHandler()
+      }}
       {...props}
     />
   )
@@ -52,12 +66,13 @@ function Toolbar({
 
 // The toolbar's button: an icon, or an icon and a label. Secondary text at
 // rest; hover and an open menu take the tertiary-hover fill and the primary
-// colour; pressed (a style that is on) the selected fill; disabled goes muted
-// without fading. Sizes: default 28px (the floating toolbars), sm 24px (a
+// colour; pressed (a style that is on, `aria-pressed`) the selected fill;
+// disabled goes muted without fading. An open menu or popover is read off
+// `aria-expanded`, which their triggers set. Sizes: default 28px (the floating toolbars), sm 24px (a
 // toolbar on a Block). `segment` joins two buttons into one control, the
 // second a narrow caret (a toggle and its menu).
 const toolbarButtonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-1 rounded-md text-sm font-medium whitespace-nowrap text-muted-foreground outline-none transition-colors duration-150 ease-out hover:bg-accent hover:text-foreground focus-visible:focus-ring disabled:pointer-events-none disabled:text-subtle-foreground data-[state=on]:bg-selected data-[state=on]:text-foreground data-[state=open]:bg-accent data-[state=open]:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "inline-flex shrink-0 items-center justify-center gap-1 rounded-md text-sm font-medium whitespace-nowrap text-muted-foreground outline-none transition-colors duration-150 ease-out hover:bg-accent hover:text-foreground focus-visible:focus-ring disabled:pointer-events-none disabled:text-subtle-foreground aria-pressed:bg-selected aria-pressed:text-foreground aria-expanded:bg-accent aria-expanded:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       size: {
@@ -77,27 +92,27 @@ const toolbarButtonVariants = cva(
   }
 )
 
+// A disabled button is natively disabled, so it leaves the Tab order and the
+// arrows skip it, as Radix's did; Base UI's default keeps it focusable.
 function ToolbarButton({
   className,
   size,
   segment,
   pressed,
+  focusableWhenDisabled = false,
   ...props
-}: React.ComponentProps<typeof ToolbarPrimitive.Button> &
+}: ToolbarPrimitive.Button.Props &
   VariantProps<typeof toolbarButtonVariants> & {
-    /** A toggle: `aria-pressed` and the on / off state. Left out, a plain button. */
+    /** A toggle: its on / off state as `aria-pressed`. Left out, a plain button. */
     pressed?: boolean
   }) {
   return (
     <ToolbarPrimitive.Button
       data-slot="toolbar-button"
+      aria-pressed={pressed}
+      focusableWhenDisabled={focusableWhenDisabled}
       className={cn(toolbarButtonVariants({ size, segment, className }))}
       {...props}
-      // After the props: a tooltip trigger around the button writes its own
-      // open / closed data-state, which must not hide a toggle's on / off.
-      {...(pressed === undefined
-        ? {}
-        : { "aria-pressed": pressed, "data-state": pressed ? "on" : "off" })}
     />
   )
 }
@@ -106,7 +121,7 @@ function ToolbarButton({
 function ToolbarSeparator({
   className,
   ...props
-}: React.ComponentProps<typeof ToolbarPrimitive.Separator>) {
+}: ToolbarPrimitive.Separator.Props) {
   return (
     <ToolbarPrimitive.Separator
       data-slot="toolbar-separator"
