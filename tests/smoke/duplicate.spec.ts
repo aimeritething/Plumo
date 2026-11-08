@@ -36,7 +36,7 @@ test('the Explorer\'s menu duplicates a Document beside it, opens the copy and s
 
   await expect(explorerRow(page, WELCOME_COPY)).toBeVisible()
   await expect(activeTab(page)).toHaveAttribute('data-testid', `tab:${WELCOME_COPY}`)
-  await expect(page.getByTestId('explorer-tree').getByRole('button', { name: 'Welcome copy.md', exact: true })).toHaveAttribute('data-active', 'true')
+  await expect(page.getByTestId('explorer-tree').getByRole('button', { name: 'Welcome copy.md', exact: true })).toHaveAttribute('data-active')
   await expect(page.locator('.bn-editor h1')).toHaveText('Welcome')
   expect(await savedContent(page, WELCOME_COPY)).toBe(await savedContent(page, WELCOME))
 

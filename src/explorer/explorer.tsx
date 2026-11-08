@@ -126,7 +126,7 @@ function visibleRows(nodes: readonly ExplorerNode[], folder: string, expanded: R
 
 const SCROLL_VIEWPORT_SELECTOR = '[data-slot="scroll-area-viewport"]'
 /** The selected row, once it is listed. */
-const SELECTED_ROW_SELECTOR = '[data-testid^="explorer-row:"][data-active="true"]'
+const SELECTED_ROW_SELECTOR = '[data-testid^="explorer-row:"][data-active]'
 
 /**
  * The tree's scroll position, put back when the sidebar, or the folded tree,

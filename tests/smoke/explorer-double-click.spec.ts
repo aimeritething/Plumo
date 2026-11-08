@@ -37,7 +37,7 @@ test('double-clicking a Document opens that Document once', async ({ page }) => 
 
   await expect(page.getByRole('tab', { name: 'Welcome.md' })).toHaveAttribute('aria-selected', 'true')
   await expect(page.getByRole('tab')).toHaveText(['Reading list.md', 'Welcome.md'])
-  await expect(explorerRow(page, WELCOME)).toHaveAttribute('data-active', 'true')
+  await expect(explorerRow(page, WELCOME)).toHaveAttribute('data-active')
   expect(errors.pageErrors).toEqual([])
   expect(errors.consoleErrors).toEqual([])
 })
@@ -49,7 +49,7 @@ test('double-clicking the first Document of a session leaves the selection on it
   await doubleClickInPlace(page, WELCOME)
 
   await expect(page.getByRole('tab')).toHaveText(['Welcome.md'])
-  await expect(explorerRow(page, WELCOME)).toHaveAttribute('data-active', 'true')
+  await expect(explorerRow(page, WELCOME)).toHaveAttribute('data-active')
 })
 
 test('a quick second click on a folder\'s arrow still folds it back', async ({ page }) => {

@@ -89,7 +89,7 @@ test('a committed rename re-sorts the row and moves the Tab with it', async ({ p
   await expect(page.getByTestId(`tab:${MOCK_FOLDER}/Aardvark.md`)).toHaveAttribute('aria-label', 'Aardvark.md')
   await expect(page.getByRole('tab', { selected: true })).toHaveAttribute('data-testid', `tab:${MOCK_FOLDER}/Aardvark.md`)
   await expect(page.locator('.bn-editor h1')).toHaveText('Welcome')
-  await expect(page.getByTestId(`explorer-row:${MOCK_FOLDER}/Aardvark.md`)).toHaveAttribute('data-active', 'true')
+  await expect(page.getByTestId(`explorer-row:${MOCK_FOLDER}/Aardvark.md`)).toHaveAttribute('data-active')
 })
 
 test('a colliding name is refused inline, and Escape puts the row back', async ({ page }) => {
@@ -146,7 +146,7 @@ test('renaming a folder retargets every Tab beneath it', async ({ page }) => {
   await expect(page.locator('.bn-editor h1')).toHaveText('Plumo')
   // The folder is what was renamed, so the folder row keeps the selection —
   // not the Document that moved with it.
-  await expect(page.getByTestId(`explorer-row:${MOCK_FOLDER}/Work`)).toHaveAttribute('data-active', 'true')
+  await expect(page.getByTestId(`explorer-row:${MOCK_FOLDER}/Work`)).toHaveAttribute('data-active')
 })
 
 test('right-click leaves the selection and the active Tab alone', async ({ page }) => {
@@ -157,7 +157,7 @@ test('right-click leaves the selection and the active Tab alone', async ({ page 
   await page.getByTestId(`explorer-row:${MOCK_FOLDER}/Reading list.md`).click({ button: 'right' })
 
   await expect(page.getByRole('menuitem', { name: 'Copy Path' })).toBeVisible()
-  await expect(page.getByTestId(`explorer-row:${MOCK_FOLDER}/Welcome.md`)).toHaveAttribute('data-active', 'true')
+  await expect(page.getByTestId(`explorer-row:${MOCK_FOLDER}/Welcome.md`)).toHaveAttribute('data-active')
   await expect(page.getByTestId(`tab:${MOCK_FOLDER}/Reading list.md`)).toHaveCount(0)
 })
 

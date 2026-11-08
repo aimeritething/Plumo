@@ -45,8 +45,8 @@ test('three pins, reordered by a drag, come back in that order after a relaunch 
   await expect.poll(() => pinnedNames(page)).toEqual(['Reading list.md', 'Welcome.md', 'Plumo.md'])
 
   // The active Tab's file is marked in both sections.
-  await expect(pinnedRow(page, PLUMO)).toHaveAttribute('data-active', 'true')
-  await expect(page.locator(`[data-testid="explorer-row:${PLUMO}"][data-active=true]`)).toBeVisible()
+  await expect(pinnedRow(page, PLUMO)).toHaveAttribute('data-active')
+  await expect(page.locator(`[data-testid="explorer-row:${PLUMO}"][data-active]`)).toBeVisible()
 
   await pinnedRow(page, PLUMO).dragTo(pinnedRow(page, READING), { targetPosition: { x: 20, y: 4 } })
   await expect.poll(() => pinnedNames(page)).toEqual(['Plumo.md', 'Reading list.md', 'Welcome.md'])

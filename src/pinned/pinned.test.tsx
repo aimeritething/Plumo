@@ -64,9 +64,9 @@ describe('Pinned', () => {
   it('marks the row whose file is the active Tab as current', () => {
     renderPinned({ activeTabPath: B })
 
-    expect(row(B)).toHaveAttribute('data-active', 'true')
+    expect(row(B)).toHaveAttribute('data-active')
     expect(row(B)).toHaveAttribute('aria-current', 'true')
-    expect(row(A)).toHaveAttribute('data-active', 'false')
+    expect(row(A)).not.toHaveAttribute('data-active')
     expect(row(A)).not.toHaveAttribute('aria-current')
   })
 

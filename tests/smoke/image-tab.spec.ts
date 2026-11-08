@@ -172,7 +172,7 @@ test('relaunch restores an Image Tab from an entry with no mode, and tolerates a
   await expect(page.getByRole('tab')).toHaveCount(2)
   await expect(activeTab(page)).toHaveText('lake.png')
   await expect(page.getByTestId('image-meta')).toHaveText('1920 × 1080 · 240 KB')
-  await expect(page.getByTestId(`explorer-row:${LAKE}`)).toHaveAttribute('data-active', 'true')
+  await expect(page.getByTestId(`explorer-row:${LAKE}`)).toHaveAttribute('data-active')
 
   await page.evaluate((seed) => window.__plumoMockVault?.seedSession(seed), {
     version: 1,

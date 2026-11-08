@@ -25,7 +25,7 @@ test('Open Folder shows a sorted Explorer, opens Documents, follows Tabs and res
   await page.getByTestId(`explorer-row:${MOCK_FOLDER}/Welcome.md`).click()
   await expect(page.locator('.bn-editor h1')).toHaveText('Welcome')
   await page.getByTestId(`tab:${MOCK_FOLDER}/Projects/Plumo.md`).click()
-  await expect(page.getByTestId(`explorer-row:${MOCK_FOLDER}/Projects/Plumo.md`)).toHaveAttribute('data-active', 'true')
+  await expect(page.getByTestId(`explorer-row:${MOCK_FOLDER}/Projects/Plumo.md`)).toHaveAttribute('data-active')
   await page.getByTestId(`explorer-row:${MOCK_FOLDER}/Attachments`).click()
   await expect(page.locator('.bn-editor h1')).toHaveText('Plumo')
   await page.reload()
