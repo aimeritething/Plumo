@@ -1,12 +1,6 @@
-import { CaretDown as ChevronDown, CaretUp as ChevronUp, X } from '@phosphor-icons/react'
 import type { EditorView } from '@tiptap/pm/view'
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
-import { Button } from '@/ui/button'
-import { Input } from '@/ui/input'
-import { Toggle } from '@/ui/toggle'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
-import { translate, type AppLocale } from '@/lib/i18n'
-import { isImeKeyEvent } from '@/lib/ime-key-event'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { AppLocale } from '@/lib/i18n'
 import { clampEditorFindIndex, nextEditorFindIndex, type EditorFindOptions } from '@/kernel/blocknote/editor-find'
 import type { RawEditorFindRequest } from './raw-editor-find-types'
 import {
@@ -18,6 +12,7 @@ import {
   type RichFindResult,
 } from '@/kernel/blocknote/rich-editor-find'
 import type { EditorFindSession } from './editor-find-session'
+import { FindBar } from './find-bar'
 
 /** What the bar needs of the BlockNote editor: its ProseMirror view, a way to hear edits, and its menus and toolbars. */
 export interface RichFindEditor extends RichFindOverlayOwner {
@@ -69,14 +64,6 @@ function viewOf(editor: RichFindEditor): EditorView | null {
   }
 }
 
-function statusText(locale: AppLocale, result: RichFindResult, activeIndex: number): string {
-  if (result.error === 'Invalid regex') return translate(locale, 'editor.find.invalidRegex')
-  if (result.error) return translate(locale, 'editor.find.regexMustMatchText')
-  const total = result.matches.length
-  if (total === 0) return translate(locale, 'editor.find.noMatches')
-  return translate(locale, 'editor.find.matchCount', { current: clampEditorFindIndex(activeIndex, total) + 1, total })
-}
-
 /** Re-render when the Document changes under the bar, so the count and the highlights follow the edit. */
 function useDocumentVersion(editor: RichFindEditor): number {
   const [version, setVersion] = useState(0)
@@ -85,7 +72,7 @@ function useDocumentVersion(editor: RichFindEditor): number {
 }
 
 /**
- * Find in Rich mode: the same bar as Raw mode's, minus replace, over the
+ * Find in Rich mode: the shared `FindBar`, without its replace row, over the
  * ProseMirror document. A request for
  * this Document opens it; esc, in the bar or in the Document's body, closes
  * it and leaves the focus in the editor.
@@ -167,77 +154,35 @@ export function RichEditorFindBar({ editor, path, request, find, locale = 'en' }
   }
   const moveNext = () => revealMatch(nextEditorFindIndex(currentIndex, matchCount, 1))
   const movePrevious = () => revealMatch(nextEditorFindIndex(currentIndex, matchCount, -1))
-  // ↵ confirming a candidate and esc cancelling one are the input method's.
-  const onInputKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key !== 'Enter' || isImeKeyEvent(event.nativeEvent)) return
-    event.preventDefault()
-    if (event.shiftKey) movePrevious()
-    else moveNext()
-  }
-  const onBarKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key !== 'Escape' || isImeKeyEvent(event.nativeEvent)) return
-    event.preventDefault()
-    close()
-  }
 
   return (
-    <div
-      className="sticky top-0 z-raised flex shrink-0 items-center gap-1.5 border-b border-border bg-background px-3 py-2"
-      data-testid="rich-editor-find-bar"
-      onKeyDown={onBarKeyDown}
-    >
-      <Input
-        ref={inputRef}
-        type="search"
-        aria-label={translate(locale, 'editor.find.findLabel')}
-        placeholder={translate(locale, 'editor.find.findPlaceholder')}
-        value={query}
-        onChange={(event) => {
-          setQuery(event.target.value)
-          searchAgain()
-        }}
-        onKeyDown={onInputKeyDown}
-        className="h-7 min-w-[12rem] flex-1 rounded px-2 text-xs"
-        data-testid="rich-editor-find-input"
-      />
-      <span className="min-w-[4.75rem] text-right text-xs text-muted-foreground" aria-live="polite" data-testid="rich-editor-find-count">
-        {statusText(locale, result, currentIndex)}
-      </span>
-      <FindTooltip label={translate(locale, 'editor.find.previousMatch')}>
-        <Button type="button" variant="icon" size="icon-xs" aria-label={translate(locale, 'editor.find.previousMatch')} disabled={matchCount === 0} onClick={movePrevious}>
-          <ChevronUp />
-        </Button>
-      </FindTooltip>
-      <FindTooltip label={translate(locale, 'editor.find.nextMatch')}>
-        <Button type="button" variant="icon" size="icon-xs" aria-label={translate(locale, 'editor.find.nextMatch')} disabled={matchCount === 0} onClick={moveNext}>
-          <ChevronDown />
-        </Button>
-      </FindTooltip>
-      <FindTooltip label={translate(locale, 'editor.find.regex')}>
-        <Toggle pressed={regex} data-state={regex ? 'on' : 'off'} onPressedChange={(pressed) => { setOptions({ ...options, regex: pressed }); searchAgain() }} aria-label={translate(locale, 'editor.find.regex')}>
-          .*
-        </Toggle>
-      </FindTooltip>
-      <FindTooltip label={translate(locale, 'editor.find.matchCase')}>
-        <Toggle pressed={caseSensitive} data-state={caseSensitive ? 'on' : 'off'} onPressedChange={(pressed) => { setOptions({ ...options, caseSensitive: pressed }); searchAgain() }} aria-label={translate(locale, 'editor.find.matchCase')}>
-          Aa
-        </Toggle>
-      </FindTooltip>
-      <FindTooltip label={translate(locale, 'editor.find.close')}>
-        <Button type="button" variant="icon" size="icon-xs" aria-label={translate(locale, 'editor.find.close')} onClick={close}>
-          <X />
-        </Button>
-      </FindTooltip>
-    </div>
-  )
-}
-
-/** An icon control's tooltip, below it. A `Toggle` inside restates its `data-state`: the trigger writes its own over it. */
-function FindTooltip({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>{children}</TooltipTrigger>
-      <TooltipContent side="bottom">{label}</TooltipContent>
-    </Tooltip>
+    // Sticky, so the bar stays at the top of the scroll area while the Document scrolls under it.
+    <FindBar
+      testIdPrefix="rich-editor"
+      className="sticky top-0 z-raised"
+      locale={locale}
+      inputRef={inputRef}
+      query={query}
+      onQueryChange={(value) => {
+        setQuery(value)
+        searchAgain()
+      }}
+      caseSensitive={caseSensitive}
+      onCaseSensitiveChange={(pressed) => {
+        setOptions({ ...options, caseSensitive: pressed })
+        searchAgain()
+      }}
+      regex={regex}
+      onRegexChange={(pressed) => {
+        setOptions({ ...options, regex: pressed })
+        searchAgain()
+      }}
+      matchCount={matchCount}
+      currentIndex={currentIndex}
+      error={result.error}
+      onNext={moveNext}
+      onPrevious={movePrevious}
+      onClose={close}
+    />
   )
 }

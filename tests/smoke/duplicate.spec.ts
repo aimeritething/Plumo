@@ -20,7 +20,7 @@ async function openFolder(page: Page) {
   await page.goto('/')
   await page.evaluate((chosen) => window.__plumoMockVault?.queueDialogSelection([chosen]), MOCK_FOLDER)
   await page.keyboard.press('Meta+o')
-  await expect(page.getByTestId('explorer-toggle')).toHaveAttribute('title', MOCK_FOLDER)
+  await expect(page.getByTestId('explorer-toggle')).toHaveText('Notes')
 }
 
 function folderPaths(page: Page): Promise<string[]> {
@@ -36,7 +36,7 @@ test('the Explorer\'s menu duplicates a Document beside it, opens the copy and s
 
   await expect(explorerRow(page, WELCOME_COPY)).toBeVisible()
   await expect(activeTab(page)).toHaveAttribute('data-testid', `tab:${WELCOME_COPY}`)
-  await expect(page.getByRole('treeitem', { name: 'Welcome copy.md' })).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByTestId('explorer-tree').getByRole('button', { name: 'Welcome copy.md', exact: true })).toHaveAttribute('data-active')
   await expect(page.locator('.bn-editor h1')).toHaveText('Welcome')
   expect(await savedContent(page, WELCOME_COPY)).toBe(await savedContent(page, WELCOME))
 
@@ -50,7 +50,7 @@ test('the Explorer\'s menu duplicates a Document beside it, opens the copy and s
 
 test('an Image file duplicates from a Pinned row, and the copy is not pinned', async ({ page }) => {
   await openFolder(page)
-  await page.getByLabel('Expand Attachments').click()
+  await page.getByTestId('explorer-tree').getByRole('button', { name: 'Attachments', exact: true }).getByTestId('explorer-disclosure').click()
   await explorerRow(page, LAKE).click({ button: 'right' })
   await page.getByRole('menuitem', { name: 'Pin', exact: true }).click()
 
@@ -67,13 +67,13 @@ test('an Image file duplicates from a Pinned row, and the copy is not pinned', a
 test('File ▸ Duplicate copies the active Tab and opens the copy in the same Raw mode', async ({ page }) => {
   await openFolder(page)
   await explorerRow(page, WELCOME).click()
-  await page.getByRole('radio', { name: 'Raw' }).click()
+  await page.getByRole('button', { name: 'Raw', exact: true }).click()
   await expect(page.locator('.cm-content')).toBeVisible()
 
   await page.evaluate(() => window.__plumoTest?.dispatchBrowserMenuCommand?.('file-duplicate'))
 
   await expect(activeTab(page)).toHaveAttribute('data-testid', `tab:${WELCOME_COPY}`)
-  await expect(page.getByRole('radio', { name: 'Raw' })).toHaveAttribute('aria-checked', 'true')
+  await expect(page.getByRole('button', { name: 'Raw', exact: true })).toHaveAttribute('aria-pressed', 'true')
 })
 
 test('the "…" menu copies what the Tab shows, the unsaved edit under a Write failure included', async ({ page }) => {

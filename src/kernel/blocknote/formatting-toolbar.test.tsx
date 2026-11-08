@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { ReactNode } from 'react'
+import { cloneElement, type ReactElement, type ReactNode } from 'react'
 
 const COVERAGE_SHARD_TEST_TIMEOUT_MS = 30_000
 
@@ -75,9 +75,12 @@ vi.mock('@blocknote/core/extensions', () => ({
 
 vi.mock('@/ui/dropdown-menu', () => ({
   DropdownMenu: ({ children }: { children?: ReactNode }) => <div data-testid="block-type-menu">{children}</div>,
-  DropdownMenuTrigger: ({ children }: { children?: ReactNode }) => <>{children}</>,
-  DropdownMenuContent: ({ children, onCloseAutoFocus, ...props }: { children?: ReactNode; onCloseAutoFocus?: unknown }) => {
-    void onCloseAutoFocus
+  // Draws the trigger's `render` element, holding the trigger's children, as the real one does.
+  DropdownMenuTrigger: ({ children, render }: { children?: ReactNode; render?: ReactElement }) => (
+    render === undefined ? <>{children}</> : children === undefined ? render : cloneElement(render, undefined, children)
+  ),
+  DropdownMenuContent: ({ children, finalFocus, ...props }: { children?: ReactNode; finalFocus?: unknown }) => {
+    void finalFocus
     return <div {...props}>{children}</div>
   },
   DropdownMenuItem: ({ children, ...props }: { children?: ReactNode }) => <button type="button" {...props}>{children}</button>,
@@ -87,6 +90,7 @@ vi.mock('@/ui/tooltip', () => ({
   Tooltip: ({ children }: { children?: ReactNode }) => <>{children}</>,
   TooltipTrigger: ({ children }: { children?: ReactNode }) => <>{children}</>,
   TooltipContent: () => null,
+  SimpleTooltip: ({ children }: { children?: ReactNode }) => <>{children}</>,
 }))
 
 vi.mock('@phosphor-icons/react', () => ({

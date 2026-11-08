@@ -12,7 +12,7 @@ import {
 import { Input } from '@/ui/input'
 import { Popover, PopoverAnchor, PopoverContent } from '@/ui/popover'
 import { Toolbar, ToolbarButton } from '@/ui/toolbar'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
+import { SimpleTooltip } from '@/ui/tooltip'
 
 // The parts of a toolbar drawn on a Block, Notion's: a few buttons and a `⋯`
 // menu on the shared raised toolbar card, in a corner of the Block, shown on
@@ -51,15 +51,6 @@ export function hiddenFromTab(shown: boolean) {
   return shown ? {} : { tabIndex: -1 }
 }
 
-export function BlockToolbarTooltip({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>{children}</TooltipTrigger>
-      <TooltipContent side="bottom">{label}</TooltipContent>
-    </Tooltip>
-  )
-}
-
 /** One of the toolbar's icon buttons, with its label as the tooltip. */
 export function BlockToolbarButton({ children, disabled, label, shown, testId, onClick }: {
   children: ReactNode
@@ -70,11 +61,11 @@ export function BlockToolbarButton({ children, disabled, label, shown, testId, o
   onClick: () => void
 }) {
   return (
-    <BlockToolbarTooltip label={label}>
+    <SimpleTooltip label={label} side="bottom">
       <ToolbarButton aria-label={label} data-testid={testId} disabled={disabled} onClick={onClick} size="sm" {...hiddenFromTab(shown)}>
         {children}
       </ToolbarButton>
-    </BlockToolbarTooltip>
+    </SimpleTooltip>
   )
 }
 
@@ -112,28 +103,26 @@ export function BlockToolbarMenu({ items, label, shown, testId, onPopupOpenChang
         onPopupOpenChange(next)
       }}
     >
-      <BlockToolbarTooltip label={label}>
-        <DropdownMenuTrigger asChild>
-          <ToolbarButton aria-label={label} data-testid={testId} size="sm" {...hiddenFromTab(shown)}>
-            <DotsThree aria-hidden="true" weight="bold" />
-          </ToolbarButton>
+      <SimpleTooltip label={label} side="bottom">
+        <DropdownMenuTrigger render={<ToolbarButton aria-label={label} data-testid={testId} size="sm" {...hiddenFromTab(shown)} />}>
+          <DotsThree aria-hidden="true" weight="bold" />
         </DropdownMenuTrigger>
-      </BlockToolbarTooltip>
+      </SimpleTooltip>
       <DropdownMenuContent
         align="end"
-        onCloseAutoFocus={(event) => {
-          event.preventDefault()
+        finalFocus={() => {
           const pending = pendingRef.current
           pendingRef.current = null
           if (pending) pending()
           else onReturnFocus()
+          return false
         }}
       >
         {items.map((item) => (
           <Fragment key={item.key}>
             {item.destructive && <DropdownMenuSeparator />}
             <DropdownMenuItem
-              onSelect={() => { pendingRef.current = item.onSelect }}
+              onClick={() => { pendingRef.current = item.onSelect }}
               variant={item.destructive ? 'destructive' : 'default'}
             >
               {item.icon}
@@ -229,34 +218,36 @@ export function BlockCornerToolbar({ children, field, fieldContent, label, name,
   shown: boolean
 }) {
   return (
-    <Popover open={field.open} onOpenChange={(next) => { if (!next) field.close(true) }}>
-      <PopoverAnchor asChild>
-        <div
-          className={cn(
-            'absolute z-raised transition-opacity duration-150 ease-out',
-            PLACEMENT_CLASS[placement],
-            shown ? 'opacity-100' : 'pointer-events-none opacity-0',
-          )}
-          {...{ [`data-${name}`]: placement }}
-          data-testid={name}
-          contentEditable={false}
-          suppressContentEditableWarning
-          onMouseDown={holdSelection}
-          onDoubleClick={holdSelection}
-        >
-          <Toolbar aria-hidden={!shown} aria-label={label} {...hiddenFromTab(shown)}>
-            {children}
-          </Toolbar>
-        </div>
+    <Popover
+      open={field.open}
+      // Esc cancels; a click away saves.
+      onOpenChange={(next, details) => { if (!next) field.close(details.reason !== 'escape-key') }}
+    >
+      <PopoverAnchor
+        render={(
+          <div
+            className={cn(
+              'absolute z-raised transition-opacity duration-150 ease-out',
+              PLACEMENT_CLASS[placement],
+              shown ? 'opacity-100' : 'pointer-events-none opacity-0',
+            )}
+            {...{ [`data-${name}`]: placement }}
+            data-testid={name}
+            contentEditable={false}
+            suppressContentEditableWarning
+            onMouseDown={holdSelection}
+            onDoubleClick={holdSelection}
+          />
+        )}
+      >
+        <Toolbar aria-hidden={!shown} aria-label={label} {...hiddenFromTab(shown)}>
+          {children}
+        </Toolbar>
       </PopoverAnchor>
       <PopoverContent
         align="end"
         variant="compact"
-        onCloseAutoFocus={(event) => event.preventDefault()}
-        onEscapeKeyDown={(event) => {
-          event.preventDefault()
-          field.close(false)
-        }}
+        finalFocus={false}
       >
         {field.open && fieldContent}
       </PopoverContent>

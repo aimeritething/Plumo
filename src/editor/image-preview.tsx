@@ -18,7 +18,7 @@ export function ImagePreview({ image, locale = 'en', onClose }: ImagePreviewProp
 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => { if (!nextOpen) onClose() }}>
-      <DialogContent variant="bare" aria-describedby={undefined} data-testid="image-preview" className="max-h-[90vh] max-w-[90vw]" {...returnFocus}>
+      <DialogContent variant="bare" data-testid="image-preview" className="max-h-[90vh] max-w-[90vw]" {...returnFocus}>
         <DialogTitle className="sr-only">{title}</DialogTitle>
         {image && (
           <img

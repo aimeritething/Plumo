@@ -2,7 +2,7 @@ import type { MouseEvent } from 'react'
 import { X } from '@phosphor-icons/react'
 import { cn } from '@/lib/cn'
 import { Button } from '@/ui/button'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
+import { SimpleTooltip } from '@/ui/tooltip'
 
 interface CloseAffordanceProps {
   /** The name of the thing that closes, for the accessible label. */
@@ -24,21 +24,18 @@ export function CloseAffordance({ name, onClose, className }: CloseAffordancePro
   }
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          variant="icon"
-          size="icon-2xs"
-          className={cn('hidden group-hover:flex', className)}
-          aria-label={`Close ${name}`}
-          data-testid="tab-close"
-          tabIndex={-1}
-          onClick={close}
-        >
-          <X aria-hidden="true" />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent side="bottom">Close Tab</TooltipContent>
-    </Tooltip>
+    <SimpleTooltip label="Close Tab" side="bottom">
+      <Button
+        variant="icon"
+        size="icon-2xs"
+        className={cn('hidden group-hover:flex', className)}
+        aria-label={`Close ${name}`}
+        data-testid="tab-close"
+        tabIndex={-1}
+        onClick={close}
+      >
+        <X aria-hidden="true" />
+      </Button>
+    </SimpleTooltip>
   )
 }

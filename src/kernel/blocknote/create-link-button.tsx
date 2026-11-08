@@ -10,7 +10,7 @@ import { LinkSimple } from '@phosphor-icons/react'
 import { useCallback, useEffect, useState } from 'react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/ui/popover'
 import { ToolbarButton } from '@/ui/toolbar'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
+import { SimpleTooltip } from '@/ui/tooltip'
 import { getSelectedBlocksSafely, type FormattingToolbarEditor } from './formatting-toolbar-selection'
 import { LinkForm } from './link-form'
 
@@ -99,12 +99,20 @@ export function CreateLinkButton() {
 
   const label = dict.formatting_toolbar.link.tooltip
 
-  // The tooltip trigger is the popover trigger's child, so the popover's open / closed data-state is the one the button keeps.
+  // The tooltip sits inside the popover trigger, so the popover's open / closed state is the one the button keeps.
+  // Esc in the field goes on to the toolbar, which closes too and hands the
+  // caret back to the text with the selection (formatting-toolbar-controller).
   return (
-    <Popover open={opened} onOpenChange={setOpened}>
-      <Tooltip>
-        <PopoverTrigger asChild>
-          <TooltipTrigger asChild>
+    <Popover
+      open={opened}
+      onOpenChange={(open, details) => {
+        setOpened(open)
+        if (details.reason === 'escape-key') details.allowPropagation()
+      }}
+    >
+      <PopoverTrigger
+        render={(
+          <SimpleTooltip label={label} shortcut={CREATE_LINK_SHORTCUT}>
             <ToolbarButton
               aria-label={label}
               data-test="createLink"
@@ -112,10 +120,9 @@ export function CreateLinkButton() {
             >
               <LinkSimple aria-hidden="true" />
             </ToolbarButton>
-          </TooltipTrigger>
-        </PopoverTrigger>
-        <TooltipContent shortcut={CREATE_LINK_SHORTCUT}>{label}</TooltipContent>
-      </Tooltip>
+          </SimpleTooltip>
+        )}
+      />
       <PopoverContent align="start" variant="compact">
         <LinkForm
           key={`${state.range.from}:${state.range.to}`}

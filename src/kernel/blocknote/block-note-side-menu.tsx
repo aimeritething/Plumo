@@ -36,7 +36,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/ui/dropdown-menu'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
+import { SimpleTooltip } from '@/ui/tooltip'
 import { richEditorBlockTypeName } from './rich-editor-block-types'
 import {
   useCallback,
@@ -232,7 +232,7 @@ function AddBlockButton() {
   if (!block) return null
 
   return (
-    <SideMenuTooltip label={dict.side_menu.add_block_label}>
+    <SimpleTooltip label={dict.side_menu.add_block_label} side="bottom">
       <Button
         aria-label={dict.side_menu.add_block_label}
         onClick={onButtonClick}
@@ -241,17 +241,7 @@ function AddBlockButton() {
       >
         <Plus data-test="dragHandleAdd" />
       </Button>
-    </SideMenuTooltip>
-  )
-}
-
-/** A side menu button's tooltip, below it, as the tab bar's are. */
-function SideMenuTooltip({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>{children}</TooltipTrigger>
-      <TooltipContent side="bottom">{label}</TooltipContent>
-    </Tooltip>
+    </SimpleTooltip>
   )
 }
 
@@ -293,7 +283,7 @@ function HeadingCollapseButton({ locale }: { locale: AppLocale }) {
   if (!isCollapsible) return null
 
   return (
-    <SideMenuTooltip label={label}>
+    <SimpleTooltip label={label} side="bottom">
       <Button
         aria-label={label}
         onClick={onButtonClick}
@@ -302,7 +292,7 @@ function HeadingCollapseButton({ locale }: { locale: AppLocale }) {
       >
         <Icon onClick={onButtonClick} data-test="headingCollapseToggle" />
       </Button>
-    </SideMenuTooltip>
+    </SimpleTooltip>
   )
 }
 
@@ -317,10 +307,12 @@ function SectionControlButton({ locale }: { locale: AppLocale }) {
  * The grip: a press that moves starts the pointer reorder (block-reorder.ts);
  * a press that does not opens the Block's menu, on the pointer's release as
  * BlockNote's menu did, so the reorder and the menu never start together. A
- * second press closes it. Enter, Space and ↓ open it from the keyboard.
+ * second press closes it. Enter, Space and ↓ open it from the keyboard, as any
+ * menu trigger's keys do.
  *
- * The menu is anchored on a box laid over the grip, not on the grip: Radix's
- * trigger would open on the press itself.
+ * The Block handle is the menu's trigger, but one that leaves the press alone
+ * (`openOnPress={false}`), as a Table handle is: a menu trigger opens on the
+ * press, so the menu would open as the press starts the reorder.
  */
 function DragHandleButton({ locale = 'en' }: { locale?: AppLocale }) {
   const dict = useDictionary()
@@ -348,7 +340,7 @@ function DragHandleButton({ locale = 'en' }: { locale?: AppLocale }) {
   return (
     <DropdownMenu modal={false} open={open} onOpenChange={setMenuOpen}>
       <span
-        className="relative inline-flex items-center justify-center"
+        className="inline-flex items-center justify-center"
         onPointerDownCapture={() => {
           openAtPressRef.current = openRef.current
           releaseHandledRef.current = false
@@ -369,42 +361,35 @@ function DragHandleButton({ locale = 'en' }: { locale?: AppLocale }) {
           setMenuOpen(!openRef.current)
         }}
       >
-        <SideMenuTooltip label={dict.side_menu.drag_handle_label}>
-          <Button
-            aria-expanded={open}
-            aria-haspopup="menu"
-            aria-label={dict.side_menu.drag_handle_label}
-            data-state={open ? 'open' : 'closed'}
-            draggable={false}
-            onDragEnd={sideMenu.blockDragEnd}
-            onDragStart={(event) => event.preventDefault()}
-            onKeyDown={(event) => {
-              if (event.key !== 'ArrowDown') return
-              event.preventDefault()
-              setMenuOpen(true)
-            }}
-            ref={buttonRef}
-            size="icon-xs"
-            variant="icon-quiet"
-          >
-            <GripVertical data-test="dragHandle" />
-          </Button>
-        </SideMenuTooltip>
-        <DropdownMenuTrigger asChild>
-          <span aria-hidden="true" className="pointer-events-none absolute inset-0" tabIndex={-1} />
-        </DropdownMenuTrigger>
+        <DropdownMenuTrigger
+          openOnPress={false}
+          render={(
+            <SimpleTooltip label={dict.side_menu.drag_handle_label} side="bottom">
+              <Button
+                aria-label={dict.side_menu.drag_handle_label}
+                draggable={false}
+                onDragEnd={sideMenu.blockDragEnd}
+                onDragStart={(event) => event.preventDefault()}
+                ref={buttonRef}
+                size="icon-xs"
+                variant="icon-quiet"
+              >
+                <GripVertical data-test="dragHandle" />
+              </Button>
+            </SimpleTooltip>
+          )}
+        />
       </span>
       <DropdownMenuContent
         align="start"
         side="left"
-        onCloseAutoFocus={(event) => {
+        finalFocus={() => {
           // A choice that acts on the text focuses the editor; Escape or a
           // click away hands the focus back to the grip, as a menu button does.
-          event.preventDefault()
           const editorElement = editor.domElement
           const active = editorElement?.ownerDocument.activeElement
-          if (editorElement && active && editorElement.contains(active)) return
-          buttonRef.current?.focus()
+          if (editorElement && active && editorElement.contains(active)) return false
+          return buttonRef.current ?? true
         }}
       >
         <BlockMenuItems locale={locale} />
@@ -421,7 +406,7 @@ function RemoveBlockItem({ children }: { children: ReactNode }) {
 
   return (
     <DropdownMenuItem
-      onSelect={() => {
+      onClick={() => {
         runSideMenuAction(() => {
           removeSideMenuSection(editor, block)
         })
@@ -446,7 +431,7 @@ function DuplicateBlockItem({ locale }: { locale: AppLocale }) {
 
   return (
     <DropdownMenuItem
-      onSelect={() => {
+      onClick={() => {
         runSideMenuAction(() => {
           const liveBlock = liveSideMenuBlock(editor, block)
           if (!liveBlock || !duplicateBlocksAndSelect(editor, [liveBlock.id])) return
@@ -497,7 +482,8 @@ function TableHeaderItem({
   return (
     <DropdownMenuCheckboxItem
       checked={checked}
-      onSelect={() => {
+      closeOnClick
+      onClick={() => {
         runSideMenuAction(() => {
           const currentBlock = liveSideMenuBlock(editor, block)
           const currentContent = tableHeaderContent(currentBlock)
@@ -538,7 +524,7 @@ function TurnBlockIntoSubmenu({ locale }: { locale: AppLocale }) {
         {getBlockTypeSelectItems().map((item) => (
           <DropdownMenuItem
             key={item.key}
-            onSelect={() => {
+            onClick={() => {
               runSideMenuAction(() => {
                 turnBlockIntoType(editor, block.id, item, 'block_menu')
               })

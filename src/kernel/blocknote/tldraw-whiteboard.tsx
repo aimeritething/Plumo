@@ -23,8 +23,8 @@ import {
   retainWhiteboardPlatformPermissionGuard,
 } from './whiteboard-platform-permission-rejection'
 import { Toolbar, ToolbarButton } from '@/ui/toolbar'
-import { Dialog } from '@/ui/dialog'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
+import { TldrawDialogScope } from '@/ui/tldraw-dialog-scope'
+import { SimpleTooltip } from '@/ui/tooltip'
 import { installTldrawTextMeasurementGuard } from './tldraw-text-measurement-guard'
 
 const EMPTY_TLDRAW_TRANSLATION_URL = 'data:application/json;base64,e30K'
@@ -448,7 +448,7 @@ const TldrawDialog = memo(function TldrawDialog({ dialog, onClose }: TldrawDialo
   // --tl-* variables live on .tl-container, and a panel portaled to the body
   // (ui/dialog's DialogContent) would lose them.
   return (
-    <Dialog open onOpenChange={handleOpenChange}>
+    <TldrawDialogScope onOpenChange={handleOpenChange}>
       <div
         ref={overlayRef}
         dir="ltr"
@@ -460,7 +460,7 @@ const TldrawDialog = memo(function TldrawDialog({ dialog, onClose }: TldrawDialo
           onClose={closeDialogNow}
         />
       </div>
-    </Dialog>
+    </TldrawDialogScope>
   )
 })
 
@@ -682,20 +682,16 @@ export function TldrawWhiteboard({
         </div>
       ) : null}
       <Toolbar aria-label={translate(locale, 'editor.whiteboard.toolbar')} className="absolute top-2 right-2 z-sticky group-data-fullscreen:top-3 group-data-fullscreen:right-3">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <ToolbarButton
-              size="sm"
-              aria-label={fullscreenLabel}
-              aria-pressed={fullscreen}
-              data-testid="tldraw-whiteboard-fullscreen-toggle"
-              onClick={toggleFullscreen}
-            >
-              {fullscreen ? <ArrowsIn aria-hidden="true" /> : <ArrowsOut aria-hidden="true" />}
-            </ToolbarButton>
-          </TooltipTrigger>
-          <TooltipContent side="left">{fullscreenLabel}</TooltipContent>
-        </Tooltip>
+        <SimpleTooltip label={fullscreenLabel} side="left">
+          <ToolbarButton
+            size="sm"
+            aria-label={fullscreenLabel}
+            data-testid="tldraw-whiteboard-fullscreen-toggle"
+            onClick={toggleFullscreen}
+          >
+            {fullscreen ? <ArrowsIn aria-hidden="true" /> : <ArrowsOut aria-hidden="true" />}
+          </ToolbarButton>
+        </SimpleTooltip>
       </Toolbar>
       <button
         type="button"

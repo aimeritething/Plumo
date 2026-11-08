@@ -38,8 +38,7 @@ import {
 } from './rich-editor-block-types'
 import { turnBlocksIntoType } from './rich-editor-block-type-commands'
 import {
-  keepEditorFocusAfterMenuClose,
-  keepFocusWhenLeavingClosingMenuItem,
+  returnFocusAfterMenuClose,
   useToolbarMenu,
 } from './toolbar-menu-state'
 
@@ -153,22 +152,24 @@ export function BlockTypeSelect() {
       open={menuState.opened}
       onOpenChange={handleMenuChange}
     >
-      <DropdownMenuTrigger asChild>
-        <ToolbarButton
-          data-test="blockTypeSelect"
-          onMouseDown={(event) => {
-            captureSelectedBlockIds()
-            event.preventDefault()
-            event.currentTarget.focus()
-          }}
-        >
-          {selectedItem.name}
-          <CaretDown aria-hidden="true" className="size-3" />
-        </ToolbarButton>
+      <DropdownMenuTrigger
+        render={(
+          <ToolbarButton
+            data-test="blockTypeSelect"
+            onMouseDown={(event) => {
+              captureSelectedBlockIds()
+              event.preventDefault()
+              event.currentTarget.focus()
+            }}
+          />
+        )}
+      >
+        {selectedItem.name}
+        <CaretDown aria-hidden="true" className="size-3" />
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="start"
-        onCloseAutoFocus={(event) => keepEditorFocusAfterMenuClose(editor.domElement, event)}
+        finalFocus={() => returnFocusAfterMenuClose(editor.domElement)}
       >
         {selectItems.map((item) => {
           const Icon = item.icon
@@ -178,7 +179,6 @@ export function BlockTypeSelect() {
               onClick={() => {
                 handleBlockTypeChange(item)
               }}
-              onPointerLeave={(event) => keepFocusWhenLeavingClosingMenuItem(menuState.opened, event)}
             >
               <Icon className="size-4" />
               {item.name}

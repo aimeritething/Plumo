@@ -52,19 +52,19 @@ const richCaretBlock = (page: Page) => page.evaluate(() => {
   const element = node instanceof Element ? node : node?.parentElement
   return element?.closest('.bn-block-content')?.textContent ?? null
 })
-const richSegment = (page: Page) => page.getByRole('radio', { name: 'Rich' })
-const rawSegment = (page: Page) => page.getByRole('radio', { name: 'Raw' })
+const richSegment = (page: Page) => page.getByRole('button', { name: 'Rich', exact: true })
+const rawSegment = (page: Page) => page.getByRole('button', { name: 'Raw', exact: true })
 
 test('⌘\\ and the segmented control switch modes, the Markdown shows in Raw, and the content comes back intact', async ({ page }) => {
   const errors = watchForErrors(page)
   await openWelcome(page)
   await typeAtEnd(page, ' Typed in Rich.')
-  await expect(richSegment(page)).toBeChecked()
+  await expect(richSegment(page)).toHaveAttribute('aria-pressed', 'true')
 
   await page.keyboard.press('Meta+Backslash')
 
   await expect(rawEditor(page)).toBeVisible()
-  await expect(rawSegment(page)).toBeChecked()
+  await expect(rawSegment(page)).toHaveAttribute('aria-pressed', 'true')
   await expect.poll(() => rawText(page)).toContain('# Welcome')
   expect(await rawText(page)).toContain('Typed in Rich.')
   await expect(page.locator('.bn-editor')).toHaveCount(0)
@@ -81,7 +81,7 @@ test('⌘\\ and the segmented control switch modes, the Markdown shows in Raw, a
 
   await expect(page.locator('.bn-editor h1')).toHaveText('Welcome')
   await expect(page.locator('.bn-editor')).toContainText('Typed in Rich.')
-  await expect(richSegment(page)).toBeChecked()
+  await expect(richSegment(page)).toHaveAttribute('aria-pressed', 'true')
   await expect(rawEditor(page)).toHaveCount(0)
   await expect.poll(() => richCaretBlock(page)).toBe('Welcome')
   expect(errors.pageErrors).toEqual([])
@@ -156,11 +156,11 @@ test('two Tabs keep different modes at once, and a relaunch restores each Tab\'s
 
   await openDocumentThroughDialog(page, PLUMO_PATH)
   await expect(page.locator('.bn-editor h1')).toHaveText('Plumo')
-  await expect(richSegment(page)).toBeChecked()
+  await expect(richSegment(page)).toHaveAttribute('aria-pressed', 'true')
 
   await page.keyboard.press('Meta+1')
   await expect(rawEditor(page)).toBeVisible()
-  await expect(rawSegment(page)).toBeChecked()
+  await expect(rawSegment(page)).toHaveAttribute('aria-pressed', 'true')
   await expect.poll(() => storedSession(page)).toMatchObject({
     openEditors: [{ path: WELCOME_PATH, mode: 'raw' }, { path: PLUMO_PATH, mode: 'rich' }],
     activePath: WELCOME_PATH,
@@ -173,7 +173,7 @@ test('two Tabs keep different modes at once, and a relaunch restores each Tab\'s
   await expect.poll(() => rawText(page)).toContain('# Welcome')
   await page.keyboard.press('Meta+2')
   await expect(page.locator('.bn-editor h1')).toHaveText('Plumo')
-  await expect(richSegment(page)).toBeChecked()
+  await expect(richSegment(page)).toHaveAttribute('aria-pressed', 'true')
   expect(errors.pageErrors).toEqual([])
   expect(errors.consoleErrors).toEqual([])
 })
@@ -209,7 +209,7 @@ test('invalid Frontmatter opens in Raw with Rich disabled and its reason as the 
   await openDocumentThroughDialog(page, BROKEN_PATH)
 
   await expect(rawEditor(page)).toBeVisible()
-  await expect(rawSegment(page)).toBeChecked()
+  await expect(rawSegment(page)).toHaveAttribute('aria-pressed', 'true')
   await expect(richSegment(page)).toBeDisabled()
   await richSegment(page).hover()
   await expect(page.getByRole('tooltip')).toHaveText('Fix the frontmatter to use Rich mode')
@@ -228,7 +228,7 @@ test('invalid Frontmatter opens in Raw with Rich disabled and its reason as the 
   await expect.poll(() => savedContent(page, BROKEN_PATH)).toMatch(/^---\ntitle: Fixed\n---\n/)
 
   await expect(richSegment(page)).toBeEnabled()
-  await expect(rawSegment(page)).toBeChecked()
+  await expect(rawSegment(page)).toHaveAttribute('aria-pressed', 'true')
   await richSegment(page).click()
   await expect(page.locator('.bn-editor h1')).toHaveText('Broken')
   expect(errors.pageErrors).toEqual([])

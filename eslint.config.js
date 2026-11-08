@@ -29,4 +29,92 @@ export default defineConfig([
       'react-hooks/set-state-in-effect': 'error',
     },
   },
+  // `asChild` and the `data-state` attribute are Radix's, and so are its
+  // `--radix-` CSS variables, its `data-radix-` attributes and its packages;
+  // Base UI's packages and its `data-base-ui`, `data-popup-open` and
+  // `data-panel-open` attributes are src/ui's own internals too. Outside src/ui
+  // a feature composes with a src/ui component's `render`, reads its state off
+  // aria (`aria-expanded:`) or a src/ui variant, and asks a src/ui option,
+  // helper or test util for the rest, so a change of primitive library touches
+  // src/ui only (ADR-0013). Test files are held to it too: a test of src/ui
+  // sits in src/ui.
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/ui/**'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "JSXAttribute[name.name='asChild']",
+          message: 'No `asChild` outside src/ui: pass the element as the src/ui component\'s `render` (ADR-0013).',
+        },
+        {
+          selector: "JSXAttribute[name.name='data-state']",
+          message: 'No `data-state` outside src/ui: it is Radix\'s; use aria or a src/ui variant (ADR-0013).',
+        },
+        {
+          selector: 'Literal[value=/data-\\[?state/]',
+          message: 'No `data-state` or `data-[state=…]` outside src/ui: use aria (`aria-expanded:`) or a src/ui variant or helper (ADR-0013).',
+        },
+        {
+          selector: 'TemplateElement[value.raw=/data-\\[?state/]',
+          message: 'No `data-state` or `data-[state=…]` outside src/ui: use aria (`aria-expanded:`) or a src/ui variant or helper (ADR-0013).',
+        },
+        {
+          selector: 'Literal[value=/--radix-|data-radix-|data-base-ui|data-popup-open|data-panel-open/]',
+          message: 'No `--radix-` variable, `data-radix-` or `data-base-ui` attribute, `data-popup-open` or `data-panel-open` outside src/ui: they are Radix\'s and Base UI\'s; use aria, a src/ui option, helper or test util (ADR-0013).',
+        },
+        {
+          selector: 'TemplateElement[value.raw=/--radix-|data-radix-|data-base-ui|data-popup-open|data-panel-open/]',
+          message: 'No `--radix-` variable, `data-radix-` or `data-base-ui` attribute, `data-popup-open` or `data-panel-open` outside src/ui: they are Radix\'s and Base UI\'s; use aria, a src/ui option, helper or test util (ADR-0013).',
+        },
+      ],
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'radix-ui',
+              message: 'No Radix import outside src/ui: compose the src/ui component instead (ADR-0013).',
+            },
+          ],
+          patterns: [
+            {
+              group: ['@radix-ui/*', 'radix-ui/*'],
+              message: 'No Radix import outside src/ui: compose the src/ui component instead (ADR-0013).',
+            },
+            {
+              group: ['@base-ui/*', '@base-ui/react/*'],
+              message: 'No Base UI import outside src/ui: compose the src/ui component instead (ADR-0013).',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  // Inside src/ui every control is on Base UI. The one Radix import is the
+  // Dialog root tldraw's own dialog parts need (ui/tldraw-dialog-scope).
+  {
+    files: ['src/ui/**/*.{ts,tsx}'],
+    ignores: ['src/ui/tldraw-dialog-scope.tsx'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'radix-ui',
+              message: 'No Radix in src/ui: build the control on Base UI, as shadcn\'s Base UI components are (ADR-0013).',
+            },
+          ],
+          patterns: [
+            {
+              group: ['@radix-ui/*', 'radix-ui/*'],
+              message: 'No Radix in src/ui: build the control on Base UI, as shadcn\'s Base UI components are (ADR-0013).',
+            },
+          ],
+        },
+      ],
+    },
+  },
 ])

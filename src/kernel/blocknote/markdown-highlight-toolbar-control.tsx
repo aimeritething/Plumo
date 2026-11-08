@@ -10,7 +10,7 @@ import type { HighlightEditor } from './markdown-highlight-model'
 import { selectionOrHighlightRange } from './markdown-highlight-range'
 import { useToolbarMenu } from './toolbar-menu-state'
 import { ToolbarButton } from '@/ui/toolbar'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
+import { SimpleTooltip } from '@/ui/tooltip'
 
 // The colour caret after the formatting toolbar's highlight toggle. It sits in
 // the toolbar's own tree: its menu is portaled, but the trigger controls it
@@ -30,36 +30,33 @@ export function ToolbarHighlightColorControl({
   }) ?? DEFAULT_MARKDOWN_HIGHLIGHT_COLOR
   const label = translate(locale, 'editor.formatting.highlightColor')
 
-  // The tooltip trigger is the menu trigger's child, so the menu's open / closed data-state is the one the button keeps.
+  // The tooltip sits inside the menu trigger, so the menu's open / closed state is the one the button keeps.
   return (
-    <Tooltip>
-      <MarkdownHighlightColorMenu
-        currentColor={currentColor}
-        editor={editor}
-        locale={locale}
-        onOpenChange={menu.setOpened}
-        open={menu.opened}
-        readRange={() => selectionOrHighlightRange(editor)}
-        source="toolbar"
-        trigger={(
-          <TooltipTrigger asChild>
-            <ToolbarButton
-              aria-label={label}
-              data-test="highlightColorMenu"
-              // As the block type trigger: keep the editor's selection, take the
-              // focus so the toolbar counts as focused while the menu is open.
-              onMouseDown={(event) => {
-                event.preventDefault()
-                event.currentTarget.focus()
-              }}
-              segment="end"
-            >
-              <CaretDown aria-hidden="true" />
-            </ToolbarButton>
-          </TooltipTrigger>
-        )}
-      />
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
+    <MarkdownHighlightColorMenu
+      currentColor={currentColor}
+      editor={editor}
+      locale={locale}
+      onOpenChange={menu.setOpened}
+      open={menu.opened}
+      readRange={() => selectionOrHighlightRange(editor)}
+      source="toolbar"
+      trigger={(
+        <SimpleTooltip label={label}>
+          <ToolbarButton
+            aria-label={label}
+            data-test="highlightColorMenu"
+            // As the block type trigger: keep the editor's selection, take the
+            // focus so the toolbar counts as focused while the menu is open.
+            onMouseDown={(event) => {
+              event.preventDefault()
+              event.currentTarget.focus()
+            }}
+            segment="end"
+          >
+            <CaretDown aria-hidden="true" />
+          </ToolbarButton>
+        </SimpleTooltip>
+      )}
+    />
   )
 }

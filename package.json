@@ -20,6 +20,7 @@
     "tauri": "node scripts/tauri-cli.mjs"
   },
   "dependencies": {
+    "@base-ui/react": "1.9.0",
     "@blocknote/code-block": "0.46.2",
     "@blocknote/core": "0.46.2",
     "@blocknote/react": "0.46.2",
@@ -46,6 +47,7 @@
     "@tldraw/assets": "4.5.10",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
     "dompurify": "3.4.12",
     "katex": "^0.16.28",
     "mermaid": "^11.16.0",

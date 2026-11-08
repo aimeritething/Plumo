@@ -1,6 +1,9 @@
 import { createEvent, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
+import { SidebarTestProvider } from '@/ui/sidebar.test-utils'
 import { Pinned, PINNED_DRAG_MIME_TYPE, type PinnedProps } from './pinned'
+import { movePinned } from './pinned-list'
 
 const A = '/Notes/Reading list.md'
 const B = '/Notes/Everything.md'
@@ -18,7 +21,7 @@ function renderPinned(overrides: Partial<PinnedProps> = {}) {
     onMove: vi.fn(),
     ...overrides,
   }
-  const view = render(<Pinned {...props} />)
+  const view = render(<Pinned {...props} />, { wrapper: SidebarTestProvider })
   return { ...props, rerender: (next: Partial<PinnedProps>) => view.rerender(<Pinned {...props} {...next} />) }
 }
 
@@ -54,24 +57,27 @@ describe('Pinned', () => {
     renderPinned()
 
     expect(screen.getByTestId('pinned-toggle')).toHaveTextContent('Pinned')
-    const list = screen.getByRole('listbox', { name: 'Pinned' })
-    expect(within(list).getAllByRole('option').map((option) => option.textContent)).toEqual(['Reading list.md', 'Everything.md', 'lake.png'])
+    const list = screen.getByRole('list', { name: 'Pinned' })
+    expect(within(list).getAllByRole('button').map((button) => button.textContent)).toEqual(['Reading list.md', 'Everything.md', 'lake.png'])
   })
 
-  it('selects the row whose file is the active Tab', () => {
+  it('marks the row whose file is the active Tab as current', () => {
     renderPinned({ activeTabPath: B })
 
-    expect(row(B)).toHaveAttribute('aria-selected', 'true')
-    expect(row(A)).toHaveAttribute('aria-selected', 'false')
+    expect(row(B)).toHaveAttribute('data-active')
+    expect(row(B)).toHaveAttribute('aria-current', 'true')
+    expect(row(A)).not.toHaveAttribute('data-active')
+    expect(row(A)).not.toHaveAttribute('aria-current')
   })
 
-  it('opens a row\'s file on click, Enter and Space', () => {
+  // A button: Tab reaches it, and Enter and Space click it.
+  it('opens a row\'s file from its button', () => {
     const { onOpen } = renderPinned()
 
+    expect(row(A).tagName).toBe('BUTTON')
+    expect(row(A)).not.toHaveAttribute('tabindex', '-1')
     fireEvent.click(row(A))
-    fireEvent.keyDown(row(LAKE), { key: 'Enter' })
-    fireEvent.keyDown(row(B), { key: ' ' })
-    expect(onOpen.mock.calls).toEqual([[A], [LAKE], [B]])
+    expect(onOpen.mock.calls).toEqual([[A]])
   })
 
   it('names the parent folder of two pins that share a name', () => {
@@ -86,14 +92,15 @@ describe('Pinned', () => {
     const { onToggleCollapsed, rerender } = renderPinned()
     const toggle = screen.getByTestId('pinned-toggle')
     expect(toggle).toHaveAttribute('aria-expanded', 'true')
-    expect(screen.getByTestId('pinned-caret')).toHaveClass('opacity-0', 'group-hover/pinned:opacity-100')
+    expect(toggle).toHaveClass('[&>svg]:opacity-0', 'group-hover/sidebar-group:[&>svg]:opacity-100')
+    expect(screen.getByTestId('pinned-caret').parentElement).toBe(toggle)
 
     fireEvent.click(toggle)
     expect(onToggleCollapsed).toHaveBeenCalledTimes(1)
 
     rerender({ collapsed: true })
     expect(screen.getByTestId('pinned-toggle')).toHaveAttribute('aria-expanded', 'false')
-    expect(screen.queryByRole('listbox')).toBeNull()
+    expect(screen.queryByRole('list')).toBeNull()
   })
 
   it('unpins from a row\'s context menu', async () => {
@@ -115,14 +122,74 @@ describe('Pinned', () => {
     await waitFor(() => expect(onDuplicate).toHaveBeenCalledWith(LAKE))
   })
 
-  it('reorders with ⌥↑ and ⌥↓', () => {
-    const { onMove } = renderPinned()
+  // The only way to reorder without a pointer (ADR-0013): it stays on the focused row's button.
+  it('reorders the focused row with ⌥↑ and ⌥↓, and leaves a plain arrow alone', () => {
+    const { onMove, onOpen } = renderPinned()
 
+    row(LAKE).focus()
+    expect(row(LAKE)).toHaveFocus()
     fireEvent.keyDown(row(LAKE), { key: 'ArrowUp', altKey: true })
     fireEvent.keyDown(row(A), { key: 'ArrowDown', altKey: true })
     fireEvent.keyDown(row(B), { key: 'ArrowDown', altKey: true })
     fireEvent.keyDown(row(A), { key: 'ArrowUp', altKey: true })
+    fireEvent.keyDown(row(A), { key: 'ArrowDown' })
     expect(onMove.mock.calls).toEqual([[LAKE, B], [A, LAKE], [B, null]])
+    expect(onOpen).not.toHaveBeenCalled()
+  })
+
+  // React reorders the rows by moving their elements, and moving the focused
+  // one drops its focus to the body (jsdom does this as the browsers do); the
+  // moved row must have it back, through a real re-render of the list.
+  it('keeps the focus on the moved row, so ⌥↑ and ⌥↓ can be pressed again and again', () => {
+    const C = '/Notes/Ideas.md'
+    function MovablePinned() {
+      const [paths, setPaths] = useState<readonly string[]>([A, B, LAKE, C])
+      return (
+        <Pinned
+          paths={paths}
+          activeTabPath={null}
+          collapsed={false}
+          onToggleCollapsed={vi.fn()}
+          onOpen={vi.fn()}
+          onUnpin={vi.fn()}
+          onDuplicate={vi.fn()}
+          onMove={(path, before) => setPaths((current) => movePinned(current, path, before))}
+        />
+      )
+    }
+    render(<MovablePinned />, { wrapper: SidebarTestProvider })
+    const order = () => screen.getAllByTestId('pinned-name').map((name) => name.textContent)
+    const press = (key: 'ArrowUp' | 'ArrowDown') => fireEvent.keyDown(document.activeElement!, { key, altKey: true })
+
+    row(A).focus()
+    press('ArrowDown')
+    press('ArrowDown')
+    press('ArrowDown')
+    expect(order()).toEqual(['Everything.md', 'lake.png', 'Ideas.md', 'Reading list.md'])
+    expect(row(A)).toHaveFocus()
+
+    press('ArrowUp')
+    press('ArrowUp')
+    press('ArrowUp')
+    expect(order()).toEqual(['Reading list.md', 'Everything.md', 'lake.png', 'Ideas.md'])
+    expect(row(A)).toHaveFocus()
+
+    row(LAKE).focus()
+    press('ArrowUp')
+    press('ArrowDown')
+    press('ArrowDown')
+    expect(order()).toEqual(['Reading list.md', 'Everything.md', 'Ideas.md', 'lake.png'])
+    expect(row(LAKE)).toHaveFocus()
+  })
+
+  it('lets the name take the row\'s room, and the parent hint shrink with an ellipsis instead of pushing it out', () => {
+    renderPinned({ paths: [A, '/Notes/A very long archive folder name/Reading list.md'] })
+
+    const name = within(row(A)).getByTestId('pinned-name')
+    const hint = within(row(A)).getByTestId('pinned-parent')
+    expect(name).toHaveClass('flex-1')
+    expect(hint).toHaveClass('flex-initial')
+    expect(hint).not.toHaveClass('flex-none')
   })
 
   describe('the drag', () => {
@@ -133,7 +200,7 @@ describe('Pinned', () => {
       fireEvent.dragStart(row(LAKE), { dataTransfer: transfer })
       expect(transfer.getData(PINNED_DRAG_MIME_TYPE)).toBe(LAKE)
       dragAt(row(A), 'dragOver', 5, transfer)
-      expect(within(row(A)).getByTestId('pinned-drop-indicator')).toHaveAttribute('data-at', 'before')
+      expect(within(row(A).parentElement!).getByTestId('pinned-drop-indicator')).toHaveAttribute('data-at', 'before')
 
       dragAt(row(A), 'drop', 5, transfer)
       expect(onMove).toHaveBeenCalledWith(LAKE, A)
@@ -146,7 +213,7 @@ describe('Pinned', () => {
 
       fireEvent.dragStart(row(A), { dataTransfer: transfer })
       dragAt(row(LAKE), 'dragOver', 25, transfer)
-      expect(within(row(LAKE)).getByTestId('pinned-drop-indicator')).toHaveAttribute('data-at', 'after')
+      expect(within(row(LAKE).parentElement!).getByTestId('pinned-drop-indicator')).toHaveAttribute('data-at', 'after')
       dragAt(row(LAKE), 'drop', 25, transfer)
 
       expect(onMove).toHaveBeenCalledWith(A, null)

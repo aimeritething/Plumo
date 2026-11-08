@@ -76,12 +76,12 @@ test('an image released over the sidebar, the tab bar or the find bar goes nowhe
   await page.goto('/')
   await page.evaluate(([path, content]) => window.__plumoMockVault?.writeNote(path, content), [PATH, CONTENT])
   await openFolderThroughDialog(page, MOCK_FOLDER)
-  await page.getByRole('treeitem', { name: 'Margins.md' }).click()
+  await page.getByTestId('explorer-tree').getByRole('button', { name: 'Margins.md', exact: true }).click()
   await expect(page.locator('.bn-editor h1')).toHaveText('Margins')
   await page.keyboard.press('Meta+f')
   const findBar = (await page.getByTestId('rich-editor-find-count').boundingBox())!
   const spots = [
-    await centreOf(page.getByRole('tree')),
+    await centreOf(page.getByTestId('explorer-tree')),
     await centreOf(page.getByRole('tab', { name: /Margins/u })),
     { x: await marginX(page, 'left', '.bn-editor'), y: findBar.y + findBar.height / 2 },
   ]
@@ -97,7 +97,7 @@ test('an image released over the sidebar, the tab bar or the find bar goes nowhe
 
 test('an image released in Raw mode\'s gutter or right of a short line lands beside the line at that height', async ({ page }) => {
   await openMargins(page)
-  await page.getByRole('radio', { name: 'Raw' }).click()
+  await page.getByRole('button', { name: 'Raw', exact: true }).click()
   const line = page.locator('.cm-line', { hasText: 'Second paragraph.' })
   const box = (await line.boundingBox())!
   const gutter = (await page.locator('.cm-gutters').boundingBox())!

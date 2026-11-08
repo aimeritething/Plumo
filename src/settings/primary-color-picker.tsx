@@ -1,21 +1,15 @@
-import { useRef, type CSSProperties, type KeyboardEvent } from 'react'
-import { cn } from '@/lib/cn'
+import { useRef, type CSSProperties } from 'react'
 import { normalizePrimaryColor, PRIMARY_COLOR_PRESETS } from '@/shell/primary-color'
-
-const NEXT_KEYS = new Set(['ArrowRight', 'ArrowDown'])
-const PREVIOUS_KEYS = new Set(['ArrowLeft', 'ArrowUp'])
+import { ToggleGroup, ToggleGroupItem, ToggleGroupItemPreview } from '@/ui/toggle-group'
+import { SimpleTooltip } from '@/ui/tooltip'
 
 const CUSTOM = 'custom'
 
-/** A swatch's colour, for its fill and its ring. */
-const swatchStyle = (hex: string) => ({ '--swatch': hex }) as CSSProperties
+/** The Custom swatch until a colour of its own is chosen: the colour wheel. */
+const COLOUR_WHEEL = 'conic-gradient(from 90deg, #e5484d, #ffc53d, #30a46c, #0082fb, #8e4ec6, #d6409f, #e5484d)'
 
-const SWATCH_CLASSES = cn(
-  'relative size-6 flex-none cursor-default rounded-full outline-none',
-  'inset-ring inset-ring-black/10',
-  'aria-checked:ring-2 aria-checked:ring-(--swatch) aria-checked:ring-offset-2 aria-checked:ring-offset-popover',
-  'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-popover',
-)
+/** A swatch's paint, for its dot and its ring. */
+const swatchStyle = (paint: string) => ({ '--swatch': paint }) as CSSProperties
 
 interface PrimaryColorPickerProps {
   /** `#rrggbb`. */
@@ -26,30 +20,22 @@ interface PrimaryColorPickerProps {
 /**
  * The Primary color setting (CONTEXT.md): a swatch per preset, in macOS's
  * accent-colour order, and a last one that opens the system colour panel for
- * any other colour. A radio group like the Theme setting: one tab stop, the
- * arrows move the choice, a change applies at once. Moving onto Custom with
- * the arrows keeps the colour; Space or a click opens the panel.
+ * any other colour. A single toggle group like the Theme setting: one tab
+ * stop, the arrows move the focus, Space or a click chooses, and a change
+ * applies at once. Custom chooses nothing by itself: Space or a click opens
+ * the panel, every time, and the colour picked there is the choice. A click
+ * on the chosen preset, which the group reads as clearing the choice, is
+ * ignored: there is always a Primary color.
  */
 export function PrimaryColorPicker({ color, onChange }: PrimaryColorPickerProps) {
-  const swatches = useRef<(HTMLButtonElement | null)[]>([])
   const panel = useRef<HTMLInputElement | null>(null)
   const current = normalizePrimaryColor(color) ?? PRIMARY_COLOR_PRESETS[0].hex
   const preset = PRIMARY_COLOR_PRESETS.find(({ hex }) => hex === current)
-  const choices = [...PRIMARY_COLOR_PRESETS.map(({ id }) => id), CUSTOM]
   const checked = preset?.id ?? CUSTOM
 
-  const choose = (index: number) => {
-    const id = choices[index]
-    if (id !== CUSTOM) onChange(PRIMARY_COLOR_PRESETS[index].hex)
-    swatches.current[index]?.focus()
-  }
-
-  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    const step = NEXT_KEYS.has(event.key) ? 1 : PREVIOUS_KEYS.has(event.key) ? -1 : 0
-    if (step === 0) return
-    event.preventDefault()
-    const from = choices.indexOf(checked)
-    choose((from + step + choices.length) % choices.length)
+  const choose = (next: string | undefined) => {
+    const chosen = PRIMARY_COLOR_PRESETS.find(({ id }) => id === next)
+    if (chosen) onChange(chosen.hex)
   }
 
   return (
@@ -58,47 +44,30 @@ export function PrimaryColorPicker({ color, onChange }: PrimaryColorPickerProps)
         <span id="settings-primary-color-label" className="text-sm font-medium text-foreground">Primary color</span>
         <span className="text-xs text-muted-foreground">Buttons, links, focus and the text selection.</span>
       </div>
-      <div
-        role="radiogroup"
+      <ToggleGroup
+        variant="swatch"
+        value={[checked]}
+        onValueChange={(value) => choose(value[0])}
         aria-labelledby="settings-primary-color-label"
-        className="flex flex-wrap items-center gap-3"
-        onKeyDown={onKeyDown}
         data-testid="settings-primary-color"
       >
-        {PRIMARY_COLOR_PRESETS.map(({ id, label, hex }, index) => (
-          <button
-            key={id}
-            ref={(swatch) => { swatches.current[index] = swatch }}
-            type="button"
-            role="radio"
-            aria-checked={checked === id}
-            aria-label={label}
-            title={label}
-            tabIndex={checked === id ? 0 : -1}
-            className={cn(SWATCH_CLASSES, 'bg-(--swatch)')}
-            style={swatchStyle(hex)}
-            onClick={() => onChange(hex)}
-            data-testid={`settings-primary-color:${id}`}
-          />
+        {PRIMARY_COLOR_PRESETS.map(({ id, label, hex }) => (
+          <SimpleTooltip key={id} label={label}>
+            <ToggleGroupItem value={id} aria-label={label} data-testid={`settings-primary-color:${id}`}>
+              <ToggleGroupItemPreview style={swatchStyle(hex)} />
+            </ToggleGroupItem>
+          </SimpleTooltip>
         ))}
-        <button
-          ref={(swatch) => { swatches.current[PRIMARY_COLOR_PRESETS.length] = swatch }}
-          type="button"
-          role="radio"
-          aria-checked={checked === CUSTOM}
-          aria-label="Custom"
-          title="Custom"
-          tabIndex={checked === CUSTOM ? 0 : -1}
-          className={cn(
-            SWATCH_CLASSES,
-            checked === CUSTOM
-              ? 'bg-(--swatch)'
-              : 'bg-[conic-gradient(from_90deg,#e5484d,#ffc53d,#30a46c,#0082fb,#8e4ec6,#d6409f,#e5484d)]',
-          )}
-          style={swatchStyle(current)}
-          onClick={() => panel.current?.click()}
-          data-testid="settings-primary-color:custom"
-        />
+        <SimpleTooltip label="Custom">
+          <ToggleGroupItem
+            value={CUSTOM}
+            aria-label="Custom"
+            onClick={() => panel.current?.click()}
+            data-testid="settings-primary-color:custom"
+          >
+            <ToggleGroupItemPreview style={swatchStyle(checked === CUSTOM ? current : COLOUR_WHEEL)} />
+          </ToggleGroupItem>
+        </SimpleTooltip>
         <input
           ref={panel}
           type="color"
@@ -115,7 +84,7 @@ export function PrimaryColorPicker({ color, onChange }: PrimaryColorPickerProps)
         {checked === CUSTOM && (
           <span className="font-mono text-xs text-muted-foreground uppercase">{current}</span>
         )}
-      </div>
+      </ToggleGroup>
     </div>
   )
 }

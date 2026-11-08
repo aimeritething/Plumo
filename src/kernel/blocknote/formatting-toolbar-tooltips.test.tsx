@@ -1,5 +1,6 @@
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { hoverToOpen } from '@/ui/open-layer.test-utils'
 import { Toolbar } from '@/ui/toolbar'
 import { TooltipProvider } from '@/ui/tooltip'
 import { CreateLinkButton } from './create-link-button'
@@ -65,7 +66,7 @@ vi.mock('@blocknote/core/extensions', () => ({
 }))
 
 function tooltipAfterHover(name: string) {
-  fireEvent.pointerMove(screen.getByRole('button', { name }), { pointerType: 'mouse' })
+  hoverToOpen(screen.getByRole('button', { name }))
   act(() => {
     vi.advanceTimersByTime(400)
   })

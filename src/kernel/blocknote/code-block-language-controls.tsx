@@ -36,6 +36,8 @@ const ELEMENT_NODE = 1
 const SUPPORTED_LANGUAGES = Object.entries(createCodeBlockOptions().supportedLanguages ?? {})
 
 const LANGUAGE_OPTIONS = SUPPORTED_LANGUAGES.map(([id, language]) => ({ id, name: language.name }))
+// The trigger shows the chosen language's name, not its id.
+const LANGUAGE_ITEMS = LANGUAGE_OPTIONS.map(({ id, name }) => ({ value: id, label: name }))
 
 // A fence keeps the name it was written with (```ts), which the native select has no option for.
 const LANGUAGE_ID_BY_NAME = new Map<string, string>([
@@ -208,16 +210,20 @@ function CodeBlockLanguagePicker({
   return (
     <Select
       disabled={!editable}
+      items={LANGUAGE_ITEMS}
       value={language}
-      onValueChange={(nextLanguage) => updateCodeBlockLanguage(editor, blockId, nextLanguage)}
+      onValueChange={(nextLanguage) => {
+        if (nextLanguage !== null) updateCodeBlockLanguage(editor, blockId, nextLanguage)
+      }}
     >
       <SelectTrigger
         size="sm"
-        className="h-7 max-w-72 border-transparent bg-transparent px-2 py-0 text-xs text-muted-foreground shadow-none hover:bg-accent hover:text-foreground focus-visible:ring-1"
+        variant="ghost"
+        className="h-7 max-w-72 px-2 py-0 text-xs"
       >
         <SelectValue />
       </SelectTrigger>
-      <SelectContent position="popper" align="start">
+      <SelectContent alignItemWithTrigger={false} align="start">
         {LANGUAGE_OPTIONS.map(({ id, name }) => (
           <SelectItem key={id} value={id}>{name}</SelectItem>
         ))}

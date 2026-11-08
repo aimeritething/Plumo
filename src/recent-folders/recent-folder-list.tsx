@@ -1,8 +1,7 @@
 import { memo } from 'react'
 import { Folder } from '@phosphor-icons/react'
-import { cn } from '@/lib/cn'
 import { ScrollArea } from '@/ui/scroll-area'
-import { SIDEBAR_ROW_CLASSES, SidebarLabel, SidebarRowIcon } from '@/shell/sidebar-row'
+import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/ui/sidebar'
 import { FolderNameAndPath } from './folder-name-and-path'
 
 interface RecentFolderListProps {
@@ -20,22 +19,20 @@ interface RecentFolderListProps {
 export const RecentFolderList = memo(function RecentFolderList({ paths, home, onOpen }: RecentFolderListProps) {
   if (paths.length === 0) return null
   return (
-    <section className="flex min-h-0 flex-col gap-0.5 pt-6" aria-label="Recent Folders" data-testid="recent-folders">
-      <SidebarLabel>Recent</SidebarLabel>
-      <ScrollArea className="-mr-3 min-h-0" viewportClassName="pr-3 [&>div]:flex! [&>div]:flex-col [&>div]:gap-0.5">
-        {paths.map((path) => (
-          <button
-            key={path}
-            type="button"
-            className={cn(SIDEBAR_ROW_CLASSES, 'h-10 w-full flex-none gap-2')}
-            data-testid={`recent-folder:${path}`}
-            onClick={() => onOpen(path)}
-          >
-            <SidebarRowIcon icon={Folder} />
-            <FolderNameAndPath path={path} home={home} />
-          </button>
-        ))}
+    <SidebarGroup className="min-h-0 gap-0.5 pt-6" role="region" aria-label="Recent Folders" data-testid="recent-folders">
+      <SidebarGroupLabel>Recent</SidebarGroupLabel>
+      <ScrollArea className="-mr-3 min-h-0" viewportClassName="pr-3">
+        <SidebarMenu>
+          {paths.map((path) => (
+            <SidebarMenuItem key={path}>
+              <SidebarMenuButton size="lg" data-testid={`recent-folder:${path}`} onClick={() => onOpen(path)}>
+                <Folder aria-hidden="true" />
+                <FolderNameAndPath path={path} home={home} />
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
       </ScrollArea>
-    </section>
+    </SidebarGroup>
   )
 })

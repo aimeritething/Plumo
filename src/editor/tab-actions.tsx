@@ -1,4 +1,4 @@
-import { useRef, type ComponentProps, type ReactNode } from 'react'
+import { useRef } from 'react'
 import { Code, DotsThree, LinkSimple, TextAa, type Icon } from '@phosphor-icons/react'
 import { APP_COMMAND_DEFINITIONS, APP_COMMAND_IDS, type AppCommandId } from '@/shell/app-command-catalog'
 import type { EditorMode } from '@/types'
@@ -11,7 +11,8 @@ import {
   DropdownMenuTrigger,
 } from '@/ui/dropdown-menu'
 import { Button } from '@/ui/button'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
+import { SimpleTooltip } from '@/ui/tooltip'
+import { ToggleGroup, ToggleGroupItem } from '@/ui/toggle-group'
 
 /** A shortcut as the manifest writes it (`⌘\\`): Plumo v0.1 is a macOS app, like the sidebar toggle's `⌘[`. */
 const shortcutOf = (id: AppCommandId) => APP_COMMAND_DEFINITIONS[id].shortcut?.display
@@ -88,14 +89,9 @@ export function ImageTabActions({ metadata, onOpenExternal, onCopyPath }: ImageT
       {metadata && (
         <span className="cursor-default pr-1.5 font-mono text-2xs tracking-normal whitespace-nowrap text-muted-foreground tabular-nums" data-testid="image-meta">{metadata}</span>
       )}
-      <button
-        type="button"
-        className="flex h-6.5 flex-none items-center rounded-full px-2.5 text-sm font-medium whitespace-nowrap text-foreground inset-ring inset-ring-border hover:bg-accent focus-visible:focus-ring"
-        data-testid="image-open-external"
-        onClick={onOpenExternal}
-      >
+      <Button variant="outline" size="pill" data-testid="image-open-external" onClick={onOpenExternal}>
         Open ↗
-      </button>
+      </Button>
       {onCopyPath && <CopyPathButton onCopyPath={onCopyPath} />}
     </div>
   )
@@ -104,51 +100,51 @@ export function ImageTabActions({ metadata, onOpenExternal, onCopyPath }: ImageT
 /** The link button, its tooltip naming Copy path's shortcut as a chip. */
 function CopyPathButton({ onCopyPath }: { onCopyPath: () => void }) {
   return (
-    <TabActionTooltip label="Copy path" shortcut={COPY_PATH_SHORTCUT}>
+    <SimpleTooltip label="Copy path" shortcut={COPY_PATH_SHORTCUT} side="bottom">
       <Button variant="icon" size="icon-xs" aria-label="Copy path" data-testid="tab-copy-path" onClick={onCopyPath}>
         <LinkSimple aria-hidden="true" />
       </Button>
-    </TabActionTooltip>
+    </SimpleTooltip>
   )
 }
 
 /**
- * `Rich | Raw`: a pill track on the shade surface, two icon segments (Aa for
- * Rich, </> for Raw), the current one a raised white pill, each with a
- * tooltip naming the mode and the shortcut as a chip. Invalid Frontmatter
- * leaves the Rich segment in place but unavailable, faded, its tooltip saying
- * why. It is marked with aria-disabled rather than the disabled attribute so
- * it still takes the pointer and can show that tooltip; `aria-checked` is the
- * one source of which segment is current.
+ * `Rich | Raw`: the segmented toggle group, two icon segments (Aa for Rich,
+ * </> for Raw), each with a tooltip naming the mode and the shortcut as a
+ * chip. Invalid Frontmatter leaves the Rich segment in place but unavailable,
+ * faded, its tooltip saying why. It is marked with aria-disabled rather than
+ * the disabled attribute so it still takes the pointer and the focus and can
+ * show that tooltip; choosing it is refused here instead. A click on the
+ * current segment, which a single toggle group reads as clearing the choice,
+ * is refused too: a Tab is always in one mode.
  */
 function ModeControl({ mode }: { mode: TabMode }) {
+  const choose = (next: string | undefined) => {
+    const segment = MODES.find((candidate) => candidate === next)
+    if (segment === undefined) return
+    if (segment === 'rich' && mode.richDisabledReason !== null) return
+    mode.onChange(segment)
+  }
+
   return (
-    <div className="flex h-6.5 flex-none items-center gap-0.5 rounded-full bg-muted p-0.5" role="radiogroup" aria-label="Editor mode" data-testid="tab-mode">
+    <ToggleGroup variant="segmented" value={[mode.value]} onValueChange={(value) => choose(value[0])} aria-label="Editor mode" data-testid="tab-mode">
       {MODES.map((segment) => {
-        const active = segment === mode.value
         const disabledReason = segment === 'rich' ? mode.richDisabledReason : null
         const SegmentIcon = MODE_ICONS[segment]
         return (
-          <TabActionTooltip key={segment} label={disabledReason ?? MODE_LABELS[segment]} shortcut={disabledReason === null ? TOGGLE_SHORTCUT : undefined}>
-            <button
-              type="button"
-              role="radio"
-              className="grid h-5.5 w-7 place-items-center rounded-full text-muted-foreground transition-colors duration-150 ease-out hover:text-muted-foreground focus-visible:focus-ring aria-checked:bg-popover aria-checked:text-foreground aria-checked:shadow-xs aria-disabled:text-subtle-foreground"
+          <SimpleTooltip key={segment} label={disabledReason ?? MODE_LABELS[segment]} shortcut={disabledReason === null ? TOGGLE_SHORTCUT : undefined} side="bottom">
+            <ToggleGroupItem
+              value={segment}
               aria-label={MODE_LABELS[segment]}
-              aria-checked={active}
               aria-disabled={disabledReason !== null || undefined}
               data-testid={`tab-mode-${segment}`}
-              onClick={() => {
-                if (active || disabledReason !== null) return
-                mode.onChange(segment)
-              }}
             >
-              <SegmentIcon size={16} aria-hidden="true" />
-            </button>
-          </TabActionTooltip>
+              <SegmentIcon aria-hidden="true" />
+            </ToggleGroupItem>
+          </SimpleTooltip>
         )
       })}
-    </div>
+    </ToggleGroup>
   )
 }
 
@@ -164,58 +160,51 @@ function DocumentMenu({ menu }: { menu: DocumentMenuActions }) {
   const onFind = menu.onFind
   return (
     <DropdownMenu>
-      {/* The tooltip trigger sits inside the menu trigger, so the menu's open / closed data-state is the one the button keeps. */}
-      <DropdownMenuTrigger asChild>
-        <TabActionTooltip label="More">
-          <Button variant="icon" size="icon-xs" aria-label="More" data-testid="tab-more">
-            <DotsThree aria-hidden="true" />
-          </Button>
-        </TabActionTooltip>
-      </DropdownMenuTrigger>
+      {/* The tooltip sits inside the menu trigger, so the menu's open / closed state is the one the button keeps. */}
+      <DropdownMenuTrigger
+        render={(
+          <SimpleTooltip label="More" side="bottom">
+            <Button variant="icon" size="icon-xs" aria-label="More" data-testid="tab-more">
+              <DotsThree aria-hidden="true" />
+            </Button>
+          </SimpleTooltip>
+        )}
+      />
       <DropdownMenuContent
         align="end"
         className="min-w-50"
         data-testid="tab-more-menu"
-        onCloseAutoFocus={(event) => {
-          if (!findChosen.current) return
+        finalFocus={() => {
+          if (!findChosen.current) return true
           findChosen.current = false
-          event.preventDefault()
+          return false
         }}
       >
-        <MenuItem label={menu.pinned ? 'Unpin' : 'Pin'} onSelect={menu.onTogglePin} />
-        <MenuItem label="Duplicate" onSelect={menu.onDuplicate} />
-        <MenuItem label="Reveal in Finder" onSelect={menu.onRevealInFinder} />
-        <MenuItem label="Open in Default App" onSelect={menu.onOpenInDefaultApp} />
+        <MenuItem label={menu.pinned ? 'Unpin' : 'Pin'} onClick={menu.onTogglePin} />
+        <MenuItem label="Duplicate" onClick={menu.onDuplicate} />
+        <MenuItem label="Reveal in Finder" onClick={menu.onRevealInFinder} />
+        <MenuItem label="Open in Default App" onClick={menu.onOpenInDefaultApp} />
         <DropdownMenuSeparator />
         <MenuItem
           label="Find"
           shortcut={FIND_SHORTCUT}
-          onSelect={onFind && (() => {
+          onClick={onFind && (() => {
             findChosen.current = true
             onFind()
           })}
         />
-        <MenuItem label="Close Tab" shortcut={CLOSE_TAB_SHORTCUT} onSelect={menu.onCloseTab} />
+        <MenuItem label="Close Tab" shortcut={CLOSE_TAB_SHORTCUT} onClick={menu.onCloseTab} />
       </DropdownMenuContent>
     </DropdownMenu>
   )
 }
 
-function MenuItem({ label, shortcut, onSelect }: { label: string; shortcut?: string; onSelect?: () => void }) {
+function MenuItem({ label, shortcut, onClick }: { label: string; shortcut?: string; onClick?: () => void }) {
   return (
-    <DropdownMenuItem disabled={!onSelect} onSelect={onSelect}>
+    <DropdownMenuItem disabled={!onClick} onClick={onClick}>
       {label}
       {shortcut && <DropdownMenuShortcut>{shortcut}</DropdownMenuShortcut>}
     </DropdownMenuItem>
   )
 }
 
-function TabActionTooltip({ label, shortcut, children, ...triggerProps }: { label: string; shortcut?: string; children: ReactNode } & ComponentProps<'button'>) {
-  return (
-    <Tooltip>
-      {/* Props a menu trigger hands down (as its Slot child) go on to the button. */}
-      <TooltipTrigger asChild {...triggerProps}>{children}</TooltipTrigger>
-      <TooltipContent side="bottom" shortcut={shortcut}>{label}</TooltipContent>
-    </Tooltip>
-  )
-}

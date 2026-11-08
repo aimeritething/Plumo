@@ -14,7 +14,7 @@ import { MARKDOWN_HIGHLIGHT_STYLE } from '@/kernel/markdown/markdown-highlight-m
 import { toggleDefaultMarkdownHighlight } from './markdown-highlight-model'
 import { ToolbarHighlightColorControl } from './markdown-highlight-toolbar-control'
 import { ToolbarButton } from '@/ui/toolbar'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
+import { SimpleTooltip } from '@/ui/tooltip'
 import { getSelectedBlocksSafely, type FormattingToolbarEditor } from './formatting-toolbar-selection'
 
 // The five text style toggles of the formatting toolbar: bold, italic,
@@ -116,21 +116,18 @@ export function TextStyleToggle({
   const isHighlight = textStyle === MARKDOWN_HIGHLIGHT_STYLE
 
   const toggle = (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <ToolbarButton
-          aria-label={copy.label}
-          data-test={textStyle}
-          onClick={toggleStyle}
-          pressed={toggleState.active}
-          // The highlight toggle and its colour caret read as one control.
-          segment={isHighlight ? 'start' : 'none'}
-        >
-          <Icon aria-hidden="true" />
-        </ToolbarButton>
-      </TooltipTrigger>
-      <TooltipContent shortcut={copy.shortcut}>{copy.label}</TooltipContent>
-    </Tooltip>
+    <SimpleTooltip label={copy.label} shortcut={copy.shortcut}>
+      <ToolbarButton
+        aria-label={copy.label}
+        data-test={textStyle}
+        onClick={toggleStyle}
+        pressed={toggleState.active}
+        // The highlight toggle and its colour caret read as one control.
+        segment={isHighlight ? 'start' : 'none'}
+      >
+        <Icon aria-hidden="true" />
+      </ToolbarButton>
+    </SimpleTooltip>
   )
 
   if (!isHighlight) return toggle

@@ -1,5 +1,6 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
+import { pressItem } from '@/ui/open-layer.test-utils'
 import { CodeBlockLanguageControls } from './code-block-language-controls'
 
 function codeBlockDom() {
@@ -88,7 +89,8 @@ describe('CodeBlockLanguageControls', () => {
     await waitFor(() => expect(trigger).toBeEnabled())
 
     fireEvent.click(trigger)
-    fireEvent.click(await screen.findByRole('option', { name: 'C++' }))
+    // The picker's list, not the native select's options it stands in for.
+    pressItem(within(await screen.findByRole('listbox')).getByRole('option', { name: 'C++' }))
 
     expect(editor.updateBlock).toHaveBeenCalledWith('code-block-1', {
       props: { language: 'cpp' },

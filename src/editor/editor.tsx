@@ -88,8 +88,8 @@ const PANE_CLASS = 'relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidde
  * the viewport of a `ScrollArea`, so the Document scrolls with Plumo's bar.
  * `overflow-anchor` is off so a side menu appearing near the viewport edge
  * does not shift a long Document; the `editor-scroll-area` name is what the
- * Kernel's side menu and the mode-position sync select on. Radix's content
- * wrapper is the flex column, at least as tall as the viewport, so the prose
+ * Kernel's side menu and the mode-position sync select on. The scroll area's
+ * content box is the flex column, at least as tall as the viewport, so the prose
  * column below the find bar fills the pane.
  */
 const RICH_SCROLL_AREA_CLASS = 'editor-scroll-area [overflow-anchor:none] [&>div]:flex! [&>div]:min-h-full [&>div]:flex-col'

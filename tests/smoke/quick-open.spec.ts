@@ -50,7 +50,7 @@ test('Quick Open finds a Document by name, shows files only, and ↵ opens it', 
 
   await expect(palette(page)).toHaveCount(0)
   await expect(page.locator('.bn-editor h1')).toHaveText('Plumo')
-  await expect(page.getByRole('radio', { name: 'Rich' })).toBeChecked()
+  await expect(page.getByRole('button', { name: 'Rich', exact: true })).toHaveAttribute('aria-pressed', 'true')
   expect(errors.pageErrors).toEqual([])
   expect(errors.consoleErrors).toEqual([])
 })
@@ -110,7 +110,7 @@ test('⌘↵ opens a Document in Raw, and plainly opens an Image file', async ({
   await page.keyboard.press('Meta+Enter')
 
   await expect(page.getByTestId('raw-editor-codemirror')).toBeVisible()
-  await expect(page.getByRole('radio', { name: 'Raw' })).toBeChecked()
+  await expect(page.getByRole('button', { name: 'Raw', exact: true })).toHaveAttribute('aria-pressed', 'true')
   await expect(page.locator('.bn-editor')).toHaveCount(0)
   // The palette stays mounted through its exit animation; ⌘P before it has gone would reopen it with "plumo" still typed.
   await expect(palette(page)).toHaveCount(0)

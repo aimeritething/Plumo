@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { ComponentProps } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { dispatchFolderFilesChanged } from '@/lib/folder-file-changes'
+import { pressToOpen } from '@/ui/open-layer.test-utils'
 import { TooltipProvider } from '@/ui/tooltip'
 import { subscribeImageOpenRequests, subscribeImagePreviewRequests } from './image-block-requests'
 import { endOpenBlockEdits } from './open-block-edits'
@@ -78,7 +79,7 @@ const toolbar = () => screen.getByTestId('image-toolbar')
 const wrapper = (container: HTMLElement) => container.querySelector('.bn-file-block-content-wrapper') as HTMLElement
 
 function openMoreMenu() {
-  fireEvent.pointerDown(screen.getByTestId('image-toolbar-more'), { button: 0, ctrlKey: false, pointerType: 'mouse' })
+  pressToOpen(screen.getByTestId('image-toolbar-more'))
 }
 
 beforeEach(() => {

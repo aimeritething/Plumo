@@ -42,7 +42,7 @@ export async function queueFolderSelection(page: Page, path: string) {
 export async function openFolderThroughDialog(page: Page, path: string) {
   await queueFolderSelection(page, path)
   await page.keyboard.press('Meta+o')
-  await expect(page.getByRole('tree')).toBeVisible()
+  await expect(page.getByTestId('explorer-tree')).toBeVisible()
 }
 
 /** Queue `path` as the dialog's answer and press ⌘⇧O. */

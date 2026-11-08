@@ -4,22 +4,19 @@ import { SCROLLBAR_CLASS, SCROLLBAR_VERTICAL_CLASS, SCROLL_THUMB_CLASS } from '@
 
 /*
  * Raw mode's scrollbar: the bar `ui/scroll-area.tsx` draws everywhere else,
- * drawn over CodeMirror's own scroller. A Radix ScrollArea cannot wrap it, since
- * CodeMirror scrolls an element it makes itself (`view.scrollDOM`) and Plumo
- * reads and restores that element's scroll position, so this keeps the scroller
- * and only swaps the native bar for the same classes and the same behaviour:
- * shown while scrolling or under the pointer, faded out a moment after, the
- * thumb dragged, the track clicked to jump, a wheel over the bar scrolling.
+ * drawn over CodeMirror's own scroller. A Base UI ScrollArea cannot wrap it,
+ * since CodeMirror scrolls an element it makes itself (`view.scrollDOM`) and
+ * Plumo reads and restores that element's scroll position, so this keeps the
+ * scroller and only swaps the native bar for the same classes and the same
+ * behaviour: shown while scrolling (`data-scrolling`, as Base UI sets it),
+ * under the pointer or while held, faded out a moment after (the classes'),
+ * the thumb dragged, the track clicked to jump, a wheel over the bar scrolling.
  */
 
-/** Radix's: how long a pause in scroll events ends a scroll. */
-const SCROLL_END_DELAY = 100
-/** ScrollArea's `scrollHideDelay`. */
-const HIDE_DELAY = 800
-/** Radix's shortest thumb. */
-const MIN_THUMB = 18
-
-type BarState = 'hidden' | 'scrolling' | 'idle' | 'interacting'
+/** Base UI's: how long after the last scroll event a scroll has ended. */
+const SCROLL_TIMEOUT = 500
+/** Base UI's shortest thumb. */
+const MIN_THUMB = 16
 
 interface Geometry {
   top: number
@@ -31,9 +28,7 @@ interface Geometry {
 class RawScrollbar {
   private readonly bar: HTMLDivElement
   private readonly thumb: HTMLDivElement
-  private state: BarState = 'hidden'
   private scrollEndTimer: number | undefined
-  private hideTimer: number | undefined
   private lastScrollTop: number
   /** Where on the thumb the pointer took hold, while dragging. */
   private dragOffset: number | null = null
@@ -47,7 +42,6 @@ class RawScrollbar {
     this.bar.className = `${SCROLLBAR_CLASS} ${SCROLLBAR_VERTICAL_CLASS} absolute right-0`
     this.bar.dataset.slot = 'scroll-area-scrollbar'
     this.bar.dataset.orientation = 'vertical'
-    this.bar.dataset.state = 'hidden'
     this.bar.setAttribute('aria-hidden', 'true')
     this.thumb = doc.createElement('div')
     this.thumb.className = SCROLL_THUMB_CLASS
@@ -57,8 +51,6 @@ class RawScrollbar {
 
     this.lastScrollTop = view.scrollDOM.scrollTop
     view.scrollDOM.addEventListener('scroll', this.onScroll, { passive: true })
-    this.bar.addEventListener('pointerenter', this.onPointerEnter)
-    this.bar.addEventListener('pointerleave', this.onPointerLeave)
     this.bar.addEventListener('pointerdown', this.onPointerDown)
     this.bar.addEventListener('pointermove', this.onPointerMove)
     this.bar.addEventListener('pointerup', this.onPointerUp)
@@ -73,7 +65,6 @@ class RawScrollbar {
 
   destroy() {
     window.clearTimeout(this.scrollEndTimer)
-    window.clearTimeout(this.hideTimer)
     this.view.scrollDOM.removeEventListener('scroll', this.onScroll)
     this.bar.remove()
   }
@@ -117,31 +108,16 @@ class RawScrollbar {
     this.thumb.style.transform = `translate3d(0, ${offset}px, 0)`
   }
 
-  private setState(state: BarState) {
-    this.state = state
-    this.bar.dataset.state = state === 'hidden' ? 'hidden' : 'visible'
-    window.clearTimeout(this.hideTimer)
-    if (state === 'idle') this.hideTimer = window.setTimeout(() => this.setState('hidden'), HIDE_DELAY)
-  }
-
   private readonly onScroll = () => {
     const geometry = this.readGeometry()
     this.layout(geometry)
     if (geometry.scrollTop === this.lastScrollTop) return
     this.lastScrollTop = geometry.scrollTop
-    if (this.state !== 'interacting') this.setState('scrolling')
+    this.bar.dataset.scrolling = ''
     window.clearTimeout(this.scrollEndTimer)
     this.scrollEndTimer = window.setTimeout(() => {
-      if (this.state === 'scrolling') this.setState('idle')
-    }, SCROLL_END_DELAY)
-  }
-
-  private readonly onPointerEnter = () => {
-    if (this.state !== 'hidden') this.setState('interacting')
-  }
-
-  private readonly onPointerLeave = () => {
-    if (this.state === 'interacting' && this.dragOffset === null) this.setState('idle')
+      delete this.bar.dataset.scrolling
+    }, SCROLL_TIMEOUT)
   }
 
   private readonly onPointerDown = (event: PointerEvent) => {
@@ -151,7 +127,7 @@ class RawScrollbar {
     this.bar.setPointerCapture(event.pointerId)
     const thumbBox = this.thumb.getBoundingClientRect()
     const onThumb = event.clientY >= thumbBox.top && event.clientY <= thumbBox.bottom
-    // On the track, the thumb's middle jumps to the pointer, as Radix's does.
+    // On the track, the thumb's middle jumps to the pointer, as Base UI's does.
     this.dragOffset = onThumb ? event.clientY - thumbBox.top : this.thumbLength / 2
     this.scrollToPointer(event.clientY)
   }
@@ -164,9 +140,6 @@ class RawScrollbar {
     if (this.dragOffset === null) return
     this.dragOffset = null
     if (this.bar.hasPointerCapture(event.pointerId)) this.bar.releasePointerCapture(event.pointerId)
-    const box = this.bar.getBoundingClientRect()
-    const inside = event.clientX >= box.left && event.clientX <= box.right && event.clientY >= box.top && event.clientY <= box.bottom
-    if (!inside) this.setState('idle')
   }
 
   private readonly onWheel = (event: WheelEvent) => {

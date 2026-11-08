@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { APP_COMMAND_IDS, executeAppCommand, resetAppCommandDispatchStateForTests } from './app-command-dispatcher'
 import { handleAppKeyboardEvent, type KeyboardActions } from './app-keyboard-shortcuts'
+import { layerAttributes } from '@/ui/open-layer.test-utils'
 
 function actions(overrides: Partial<KeyboardActions> = {}): KeyboardActions {
   return {
@@ -245,7 +246,7 @@ describe('handleAppKeyboardEvent', () => {
     ]
 
     it.each(layers)('$name keeps ⌘W, ⌘N and ⌘K off the window behind it, and lets ⌘Q through', ({ slot }) => {
-      document.body.innerHTML = `<div data-slot="${slot}" data-state="open"></div>`
+      document.body.innerHTML = `<div ${layerAttributes(slot)}></div>`
       const handlers = actions({ onCloseTab: vi.fn(), onQuit: vi.fn() })
 
       for (const key of ['w', 'n', 'k']) {
@@ -262,7 +263,7 @@ describe('handleAppKeyboardEvent', () => {
     })
 
     it('leaves the Command Menu, a dialog itself, to its own rule: ⌘K and ⌘P still switch it', () => {
-      document.body.innerHTML = '<div data-slot="dialog-content" data-state="open" data-command-palette="true"><input type="text" /></div>'
+      document.body.innerHTML = `<div ${layerAttributes('dialog-content')} data-command-palette="true"><input type="text" /></div>`
       document.querySelector('input')!.focus()
       const handlers = actions()
 
@@ -274,7 +275,7 @@ describe('handleAppKeyboardEvent', () => {
     })
 
     it('lets ⌘W and ⌘, through to the Settings dialog, which routes them to itself, and nothing else', () => {
-      document.body.innerHTML = '<div data-slot="dialog-content" data-state="open" data-settings-dialog="true"></div>'
+      document.body.innerHTML = `<div ${layerAttributes('dialog-content')} data-settings-dialog="true"></div>`
       const handlers = actions({ onCloseTab: vi.fn(), onOpenSettings: vi.fn() })
 
       handleAppKeyboardEvent(handlers, press('w'))
@@ -289,7 +290,7 @@ describe('handleAppKeyboardEvent', () => {
     })
 
     it('keeps ⌘W off the Tabs when a menu is open over the Settings dialog', () => {
-      document.body.innerHTML = '<div data-slot="dialog-content" data-state="open" data-settings-dialog="true"></div><div data-slot="dropdown-menu-content" data-state="open"></div>'
+      document.body.innerHTML = `<div ${layerAttributes('dialog-content')} data-settings-dialog="true"></div><div ${layerAttributes('dropdown-menu-content')}></div>`
       const handlers = actions({ onCloseTab: vi.fn() })
 
       handleAppKeyboardEvent(handlers, press('w'))
@@ -298,7 +299,7 @@ describe('handleAppKeyboardEvent', () => {
     })
 
     it('stops counting once it is closing', () => {
-      document.body.innerHTML = '<div data-slot="dialog-content" data-state="closed"></div>'
+      document.body.innerHTML = `<div ${layerAttributes('dialog-content', 'closing')}></div>`
       const handlers = actions({ onCloseTab: vi.fn() })
 
       handleAppKeyboardEvent(handlers, press('w'))
@@ -307,7 +308,7 @@ describe('handleAppKeyboardEvent', () => {
     })
 
     it('leaves ⌘Z to a text field inside it', () => {
-      document.body.innerHTML = '<div data-slot="dialog-content" data-state="open"><input type="text" /></div>'
+      document.body.innerHTML = `<div ${layerAttributes('dialog-content')}><input type="text" /></div>`
       document.querySelector('input')!.focus()
       const event = press('z')
 

@@ -124,12 +124,12 @@ test('the "…" menu hands the Document to Finder and to its default app, its Fi
   await page.goto('/')
   await page.evaluate((folder) => window.__plumoMockVault?.queueDialogSelection([folder]), MOCK_FOLDER)
   await page.keyboard.press('Meta+o')
-  await expect(page.getByRole('tree')).toBeVisible()
+  await expect(page.getByTestId('explorer-tree')).toBeVisible()
   await openDocumentThroughDialog(page, WELCOME_PATH)
   await expect(page.locator('.bn-editor h1')).toHaveText('Welcome')
 
   await page.getByRole('button', { name: 'More', exact: true }).click()
-  expect(await page.getByTestId('tab-more-menu').getByRole('menuitem').allTextContents()).toEqual([
+  await expect(page.getByTestId('tab-more-menu').getByRole('menuitem')).toHaveText([
     'Pin', 'Duplicate', 'Reveal in Finder', 'Open in Default App', 'Find⌘F', 'Close Tab⌘W',
   ])
   await page.getByRole('menuitem', { name: 'Reveal in Finder' }).click()

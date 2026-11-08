@@ -28,12 +28,12 @@ test('⌘, opens the Settings with no Folder open, and a theme chosen there appl
 
   await expect(settingsDialog(page)).toBeVisible()
   await expect(page.getByRole('dialog', { name: 'Settings' })).toBeVisible()
-  await expect(themeCard(page, 'light')).toHaveAttribute('aria-checked', 'true')
+  await expect(themeCard(page, 'light')).toHaveAttribute('aria-pressed', 'true')
 
   await themeCard(page, 'dark').click()
 
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
-  await expect(themeCard(page, 'dark')).toHaveAttribute('aria-checked', 'true')
+  await expect(themeCard(page, 'dark')).toHaveAttribute('aria-pressed', 'true')
   await expect.poll(() => storedSettings(page)).toEqual({ version: 1, theme: 'dark', primaryColor: '#0082fb' })
   expect(await storedSession(page)).not.toHaveProperty('theme')
 
@@ -65,8 +65,12 @@ test('the Folder switcher\'s menu ends with Settings, which opens the dialog', a
   await page.keyboard.press('Tab')
   await page.keyboard.press('Tab')
   await expect(themeCard(page, 'light')).toBeFocused()
+  // The arrows move the focus; Space chooses.
   await page.keyboard.press('ArrowLeft')
-  await expect(themeCard(page, 'dark')).toHaveAttribute('aria-checked', 'true')
+  await expect(themeCard(page, 'dark')).toBeFocused()
+  await expect(themeCard(page, 'light')).toHaveAttribute('aria-pressed', 'true')
+  await page.keyboard.press('Space')
+  await expect(themeCard(page, 'dark')).toHaveAttribute('aria-pressed', 'true')
   await expect(themeCard(page, 'dark')).toBeFocused()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
   expect(errors.pageErrors).toEqual([])
@@ -80,7 +84,7 @@ test('View → Appearance and the dialog show the same theme, and ⌘W closes th
   await expect(settingsDialog(page)).toBeVisible()
 
   await dispatchCommand(page, 'view-appearance-system')
-  await expect(themeCard(page, 'system')).toHaveAttribute('aria-checked', 'true')
+  await expect(themeCard(page, 'system')).toHaveAttribute('aria-pressed', 'true')
 
   await dispatchCommand(page, 'app-settings')
   await expect(settingsDialog(page)).toHaveCount(1)

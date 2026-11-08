@@ -5,7 +5,7 @@ import { createTranslator } from '@/lib/i18n'
 import { trackEvent } from '@/lib/telemetry'
 import { writeClipboardText } from '@/platform/clipboard-text'
 import { codeBlockText } from './editor-rich-copy'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
+import { SimpleTooltip } from '@/ui/tooltip'
 import { Toolbar, ToolbarButton } from '@/ui/toolbar'
 import type { CodeBlockCopyTarget } from './use-code-block-copy-target'
 
@@ -33,19 +33,16 @@ export function CodeBlockCopyButton({ copyTarget, locale }: { copyTarget: CodeBl
   const handleCopy = useCodeBlockCopyAction(copyTarget)
   return (
     <Toolbar aria-label={t('editor.codeBlock.toolbar')} className="absolute z-raised" contentEditable={false} data-editor-code-copy style={{ left: copyTarget.left, top: copyTarget.top }}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <ToolbarButton
-            aria-label={label}
-            onClick={handleCopy}
-            onMouseDown={stopCopyButtonEvent}
-            size="sm"
-          >
-            <Copy aria-hidden="true" />
-          </ToolbarButton>
-        </TooltipTrigger>
-        <TooltipContent side="left" align="center">{label}</TooltipContent>
-      </Tooltip>
+      <SimpleTooltip label={label} side="left">
+        <ToolbarButton
+          aria-label={label}
+          onClick={handleCopy}
+          onMouseDown={stopCopyButtonEvent}
+          size="sm"
+        >
+          <Copy aria-hidden="true" />
+        </ToolbarButton>
+      </SimpleTooltip>
     </Toolbar>
   )
 }

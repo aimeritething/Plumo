@@ -1,5 +1,5 @@
 import type { EditorView } from '@codemirror/view'
-import type { ChangeEvent, KeyboardEvent, MutableRefObject, RefObject } from 'react'
+import type { MutableRefObject, RefObject } from 'react'
 import type { AppLocale } from '@/lib/i18n'
 import type { EditorFindMatch } from '@/kernel/blocknote/editor-find'
 import type { EditorFindSession } from './editor-find-session'
@@ -28,23 +28,24 @@ export interface ActiveEditorFindMatchSelection {
   viewRef: MutableRefObject<EditorView | null>
 }
 
+/** What the Raw bar's search hands the shared `FindBar`. */
 export interface RawEditorFindController {
   caseSensitive: boolean
+  changeQuery: (value: string) => void
   close: () => void
+  currentIndex: number
+  error: string | null
   findInputRef: RefObject<HTMLInputElement | null>
-  handleFindChange: (event: ChangeEvent<HTMLInputElement>) => void
-  handleFindKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void
-  hasMatches: boolean
+  matchCount: number
   moveNext: () => void
   movePrevious: () => void
   query: string
   regex: boolean
   replaceAll: () => void
-  replaceCurrent: () => void
-  handleReplaceKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void
+  /** The Replace button hands the focus to the editor; ↵ in the replace input keeps it there. */
+  replaceCurrent: (from: 'button' | 'enter') => void
   replacement: string
   setReplacement: (value: string) => void
-  status: string
   toggleCaseSensitive: () => void
   toggleRegex: () => void
 }

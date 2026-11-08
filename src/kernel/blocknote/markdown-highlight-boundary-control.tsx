@@ -1,38 +1,59 @@
 import { Highlighter } from '@phosphor-icons/react'
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { translate } from '@/lib/i18n'
 import { MarkdownHighlightColorMenu } from './markdown-highlight-color-menu'
 import {
+  CONTROL_GAP,
   useCursorControlState,
   useDocumentLocale,
   useFocusWithinEditorOrControl,
 } from './markdown-highlight-control-state'
 import type { HighlightEditor } from './markdown-highlight-model'
 import { Button } from '@/ui/button'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
+import { Popover, PopoverAnchor, PopoverContent } from '@/ui/popover'
+import { SimpleTooltip } from '@/ui/tooltip'
 
 // Shown while the focus is in the editor, or in the button or its colour menu
-// (the menu is portaled, so it counts while open). The menu and the tooltip
-// open away from the highlight's line, on the side the button sits.
+// (the menu is portaled, so it counts while open). A popover anchored on the
+// highlight end's line places it, above the line or below it, inside the
+// scroll area's left and right edges. The menu and the tooltip open away from
+// the highlight's line, on the side the button sits.
 export function HighlightBoundaryColorControl({ editor }: { editor: HighlightEditor }) {
   const locale = useDocumentLocale()
   const state = useCursorControlState(editor)
   const controlRef = useRef<HTMLDivElement>(null)
   const focused = useFocusWithinEditorOrControl(editor, controlRef)
   const [menuOpen, setMenuOpen] = useState(false)
+  // A new anchor whenever the line box moves, so the popover places it again.
+  const anchorRect = state?.anchor
+  const anchor = useMemo(() => ({ current: anchorRect ? { getBoundingClientRect: () => anchorRect } : null }), [anchorRect])
   if (!state || !editor.isEditable || !(focused || menuOpen)) return null
 
   const label = translate(locale, 'editor.formatting.highlightChangeColor')
 
   return (
-    <div
-      ref={controlRef}
-      className="fixed z-sticky"
-      data-test="highlightBoundaryControl"
-      style={{ left: state.left, top: state.top }}
-    >
-      {/* The tooltip trigger is the menu trigger's child, so the menu's open / closed data-state is the one the button keeps. */}
-      <Tooltip>
+    // Open for as long as it is shown, with no onOpenChange: a press in the
+    // editor, the editor's focus and Esc are all "outside" the popover, and
+    // none of them may close it.
+    <Popover open>
+      <PopoverAnchor anchor={anchor} />
+      <PopoverContent
+        ref={controlRef}
+        align="center"
+        collisionBoundary={state.boundary ?? undefined}
+        data-test="highlightBoundaryControl"
+        // It never closes on Esc (it has no onOpenChange), so the Esc stays the editor's.
+        leaveEscapeUnmarked
+        // The popover only places the button; the focus stays in the editor,
+        // so it neither takes the focus when it shows nor hands it back when it goes.
+        finalFocus={false}
+        initialFocus={false}
+        role={undefined}
+        side={state.side}
+        sideOffset={CONTROL_GAP}
+        variant="menu"
+      >
+        {/* The tooltip sits inside the menu trigger, so the menu's open / closed state is the one the button keeps. */}
         <MarkdownHighlightColorMenu
           currentColor={state.color}
           editor={editor}
@@ -42,22 +63,20 @@ export function HighlightBoundaryColorControl({ editor }: { editor: HighlightEdi
           side={state.side}
           source="cursor"
           trigger={(
-            <TooltipTrigger asChild>
+            <SimpleTooltip label={label} side={state.side}>
               <Button
                 aria-label={label}
-                className="bg-popover text-foreground border-hairline border-border shadow-md"
                 data-test="highlightBoundaryColorMenu"
                 onMouseDown={event => event.preventDefault()}
                 size="icon-xs"
-                variant="ghost"
+                variant="surface"
               >
                 <Highlighter aria-hidden="true" />
               </Button>
-            </TooltipTrigger>
+            </SimpleTooltip>
           )}
         />
-        <TooltipContent side={state.side}>{label}</TooltipContent>
-      </Tooltip>
-    </div>
+      </PopoverContent>
+    </Popover>
   )
 }

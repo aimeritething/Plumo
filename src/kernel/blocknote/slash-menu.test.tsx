@@ -1,5 +1,6 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it, onTestFinished, vi } from 'vitest'
+import { isLayerPositioner, layerPositioner } from '@/ui/open-layer.test-utils'
 
 const editorElement = document.createElement('div')
 document.body.appendChild(editorElement)
@@ -110,28 +111,62 @@ describe('SlashMenu', () => {
     fireEvent.mouseEnter(screen.getByRole('option', { name: 'Callout' }))
 
     const submenu = screen.getByRole('menu', { name: 'Callout' })
-    expect(submenu).toHaveClass('fixed', 'rounded-xl', 'shadow-md')
+    expect(submenu).toHaveClass('rounded-xl', 'shadow-md')
+    expect(submenu.closest('[data-slot="popover-content"]')).toHaveAttribute('data-side', 'right')
     fireEvent.click(screen.getByRole('menuitem', { name: 'Tip' }))
     expect(onItemClick).toHaveBeenCalledWith(item.submenuItems?.[1])
   })
 
-  it('slides the submenu up when level with its row it would run off the viewport', () => {
-    const rect = (overrides: Partial<DOMRect>) => ({
-      bottom: 0, height: 0, left: 0, right: 0, top: 0, width: 0, x: 0, y: 0, toJSON: () => ({}), ...overrides,
-    }) as DOMRect
-    const boundsSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
-      return this.getAttribute('role') === 'menu' ? rect({ height: 400 }) : rect({ right: 300, top: 700 })
+  // The popover places the submenu beside the row it opened from: level with
+  // it and 4px to its right, slid up as far as it must to stay 8px inside the
+  // viewport near its bottom.
+  it('places the submenu beside its row, slid up when level with it it would run off the viewport', async () => {
+    const rect = (overrides: Partial<DOMRect>) => {
+      const box = { bottom: 0, height: 0, left: 0, right: 0, top: 0, width: 0, x: 0, y: 0, ...overrides }
+      return { ...box, toJSON: () => box } as DOMRect
+    }
+    const isPopper = (element: HTMLElement) => isLayerPositioner(element)
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      if (this.getAttribute('role') === 'option') return rect({ bottom: 732, height: 32, left: 12, right: 300, top: 700, width: 288, x: 12, y: 700 })
+      return isPopper(this) ? rect({ height: 400, width: 160 }) : rect({})
     })
-    const innerHeight = window.innerHeight
-    Object.defineProperty(window, 'innerHeight', { configurable: true, value: 800 })
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (this: HTMLElement) {
+      return isPopper(this) ? 400 : 0
+    })
+    vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(function (this: HTMLElement) {
+      return isPopper(this) ? 160 : 0
+    })
+    vi.spyOn(document.documentElement, 'clientHeight', 'get').mockReturnValue(800)
+    vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(1200)
+    onTestFinished(() => { vi.restoreAllMocks() })
 
     render(<SlashMenu items={[calloutItem()]} loadingState="loaded" selectedIndex={0} onItemClick={vi.fn()} />)
     fireEvent.mouseEnter(screen.getByRole('option', { name: 'Callout' }))
 
-    expect(screen.getByRole('menu', { name: 'Callout' })).toHaveStyle({ left: '304px', top: '392px' })
+    const popper = layerPositioner(screen.getByRole('menu', { name: 'Callout' }))
+    await waitFor(() => { expect(popper.style.transform).toBe('translate(304px, 392px)') })
+  })
 
-    boundsSpy.mockRestore()
-    Object.defineProperty(window, 'innerHeight', { configurable: true, value: innerHeight })
+  // The submenu is a popover for its placement only: it would otherwise take
+  // the focus on open, and close on a press on the Slash menu's own rows or on
+  // the focus the editor keeps, both "outside" it.
+  it('leaves the focus in the editor and stays open on a press or a focus outside it', async () => {
+    editorElement.tabIndex = -1
+    editorElement.focus()
+    onTestFinished(() => { editorElement.blur() })
+    render(<SlashMenu items={[calloutItem()]} loadingState="loaded" selectedIndex={0} onItemClick={vi.fn()} />)
+
+    fireEvent.keyDown(editorElement, { key: 'ArrowRight' })
+    expect(screen.getByRole('menu', { name: 'Callout' })).toBeInTheDocument()
+    expect(document.activeElement).toBe(editorElement)
+
+    // The popover starts listening for presses outside it a task after it opens.
+    await new Promise((resolve) => { setTimeout(resolve, 0) })
+    fireEvent.pointerDown(screen.getByRole('option', { name: 'Callout' }))
+    fireEvent.focusIn(editorElement)
+
+    expect(screen.getByRole('menu', { name: 'Callout' })).toBeInTheDocument()
+    expect(document.activeElement).toBe(editorElement)
   })
 
   it('supports right-arrow entry and keyboard selection inside the submenu', () => {

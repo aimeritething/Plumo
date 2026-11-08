@@ -137,7 +137,7 @@ describe("FilePanel", () => {
 			caption: "Q3",
 		});
 		render(panel(editor));
-		fireEvent.mouseDown(screen.getByRole("tab", { name: "Embed" }));
+		fireEvent.click(screen.getByRole("tab", { name: "Embed" }));
 
 		const embedButton = await screen.findByRole("button", { name: "Embed image" });
 		expect(embedButton).toBeDisabled();

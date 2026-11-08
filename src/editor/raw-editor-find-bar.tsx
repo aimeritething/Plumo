@@ -1,14 +1,6 @@
-import { CaretDown as ChevronDown, CaretRight as ChevronRight, CaretUp as ChevronUp, X } from '@phosphor-icons/react'
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { EditorView } from '@codemirror/view'
-import { Button } from '@/ui/button'
-import { Input } from '@/ui/input'
-import { Toggle } from '@/ui/toggle'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
-import { cn } from '@/lib/cn'
-import { translate, type AppLocale } from '@/lib/i18n'
-import { isImeKeyEvent } from '@/lib/ime-key-event'
-import type { FindControlsProps, ReplaceControlsProps } from './raw-editor-find-control-types'
+import { FindBar } from './find-bar'
 import type { ActiveEditorFindMatchSelection, RawEditorFindBarProps, RawEditorFindController, RawEditorFindRequest } from './raw-editor-find-types'
 import {
   buildEditorFindReplacementChange,
@@ -29,16 +21,6 @@ function selectMatch(view: EditorView, match: EditorFindMatch, focusEditor: bool
     effects: EditorView.scrollIntoView(match.from, { y: 'center' }),
   })
   if (focusEditor) view.focus()
-}
-
-function matchStatusText(locale: AppLocale, error: string | null, activeIndex: number, matchCount: number): string {
-  if (error === 'Invalid regex') return translate(locale, 'editor.find.invalidRegex')
-  if (error) return translate(locale, 'editor.find.regexMustMatchText')
-  if (matchCount === 0) return translate(locale, 'editor.find.noMatches')
-  return translate(locale, 'editor.find.matchCount', {
-    current: clampEditorFindIndex(activeIndex, matchCount) + 1,
-    total: matchCount,
-  })
 }
 
 function useRequestFocus({
@@ -69,29 +51,6 @@ function useRequestFocus({
 function closeRawEditorFind(onClose: () => void, viewRef: React.MutableRefObject<EditorView | null>): void {
   onClose()
   requestAnimationFrame(() => viewRef.current?.focus())
-}
-
-/** ↵ in the find input: the next match, ⇧↵ the previous. Escape is the bar's, for every control in it. */
-function handleRawEditorFindKeyDown(
-  event: KeyboardEvent<HTMLInputElement>,
-  moveMatch: (direction: 1 | -1) => void,
-): void {
-  // Enter confirming a candidate is the input method's.
-  if (event.key !== 'Enter' || isImeKeyEvent(event.nativeEvent)) return
-
-  event.preventDefault()
-  moveMatch(event.shiftKey ? -1 : 1)
-}
-
-/** ↵ in the replace input replaces the current match, as the Replace button does, and the next match becomes current. */
-function handleRawEditorReplaceKeyDown(
-  event: KeyboardEvent<HTMLInputElement>,
-  replaceCurrent: () => void,
-): void {
-  if (event.key !== 'Enter' || event.shiftKey || isImeKeyEvent(event.nativeEvent)) return
-
-  event.preventDefault()
-  replaceCurrent()
 }
 
 /**
@@ -196,14 +155,14 @@ function useEditorFindNavigation(
   matchCount: number,
   setActiveIndex: React.Dispatch<React.SetStateAction<number>>,
   requestSelection: () => void,
-): { moveMatch: (direction: 1 | -1) => void; moveNext: () => void; movePrevious: () => void } {
+): { moveNext: () => void; movePrevious: () => void } {
   const moveMatch = useCallback((direction: 1 | -1) => {
     setActiveIndex((current) => nextEditorFindIndex(current, matchCount, direction))
     requestSelection()
   }, [matchCount, requestSelection, setActiveIndex])
   const movePrevious = useCallback(() => moveMatch(-1), [moveMatch])
   const moveNext = useCallback(() => moveMatch(1), [moveMatch])
-  return { moveMatch, moveNext, movePrevious }
+  return { moveNext, movePrevious }
 }
 
 function useEditorFindOptionToggle(
@@ -220,13 +179,11 @@ function useEditorFindOptionToggle(
 function useEditorFindState({
   activeIndex,
   doc,
-  locale,
   options,
   query,
 }: {
   activeIndex: number
   doc: string
-  locale: AppLocale
   options: EditorFindOptions
   query: string
 }) {
@@ -235,23 +192,22 @@ function useEditorFindState({
   return {
     activeMatch: result.matches.at(currentIndex),
     currentIndex,
-    hasMatches: result.matches.length > 0 && !result.error,
+    error: result.error,
     matches: result.matches,
-    status: matchStatusText(locale, result.error, currentIndex, result.matches.length),
   }
 }
 
 function useRawEditorFindController(
   functionOptions: Omit<RawEditorFindBarProps, 'replaceOpen'>,
 ): RawEditorFindController {
-  const { doc, find, locale = 'en', onReplaceOpenChange, path, request, viewRef } = functionOptions
+  const { doc, find, onReplaceOpenChange, path, request, viewRef } = functionOptions
   const { open, options, query, setQuery } = find
   const { caseSensitive, regex } = options
   const inputRef = useRef<HTMLInputElement>(null)
   const [replacement, setReplacement] = useState('')
   const [activeIndex, setActiveIndex] = useState(0)
   const [selectionRequestId, setSelectionRequestId] = useState(0)
-  const { activeMatch, currentIndex, hasMatches, matches, status } = useEditorFindState({ activeIndex, doc, locale, options, query })
+  const { activeMatch, currentIndex, error, matches } = useEditorFindState({ activeIndex, doc, options, query })
 
   useRequestFocus({ inputRef, onReplaceOpenChange, open, path, request })
 
@@ -259,9 +215,9 @@ function useRawEditorFindController(
   useRequestedEditorFindMatchSelection({ activeMatch, open, requestId: selectionRequestId, viewRef })
 
   const requestSelection = useCallback(() => setSelectionRequestId((current) => current + 1), [])
-  const { moveMatch, moveNext, movePrevious } = useEditorFindNavigation(matches.length, setActiveIndex, requestSelection)
-  const handleFindChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setQuery(event.target.value)
+  const { moveNext, movePrevious } = useEditorFindNavigation(matches.length, setActiveIndex, requestSelection)
+  const changeQuery = useCallback((value: string) => {
+    setQuery(value)
     setActiveIndex(0)
     requestSelection()
   }, [requestSelection, setQuery])
@@ -269,30 +225,16 @@ function useRawEditorFindController(
   const closeFind = find.close
   const close = useCallback(() => closeRawEditorFind(closeFind, viewRef), [closeFind, viewRef])
 
-  const handleFindKeyDown = useCallback(
-    (event: KeyboardEvent<HTMLInputElement>) => {
-      handleRawEditorFindKeyDown(event, moveMatch)
-    },
-    [moveMatch],
-  )
-
-  const replaceMatch = useCallback((focusEditor: boolean) => {
+  const replaceCurrent = useCallback((from: 'button' | 'enter') => {
     replaceCurrentEditorFindMatch({
       activeMatch,
-      focusEditor,
+      focusEditor: from === 'button',
       options,
       query,
       replacement,
       viewRef,
     })
   }, [activeMatch, options, query, replacement, viewRef])
-  const replaceCurrent = useCallback(() => replaceMatch(true), [replaceMatch])
-  const handleReplaceKeyDown = useCallback(
-    (event: KeyboardEvent<HTMLInputElement>) => {
-      handleRawEditorReplaceKeyDown(event, () => replaceMatch(false))
-    },
-    [replaceMatch],
-  )
 
   const replaceAll = useCallback(() => {
     if (
@@ -312,12 +254,12 @@ function useRawEditorFindController(
 
   return {
     caseSensitive,
+    changeQuery,
     close,
+    currentIndex,
+    error,
     findInputRef: inputRef,
-    handleFindChange,
-    handleFindKeyDown,
-    handleReplaceKeyDown,
-    hasMatches,
+    matchCount: matches.length,
     moveNext,
     movePrevious,
     query,
@@ -326,193 +268,42 @@ function useRawEditorFindController(
     replaceCurrent,
     replacement,
     setReplacement,
-    status,
     toggleCaseSensitive,
     toggleRegex,
   }
 }
 
-function FindNavigationControls({
-  hasMatches,
-  locale,
-  moveNext,
-  movePrevious,
-}: Pick<FindControlsProps, 'hasMatches' | 'locale' | 'moveNext' | 'movePrevious'>) {
-  const previousLabel = translate(locale, 'editor.find.previousMatch')
-  const nextLabel = translate(locale, 'editor.find.nextMatch')
-  return (
-    <>
-      <FindTooltip label={previousLabel}>
-        <Button type="button" variant="icon" size="icon-xs" aria-label={previousLabel} disabled={!hasMatches} onClick={movePrevious}>
-          <ChevronUp />
-        </Button>
-      </FindTooltip>
-      <FindTooltip label={nextLabel}>
-        <Button type="button" variant="icon" size="icon-xs" aria-label={nextLabel} disabled={!hasMatches} onClick={moveNext}>
-          <ChevronDown />
-        </Button>
-      </FindTooltip>
-    </>
-  )
-}
-
-function FindModeControls({
-  caseSensitive,
-  close,
-  locale,
-  regex,
-  toggleCaseSensitive,
-  toggleRegex,
-}: Pick<FindControlsProps, 'caseSensitive' | 'close' | 'locale' | 'regex' | 'toggleCaseSensitive' | 'toggleRegex'>) {
-  const regexLabel = translate(locale, 'editor.find.regex')
-  const matchCaseLabel = translate(locale, 'editor.find.matchCase')
-  const closeLabel = translate(locale, 'editor.find.close')
-  return (
-    <>
-      <FindTooltip label={regexLabel}>
-        <Toggle pressed={regex} data-state={regex ? 'on' : 'off'} aria-label={regexLabel} onPressedChange={toggleRegex}>
-          .*
-        </Toggle>
-      </FindTooltip>
-      <FindTooltip label={matchCaseLabel}>
-        <Toggle pressed={caseSensitive} data-state={caseSensitive ? 'on' : 'off'} aria-label={matchCaseLabel} onPressedChange={toggleCaseSensitive}>
-          Aa
-        </Toggle>
-      </FindTooltip>
-      <FindTooltip label={closeLabel}>
-        <Button type="button" variant="icon" size="icon-xs" aria-label={closeLabel} onClick={close}>
-          <X />
-        </Button>
-      </FindTooltip>
-    </>
-  )
-}
-
-/** An icon control's tooltip, below it. A `Toggle` inside restates its `data-state`: the trigger writes its own over it. */
-function FindTooltip({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>{children}</TooltipTrigger>
-      <TooltipContent side="bottom">{label}</TooltipContent>
-    </Tooltip>
-  )
-}
-
-function FindControls(options: FindControlsProps) {
-  const { findInputRef, handleFindChange, handleFindKeyDown, locale, onReplaceOpenChange, query, replaceOpen, status } = options
-  const replaceLabel = translate(locale, replaceOpen ? 'editor.find.hideReplace' : 'editor.find.showReplace')
-  return (
-    <div className="flex min-w-0 items-center gap-1.5">
-      <FindTooltip label={replaceLabel}>
-        <Button type="button" variant="icon" size="icon-xs" aria-label={replaceLabel} onClick={() => onReplaceOpenChange(!replaceOpen)}>
-          <ChevronRight className={cn('transition-transform', replaceOpen && 'rotate-90')} />
-        </Button>
-      </FindTooltip>
-      <Input
-        ref={findInputRef}
-        type="search"
-        aria-label={translate(locale, 'editor.find.findLabel')}
-        placeholder={translate(locale, 'editor.find.findPlaceholder')}
-        value={query}
-        onChange={handleFindChange}
-        onKeyDown={handleFindKeyDown}
-        className="h-7 min-w-[12rem] flex-1 rounded px-2 text-xs"
-        data-testid="raw-editor-find-input"
-      />
-      <span
-        className="min-w-[4.75rem] text-right text-xs text-muted-foreground"
-        aria-live="polite"
-        data-testid="raw-editor-find-count"
-      >
-        {status}
-      </span>
-      <FindNavigationControls {...options} />
-      <FindModeControls {...options} />
-    </div>
-  )
-}
-
-function ReplaceControls({
-  handleReplaceKeyDown,
-  hasMatches,
-  locale,
-  replaceAll,
-  replaceCurrent,
-  replacement,
-  setReplacement,
-}: ReplaceControlsProps) {
-  return (
-    <div className="ml-[1.875rem] flex min-w-0 items-center gap-1.5">
-      <Input
-        type="text"
-        aria-label={translate(locale, 'editor.find.replaceLabel')}
-        placeholder={translate(locale, 'editor.find.replacePlaceholder')}
-        value={replacement}
-        onChange={(event) => setReplacement(event.target.value)}
-        onKeyDown={handleReplaceKeyDown}
-        className="h-7 min-w-[12rem] flex-1 rounded px-2 text-xs"
-        data-testid="raw-editor-replace-input"
-      />
-      <Button type="button" variant="outline" size="xs" disabled={!hasMatches} onClick={replaceCurrent}>
-        {translate(locale, 'editor.find.replace')}
-      </Button>
-      <Button type="button" variant="outline" size="xs" disabled={!hasMatches} onClick={replaceAll}>
-        {translate(locale, 'editor.find.replaceAll')}
-      </Button>
-    </div>
-  )
-}
-
-function RawEditorFindBarContent({
-  controller,
-  locale,
-  onReplaceOpenChange,
-  replaceOpen,
-}: {
-  controller: RawEditorFindController
-  locale: AppLocale
-  onReplaceOpenChange: (open: boolean) => void
-  replaceOpen: boolean
-}) {
-  return (
-    <>
-      <FindControls
-        {...controller}
-        locale={locale}
-        onReplaceOpenChange={onReplaceOpenChange}
-        replaceOpen={replaceOpen}
-      />
-      {replaceOpen && <ReplaceControls {...controller} locale={locale} />}
-    </>
-  )
-}
-
 export function RawEditorFindBar(props: RawEditorFindBarProps) {
   const { find, locale = 'en', onReplaceOpenChange, replaceOpen } = props
   const controller = useRawEditorFindController(props)
-  const { close } = controller
 
   if (!find.open) return null
 
-  // Escape from any control in the bar closes it once; cancelling a candidate is the input method's.
-  const onBarKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key !== 'Escape' || isImeKeyEvent(event.nativeEvent)) return
-    event.preventDefault()
-    close()
-  }
-
   return (
-    <div
-      className="flex shrink-0 flex-col gap-1.5 border-b border-border bg-background px-3 py-2"
-      data-testid="raw-editor-find-bar"
-      onKeyDown={onBarKeyDown}
-    >
-      <RawEditorFindBarContent
-        controller={controller}
-        locale={locale}
-        onReplaceOpenChange={onReplaceOpenChange}
-        replaceOpen={replaceOpen}
-      />
-    </div>
+    <FindBar
+      testIdPrefix="raw-editor"
+      locale={locale}
+      inputRef={controller.findInputRef}
+      query={controller.query}
+      onQueryChange={controller.changeQuery}
+      caseSensitive={controller.caseSensitive}
+      onCaseSensitiveChange={controller.toggleCaseSensitive}
+      regex={controller.regex}
+      onRegexChange={controller.toggleRegex}
+      matchCount={controller.matchCount}
+      currentIndex={controller.currentIndex}
+      error={controller.error}
+      onNext={controller.moveNext}
+      onPrevious={controller.movePrevious}
+      onClose={controller.close}
+      replace={{
+        open: replaceOpen,
+        onOpenChange: onReplaceOpenChange,
+        value: controller.replacement,
+        onValueChange: controller.setReplacement,
+        onReplace: controller.replaceCurrent,
+        onReplaceAll: controller.replaceAll,
+      }}
+    />
   )
 }

@@ -40,6 +40,18 @@ describe('TabBar', () => {
     expect(onActivate).toHaveBeenCalledTimes(1)
   })
 
+  it('activates a focused Tab on Enter or Space, with only the active Tab in the Tab order', () => {
+    const onActivate = vi.fn()
+    render(<TabBar tabs={tabs} activeTabPath="/n/a.md" onActivate={onActivate} onClose={vi.fn()} />)
+
+    expect(screen.getAllByRole('tab').map((element) => element.tabIndex)).toEqual([0, -1, -1])
+    fireEvent.keyDown(screen.getByRole('tab', { name: 'b.md' }), { key: 'Enter' })
+    fireEvent.keyDown(screen.getByRole('tab', { name: 'c.md' }), { key: ' ' })
+    fireEvent.keyDown(screen.getByRole('tab', { name: 'c.md' }), { key: 'a' })
+
+    expect(onActivate.mock.calls).toEqual([['/n/b.md'], ['/n/c.md']])
+  })
+
   it('closes a Tab on a middle-click, the way its close affordance does, without activating it', () => {
     const onActivate = vi.fn()
     const onClose = vi.fn()

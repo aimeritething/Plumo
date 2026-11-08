@@ -88,10 +88,10 @@ test('a launch by document inside the open Folder leaves the sidebar as it was a
 
   await expect(activeTab(page)).toHaveText('Plumo.md')
   await expect(page.getByTestId('sidebar')).toBeVisible()
-  const row = page.getByRole('treeitem', { name: 'Plumo.md' })
+  const row = page.getByTestId('explorer-tree').getByRole('button', { name: 'Plumo.md', exact: true })
   await expect(row).toBeVisible()
-  await expect(row).toHaveAttribute('aria-selected', 'true')
-  await expect(page.getByRole('treeitem', { name: 'Projects' })).toHaveAttribute('aria-expanded', 'true')
+  await expect(row).toHaveAttribute('data-active')
+  await expect(page.getByTestId('explorer-tree').getByRole('button', { name: 'Projects', exact: true })).toHaveAttribute('aria-expanded', 'true')
   expect(errors.pageErrors).toEqual([])
   expect(errors.consoleErrors).toEqual([])
 })

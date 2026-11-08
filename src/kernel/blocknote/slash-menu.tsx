@@ -1,7 +1,6 @@
 import { useBlockNoteEditor, useDictionary, type SuggestionMenuProps } from '@blocknote/react'
 import { CaretRight, CircleNotch } from '@phosphor-icons/react'
-import { Fragment, useCallback, useLayoutEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react'
-import { createPortal } from 'react-dom'
+import { Fragment, useCallback, useLayoutEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react'
 import { isImeKeyEvent } from '@/lib/ime-key-event'
 import {
   MenuList,
@@ -11,6 +10,7 @@ import {
   MenuListSeparator,
   MenuListShortcut,
 } from '@/ui/menu-list'
+import { Popover, PopoverAnchor, PopoverContent } from '@/ui/popover'
 import type { SlashMenuItem } from './slash-menu-items'
 
 // The Slash menu (CONTEXT.md), laid out like Notion's: the rows under small
@@ -22,22 +22,17 @@ import type { SlashMenuItem } from './slash-menu-items'
 // `aria-controls` and `aria-activedescendant`.
 
 interface OpenSubmenu {
+  /** The row it opened from, which it sits beside. */
+  anchor: Element
   key: string
-  left: number
-  top: number
 }
 
 type SubmenuKeyboardAction = { kind: 'close' } | { kind: 'move'; delta: number } | { kind: 'open' } | { kind: 'select' }
 
-const SUBMENU_VIEWPORT_PADDING_PX = 8
-
 // The submenu opens level with its row; near the bottom of the viewport that
-// would run it off screen, so it slides up as far as needed (and no higher
-// than the padding).
-function clampedSubmenuTop(top: number, submenuHeight: number, viewportHeight: number): number {
-  const maxTop = viewportHeight - submenuHeight - SUBMENU_VIEWPORT_PADDING_PX
-  return Math.max(SUBMENU_VIEWPORT_PADDING_PX, Math.min(top, maxTop))
-}
+// would run it off screen, so the popover slides it up as far as needed, and
+// no closer to the edge than this.
+const SUBMENU_VIEWPORT_PADDING_PX = 8
 
 function stopMenuKeyboardEvent(event: KeyboardEvent) {
   event.preventDefault()
@@ -143,25 +138,23 @@ export function SlashMenu({
   const itemElements = useRef(new Map<string, Element>())
   const [openSubmenu, setOpenSubmenu] = useState<OpenSubmenu | null>(null)
   const [submenuIndex, setSubmenuIndex] = useState(0)
-  const submenuElement = useRef<HTMLDivElement>(null)
+  // The last submenu shown, kept while the popover fades out once it closes.
+  const [shownSubmenu, setShownSubmenu] = useState<OpenSubmenu | null>(null)
   const submenuItems = submenuForKey(items, openSubmenu?.key)
-
-  useLayoutEffect(() => {
-    const element = submenuElement.current
-    if (!element || !openSubmenu) return
-    const top = clampedSubmenuTop(openSubmenu.top, element.getBoundingClientRect().height, window.innerHeight)
-    if (top !== openSubmenu.top) setOpenSubmenu({ ...openSubmenu, top })
-  }, [openSubmenu])
+  const submenuOpen = Boolean(openSubmenu && submenuItems.length > 0)
+  const shownSubmenuItems = submenuForKey(items, shownSubmenu?.key)
+  const submenuAnchor = useMemo(() => ({ current: shownSubmenu?.anchor ?? null }), [shownSubmenu])
 
   const openItemSubmenu = useCallback((item: SlashMenuItem) => {
     if (!item.submenuItems?.length) {
       setOpenSubmenu(null)
       return
     }
-    const bounds = itemElements.current.get(item.key)?.getBoundingClientRect()
-    if (!bounds) return
+    const anchor = itemElements.current.get(item.key)
+    if (!anchor) return
     setSubmenuIndex(0)
-    setOpenSubmenu({ key: item.key, left: bounds.right + 4, top: bounds.top })
+    setOpenSubmenu({ anchor, key: item.key })
+    setShownSubmenu({ anchor, key: item.key })
   }, [])
 
   // On the document, not on the editor element: BlockNote's own keyboard
@@ -179,7 +172,7 @@ export function SlashMenu({
       const selectedItem = selectedIndex === undefined ? undefined : items.at(selectedIndex)
       const action = submenuKeyboardAction({
         canOpen: Boolean(selectedItem?.submenuItems?.length),
-        isOpen: Boolean(openSubmenu && submenuItems.length > 0),
+        isOpen: submenuOpen,
         key: event.key,
       })
       if (!action) return
@@ -200,7 +193,7 @@ export function SlashMenu({
     const root = element?.ownerDocument
     root?.addEventListener('keydown', handleKeyDown, true)
     return () => root?.removeEventListener('keydown', handleKeyDown, true)
-  }, [editor.domElement, items, onItemClick, openItemSubmenu, openSubmenu, selectedIndex, submenuIndex, submenuItems])
+  }, [editor.domElement, items, onItemClick, openItemSubmenu, selectedIndex, submenuIndex, submenuItems, submenuOpen])
 
   const rows = items.map((item, index) => {
     const startsGroup = item.group !== items[index - 1]?.group
@@ -248,17 +241,31 @@ export function SlashMenu({
           </MenuListEmpty>
         )}
       </MenuList>
-      {openSubmenu &&
-        submenuItems.length > 0 &&
-        createPortal(
+      {/* Open only by the slash menu's state, with no onOpenChange: a press on
+          the Slash menu's own rows, the focus the editor keeps and Escape are
+          all "outside" the popover, and none of them may close it. The content
+          drops the popover's dialog role: what it holds is the menu. */}
+      <Popover open={submenuOpen}>
+        <PopoverAnchor anchor={submenuAnchor} />
+        <PopoverContent
+          align="start"
+          collisionPadding={SUBMENU_VIEWPORT_PADDING_PX}
+          // The submenu is a popover only for its placement. The focus stays in
+          // the editor, where the keys above drive it, so the popover neither
+          // takes the focus when it opens nor hands it back when it closes.
+          finalFocus={false}
+          initialFocus={false}
+          role={undefined}
+          side="right"
+          sticky
+          variant="menu"
+        >
           <MenuList
-            aria-label={items.find((item) => item.key === openSubmenu.key)?.title}
-            className="fixed z-popover max-h-[min(26rem,calc(100vh-1rem))] min-w-40"
-            ref={submenuElement}
+            aria-label={items.find((item) => item.key === shownSubmenu?.key)?.title}
+            className="max-h-[min(26rem,calc(100vh-1rem))] min-w-40"
             role="menu"
-            style={{ left: openSubmenu.left, top: openSubmenu.top }}
           >
-            {submenuItems.map((item, index) => (
+            {shownSubmenuItems.map((item, index) => (
               <MenuListItem
                 key={item.key}
                 onClick={() => onItemClick?.(item)}
@@ -272,9 +279,9 @@ export function SlashMenu({
                 <span>{item.title}</span>
               </MenuListItem>
             ))}
-          </MenuList>,
-          document.body,
-        )}
+          </MenuList>
+        </PopoverContent>
+      </Popover>
     </>
   )
 }

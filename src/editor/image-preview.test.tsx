@@ -49,7 +49,7 @@ describe('ImagePreview', () => {
     editable.focus()
     const image = { src: 'https://example.com/photo.png', alt: 'A lake' }
     const { rerender } = render(<ImagePreview image={image} onClose={() => {}} />)
-    expect(editable).not.toHaveFocus()
+    await waitFor(() => expect(editable).not.toHaveFocus())
 
     fireEvent.keyDown(screen.getByTestId('image-preview'), { key: 'Escape' })
     rerender(<ImagePreview image={null} onClose={() => {}} />)

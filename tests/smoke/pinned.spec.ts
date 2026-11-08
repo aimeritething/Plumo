@@ -11,14 +11,14 @@ const READING = `${MOCK_FOLDER}/Reading list.md`
 const PLUMO = `${MOCK_FOLDER}/Projects/Plumo.md`
 const PROJECTS = `${MOCK_FOLDER}/Projects`
 
-const pinnedNames = (page: Page) => page.getByTestId('pinned').getByRole('option').allTextContents()
+const pinnedNames = (page: Page) => page.getByTestId('pinned').getByRole('list').getByRole('button').allTextContents()
 const explorerRow = (page: Page, path: string) => page.getByTestId(`explorer-row:${path}`)
 const pinnedRow = (page: Page, path: string) => page.getByTestId(`pinned-row:${path}`)
 
 async function openFolder(page: Page, path: string) {
   await page.evaluate((chosen) => window.__plumoMockVault?.queueDialogSelection([chosen]), path)
   await page.keyboard.press('Meta+o')
-  await expect(page.getByTestId('explorer-toggle')).toHaveAttribute('title', path)
+  await expect(page.getByTestId('explorer-toggle')).toHaveText(path.slice(path.lastIndexOf('/') + 1))
 }
 
 async function pinFromExplorer(page: Page, path: string) {
@@ -37,7 +37,7 @@ test('three pins, reordered by a drag, come back in that order after a relaunch 
   await explorerRow(page, WELCOME).click()
   await page.getByTestId('tab-more').click()
   await page.getByRole('menuitem', { name: 'Pin', exact: true }).click()
-  await page.getByLabel('Expand Projects').click()
+  await page.getByTestId('explorer-tree').getByRole('button', { name: 'Projects', exact: true }).getByTestId('explorer-disclosure').click()
   await explorerRow(page, PLUMO).click()
   await page.keyboard.press('Meta+k')
   await page.keyboard.type('Pin/Unpin')
@@ -45,8 +45,8 @@ test('three pins, reordered by a drag, come back in that order after a relaunch 
   await expect.poll(() => pinnedNames(page)).toEqual(['Reading list.md', 'Welcome.md', 'Plumo.md'])
 
   // The active Tab's file is marked in both sections.
-  await expect(pinnedRow(page, PLUMO)).toHaveAttribute('aria-selected', 'true')
-  await expect(page.locator(`[role=treeitem][aria-selected=true] > [data-testid="explorer-row:${PLUMO}"]`)).toBeVisible()
+  await expect(pinnedRow(page, PLUMO)).toHaveAttribute('data-active')
+  await expect(page.locator(`[data-testid="explorer-row:${PLUMO}"][data-active]`)).toBeVisible()
 
   await pinnedRow(page, PLUMO).dragTo(pinnedRow(page, READING), { targetPosition: { x: 20, y: 4 } })
   await expect.poll(() => pinnedNames(page)).toEqual(['Plumo.md', 'Reading list.md', 'Welcome.md'])
@@ -103,7 +103,7 @@ test('the section folds away under its label, and stays folded after a relaunch'
   await pinFromExplorer(page, WELCOME)
 
   await page.getByTestId('pinned-toggle').click()
-  await expect(page.getByTestId('pinned').getByRole('option')).toHaveCount(0)
+  await expect(page.getByTestId('pinned').getByRole('list').getByRole('button')).toHaveCount(0)
   await expect.poll(() => storedSession(page)).toMatchObject({ sidebar: { collapsedSections: ['pinned'] } })
 
   await page.reload()

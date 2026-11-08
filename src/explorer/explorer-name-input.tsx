@@ -1,7 +1,8 @@
 import { useSidebarInlineRenameInput } from '@/shell/sidebar-hooks'
 import { stripBlockedNameCharacters, type ExplorerRowKind } from '@/folder/explorer-names'
 import { EXPLORER_ROW_ICONS, explorerNameIndent, explorerRowIndent } from './explorer-row'
-import { SidebarRow, SidebarRowIcon } from '@/shell/sidebar-row'
+import { Input } from '@/ui/input'
+import { SidebarMenuButton } from '@/ui/sidebar'
 
 /**
  * The in-row inline input behind creation and Rename…; it edits the stem
@@ -42,13 +43,15 @@ export function ExplorerNameInput(props: ExplorerNameInputProps) {
   })
 
   // The row's indent and the message's are runtime numbers, so they stay inline.
+  // The row keeps a row's look around the input, as a `<div>`: an input
+  // cannot sit inside a button.
   return (
-    <div>
-      <SidebarRow className="mb-0.5" style={{ paddingLeft: explorerRowIndent(depth) }}>
-        <SidebarRowIcon icon={Icon} />
-        <input
+    <>
+      <SidebarMenuButton render={<div style={{ paddingLeft: explorerRowIndent(depth) }} />}>
+        <Icon aria-hidden="true" />
+        <Input
           ref={inputRef}
-          className="h-5 min-w-0 flex-1 rounded-sm border-hairline border-border bg-background px-1 text-foreground outline-none focus:border-ring aria-invalid:border-red"
+          size="compact"
           data-testid="explorer-rename-input"
           aria-label="Name"
           aria-invalid={error ? true : undefined}
@@ -61,7 +64,7 @@ export function ExplorerNameInput(props: ExplorerNameInputProps) {
           onKeyDown={handleKeyDown}
         />
         {extension && <span className="flex-none text-subtle-foreground">{extension}</span>}
-      </SidebarRow>
+      </SidebarMenuButton>
       {error && (
         <div
           className="pr-2 pb-0.5 text-2xs text-subtle-foreground wrap-anywhere"
@@ -72,6 +75,6 @@ export function ExplorerNameInput(props: ExplorerNameInputProps) {
           {error}
         </div>
       )}
-    </div>
+    </>
   )
 }

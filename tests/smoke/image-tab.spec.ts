@@ -37,8 +37,8 @@ async function addImage(page: Page, path: string, picture: MockVaultImage) {
 }
 
 async function expandAttachments(page: Page) {
-  const expand = page.getByTestId('explorer').getByRole('button', { name: 'Expand Attachments' })
-  if (await expand.count()) await expand.click()
+  const row = page.getByTestId('explorer').getByRole('button', { name: 'Attachments', exact: true })
+  if (await row.getAttribute('aria-expanded') === 'false') await row.getByTestId('explorer-disclosure').click()
 }
 
 async function openInExplorer(page: Page, path: string) {
@@ -54,7 +54,7 @@ test('an Image file opens as a Tab with its picture, dimensions, size and two ha
 
   await expect(activeTab(page)).toHaveText('lake.png')
   await expect(page.getByTestId(`tab:${LAKE}`)).toBeVisible()
-  await expect(page.getByRole('tab', { selected: true })).toHaveAttribute('title', LAKE)
+  await expect(page.getByRole('tab', { selected: true })).toHaveAttribute('data-testid', `tab:${LAKE}`)
   await expect(page.getByTestId('image-meta')).toHaveText('1920 × 1080 · 240 KB')
   await expect(page.getByRole('button', { name: 'Open ↗' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Copy path' })).toBeVisible()
@@ -172,7 +172,7 @@ test('relaunch restores an Image Tab from an entry with no mode, and tolerates a
   await expect(page.getByRole('tab')).toHaveCount(2)
   await expect(activeTab(page)).toHaveText('lake.png')
   await expect(page.getByTestId('image-meta')).toHaveText('1920 × 1080 · 240 KB')
-  await expect(page.getByTestId(`explorer-row:${LAKE}`).locator('..')).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByTestId(`explorer-row:${LAKE}`)).toHaveAttribute('data-active')
 
   await page.evaluate((seed) => window.__plumoMockVault?.seedSession(seed), {
     version: 1,

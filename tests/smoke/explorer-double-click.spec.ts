@@ -37,7 +37,7 @@ test('double-clicking a Document opens that Document once', async ({ page }) => 
 
   await expect(page.getByRole('tab', { name: 'Welcome.md' })).toHaveAttribute('aria-selected', 'true')
   await expect(page.getByRole('tab')).toHaveText(['Reading list.md', 'Welcome.md'])
-  await expect(explorerRow(page, WELCOME).locator('..')).toHaveAttribute('aria-selected', 'true')
+  await expect(explorerRow(page, WELCOME)).toHaveAttribute('data-active')
   expect(errors.pageErrors).toEqual([])
   expect(errors.consoleErrors).toEqual([])
 })
@@ -49,14 +49,14 @@ test('double-clicking the first Document of a session leaves the selection on it
   await doubleClickInPlace(page, WELCOME)
 
   await expect(page.getByRole('tab')).toHaveText(['Welcome.md'])
-  await expect(explorerRow(page, WELCOME).locator('..')).toHaveAttribute('aria-selected', 'true')
+  await expect(explorerRow(page, WELCOME)).toHaveAttribute('data-active')
 })
 
 test('a quick second click on a folder\'s arrow still folds it back', async ({ page }) => {
   await page.goto('/')
   await openFolderThroughDialog(page, MOCK_FOLDER)
 
-  await page.getByTestId('explorer').getByRole('button', { name: 'Expand Projects' }).dblclick()
+  await page.getByTestId('explorer').getByRole('button', { name: 'Projects', exact: true }).getByTestId('explorer-disclosure').dblclick()
 
   await expect(explorerRow(page, `${MOCK_FOLDER}/Projects/Plumo.md`)).toHaveCount(0)
 })
@@ -68,5 +68,5 @@ test('double-clicking a folder\'s name opens it and shuts it again', async ({ pa
   await page.getByTestId('explorer').getByText('Projects', { exact: true }).dblclick()
 
   await expect(explorerRow(page, `${MOCK_FOLDER}/Projects/Plumo.md`)).toHaveCount(0)
-  await expect(explorerRow(page, `${MOCK_FOLDER}/Projects`).locator('..')).toHaveAttribute('aria-expanded', 'false')
+  await expect(explorerRow(page, `${MOCK_FOLDER}/Projects`)).toHaveAttribute('aria-expanded', 'false')
 })

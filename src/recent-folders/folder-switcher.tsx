@@ -1,8 +1,6 @@
 import { memo, useMemo, type ComponentProps } from 'react'
 import { CaretUpDown, Check } from '@phosphor-icons/react'
 import type { ListedFile } from '@/folder/explorer'
-import { cn } from '@/lib/cn'
-import { SIDEBAR_ROW_CLASSES, SidebarRowIcon, SidebarRowName } from '@/shell/sidebar-row'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,6 +9,7 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from '@/ui/dropdown-menu'
+import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/ui/sidebar'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip'
 import { FolderNameAndPath } from './folder-name-and-path'
 import { folderContentsSummary, folderName, tildePath } from './recent-folders'
@@ -47,64 +46,62 @@ export const FolderSwitcher = memo(function FolderSwitcher(props: FolderSwitcher
   const summary = useMemo(() => folderContentsSummary(files), [files])
 
   return (
-    <div className="flex flex-none flex-col pt-2.5 pb-0.5" data-testid="folder-switcher">
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <SwitcherRow name={folderName(folder)} path={tildePath(folder, home)} summary={summary} />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent
-          side="top"
-          align="start"
-          sideOffset={POPUP_OFFSET}
-          className="w-(--radix-dropdown-menu-trigger-width)"
-          data-testid="folder-switcher-menu"
-        >
-          {recentFolders.map((path) => (
-            <DropdownMenuItem
-              key={path}
-              className="h-10"
-              aria-current={path === folder || undefined}
-              data-testid={`recent-folder:${path}`}
-              onSelect={() => {
-                if (path !== folder) onOpenRecent(path)
-              }}
-            >
-              <FolderNameAndPath path={path} home={home} />
-              {path === folder && <Check aria-hidden="true" className="ms-auto size-3" />}
+    <SidebarMenu className="flex-none pt-2.5 pb-0.5" data-testid="folder-switcher">
+      <SidebarMenuItem>
+        <DropdownMenu>
+          <DropdownMenuTrigger render={<SwitcherRow name={folderName(folder)} path={tildePath(folder, home)} summary={summary} />} />
+          <DropdownMenuContent
+            side="top"
+            align="start"
+            sideOffset={POPUP_OFFSET}
+            matchTriggerWidth
+            data-testid="folder-switcher-menu"
+          >
+            {recentFolders.map((path) => (
+              <DropdownMenuItem
+                key={path}
+                className="h-10"
+                aria-current={path === folder || undefined}
+                data-testid={`recent-folder:${path}`}
+                onClick={() => {
+                  if (path !== folder) onOpenRecent(path)
+                }}
+              >
+                <FolderNameAndPath path={path} home={home} />
+                {path === folder && <Check aria-hidden="true" className="ms-auto size-3" />}
+              </DropdownMenuItem>
+            ))}
+            {recentFolders.length > 0 && <DropdownMenuSeparator />}
+            <DropdownMenuItem onClick={onOpenFolder}>
+              Open Folder…
+              <DropdownMenuShortcut>⌘O</DropdownMenuShortcut>
             </DropdownMenuItem>
-          ))}
-          {recentFolders.length > 0 && <DropdownMenuSeparator />}
-          <DropdownMenuItem onSelect={onOpenFolder}>
-            Open Folder…
-            <DropdownMenuShortcut>⌘O</DropdownMenuShortcut>
-          </DropdownMenuItem>
-          <DropdownMenuItem onSelect={onCloseFolder}>
-            Close Folder
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={onOpenSettings} data-testid="folder-switcher-settings">
-            Settings
-            <DropdownMenuShortcut>⌘,</DropdownMenuShortcut>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+            <DropdownMenuItem onClick={onCloseFolder}>
+              Close Folder
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={onOpenSettings} data-testid="folder-switcher-settings">
+              Settings
+              <DropdownMenuShortcut>⌘,</DropdownMenuShortcut>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </SidebarMenuItem>
+    </SidebarMenu>
   )
 })
 
 /**
- * The row, with its tooltip. As the menu trigger's Slot child it hands the
- * trigger's props on to the button, so the menu's `data-state` is the one
- * kept and the open menu holds the row in its hover colours.
+ * The row, with its tooltip. As the menu trigger's `render` it hands the
+ * trigger's props on to the row's button, so the menu's open / closed state is
+ * the one kept and the open menu holds the row in its hover colours.
  */
-function SwitcherRow({ name, path, summary, className, ...props }: ComponentProps<'button'> & { name: string; path: string; summary: string }) {
+function SwitcherRow({ name, path, summary, ...props }: ComponentProps<typeof SidebarMenuButton> & { name: string; path: string; summary: string }) {
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <button type="button" className={cn(SIDEBAR_ROW_CLASSES, 'w-full', className)} data-testid="folder-switcher-row" {...props}>
-          <SidebarRowIcon icon={CaretUpDown} />
-          <SidebarRowName className="text-left">{name}</SidebarRowName>
-        </button>
+      <TooltipTrigger render={<SidebarMenuButton data-testid="folder-switcher-row" {...props} />}>
+        <CaretUpDown aria-hidden="true" />
+        <span>{name}</span>
       </TooltipTrigger>
       <TooltipContent side="top" align="start" sideOffset={POPUP_OFFSET} className="flex-col gap-0.5" data-testid="folder-switcher-tooltip">
         <span className="wrap-anywhere">{path}</span>

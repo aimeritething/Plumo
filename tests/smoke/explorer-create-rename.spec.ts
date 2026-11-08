@@ -10,7 +10,7 @@ async function openFolder(page: Page, path = MOCK_FOLDER) {
   await expect(page.getByTestId('editor-empty-state')).toBeVisible()
   await page.evaluate((chosen) => window.__plumoMockVault?.queueDialogSelection([chosen]), path)
   await page.keyboard.press('Meta+o')
-  await expect(page.getByTestId('explorer-toggle')).toHaveAttribute('title', path)
+  await expect(page.getByTestId('explorer-toggle')).toHaveText(path.slice(path.lastIndexOf('/') + 1))
 }
 
 function renameInput(page: Page) {
@@ -87,9 +87,9 @@ test('a committed rename re-sorts the row and moves the Tab with it', async ({ p
   await expect(explorer.locator('[data-testid^="explorer-row:"]'))
     .toHaveText(['Attachments', 'Projects', 'Style catalog', 'Aardvark.md', 'Reading list.md'])
   await expect(page.getByTestId(`tab:${MOCK_FOLDER}/Aardvark.md`)).toHaveAttribute('aria-label', 'Aardvark.md')
-  await expect(page.getByRole('tab', { selected: true })).toHaveAttribute('title', `${MOCK_FOLDER}/Aardvark.md`)
+  await expect(page.getByRole('tab', { selected: true })).toHaveAttribute('data-testid', `tab:${MOCK_FOLDER}/Aardvark.md`)
   await expect(page.locator('.bn-editor h1')).toHaveText('Welcome')
-  await expect(page.getByTestId(`explorer-row:${MOCK_FOLDER}/Aardvark.md`).locator('..')).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByTestId(`explorer-row:${MOCK_FOLDER}/Aardvark.md`)).toHaveAttribute('data-active')
 })
 
 test('a colliding name is refused inline, and Escape puts the row back', async ({ page }) => {
@@ -132,7 +132,7 @@ test('a slash never enters a name and a trailing dot is refused on commit', asyn
 
 test('renaming a folder retargets every Tab beneath it', async ({ page }) => {
   await openFolder(page)
-  await page.getByRole('button', { name: 'Expand Projects' }).click()
+  await page.getByTestId('explorer-tree').getByRole('button', { name: 'Projects', exact: true }).getByTestId('explorer-disclosure').click()
   await page.getByTestId(`explorer-row:${MOCK_FOLDER}/Projects/Plumo.md`).click()
   await expect(page.locator('.bn-editor h1')).toHaveText('Plumo')
 
@@ -142,11 +142,11 @@ test('renaming a folder retargets every Tab beneath it', async ({ page }) => {
   await page.keyboard.press('Enter')
 
   await expect(page.getByTestId(`tab:${MOCK_FOLDER}/Work/Plumo.md`)).toBeVisible()
-  await expect(page.getByRole('tab', { selected: true })).toHaveAttribute('title', `${MOCK_FOLDER}/Work/Plumo.md`)
+  await expect(page.getByRole('tab', { selected: true })).toHaveAttribute('data-testid', `tab:${MOCK_FOLDER}/Work/Plumo.md`)
   await expect(page.locator('.bn-editor h1')).toHaveText('Plumo')
   // The folder is what was renamed, so the folder row keeps the selection —
   // not the Document that moved with it.
-  await expect(page.getByTestId(`explorer-row:${MOCK_FOLDER}/Work`).locator('..')).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByTestId(`explorer-row:${MOCK_FOLDER}/Work`)).toHaveAttribute('data-active')
 })
 
 test('right-click leaves the selection and the active Tab alone', async ({ page }) => {
@@ -157,7 +157,7 @@ test('right-click leaves the selection and the active Tab alone', async ({ page 
   await page.getByTestId(`explorer-row:${MOCK_FOLDER}/Reading list.md`).click({ button: 'right' })
 
   await expect(page.getByRole('menuitem', { name: 'Copy Path' })).toBeVisible()
-  await expect(page.getByTestId(`explorer-row:${MOCK_FOLDER}/Welcome.md`).locator('..')).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByTestId(`explorer-row:${MOCK_FOLDER}/Welcome.md`)).toHaveAttribute('data-active')
   await expect(page.getByTestId(`tab:${MOCK_FOLDER}/Reading list.md`)).toHaveCount(0)
 })
 

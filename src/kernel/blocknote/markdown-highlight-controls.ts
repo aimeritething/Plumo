@@ -10,7 +10,8 @@ export {
 export { readMarkdownHighlightRange } from './markdown-highlight-range'
 
 // The boundary control (the colour button beside a highlight the cursor sits
-// in) is mounted by the extension in its own root; the toolbar's colour caret
+// in) is mounted by the extension in its own root (it draws into a popover on
+// the body, so the host holds nothing visible); the toolbar's colour caret
 // is part of the formatting toolbar itself (markdown-highlight-toolbar-control.tsx).
 
 function unmountControl(root: Root, host: HTMLElement) {
@@ -25,7 +26,6 @@ function mountBoundaryControl(editor: HighlightEditor, ownerDocument: Document):
   root: Root
 } {
   const host = ownerDocument.createElement('div')
-  host.className = 'relative z-sticky'
   host.dataset.test = 'highlightBoundaryControlHost'
   ownerDocument.body.appendChild(host)
   const root = createRoot(host)

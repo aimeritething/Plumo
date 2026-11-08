@@ -48,7 +48,7 @@ describe('find across a Rich ↔ Raw switch', () => {
     // The shell drops the request with the mode it was made in.
     rerender(<Surfaces mode="raw" request={null} />)
     expect(screen.getByTestId('raw-editor-find-input')).toHaveValue('Alpha')
-    expect(screen.getByRole('button', { name: 'Match case' })).toHaveAttribute('data-state', 'on')
+    expect(screen.getByRole('button', { name: 'Match case' })).toHaveAttribute('aria-pressed', 'true')
     fireEvent.change(screen.getByTestId('raw-editor-find-input'), { target: { value: 'Alph' } })
 
     rerender(<Surfaces mode="rich" request={null} />)

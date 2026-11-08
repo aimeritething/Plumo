@@ -26,6 +26,7 @@ import {
   requireParentElement,
   rootSideMenuButtonText,
   setupSideMenuTest,
+  sideMenuElement,
   sideMenuBlock,
   staleBlockError,
   testBlock,
@@ -447,6 +448,26 @@ describe('SideMenu', () => {
     expect(screen.queryByRole('menu')).not.toBeInTheDocument()
     expect(mockSideMenu.unfreezeMenu).toHaveBeenCalled()
     await waitFor(() => expect(grip).toHaveFocus())
+  })
+
+  // The grip is the menu's own trigger, not a hidden box laid over it: it
+  // names the menu it opens, and Enter opens it as any menu button's does.
+  it('makes the grip itself the trigger of the menu it opens', () => {
+    mockEditor.getBlock.mockReturnValue(sideMenuBlock)
+    renderSideMenuWithBlock(sideMenuBlock)
+    const grip = screen.getByRole('button', { name: 'Drag block' })
+    expect(grip).toHaveAttribute('aria-haspopup', 'menu')
+    expect(grip).toHaveAttribute('aria-expanded', 'false')
+    expect(sideMenuElement().querySelector('[aria-hidden="true"][aria-haspopup]')).toBeNull()
+
+    // Enter on a button is a click with no pointer (`detail` 0); jsdom does not make it.
+    fireEvent.keyDown(grip, { key: 'Enter' })
+    fireEvent.click(grip, { detail: 0 })
+
+    const menu = screen.getByRole('menu')
+    expect(grip).toHaveAttribute('aria-expanded', 'true')
+    expect(grip).toHaveAttribute('aria-controls', menu.id)
+    expect(mockSideMenu.freezeMenu).toHaveBeenCalledOnce()
   })
 
   it('ignores the button-less pointerdown the menu trigger dispatches on pointer up', () => {

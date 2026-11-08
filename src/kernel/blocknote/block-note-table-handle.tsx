@@ -19,6 +19,7 @@ import {
 } from '@blocknote/react'
 import { useMemo, useRef, useState } from 'react'
 import { cn } from '@/lib/cn'
+import { Button } from '@/ui/button'
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -43,9 +44,10 @@ import { setTableHandleTint, type TableHandleTint } from './table-handle-tint'
  *
  * A click opens the column's or row's menu (Notion's: insert on either side,
  * the header toggle on the first one, Delete last); dragging the handle is
- * BlockNote's column or row drag. The menu is anchored on a box laid over the
- * handle, not on the handle: Radix's trigger would open on the press, which
- * also starts a drag.
+ * BlockNote's column or row drag. The handle is the menu's trigger, but one
+ * that leaves the press alone (`openOnPress={false}`): a menu trigger opens on
+ * the press, so the menu would open as the press starts the drag. So the
+ * click opens the menu here, and the keys open it as any trigger's do.
  */
 export function TableHandle({ orientation, hideOtherElements }: TableHandleProps) {
   const editor = useBlockNoteEditor()
@@ -101,56 +103,58 @@ export function TableHandle({ orientation, hideOtherElements }: TableHandleProps
 
   return (
     <DropdownMenu modal={false} open={open} onOpenChange={setMenuOpen}>
-      <span className="relative inline-flex">
-        <button
-          aria-expanded={open}
-          aria-haspopup="menu"
-          data-state={open ? 'open' : 'closed'}
-          ref={buttonRef}
-          type="button"
-          className={cn(
-            'group relative flex cursor-grab items-center justify-center outline-none',
-            isColumn ? 'h-3.5 w-5.5 -translate-y-[5px]' : 'h-5.5 w-3.5 -translate-x-[3px]',
+      {/* The slot: the handle's box and its grab cursor; the button fills it. */}
+      <span
+        className={cn(
+          'relative inline-flex cursor-grab',
+          isColumn ? 'h-3.5 w-5.5 -translate-y-[5px]' : 'h-5.5 w-3.5 -translate-x-[3px]',
+        )}
+      >
+        <DropdownMenuTrigger
+          openOnPress={false}
+          render={(
+            <Button
+              ref={buttonRef}
+              variant="bare"
+              size="fill"
+              className="group relative"
+              data-table-handle={orientation}
+              data-dragging={isDragging || undefined}
+              draggable={isDraggable}
+              onPointerDownCapture={() => {
+                openAtPressRef.current = openRef.current
+              }}
+              onClick={(event) => {
+                // A click with no press before it (assistive technology) toggles
+                // from the menu's state now; the keys are the trigger's own.
+                const wasOpen = event.detail === 0 ? openRef.current : openAtPressRef.current
+                setMenuOpen(!wasOpen)
+              }}
+              onPointerEnter={() => hideOtherElements(true)}
+              onPointerLeave={() => {
+                if (!holdsFocusRef.current) hideOtherElements(false)
+              }}
+              onDragStart={(event) => {
+                holdsFocusRef.current = true
+                setIsDragging(true)
+                hideOtherElements(true)
+                if (isColumn) tableHandles.colDragStart(event)
+                else tableHandles.rowDragStart(event)
+              }}
+              onDragEnd={() => {
+                holdsFocusRef.current = false
+                tableHandles.dragEnd()
+                hideOtherElements(false)
+                setIsDragging(false)
+              }}
+            />
           )}
-          data-table-handle={orientation}
-          data-dragging={isDragging || undefined}
-          draggable={isDraggable}
-          onPointerDownCapture={() => {
-            openAtPressRef.current = openRef.current
-          }}
-          onClick={(event) => {
-            // A click from the keyboard (Enter, Space) has no press before it.
-            const wasOpen = event.detail === 0 ? openRef.current : openAtPressRef.current
-            setMenuOpen(!wasOpen)
-          }}
-          onKeyDown={(event) => {
-            if (event.key !== 'ArrowDown') return
-            event.preventDefault()
-            setMenuOpen(true)
-          }}
-          onPointerEnter={() => hideOtherElements(true)}
-          onPointerLeave={() => {
-            if (!holdsFocusRef.current) hideOtherElements(false)
-          }}
-          onDragStart={(event) => {
-            holdsFocusRef.current = true
-            setIsDragging(true)
-            hideOtherElements(true)
-            if (isColumn) tableHandles.colDragStart(event)
-            else tableHandles.rowDragStart(event)
-          }}
-          onDragEnd={() => {
-            holdsFocusRef.current = false
-            tableHandles.dragEnd()
-            hideOtherElements(false)
-            setIsDragging(false)
-          }}
         >
           <span
             aria-hidden
             className={cn(
               'rounded-sm border-2 border-background bg-subtle-foreground',
-              'group-hover:opacity-0 group-focus-visible:opacity-0 group-data-dragging:opacity-0 group-data-[state=open]:opacity-0',
+              'group-hover:opacity-0 group-focus-visible:opacity-0 group-aria-expanded:opacity-0 group-data-dragging:opacity-0',
               isColumn ? 'h-1.5 w-4.5' : 'h-4.5 w-1.5',
             )}
           />
@@ -161,21 +165,18 @@ export function TableHandle({ orientation, hideOtherElements }: TableHandleProps
               'transition-[opacity,scale] duration-100 ease-out',
               'group-hover:scale-100 group-hover:opacity-100 group-focus-visible:scale-100 group-focus-visible:opacity-100',
               'group-data-dragging:scale-100 group-data-dragging:opacity-100',
-              'group-data-[state=open]:scale-100 group-data-[state=open]:border-primary group-data-[state=open]:bg-primary group-data-[state=open]:text-primary-foreground group-data-[state=open]:opacity-100',
+              'group-aria-expanded:scale-100 group-aria-expanded:border-primary group-aria-expanded:bg-primary group-aria-expanded:text-primary-foreground group-aria-expanded:opacity-100',
             )}
           >
             <Dots className="size-4" weight="bold" />
           </span>
-        </button>
-        <DropdownMenuTrigger asChild>
-          <span aria-hidden="true" className="pointer-events-none absolute inset-0" tabIndex={-1} />
         </DropdownMenuTrigger>
       </span>
       <DropdownMenuContent
         align="start"
         side={isColumn ? 'bottom' : 'right'}
         // The editor takes the focus as the menu closes (above).
-        onCloseAutoFocus={(event) => event.preventDefault()}
+        finalFocus={false}
       >
         <TableHandleMenuItems orientation={orientation} />
       </DropdownMenuContent>
@@ -217,7 +218,7 @@ function TableHandleMenuItems({ orientation }: Pick<TableHandleProps, 'orientati
         return (
           <DropdownMenuItem
             key={side}
-            onSelect={() => {
+            onClick={() => {
               tableHandles.addRowOrColumn(
                 index,
                 orientation === 'row'
@@ -236,7 +237,8 @@ function TableHandleMenuItems({ orientation }: Pick<TableHandleProps, 'orientati
           <DropdownMenuSeparator />
           <DropdownMenuCheckboxItem
             checked={isHeader}
-            onSelect={() => {
+            closeOnClick
+            onClick={() => {
               editor.updateBlock(block, {
                 content: {
                   ...block.content,
@@ -251,7 +253,7 @@ function TableHandleMenuItems({ orientation }: Pick<TableHandleProps, 'orientati
       )}
       <DropdownMenuSeparator />
       <DropdownMenuItem
-        onSelect={() => tableHandles.removeRowOrColumn(index, orientation)}
+        onClick={() => tableHandles.removeRowOrColumn(index, orientation)}
         variant="destructive"
       >
         <Trash aria-hidden="true" />

@@ -43,6 +43,13 @@ globalThis.ResizeObserver = class {
   disconnect() {}
 } as unknown as typeof ResizeObserver
 
+// jsdom runs no animations and has no getAnimations. Base UI's scroll area
+// viewport asks for its animations without checking, so jsdom gets one that
+// finds none; the flag keeps Base UI's waits for an exit to finish
+// synchronous, as they are when getAnimations is missing.
+Element.prototype.getAnimations = () => []
+;(globalThis as { BASE_UI_ANIMATIONS_DISABLED?: boolean }).BASE_UI_ANIMATIONS_DISABLED = true
+
 // Mock IntersectionObserver for jsdom (not implemented)
 globalThis.IntersectionObserver = class {
   observe() {}
