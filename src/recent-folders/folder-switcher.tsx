@@ -63,7 +63,7 @@ export const FolderSwitcher = memo(function FolderSwitcher(props: FolderSwitcher
                 className="h-10"
                 aria-current={path === folder || undefined}
                 data-testid={`recent-folder:${path}`}
-                onSelect={() => {
+                onClick={() => {
                   if (path !== folder) onOpenRecent(path)
                 }}
               >
@@ -72,15 +72,15 @@ export const FolderSwitcher = memo(function FolderSwitcher(props: FolderSwitcher
               </DropdownMenuItem>
             ))}
             {recentFolders.length > 0 && <DropdownMenuSeparator />}
-            <DropdownMenuItem onSelect={onOpenFolder}>
+            <DropdownMenuItem onClick={onOpenFolder}>
               Open Folder…
               <DropdownMenuShortcut>⌘O</DropdownMenuShortcut>
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={onCloseFolder}>
+            <DropdownMenuItem onClick={onCloseFolder}>
               Close Folder
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={onOpenSettings} data-testid="folder-switcher-settings">
+            <DropdownMenuItem onClick={onOpenSettings} data-testid="folder-switcher-settings">
               Settings
               <DropdownMenuShortcut>⌘,</DropdownMenuShortcut>
             </DropdownMenuItem>

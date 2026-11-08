@@ -1,4 +1,4 @@
-import { useState, type ComponentType } from 'react'
+import { useRef, useState, type ComponentType } from 'react'
 import { Palette, X as XIcon, type IconProps } from '@phosphor-icons/react'
 import type { ThemeMode } from '@/shell/theme-mode'
 import { Button } from '@/ui/button'
@@ -39,18 +39,16 @@ interface SettingsDialogProps {
 export function SettingsDialog({ open, onClose, theme, onThemeChange, primaryColor, onPrimaryColorChange }: SettingsDialogProps) {
   const [sectionId, setSectionId] = useState<SettingsSectionId>('appearance')
   const section = SETTINGS_SECTIONS.find(({ id }) => id === sectionId) ?? SETTINGS_SECTIONS[0]
+  const contentRef = useRef<HTMLDivElement>(null)
 
   return (
     <Dialog open={open} onOpenChange={(next) => { if (!next) onClose() }}>
       <DialogContent
         variant="panel"
         className="h-[min(580px,calc(100vh-64px))] w-[min(840px,calc(100vw-64px))] max-w-none"
-        aria-describedby={undefined}
+        ref={contentRef}
         // Focus lands on the dialog itself, not ringed on the first nav row; Tab goes on from there.
-        onOpenAutoFocus={(event) => {
-          event.preventDefault()
-          if (event.currentTarget instanceof HTMLElement) event.currentTarget.focus()
-        }}
+        initialFocus={contentRef}
         data-testid="settings-dialog"
         // The keyboard's modal rule lets ⌘W and ⌘, through to this dialog alone.
         data-settings-dialog="true"

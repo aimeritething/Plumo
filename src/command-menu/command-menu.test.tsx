@@ -36,10 +36,10 @@ afterEach(() => {
 })
 
 describe('CommandMenu', () => {
-  it('opens on the input with every command listed and the mono footer', () => {
+  it('opens on the input with every command listed and the mono footer', async () => {
     renderMenu()
     expect(screen.getByTestId('command-menu')).toHaveAttribute('data-mode', 'commands')
-    expect(input()).toHaveFocus()
+    await waitFor(() => expect(input()).toHaveFocus())
     expect(rowNames()).toEqual(['Save', 'Toggle Sidebar', 'Toggle Rich/Raw'])
     expect(screen.getByTestId('command-menu-footer')).toHaveTextContent('↵ open · ⌘↵ open in Raw · esc close')
   })
@@ -186,7 +186,7 @@ describe('CommandMenu', () => {
     it('esc hands focus back to where it was, not to the body', async () => {
       const editable = focusedBefore()
       const { props, rerender } = renderMenu()
-      expect(input()).toHaveFocus()
+      await waitFor(() => expect(input()).toHaveFocus())
 
       fireEvent.keyDown(input(), { key: 'Escape' })
       rerender(<CommandMenu {...props} open={false} />)

@@ -79,8 +79,8 @@ vi.mock('@/ui/dropdown-menu', () => ({
   DropdownMenuTrigger: ({ children, render }: { children?: ReactNode; render?: ReactElement }) => (
     render === undefined ? <>{children}</> : children === undefined ? render : cloneElement(render, undefined, children)
   ),
-  DropdownMenuContent: ({ children, onCloseAutoFocus, ...props }: { children?: ReactNode; onCloseAutoFocus?: unknown }) => {
-    void onCloseAutoFocus
+  DropdownMenuContent: ({ children, finalFocus, ...props }: { children?: ReactNode; finalFocus?: unknown }) => {
+    void finalFocus
     return <div {...props}>{children}</div>
   },
   DropdownMenuItem: ({ children, ...props }: { children?: ReactNode }) => <button type="button" {...props}>{children}</button>,

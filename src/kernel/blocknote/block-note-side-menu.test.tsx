@@ -460,7 +460,9 @@ describe('SideMenu', () => {
     expect(grip).toHaveAttribute('aria-expanded', 'false')
     expect(sideMenuElement().querySelector('[aria-hidden="true"][aria-haspopup]')).toBeNull()
 
+    // Enter on a button is a click with no pointer (`detail` 0); jsdom does not make it.
     fireEvent.keyDown(grip, { key: 'Enter' })
+    fireEvent.click(grip, { detail: 0 })
 
     const menu = screen.getByRole('menu')
     expect(grip).toHaveAttribute('aria-expanded', 'true')

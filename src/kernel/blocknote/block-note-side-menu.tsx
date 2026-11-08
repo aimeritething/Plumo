@@ -383,14 +383,13 @@ function DragHandleButton({ locale = 'en' }: { locale?: AppLocale }) {
       <DropdownMenuContent
         align="start"
         side="left"
-        onCloseAutoFocus={(event) => {
+        finalFocus={() => {
           // A choice that acts on the text focuses the editor; Escape or a
           // click away hands the focus back to the grip, as a menu button does.
-          event.preventDefault()
           const editorElement = editor.domElement
           const active = editorElement?.ownerDocument.activeElement
-          if (editorElement && active && editorElement.contains(active)) return
-          buttonRef.current?.focus()
+          if (editorElement && active && editorElement.contains(active)) return false
+          return buttonRef.current ?? true
         }}
       >
         <BlockMenuItems locale={locale} />
@@ -407,7 +406,7 @@ function RemoveBlockItem({ children }: { children: ReactNode }) {
 
   return (
     <DropdownMenuItem
-      onSelect={() => {
+      onClick={() => {
         runSideMenuAction(() => {
           removeSideMenuSection(editor, block)
         })
@@ -432,7 +431,7 @@ function DuplicateBlockItem({ locale }: { locale: AppLocale }) {
 
   return (
     <DropdownMenuItem
-      onSelect={() => {
+      onClick={() => {
         runSideMenuAction(() => {
           const liveBlock = liveSideMenuBlock(editor, block)
           if (!liveBlock || !duplicateBlocksAndSelect(editor, [liveBlock.id])) return
@@ -483,7 +482,8 @@ function TableHeaderItem({
   return (
     <DropdownMenuCheckboxItem
       checked={checked}
-      onSelect={() => {
+      closeOnClick
+      onClick={() => {
         runSideMenuAction(() => {
           const currentBlock = liveSideMenuBlock(editor, block)
           const currentContent = tableHeaderContent(currentBlock)
@@ -524,7 +524,7 @@ function TurnBlockIntoSubmenu({ locale }: { locale: AppLocale }) {
         {getBlockTypeSelectItems().map((item) => (
           <DropdownMenuItem
             key={item.key}
-            onSelect={() => {
+            onClick={() => {
               runSideMenuAction(() => {
                 turnBlockIntoType(editor, block.id, item, 'block_menu')
               })

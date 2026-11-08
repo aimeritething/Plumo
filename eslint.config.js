@@ -30,10 +30,12 @@ export default defineConfig([
     },
   },
   // `asChild` and the `data-state` attribute are Radix's, and so are its
-  // `--radix-` CSS variables, its `data-radix-` attributes and its packages.
-  // Outside src/ui a feature composes with a src/ui component's `render`, reads
-  // its state off aria (`aria-expanded:`) or a src/ui variant, and asks a src/ui
-  // option, helper or test util for the rest, so the move to Base UI touches
+  // `--radix-` CSS variables, its `data-radix-` attributes and its packages;
+  // Base UI's packages and its `data-base-ui`, `data-popup-open` and
+  // `data-panel-open` attributes are src/ui's own internals too. Outside src/ui
+  // a feature composes with a src/ui component's `render`, reads its state off
+  // aria (`aria-expanded:`) or a src/ui variant, and asks a src/ui option,
+  // helper or test util for the rest, so a change of primitive library touches
   // src/ui only (ADR-0013). Test files are held to it too: a test of src/ui
   // sits in src/ui.
   {
@@ -59,12 +61,12 @@ export default defineConfig([
           message: 'No `data-state` or `data-[state=…]` outside src/ui: use aria (`aria-expanded:`) or a src/ui variant or helper (ADR-0013).',
         },
         {
-          selector: 'Literal[value=/--radix-|data-radix-/]',
-          message: 'No `--radix-` variable or `data-radix-` attribute outside src/ui: they are Radix\'s; use a src/ui option, helper or test util (ADR-0013).',
+          selector: 'Literal[value=/--radix-|data-radix-|data-base-ui|data-popup-open|data-panel-open/]',
+          message: 'No `--radix-` variable, `data-radix-` or `data-base-ui` attribute, `data-popup-open` or `data-panel-open` outside src/ui: they are Radix\'s and Base UI\'s; use aria, a src/ui option, helper or test util (ADR-0013).',
         },
         {
-          selector: 'TemplateElement[value.raw=/--radix-|data-radix-/]',
-          message: 'No `--radix-` variable or `data-radix-` attribute outside src/ui: they are Radix\'s; use a src/ui option, helper or test util (ADR-0013).',
+          selector: 'TemplateElement[value.raw=/--radix-|data-radix-|data-base-ui|data-popup-open|data-panel-open/]',
+          message: 'No `--radix-` variable, `data-radix-` or `data-base-ui` attribute, `data-popup-open` or `data-panel-open` outside src/ui: they are Radix\'s and Base UI\'s; use aria, a src/ui option, helper or test util (ADR-0013).',
         },
       ],
       'no-restricted-imports': [
@@ -80,6 +82,10 @@ export default defineConfig([
             {
               group: ['@radix-ui/*', 'radix-ui/*'],
               message: 'No Radix import outside src/ui: compose the src/ui component instead (ADR-0013).',
+            },
+            {
+              group: ['@base-ui/*', '@base-ui/react/*'],
+              message: 'No Base UI import outside src/ui: compose the src/ui component instead (ADR-0013).',
             },
           ],
         },

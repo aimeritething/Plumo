@@ -11,7 +11,7 @@ describe('installNativeContextMenuSuppression', () => {
     uninstall = null
   })
 
-  it('leaves a Radix context menu able to open', async () => {
+  it('leaves a ui/context-menu able to open', async () => {
     uninstall = installNativeContextMenuSuppression(document)
     render(
       <ContextMenu>

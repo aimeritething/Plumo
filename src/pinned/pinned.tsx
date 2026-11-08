@@ -196,9 +196,9 @@ function PinnedRow({ path, parentHint, active, dragging, dropMark, dragProps, on
           {parentHint && <span className="flex-initial text-2xs text-muted-foreground" data-testid="pinned-parent">{parentHint}</span>}
         </ContextMenuTrigger>
         <ContextMenuContent data-testid="pinned-menu">
-          <ContextMenuItem onSelect={() => onUnpin(path)}>Unpin</ContextMenuItem>
+          <ContextMenuItem onClick={() => onUnpin(path)}>Unpin</ContextMenuItem>
           <ContextMenuSeparator />
-          <ContextMenuItem onSelect={() => onDuplicate(path)}>Duplicate</ContextMenuItem>
+          <ContextMenuItem onClick={() => onDuplicate(path)}>Duplicate</ContextMenuItem>
         </ContextMenuContent>
       </ContextMenu>
       {dropMark && (

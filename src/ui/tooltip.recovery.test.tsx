@@ -15,11 +15,11 @@ function Boom(): never {
 }
 
 /** An open tooltip whose content throws while rendering. */
-function FailingTooltip({ label, children }: { label: string; children: React.ReactNode }) {
+function FailingTooltip({ label, children }: { label: string; children: React.ReactElement }) {
   return (
     <TooltipProvider>
       <Tooltip open>
-        <TooltipTrigger asChild>{children}</TooltipTrigger>
+        <TooltipTrigger render={children} />
         <TooltipContent>
           {label}
           <Boom />
@@ -48,10 +48,12 @@ describe('Tooltip recovery', () => {
   it('keeps failed tooltip content disabled when the trigger updates parent state on mount', () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
 
-    function TriggerButton({ onMount }: { onMount: () => void }) {
+    // Not `onMount`: the trigger merges an `on…` prop as an event handler,
+    // a new function each render.
+    function TriggerButton({ afterMount }: { afterMount: () => void }) {
       useLayoutEffect(() => {
-        onMount()
-      }, [onMount])
+        afterMount()
+      }, [afterMount])
       return <button type="button">Switch editor layout</button>
     }
 
@@ -63,7 +65,7 @@ describe('Tooltip recovery', () => {
 
       return (
         <FailingTooltip label={`Switch editor layout ${renderCount}`}>
-          <TriggerButton onMount={bumpRenderCount} />
+          <TriggerButton afterMount={bumpRenderCount} />
         </FailingTooltip>
       )
     }
@@ -79,7 +81,7 @@ describe('Tooltip recovery', () => {
     render(
       <TooltipProvider>
         <Tooltip open>
-          <TooltipTrigger asChild><button type="button">Hide sidebar</button></TooltipTrigger>
+          <TooltipTrigger render={<button type="button">Hide sidebar</button>} />
           <TooltipContent shortcut="⌘[">Hide sidebar</TooltipContent>
         </Tooltip>
       </TooltipProvider>,

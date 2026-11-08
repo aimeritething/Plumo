@@ -34,13 +34,6 @@ type SubmenuKeyboardAction = { kind: 'close' } | { kind: 'move'; delta: number }
 // no closer to the edge than this.
 const SUBMENU_VIEWPORT_PADDING_PX = 8
 
-// The submenu is a popover only for its placement. The focus stays in the
-// editor, where the keys above drive it, so the popover neither takes the
-// focus when it opens nor hands it back when it closes.
-function keepFocusInEditor(event: Event) {
-  event.preventDefault()
-}
-
 function stopMenuKeyboardEvent(event: KeyboardEvent) {
   event.preventDefault()
   event.stopImmediatePropagation()
@@ -257,11 +250,14 @@ export function SlashMenu({
         <PopoverContent
           align="start"
           collisionPadding={SUBMENU_VIEWPORT_PADDING_PX}
-          onCloseAutoFocus={keepFocusInEditor}
-          onOpenAutoFocus={keepFocusInEditor}
+          // The submenu is a popover only for its placement. The focus stays in
+          // the editor, where the keys above drive it, so the popover neither
+          // takes the focus when it opens nor hands it back when it closes.
+          finalFocus={false}
+          initialFocus={false}
           role={undefined}
           side="right"
-          sticky="always"
+          sticky
           variant="menu"
         >
           <MenuList

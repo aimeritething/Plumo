@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { ListedFile } from '@/folder/explorer'
+import { pressToOpen } from '@/ui/open-layer.test-utils'
 import { SidebarTestProvider } from '@/ui/sidebar.test-utils'
 import { FolderSwitcher } from './folder-switcher'
 import { RecentFolderList } from './recent-folder-list'
@@ -27,7 +28,7 @@ function renderSwitcher() {
 }
 
 async function openMenu() {
-  fireEvent.pointerDown(screen.getByTestId('folder-switcher-row'), { button: 0, ctrlKey: false, pointerType: 'mouse' })
+  pressToOpen(screen.getByTestId('folder-switcher-row'))
   return screen.findByTestId('folder-switcher-menu')
 }
 

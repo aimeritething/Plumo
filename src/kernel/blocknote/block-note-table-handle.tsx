@@ -176,7 +176,7 @@ export function TableHandle({ orientation, hideOtherElements }: TableHandleProps
         align="start"
         side={isColumn ? 'bottom' : 'right'}
         // The editor takes the focus as the menu closes (above).
-        onCloseAutoFocus={(event) => event.preventDefault()}
+        finalFocus={false}
       >
         <TableHandleMenuItems orientation={orientation} />
       </DropdownMenuContent>
@@ -218,7 +218,7 @@ function TableHandleMenuItems({ orientation }: Pick<TableHandleProps, 'orientati
         return (
           <DropdownMenuItem
             key={side}
-            onSelect={() => {
+            onClick={() => {
               tableHandles.addRowOrColumn(
                 index,
                 orientation === 'row'
@@ -237,7 +237,8 @@ function TableHandleMenuItems({ orientation }: Pick<TableHandleProps, 'orientati
           <DropdownMenuSeparator />
           <DropdownMenuCheckboxItem
             checked={isHeader}
-            onSelect={() => {
+            closeOnClick
+            onClick={() => {
               editor.updateBlock(block, {
                 content: {
                   ...block.content,
@@ -252,7 +253,7 @@ function TableHandleMenuItems({ orientation }: Pick<TableHandleProps, 'orientati
       )}
       <DropdownMenuSeparator />
       <DropdownMenuItem
-        onSelect={() => tableHandles.removeRowOrColumn(index, orientation)}
+        onClick={() => tableHandles.removeRowOrColumn(index, orientation)}
         variant="destructive"
       >
         <Trash aria-hidden="true" />

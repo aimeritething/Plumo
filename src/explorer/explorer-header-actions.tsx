@@ -51,10 +51,10 @@ export function ExplorerHeaderActions(props: ExplorerHeaderActionsProps) {
           <DotsThree aria-hidden="true" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-50" data-testid="explorer-header-menu">
-          <DropdownMenuItem onSelect={onNewFolder}>New Folder</DropdownMenuItem>
-          <DropdownMenuItem onSelect={onCollapseAll}>Collapse All</DropdownMenuItem>
-          <DropdownMenuItem onSelect={onReveal}>Reveal in Finder</DropdownMenuItem>
-          <DropdownMenuItem onSelect={onCloseFolder}>Close Folder</DropdownMenuItem>
+          <DropdownMenuItem onClick={onNewFolder}>New Folder</DropdownMenuItem>
+          <DropdownMenuItem onClick={onCollapseAll}>Collapse All</DropdownMenuItem>
+          <DropdownMenuItem onClick={onReveal}>Reveal in Finder</DropdownMenuItem>
+          <DropdownMenuItem onClick={onCloseFolder}>Close Folder</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

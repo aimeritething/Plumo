@@ -47,25 +47,22 @@ export function useToolbarMenu(key: ToolbarMenuKey): {
   return { opened: state.openMenu === key, setOpened }
 }
 
-// A choice in a toolbar menu acts on the editor and focuses it; Radix would
-// then hand the focus back to the trigger on close, taking it from the text
-// again. Left alone when the editor is not focused (Escape, a click away), so
-// the trigger gets it as usual.
-export function keepEditorFocusAfterMenuClose(
-  editorElement: HTMLElement | null | undefined,
-  event: { preventDefault(): void },
-) {
+// A toolbar menu's `finalFocus`: a choice acts on the editor and focuses it,
+// and handing the focus back to the trigger on close would take it from the
+// text again. When the editor is not focused (Escape, a click away), the
+// trigger gets it as usual.
+export function returnFocusAfterMenuClose(editorElement: HTMLElement | null | undefined): boolean {
   const active = editorElement?.ownerDocument.activeElement
-  if (editorElement && active && editorElement.contains(active)) event.preventDefault()
+  return !(editorElement && active && editorElement.contains(active))
 }
 
-// Radix hands the focus to the menu when the pointer leaves an item (so no
+// Base UI hands the focus to the menu when the pointer leaves an item (so no
 // item stays highlighted). After a choice the menu is closing and the editor
 // has the focus, and a choice that changes the block moves the layout under
 // the pointer: the leave it causes must not take the focus back from the text.
 export function keepFocusWhenLeavingClosingMenuItem(
   opened: boolean,
-  event: { preventDefault(): void },
+  event: { preventBaseUIHandler(): void },
 ) {
-  if (!opened) event.preventDefault()
+  if (!opened) event.preventBaseUIHandler()
 }

@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
+import { holdsOpenMenu, pressToOpen } from './open-layer.test-utils'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './dropdown-menu'
 import { Toggle } from './toggle'
 import { SimpleTooltip, TooltipProvider } from './tooltip'
@@ -42,12 +43,12 @@ describe('SimpleTooltip', () => {
 
     const button = screen.getByRole('button', { name: 'More' })
     expect(button).toHaveAttribute('aria-haspopup', 'menu')
-    expect(button).toHaveAttribute('data-state', 'closed')
+    expect(holdsOpenMenu(button)).toBe(false)
 
-    fireEvent.pointerDown(button, { button: 0, ctrlKey: false, pointerType: 'mouse' })
+    pressToOpen(button)
     expect(await screen.findByTestId('menu')).toBeInTheDocument()
     expect(button).toHaveAttribute('aria-expanded', 'true')
-    expect(button).toHaveAttribute('data-state', 'open')
+    expect(holdsOpenMenu(button)).toBe(true)
   })
 
   // The tooltip's trigger hands its own open / closed state to the toggle

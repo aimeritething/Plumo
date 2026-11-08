@@ -12,9 +12,9 @@ import { surfaceVariants } from "./surface"
 // A menu that never takes the focus: the element that has it (a text field,
 // an editor) moves the selection with its own keys and says which row is
 // selected. It looks like ui/dropdown-menu (the card, the rows, the group
-// labels and the hairlines are the same classes); a Radix menu takes the focus
-// and moves it from row to row, which a menu that filters as the user types
-// cannot do.
+// labels and the hairlines are the same classes); a Base UI menu takes the
+// focus and moves it from row to row, which a menu that filters as the user
+// types cannot do.
 
 /**
  * The card: rows scroll in Plumo's ScrollArea inside it, the card's inset the

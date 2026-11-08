@@ -38,8 +38,8 @@ import {
 } from './rich-editor-block-types'
 import { turnBlocksIntoType } from './rich-editor-block-type-commands'
 import {
-  keepEditorFocusAfterMenuClose,
   keepFocusWhenLeavingClosingMenuItem,
+  returnFocusAfterMenuClose,
   useToolbarMenu,
 } from './toolbar-menu-state'
 
@@ -170,7 +170,7 @@ export function BlockTypeSelect() {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="start"
-        onCloseAutoFocus={(event) => keepEditorFocusAfterMenuClose(editor.domElement, event)}
+        finalFocus={() => returnFocusAfterMenuClose(editor.domElement)}
       >
         {selectItems.map((item) => {
           const Icon = item.icon

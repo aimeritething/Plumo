@@ -13,12 +13,6 @@ import { Button } from '@/ui/button'
 import { Popover, PopoverAnchor, PopoverContent } from '@/ui/popover'
 import { SimpleTooltip } from '@/ui/tooltip'
 
-// The popover only places the button; the focus stays in the editor, so it
-// neither takes the focus when it shows nor hands it back when it goes.
-function keepFocusInEditor(event: Event) {
-  event.preventDefault()
-}
-
 // Shown while the focus is in the editor, or in the button or its colour menu
 // (the menu is portaled, so it counts while open). A popover anchored on the
 // highlight end's line places it, above the line or below it, inside the
@@ -46,12 +40,14 @@ export function HighlightBoundaryColorControl({ editor }: { editor: HighlightEdi
       <PopoverContent
         ref={controlRef}
         align="center"
-        collisionBoundary={state.boundary}
+        collisionBoundary={state.boundary ?? undefined}
         data-test="highlightBoundaryControl"
         // It never closes on Esc (it has no onOpenChange), so the Esc stays the editor's.
         leaveEscapeUnmarked
-        onCloseAutoFocus={keepFocusInEditor}
-        onOpenAutoFocus={keepFocusInEditor}
+        // The popover only places the button; the focus stays in the editor,
+        // so it neither takes the focus when it shows nor hands it back when it goes.
+        finalFocus={false}
+        initialFocus={false}
         role={undefined}
         side={state.side}
         sideOffset={CONTROL_GAP}

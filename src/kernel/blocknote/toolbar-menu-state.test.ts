@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
-  keepEditorFocusAfterMenuClose,
   keepFocusWhenLeavingClosingMenuItem,
+  returnFocusAfterMenuClose,
   toolbarMenuAfter,
 } from './toolbar-menu-state'
 
@@ -18,32 +18,29 @@ describe('toolbarMenuAfter', () => {
   })
 })
 
-describe('keepEditorFocusAfterMenuClose', () => {
+describe('returnFocusAfterMenuClose', () => {
   it('keeps the focus in the editor after a choice, and lets the trigger take it otherwise', () => {
     const editorElement = document.createElement('div')
     const text = document.createElement('button')
     editorElement.appendChild(text)
     document.body.appendChild(editorElement)
-    const event = { preventDefault: vi.fn() }
 
     text.focus()
-    keepEditorFocusAfterMenuClose(editorElement, event)
-    expect(event.preventDefault).toHaveBeenCalledTimes(1)
+    expect(returnFocusAfterMenuClose(editorElement)).toBe(false)
 
     text.blur()
-    keepEditorFocusAfterMenuClose(editorElement, event)
-    keepEditorFocusAfterMenuClose(null, event)
-    expect(event.preventDefault).toHaveBeenCalledTimes(1)
+    expect(returnFocusAfterMenuClose(editorElement)).toBe(true)
+    expect(returnFocusAfterMenuClose(null)).toBe(true)
     editorElement.remove()
   })
 })
 
 describe('keepFocusWhenLeavingClosingMenuItem', () => {
   it('only stops the leave on a menu that is closing', () => {
-    const event = { preventDefault: vi.fn() }
+    const event = { preventBaseUIHandler: vi.fn() }
     keepFocusWhenLeavingClosingMenuItem(true, event)
-    expect(event.preventDefault).not.toHaveBeenCalled()
+    expect(event.preventBaseUIHandler).not.toHaveBeenCalled()
     keepFocusWhenLeavingClosingMenuItem(false, event)
-    expect(event.preventDefault).toHaveBeenCalledTimes(1)
+    expect(event.preventBaseUIHandler).toHaveBeenCalledTimes(1)
   })
 })

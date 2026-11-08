@@ -57,7 +57,7 @@ type FloatingMiddleware = NonNullable<FloatingOptions['middleware']>[number]
 // What the toolbar opens (the block type menu, the link form) is portaled to
 // the body, so a pointer or focus move into it leaves the toolbar's DOM
 // subtree; it counts as within the toolbar when a trigger in the toolbar
-// controls it (Radix marks the pair with aria-controls and an id).
+// controls it (the trigger names the popup's id in aria-controls).
 function isControlledFromToolbar(toolbar: Element, target: Node) {
   for (
     let element = target instanceof Element ? target : target.parentElement;

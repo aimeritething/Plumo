@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { TooltipProvider } from '@/ui/tooltip'
-import { isLayerPositioner } from '@/ui/open-layer.test-utils'
+import { isLayerPositioner, layerPositioner, pressToOpen } from '@/ui/open-layer.test-utils'
 import { BlockNoteEditor } from '@blocknote/core'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { schema } from './editor-schema'
@@ -54,6 +54,8 @@ function textRange(editor: Awaited<ReturnType<typeof editorFromMarkdown>>, text:
 }
 
 afterEach(() => {
+  // Unmount first: a tooltip or menu still open is portaled into the body.
+  cleanup()
   document.body.innerHTML = ''
   trackEventMock.mockClear()
   vi.restoreAllMocks()
@@ -62,7 +64,7 @@ afterEach(() => {
 const SCROLL_AREA_BOUNDS = new DOMRect(0, 100, 800, 400)
 const mountedEditors: Array<Awaited<ReturnType<typeof editorFromMarkdown>>> = []
 
-// jsdom lays nothing out, so the boxes Radix measures to place the popover
+// jsdom lays nothing out, so the boxes Base UI measures to place the popover
 // are given here: the popover the button sits in is the button's 24px
 // square, the scroll area its bounds, and the window 1024×768.
 function layOutForThePopover() {
@@ -122,7 +124,7 @@ function boundaryButton() {
 function boundaryControlBox() {
   const box = document.querySelector<HTMLElement>('[data-test="highlightBoundaryControl"]')
   if (!box) throw new Error('The boundary control is not shown')
-  const placed = /^translate\((-?[\d.]+)px, (-?[\d.]+)px\)$/.exec(box.parentElement?.style.transform ?? '')
+  const placed = /^translate\((-?[\d.]+)px, (-?[\d.]+)px\)$/.exec(layerPositioner(box).style.transform)
   if (!placed) throw new Error('The boundary control is not placed yet')
   return { left: Number(placed[1]), side: box.dataset.side, top: Number(placed[2]) }
 }
@@ -227,8 +229,7 @@ describe('Markdown highlight color controls', () => {
     render(<Toolbar><ToolbarHighlightColorControl editor={editor} locale="en" /></Toolbar>, { wrapper: TooltipProvider })
 
     const caret = screen.getByRole('button', { name: 'Choose highlight color' })
-    fireEvent.pointerDown(caret)
-    fireEvent.click(caret)
+    pressToOpen(caret)
     fireEvent.click(screen.getByRole('menuitem', { name: 'Red' }))
 
     expect(serializeMarkdownHighlightAwareBlocks(editor, editor.document)).toBe('Start ==🔴marked== end')
@@ -393,8 +394,7 @@ describe('the highlight boundary colour button', () => {
     act(() => button.focus())
     expect(boundaryButton()).not.toBeNull()
 
-    fireEvent.pointerDown(button)
-    fireEvent.click(button)
+    pressToOpen(button)
     const red = screen.getByRole('menuitem', { name: 'Red' })
     act(() => red.focus())
 

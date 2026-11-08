@@ -2,6 +2,7 @@ import { en } from '@blocknote/core/locales'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { ComponentProps } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { pressToOpen } from '@/ui/open-layer.test-utils'
 import { TooltipProvider } from '@/ui/tooltip'
 import { subscribeImageOpenRequests } from './image-block-requests'
 import { endOpenBlockEdits } from './open-block-edits'
@@ -84,7 +85,7 @@ const toolbar = () => screen.getByTestId('file-toolbar')
 const view = (container: HTMLElement) => container.querySelector('[data-file-block-view]') as HTMLElement
 
 function openMoreMenu() {
-  fireEvent.pointerDown(screen.getByTestId('file-toolbar-more'), { button: 0, ctrlKey: false, pointerType: 'mouse' })
+  pressToOpen(screen.getByTestId('file-toolbar-more'))
 }
 
 beforeEach(() => {

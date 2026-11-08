@@ -3,6 +3,7 @@ import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import { describe, expect, it, onTestFinished, vi } from 'vitest'
 import { editorBlockElement, type RichEditor } from '@/kernel/blocknote/block-note-dom'
 import { isCollapsedBlock, toggleCollapsedHeading } from '@/kernel/blocknote/collapsed-sections'
+import { hoverToOpen, unhover } from '@/ui/open-layer.test-utils'
 import { Outline } from './outline'
 
 const ARTICLE: PartialBlock[] = [
@@ -18,6 +19,9 @@ const ARTICLE: PartialBlock[] = [
 
 /** A Rich surface: the editor mounted in a scroll area whose editor box sits `gutter` px in from its left. */
 function mountOutline(blocks: PartialBlock[] = ARTICLE, gutter = 200) {
+  // The side menu reads the Block under a moving mouse, which jsdom cannot hit-test.
+  Object.defineProperty(document, 'elementsFromPoint', { configurable: true, value: () => [] })
+  onTestFinished(() => { Reflect.deleteProperty(document, 'elementsFromPoint') })
   const scrollArea = document.createElement('div')
   const mount = document.createElement('div')
   scrollArea.appendChild(mount)
@@ -43,7 +47,7 @@ function mountOutline(blocks: PartialBlock[] = ARTICLE, gutter = 200) {
   const rail = () => view.container.querySelector('[data-slot="hover-card-trigger"]')!
   const row = (text: string) => Array.from(card()?.querySelectorAll('button') ?? []).find((button) => button.textContent === text)!
   const openCard = async () => {
-    fireEvent.pointerEnter(rail())
+    hoverToOpen(rail())
     await waitFor(() => expect(card()).not.toBeNull())
   }
   return { editor, scrollArea, view, card, rail, row, openCard }
@@ -70,20 +74,20 @@ describe('Outline', () => {
     const { card, rail } = mountOutline()
     await vi.waitFor(() => expect(rail()).not.toBeNull())
 
-    fireEvent.pointerEnter(rail())
+    hoverToOpen(rail())
     act(() => { vi.advanceTimersByTime(60) })
     expect(card()).toBeNull()
     act(() => { vi.advanceTimersByTime(60) })
     expect(card()).not.toBeNull()
 
     // Crossing from the rail onto the card keeps it open.
-    fireEvent.pointerLeave(rail())
+    unhover(rail(), card()!)
     act(() => { vi.advanceTimersByTime(50) })
-    fireEvent.pointerEnter(card()!)
+    hoverToOpen(card()!)
     act(() => { vi.advanceTimersByTime(300) })
     expect(card()).not.toBeNull()
 
-    fireEvent.pointerLeave(card()!)
+    unhover(card()!)
     act(() => { vi.advanceTimersByTime(160) })
     expect(card()).toBeNull()
   })

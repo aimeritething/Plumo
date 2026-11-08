@@ -190,15 +190,20 @@ export function CommandMenu({ open, mode, entries, onClose, onRunCommand, onOpen
   return (
     <CommandDialog
       open={open}
-      onOpenChange={(next) => { if (!next) onClose() }}
+      onOpenChange={(next, details) => {
+        // Esc cancelling a candidate does not close the palette.
+        if (!next && details.reason === 'escape-key' && isImeKeyEvent(details.event)) {
+          details.cancel()
+          return
+        }
+        if (!next) onClose()
+      }}
       title={TITLES[mode]}
       description={DESCRIPTIONS[mode]}
       contentProps={{
         'data-testid': 'command-menu',
         'data-mode': mode,
         'data-command-palette': 'true',
-        // Esc cancelling a candidate does not close the palette.
-        onEscapeKeyDown: (event) => { if (isImeKeyEvent(event)) event.preventDefault() },
         ...returnFocus,
       }}
       commandProps={{

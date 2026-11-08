@@ -412,7 +412,7 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<"li">) {
 // switcher, the Settings sections): 32px, an 8px radius, regular weight, a
 // 16px icon and a name that ellipsises. Hover is `sidebar-accent`, the current
 // item (`isActive`) `sidebar-selected`. A row whose menu is open
-// (`data-state="open"`, from a context menu's or a dropdown's trigger) keeps
+// (`data-popup-open`, from a context menu's or a dropdown's trigger) keeps
 // the hover look while the pointer is in the menu: a right-click does not
 // select, so this is the only mark on the row the menu acts on, and it must
 // not look like the current row. A row a dragged file would land in is a drop
@@ -423,9 +423,9 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<"li">) {
 const sidebarMenuButtonVariants = cva(
   [
     "peer/menu-button group/menu-button flex w-full cursor-default items-center gap-1.5 overflow-hidden rounded-lg pr-1.5 pl-2 text-left whitespace-nowrap text-sidebar-foreground outline-none transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:focus-ring disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50",
-    "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground data-active:bg-sidebar-selected data-active:text-sidebar-foreground",
+    "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-popup-open:bg-sidebar-accent data-popup-open:text-sidebar-accent-foreground data-active:bg-sidebar-selected data-active:text-sidebar-foreground",
     "[&>span]:min-w-0 [&>span]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
-    "[&_svg]:text-muted-foreground hover:[&_svg]:text-foreground data-[state=open]:[&_svg]:text-foreground data-active:[&_svg]:text-foreground",
+    "[&_svg]:text-muted-foreground hover:[&_svg]:text-foreground data-popup-open:[&_svg]:text-foreground data-active:[&_svg]:text-foreground",
     sidebarDropTargetClassName,
   ],
   {
@@ -471,11 +471,7 @@ function SidebarMenuButton({
       },
       props
     ),
-    // Until the tooltip is on Base UI its trigger takes an element only, not
-    // a render function; no row passes both a function and a tooltip.
-    render: !tooltip
-      ? render
-      : <TooltipTrigger render={render as React.ReactElement | undefined} />,
+    render: !tooltip ? render : <TooltipTrigger render={render} />,
     state: {
       slot: "sidebar-menu-button",
       sidebar: "menu-button",
@@ -527,7 +523,7 @@ function SidebarMenuAction({
           "peer-data-[size=lg]/menu-button:top-2.5",
           "group-data-[collapsible=icon]:hidden",
           showOnHover &&
-            "opacity-0 group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-[state=open]:opacity-100",
+            "opacity-0 group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 aria-expanded:opacity-100",
           className
         ),
       },

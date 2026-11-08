@@ -174,34 +174,34 @@ function DocumentMenu({ menu }: { menu: DocumentMenuActions }) {
         align="end"
         className="min-w-50"
         data-testid="tab-more-menu"
-        onCloseAutoFocus={(event) => {
-          if (!findChosen.current) return
+        finalFocus={() => {
+          if (!findChosen.current) return true
           findChosen.current = false
-          event.preventDefault()
+          return false
         }}
       >
-        <MenuItem label={menu.pinned ? 'Unpin' : 'Pin'} onSelect={menu.onTogglePin} />
-        <MenuItem label="Duplicate" onSelect={menu.onDuplicate} />
-        <MenuItem label="Reveal in Finder" onSelect={menu.onRevealInFinder} />
-        <MenuItem label="Open in Default App" onSelect={menu.onOpenInDefaultApp} />
+        <MenuItem label={menu.pinned ? 'Unpin' : 'Pin'} onClick={menu.onTogglePin} />
+        <MenuItem label="Duplicate" onClick={menu.onDuplicate} />
+        <MenuItem label="Reveal in Finder" onClick={menu.onRevealInFinder} />
+        <MenuItem label="Open in Default App" onClick={menu.onOpenInDefaultApp} />
         <DropdownMenuSeparator />
         <MenuItem
           label="Find"
           shortcut={FIND_SHORTCUT}
-          onSelect={onFind && (() => {
+          onClick={onFind && (() => {
             findChosen.current = true
             onFind()
           })}
         />
-        <MenuItem label="Close Tab" shortcut={CLOSE_TAB_SHORTCUT} onSelect={menu.onCloseTab} />
+        <MenuItem label="Close Tab" shortcut={CLOSE_TAB_SHORTCUT} onClick={menu.onCloseTab} />
       </DropdownMenuContent>
     </DropdownMenu>
   )
 }
 
-function MenuItem({ label, shortcut, onSelect }: { label: string; shortcut?: string; onSelect?: () => void }) {
+function MenuItem({ label, shortcut, onClick }: { label: string; shortcut?: string; onClick?: () => void }) {
   return (
-    <DropdownMenuItem disabled={!onSelect} onSelect={onSelect}>
+    <DropdownMenuItem disabled={!onClick} onClick={onClick}>
       {label}
       {shortcut && <DropdownMenuShortcut>{shortcut}</DropdownMenuShortcut>}
     </DropdownMenuItem>

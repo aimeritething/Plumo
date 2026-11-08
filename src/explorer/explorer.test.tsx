@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { holdsOpenMenu } from '@/ui/open-layer.test-utils'
+import { holdsOpenMenu, pressToOpen } from '@/ui/open-layer.test-utils'
 import { sidebarDropTargetClassName } from '@/ui/sidebar'
 import { SidebarTestProvider } from '@/ui/sidebar.test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -147,7 +147,7 @@ const disclosure = (name: string) => within(rowButton(name)).getByTestId('explor
 /** The rows listed, in order, by name. */
 const rowNames = () => within(screen.getByRole('list', { name: 'Notes' })).getAllByRole('button').map((row) => row.textContent)
 
-/** Radix opens a context menu from a right-click on its trigger. */
+/** A context menu opens from a right-click on its trigger. */
 function rightClick(element: Element) {
   fireEvent.contextMenu(element, { button: 2, clientX: 20, clientY: 20 })
 }
@@ -603,10 +603,7 @@ describe('the header actions', () => {
   it('holds exactly New Folder, Collapse All, Reveal in Finder and Close Folder', async () => {
     renderExplorer(stubActions())
 
-    fireEvent.pointerDown(
-      screen.getByTestId('explorer-more-actions'),
-      { button: 0, ctrlKey: false, pointerType: 'mouse' },
-    )
+    pressToOpen(screen.getByTestId('explorer-more-actions'))
 
     const menu = await screen.findByTestId('explorer-header-menu')
     expect(menuLabels(menu)).toEqual(['New Folder', 'Collapse All', 'Reveal in Finder', 'Close Folder'])
@@ -617,10 +614,7 @@ describe('the header actions', () => {
     fireEvent.click(disclosure('Projects'))
     expect(isExpanded('Projects')).toBe(true)
 
-    fireEvent.pointerDown(
-      screen.getByTestId('explorer-more-actions'),
-      { button: 0, ctrlKey: false, pointerType: 'mouse' },
-    )
+    pressToOpen(screen.getByTestId('explorer-more-actions'))
     fireEvent.click(within(await screen.findByTestId('explorer-header-menu')).getByRole('menuitem', { name: 'Collapse All' }))
 
     await waitFor(() => expect(isExpanded('Projects')).toBe(false))

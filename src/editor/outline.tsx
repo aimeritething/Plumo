@@ -139,8 +139,10 @@ export function Outline({ editor, scrollAreaRef, locale = 'en' }: {
   return (
     // `data-side-menu-inert`: the Kernel's side menu stays where it is while the pointer is over the Outline.
     <div className="pointer-events-none absolute inset-y-0 left-0 z-overlay" data-side-menu-inert="">
-      <HoverCard open={open} onOpenChange={setOpen} openDelay={OPEN_DELAY_MS} closeDelay={CLOSE_DELAY_MS}>
+      <HoverCard open={open} onOpenChange={setOpen}>
         <HoverCardTrigger
+          delay={OPEN_DELAY_MS}
+          closeDelay={CLOSE_DELAY_MS}
           className="pointer-events-auto absolute top-1/2 left-0 -translate-y-1/2 py-3"
           style={{ paddingInline: RAIL_INSET }}
           aria-hidden="true"

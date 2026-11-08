@@ -110,19 +110,19 @@ export function BlockToolbarMenu({ items, label, shown, testId, onPopupOpenChang
       </SimpleTooltip>
       <DropdownMenuContent
         align="end"
-        onCloseAutoFocus={(event) => {
-          event.preventDefault()
+        finalFocus={() => {
           const pending = pendingRef.current
           pendingRef.current = null
           if (pending) pending()
           else onReturnFocus()
+          return false
         }}
       >
         {items.map((item) => (
           <Fragment key={item.key}>
             {item.destructive && <DropdownMenuSeparator />}
             <DropdownMenuItem
-              onSelect={() => { pendingRef.current = item.onSelect }}
+              onClick={() => { pendingRef.current = item.onSelect }}
               variant={item.destructive ? 'destructive' : 'default'}
             >
               {item.icon}
@@ -218,7 +218,11 @@ export function BlockCornerToolbar({ children, field, fieldContent, label, name,
   shown: boolean
 }) {
   return (
-    <Popover open={field.open} onOpenChange={(next) => { if (!next) field.close(true) }}>
+    <Popover
+      open={field.open}
+      // Esc cancels; a click away saves.
+      onOpenChange={(next, details) => { if (!next) field.close(details.reason !== 'escape-key') }}
+    >
       <PopoverAnchor
         render={(
           <div
@@ -243,11 +247,7 @@ export function BlockCornerToolbar({ children, field, fieldContent, label, name,
       <PopoverContent
         align="end"
         variant="compact"
-        onCloseAutoFocus={(event) => event.preventDefault()}
-        onEscapeKeyDown={(event) => {
-          event.preventDefault()
-          field.close(false)
-        }}
+        finalFocus={false}
       >
         {field.open && fieldContent}
       </PopoverContent>

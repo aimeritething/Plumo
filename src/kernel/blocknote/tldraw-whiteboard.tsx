@@ -23,7 +23,7 @@ import {
   retainWhiteboardPlatformPermissionGuard,
 } from './whiteboard-platform-permission-rejection'
 import { Toolbar, ToolbarButton } from '@/ui/toolbar'
-import { Dialog } from '@/ui/dialog'
+import { TldrawDialogScope } from '@/ui/tldraw-dialog-scope'
 import { SimpleTooltip } from '@/ui/tooltip'
 import { installTldrawTextMeasurementGuard } from './tldraw-text-measurement-guard'
 
@@ -448,7 +448,7 @@ const TldrawDialog = memo(function TldrawDialog({ dialog, onClose }: TldrawDialo
   // --tl-* variables live on .tl-container, and a panel portaled to the body
   // (ui/dialog's DialogContent) would lose them.
   return (
-    <Dialog open onOpenChange={handleOpenChange}>
+    <TldrawDialogScope onOpenChange={handleOpenChange}>
       <div
         ref={overlayRef}
         dir="ltr"
@@ -460,7 +460,7 @@ const TldrawDialog = memo(function TldrawDialog({ dialog, onClose }: TldrawDialo
           onClose={closeDialogNow}
         />
       </div>
-    </Dialog>
+    </TldrawDialogScope>
   )
 })
 

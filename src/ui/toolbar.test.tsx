@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { Popover, PopoverContent, PopoverTrigger } from './popover'
 import { Toolbar, ToolbarButton } from './toolbar'
@@ -22,6 +22,8 @@ function ToolbarWithField() {
 describe('Toolbar', () => {
   it('moves the focus along its buttons with the arrows', async () => {
     render(<ToolbarWithField />)
+    // The open popover takes the focus first, into its field.
+    await waitFor(() => expect(screen.getByRole('textbox', { name: 'URL' })).toHaveFocus())
 
     const bold = screen.getByRole('button', { name: 'Bold' })
     act(() => bold.focus())

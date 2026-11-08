@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { DocumentTabActions, ImageTabActions, type DocumentMenuActions, type TabMode } from './tab-actions'
+import { pressToOpen } from '@/ui/open-layer.test-utils'
 import { TooltipProvider } from '@/ui/tooltip'
 
 function richMode(overrides: Partial<TabMode> = {}): TabMode {
@@ -11,9 +12,8 @@ function renderWithTooltips(ui: React.ReactElement) {
   return render(<TooltipProvider>{ui}</TooltipProvider>)
 }
 
-/** Radix opens a dropdown from a primary-button pointer-down on its trigger. */
 async function openMore() {
-  fireEvent.pointerDown(screen.getByRole('button', { name: 'More' }), { button: 0, ctrlKey: false, pointerType: 'mouse' })
+  pressToOpen(screen.getByRole('button', { name: 'More' }))
   return screen.findByTestId('tab-more-menu')
 }
 

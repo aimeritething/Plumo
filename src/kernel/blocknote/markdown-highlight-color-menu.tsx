@@ -6,7 +6,7 @@ import {
   MARKDOWN_HIGHLIGHT_COLORS,
   type MarkdownHighlightColor,
 } from '@/kernel/markdown/markdown-highlight-markdown'
-import { keepEditorFocusAfterMenuClose, keepFocusWhenLeavingClosingMenuItem } from './toolbar-menu-state'
+import { keepFocusWhenLeavingClosingMenuItem, returnFocusAfterMenuClose } from './toolbar-menu-state'
 import { colorLabel } from './markdown-highlight-control-state'
 import {
   applyMarkdownHighlightColor,
@@ -59,14 +59,14 @@ export function MarkdownHighlightColorMenu(props: MarkdownHighlightColorMenuProp
       <DropdownMenuContent
         align="end"
         className="min-w-36"
-        onCloseAutoFocus={(event) => keepEditorFocusAfterMenuClose(editor.domElement, event)}
+        finalFocus={() => returnFocusAfterMenuClose(editor.domElement)}
         side={side}
       >
         {MARKDOWN_HIGHLIGHT_COLORS.map(color => (
           <DropdownMenuItem
             key={color}
             onPointerLeave={(event) => keepFocusWhenLeavingClosingMenuItem(open === true, event)}
-            onSelect={() => applyMarkdownHighlightColor(editor, color, readRange(), source)}
+            onClick={() => applyMarkdownHighlightColor(editor, color, readRange(), source)}
           >
             <span aria-hidden="true" className={swatchVariants({ color })} />
             <span>{colorLabel(locale, color)}</span>
