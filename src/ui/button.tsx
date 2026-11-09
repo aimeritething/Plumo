@@ -42,14 +42,14 @@ const buttonVariants = cva(
         outline:
           "border-hairline border-border bg-background text-foreground shadow-xs hover:bg-accent hover:text-accent-foreground",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-selected",
+          "bg-secondary text-secondary-foreground hover:bg-secondary-hover",
         ghost:
           "hover:bg-accent hover:text-accent-foreground aria-expanded:bg-accent aria-expanded:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
         icon: `text-muted-foreground ${ICON_BUTTON_STATES}`,
         "icon-quiet": `text-subtle-foreground ${ICON_BUTTON_STATES}`,
         placeholder:
-          "bg-muted font-normal text-muted-foreground hover:bg-selected hover:text-foreground data-[selected=true]:bg-selected",
+          "bg-muted font-normal text-muted-foreground hover:bg-secondary-hover hover:text-foreground data-[selected=true]:bg-secondary-hover",
         bare: "",
         surface: `${surfaceVariants()} hover:bg-accent hover:text-accent-foreground aria-expanded:bg-accent aria-expanded:text-accent-foreground`,
         list: "font-normal text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:bg-accent focus-visible:ring-0 aria-[current]:font-medium aria-[current]:text-foreground data-dimmed:not-hover:not-aria-[current]:text-subtle-foreground",

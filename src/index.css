@@ -171,12 +171,17 @@
   --document-foreground: color-mix(in oklab, var(--gray-12) 60%, var(--gray-11));
   --document-heading: var(--gray-12);
 
-  /* fills: hover, selected (also pressed), and the quiet ones */
-  --accent: var(--gray-a3);
+  /* fills: hover (also a menu's highlighted row), selected (also pressed),
+     and the quiet ones. Selected sits on the quiet fills' step and hover
+     half a step under it, as light as Search's and Sana's (`a2` alone lost
+     a menu's keyboard row on white); a control that already wears a quiet
+     fill takes `secondary-hover`, a step above it, on hover. */
+  --accent: color-mix(in srgb, var(--gray-a2), var(--gray-a3));
   --accent-foreground: var(--foreground);
-  --selected: var(--gray-a4);
+  --selected: var(--gray-a3);
   --secondary: var(--gray-a3);
   --secondary-foreground: var(--foreground);
+  --secondary-hover: var(--gray-a4);
   --muted: var(--gray-a3);
 
   /* lines */
@@ -287,6 +292,7 @@
   --color-selected: var(--selected);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary-hover: var(--secondary-hover);
   --color-muted: var(--muted);
   --color-border: var(--border);
   --color-input: var(--input);
