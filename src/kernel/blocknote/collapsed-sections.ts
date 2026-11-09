@@ -316,7 +316,7 @@ function headingDotsCssDeclarations() {
 
 function headingDotsHoverCssDeclarations() {
   return [
-    'background: var(--accent);',
+    'background: var(--secondary-hover);',
     'color: var(--muted-foreground);',
   ].join('\n')
 }
