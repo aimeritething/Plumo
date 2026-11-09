@@ -90,7 +90,8 @@ const PANE_CLASS = 'relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidde
  * does not shift a long Document; the `editor-scroll-area` name is what the
  * Kernel's side menu and the mode-position sync select on. The scroll area's
  * content box is the flex column, at least as tall as the viewport, so the prose
- * column below the find bar fills the pane.
+ * column below the find bar fills the pane. It has no scroll fade: the fade
+ * would dim the find bar and the line being written at the pane's edges.
  */
 const RICH_SCROLL_AREA_CLASS = 'editor-scroll-area [overflow-anchor:none] [&>div]:flex! [&>div]:min-h-full [&>div]:flex-col'
 const RICH_SCROLL_AREA_PROPS = { 'data-editor-find-scope': 'true' }
@@ -506,7 +507,7 @@ export const Editor = memo(function Editor(props: EditorProps) {
           ) : (
             // The Outline sits beside the scroll area, so it stays put while the Document scrolls.
             <div className={RICH_SURFACE_CLASS}>
-              <ScrollArea className="min-h-0 flex-1" viewportRef={richScrollAreaRef} viewportClassName={RICH_SCROLL_AREA_CLASS} viewportProps={RICH_SCROLL_AREA_PROPS}>
+              <ScrollArea className="min-h-0 flex-1" viewportRef={richScrollAreaRef} viewportClassName={RICH_SCROLL_AREA_CLASS} viewportProps={RICH_SCROLL_AREA_PROPS} fade={false}>
                 <RichEditorFindBar key={activeTab.entry.path} editor={editor} path={activeTab.entry.path} request={findRequest} find={find} />
                 {/* The prose column: the Kernel's .bn-editor centres itself at --editor-max-width, so no padding here. */}
                 <div className="mx-auto flex min-h-0 w-full max-w-(--editor-max-width) flex-1 flex-col">

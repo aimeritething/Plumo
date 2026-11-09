@@ -37,8 +37,9 @@ export interface TabBarProps {
  * sidebar icon sit over that room, and the first Tab follows. The inset slides
  * with the sidebar, so the first Tab rides the sidebar's edge. Too many Tabs
  * to fit shrink to 96px each, then the Tabs alone scroll sideways, with no
- * scrollbar drawn; the "+" and the controls stay put, and whichever Tab
- * becomes active is scrolled into view.
+ * scrollbar drawn, fading out over an edge with more Tabs past it; the "+"
+ * and the controls stay put, and whichever Tab becomes active is scrolled
+ * into view.
  */
 export const TabBar = memo(function TabBar({ tabs, activeTabPath, onActivate, onClose, onNewDocument, actions, sidebarCollapsed = false }: TabBarProps) {
   const hints = useMemo(() => tabParentHints(tabs.map((tab) => tab.entry.path)), [tabs])
@@ -76,7 +77,8 @@ export const TabBar = memo(function TabBar({ tabs, activeTabPath, onActivate, on
 /**
  * Whenever another Tab becomes active (a click, an open, a shortcut, the
  * active one closing), bring it into view in the strip, at once: the nearest
- * edge, so a Tab already showing does not move.
+ * edge, so a Tab already showing does not move. The strip's scroll padding
+ * is as deep as its fade, so the Tab stops clear of it, never dimmed.
  */
 function useActiveTabInView(stripRef: RefObject<HTMLDivElement | null>, activeTabPath: string | null) {
   useEffect(() => {

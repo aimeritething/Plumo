@@ -34,7 +34,7 @@ function MenuList({
       className={cn(surfaceVariants(), "flex min-w-[8rem] flex-col overflow-hidden", className)}
       {...props}
     >
-      <ScrollArea className="min-h-0" viewportClassName="p-1.5">
+      <ScrollArea className="min-h-0" viewportClassName="p-1.5" fade={false}>
         {children}
       </ScrollArea>
     </div>

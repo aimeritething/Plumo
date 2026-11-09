@@ -42,6 +42,11 @@ type ViewportProps = React.HTMLAttributes<HTMLDivElement> & {
  * flex column); Base UI lays it out at its content's width so it can outgrow
  * the viewport sideways, but Plumo's lists truncate instead, so it is held to
  * the viewport's width.
+ *
+ * The content fades out over the top and bottom edges where more of it lies
+ * past them (`scroll-fade-y` in index.css), so a list that runs on shows that
+ * it does. `fade={false}` leaves it out: the Document, whose text is being
+ * written and whose find bar sits in the viewport, and the menus.
  */
 function ScrollArea({
   className,
@@ -49,8 +54,10 @@ function ScrollArea({
   viewportRef,
   viewportClassName,
   viewportProps,
+  fade = true,
   ...props
 }: ScrollAreaPrimitive.Root.Props & {
+  fade?: boolean
   viewportRef?: React.Ref<HTMLDivElement>
   viewportClassName?: string
   viewportProps?: ViewportProps
@@ -75,6 +82,7 @@ function ScrollArea({
         style={{ overflowX: "hidden", ...viewportProps?.style }}
         className={cn(
           "min-h-0 w-full flex-1 rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:focus-ring",
+          fade && "scroll-fade-y",
           viewportClassName
         )}
       >

@@ -164,7 +164,7 @@ function DropdownMenuContent({
         >
           {finalFocus === undefined && <MenuOpenedFrom onOpen={returnFocus.noteOpenedFrom} />}
           {/* A menu taller than the window scrolls with Plumo's bar; the inset is the viewport's. */}
-          <ScrollArea className="min-h-0" viewportClassName="p-1.5">
+          <ScrollArea className="min-h-0" viewportClassName="p-1.5" fade={false}>
             {children}
           </ScrollArea>
         </MenuPrimitive.Popup>

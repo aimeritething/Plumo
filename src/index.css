@@ -505,6 +505,44 @@
   @apply outline-none ring-1 ring-ring;
 }
 
+/* The scroll fade: a scroller's content fades out over its edge where more of
+   it lies past that edge, and only there. The fade grows with the distance
+   left to scroll, up to `--scroll-fade-size`, so it comes in as the content
+   leaves the edge rather than snapping on, and needs no motion of its own.
+   The scroll padding is as deep, so a row scrolled into view (the active Tab,
+   a revealed file, the Command Menu's selected row) stops clear of the fade.
+   `scroll-fade-y` reads the distances Base UI's ScrollArea viewport writes;
+   `scroll-fade-x` reads `--scroll-fade-x-start` and `--scroll-fade-x-end`,
+   which the scroller's own code writes (ui/document-tabs). Before either is
+   measured both are 0, so nothing fades. */
+@utility scroll-fade-y {
+  --scroll-fade-size: 16px;
+  --scroll-fade-mask: linear-gradient(
+    to bottom,
+    transparent 0,
+    black min(var(--scroll-fade-size), var(--scroll-area-overflow-y-start, 0px)),
+    black calc(100% - min(var(--scroll-fade-size), var(--scroll-area-overflow-y-end, 0px))),
+    transparent 100%
+  );
+  -webkit-mask-image: var(--scroll-fade-mask);
+  mask-image: var(--scroll-fade-mask);
+  scroll-padding-block: var(--scroll-fade-size);
+}
+
+@utility scroll-fade-x {
+  --scroll-fade-size: 24px;
+  --scroll-fade-mask: linear-gradient(
+    to right,
+    transparent 0,
+    black min(var(--scroll-fade-size), var(--scroll-fade-x-start, 0px)),
+    black calc(100% - min(var(--scroll-fade-size), var(--scroll-fade-x-end, 0px))),
+    transparent 100%
+  );
+  -webkit-mask-image: var(--scroll-fade-mask);
+  mask-image: var(--scroll-fade-mask);
+  scroll-padding-inline: var(--scroll-fade-size);
+}
+
 /* The sidebar's slide: the sidebar's margin (it slides out past the window's
    edge) and the collapsed tab bar's left inset move on one curve and one
    duration, so the first Tab rides the sidebar's edge and the pair reads as
