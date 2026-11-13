@@ -96,7 +96,7 @@ describe('slash menu items', () => {
     ])
   })
 
-  it('wraps slash-menu icons so hover can swap Phosphor weights', () => {
+  it('keeps slash-menu icons at the regular weight, hovered or not', () => {
     type SlashMenuTestItem = {
       key: string
       title: string
@@ -116,14 +116,8 @@ describe('slash menu items', () => {
       ReactElement<{ className?: string; weight?: string }>
     >
     expect(icon.props.className).toBe('relative inline-flex size-5 items-center justify-center')
-    expect(iconChildren.map((child) => child.props.className)).toEqual([
-      'size-4.5 group-hover/menu-item:opacity-0 group-aria-selected/menu-item:opacity-0 group-data-highlighted/menu-item:opacity-0',
-      'absolute inset-0 size-4.5 opacity-0 group-hover/menu-item:opacity-100 group-aria-selected/menu-item:opacity-100 group-data-highlighted/menu-item:opacity-100',
-    ])
-    expect(iconChildren.map((child) => child.props.weight)).toEqual([
-      'regular',
-      'fill',
-    ])
+    expect(iconChildren.map((child) => child.props.className)).toEqual(['size-4.5'])
+    expect(iconChildren.map((child) => child.props.weight)).toEqual(['regular'])
   })
 
   it('keeps custom media slash-menu commands searchable', () => {

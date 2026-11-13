@@ -448,10 +448,9 @@ export function addItemsToMediaGroup(
 }
 
 /**
- * A menu icon that swaps from the regular to the filled weight while its row
- * is highlighted: the two icons sit on top of each other and trade opacity on
- * the row's hover, its selection (a Slash menu row) and its highlight (a
- * dropdown row). Every menu row in ui/ is the `menu-item` group.
+ * A menu row's icon: the regular weight in a 20px box, the same whether the
+ * row is hovered, selected (a Slash menu row) or highlighted (a dropdown row).
+ * The filled weight it once swapped to there read as the icon inverting.
  */
 export function createSlashMenuIcon(Icon: PhosphorIcon) {
   return createElement(
@@ -459,15 +458,9 @@ export function createSlashMenuIcon(Icon: PhosphorIcon) {
     { className: 'relative inline-flex size-5 items-center justify-center' },
     createElement(Icon, {
       'aria-hidden': true,
-      className: 'size-4.5 group-hover/menu-item:opacity-0 group-aria-selected/menu-item:opacity-0 group-data-highlighted/menu-item:opacity-0',
+      className: 'size-4.5',
       size: 18,
       weight: 'regular',
-    }),
-    createElement(Icon, {
-      'aria-hidden': true,
-      className: 'absolute inset-0 size-4.5 opacity-0 group-hover/menu-item:opacity-100 group-aria-selected/menu-item:opacity-100 group-data-highlighted/menu-item:opacity-100',
-      size: 18,
-      weight: 'fill',
     }),
   )
 }
