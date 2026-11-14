@@ -37,3 +37,11 @@ devtools = ["tauri/devtools"]
 
 [dev-dependencies]
 tempfile = "3"
+
+# Release builds favour a small binary over build time: the Rust side moves files
+# and forwards commands, so it is not CPU-bound.
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1
+opt-level = "s"
