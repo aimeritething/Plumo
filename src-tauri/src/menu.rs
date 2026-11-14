@@ -301,7 +301,7 @@ fn build_manifest_menu(app: &App, label: &str) -> MenuResult {
 }
 
 /// The app menu: About, the manifest's `appMenu` items up to its first
-/// separator (Settings, where macOS puts it), the service and hide items,
+/// separator (Check for Updates… and Settings, where macOS puts them), the service and hide items,
 /// then the rest of `appMenu`. Quit is one of those rather than the predefined
 /// item: the predefined one terminates through `applicationWillTerminate`,
 /// which reaches the event loop as `Exit` with no way to hold it, while a
@@ -552,7 +552,7 @@ mod tests {
     }
 
     #[test]
-    fn app_menu_holds_settings_then_quit_with_their_accelerators() {
+    fn app_menu_holds_check_for_updates_settings_then_quit_with_their_accelerators() {
         let items: Vec<_> = manifest()
             .app_menu
             .iter()
@@ -571,6 +571,12 @@ mod tests {
             items,
             [
                 (
+                    Some("app-check-for-updates"),
+                    Some("Check for Updates…"),
+                    Some("Check for Updates…"),
+                    None
+                ),
+                (
                     Some("app-settings"),
                     Some("Settings"),
                     Some("Settings"),
@@ -585,10 +591,10 @@ mod tests {
             ]
         );
         assert!(matches!(
-            manifest().app_menu[1],
+            manifest().app_menu[2],
             ManifestMenuItem::Separator
         ));
-        for id in ["app-settings", "app-quit"] {
+        for id in ["app-check-for-updates", "app-settings", "app-quit"] {
             assert!(custom_menu_ids().contains(id));
             assert_eq!(emitted_menu_event_id(id), Some(id));
         }

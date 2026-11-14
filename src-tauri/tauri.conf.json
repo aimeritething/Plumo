@@ -1,7 +1,6 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Plumo",
-  "version": "0.1.0",
   "identifier": "com.aimerite.plumo",
   "build": {
     "frontendDist": "../dist",
@@ -52,8 +51,11 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["app"],
+    "targets": ["app", "dmg"],
     "category": "Productivity",
+    "macOS": {
+      "minimumSystemVersion": "13.0"
+    },
     "fileAssociations": [
       {
         "ext": ["md"],
@@ -70,5 +72,12 @@
       "icons/icon.icns"
     ]
   },
-  "plugins": {}
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDZCMTFGQTlGRDZBMTk5NkMKUldSc21hSFduL29SYTR1VEUvT21yNDlIVmo5K0RYc3F3WjBIbHhWZ3ZLaThLQzBnL3haeFlNT1UK",
+      "endpoints": [
+        "https://github.com/aimeritething/Plumo/releases/latest/download/latest.json"
+      ]
+    }
+  }
 }

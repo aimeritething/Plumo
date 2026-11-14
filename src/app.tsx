@@ -50,6 +50,8 @@ import { requestPlainTextPaste } from '@/editor/plain-text-paste'
 import { requestEditorFocus } from '@/editor/use-editor-focus'
 import { nativeTextFieldHasFocus, type EditorHistory } from '@/editor/editor-history'
 import { activeTabPaths, isImageFilePath } from '@/tabs/image-file'
+import { UpdateButton } from '@/update/update-button'
+import { useUpdate } from '@/update/use-update'
 
 const noop = () => {}
 
@@ -205,6 +207,13 @@ export default function App() {
     await reloadTab(path)
   }, [discardPending, reloadTab])
 
+  // The Update (CONTEXT.md): Restart and Update is the quit sequence with the
+  // install as its last step, so it writes every pending edit first and a
+  // Write failure stops it as it stops ⌘Q.
+  const updater = useUpdate()
+  const { exitOrInstall } = updater
+  const exitOrInstallUpdate = useCallback(() => exitOrInstall(exitApp), [exitOrInstall])
+
   const writeFailures = useWriteFailures({
     record: writeFailureRecord,
     tabs,
@@ -213,9 +222,13 @@ export default function App() {
     writeBuffer,
     revertToDisk,
     closeTab: closeTab,
-    exitApp,
+    exitApp: exitOrInstallUpdate,
   })
   const { settleAndRecord, closeTabOrAsk, retry, discard, quit, answerPrompt, dismissPrompt } = writeFailures
+  const { restart: restartIntoUpdate } = updater
+  const onRestartAndUpdate = useCallback(() => {
+    void restartIntoUpdate(quit)
+  }, [quit, restartIntoUpdate])
   // The open paths, so a flush that arrives after a Tab has gone is refused
   // rather than recreating its file. The editor reaches this through a ref it
   // refreshes before its own swap effect runs, so the set is never the stale one.
@@ -558,12 +571,13 @@ export default function App() {
     ...tabCommands.handlers,
     ...appearance.handlers,
     onOpenSettings: openSettings,
+    onCheckForUpdates: updater.checkNow,
     ...(settingsOpen ? { onCloseTab: closeSettings } : {}),
     onCreateNote: createDocumentFromShell,
     onQuickOpen: hasFolder ? openQuickOpen : undefined,
     onCommandPalette: openCommandMenu,
     onPastePlainText,
-  }), [activeDocumentPath, appearance.handlers, canPinActiveTab, createDocumentFromShell, hasFolder, hasRichDocument, hasTab, onCloseFolder, onCopyPath, onDuplicateBlock, onFindInNote, onOpenFolder, onOpenNote, onPastePlainText, onRedo, onSave, onToggleRawEditor, onUndo, openCommandMenu, openQuickOpen, openSettings, closeSettings, quit, settingsOpen, tabCommands, tabFileCommands, toggleSidebar])
+  }), [activeDocumentPath, appearance.handlers, canPinActiveTab, createDocumentFromShell, hasFolder, hasRichDocument, hasTab, onCloseFolder, onCopyPath, onDuplicateBlock, onFindInNote, onOpenFolder, onOpenNote, onPastePlainText, onRedo, onSave, onToggleRawEditor, onUndo, openCommandMenu, openQuickOpen, openSettings, closeSettings, quit, settingsOpen, tabCommands, tabFileCommands, toggleSidebar, updater.checkNow])
   useAppKeyboard(handlers)
   useMenuEvents(handlers)
 
@@ -609,6 +623,7 @@ export default function App() {
       data-testid="shell"
       data-restoring={!(restored && settingsRestored && finderOpenSettled) || undefined}
       data-sidebar-slides={sidebarSlides || undefined}
+      data-update-ready={updater.update !== null || undefined}
     >
       <Sidebar slides={sidebarSlides} width={sidebar.width} onWidthChange={setSidebarWidth}>
         <Pinned
@@ -681,6 +696,13 @@ export default function App() {
         sidebarCollapsed={sidebar.collapsed}
       />
       <SidebarToggle />
+      <UpdateButton
+        update={updater.update}
+        open={updater.open}
+        onOpenChange={updater.setOpen}
+        onRestart={onRestartAndUpdate}
+        restarting={updater.restarting}
+      />
       <WriteFailureDialog
         prompt={writeFailures.prompt}
         pending={writeFailures.promptPending ?? writeFailures.pendingFor(writeFailures.prompt?.path ?? null)}

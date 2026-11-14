@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { copyPathWithToast, showClosedOutsideToast, showImageImportErrorToast, showOpenFailureToast, showRefusalToast } from './toasts'
+import { copyPathWithToast, showClosedOutsideToast, showImageImportErrorToast, showOpenFailureToast, showRefusalToast, showUpdateCheckToast } from './toasts'
 
 const runtime = vi.hoisted(() => ({
   copyLocalPath: vi.fn<(path: string) => Promise<void>>(() => Promise.resolve()),
@@ -64,5 +64,24 @@ describe('toasts', () => {
 
     expect(runtime.toast).toHaveBeenCalledWith("Couldn't add IMG_0001.HEIC: HEIC images aren't supported", expect.anything())
     expect(runtime.toast).toHaveBeenCalledWith("Couldn't copy shot.png into attachments/", expect.anything())
+  })
+
+  it('answers Check for Updates… in one toast that goes from checking to what was found', () => {
+    runtime.toast.mockClear()
+
+    showUpdateCheckToast('checking')
+    showUpdateCheckToast('ready', '0.2.0')
+    showUpdateCheckToast('up-to-date')
+    showUpdateCheckToast('failed')
+    showUpdateCheckToast('install-failed')
+
+    expect(runtime.toast.mock.calls.map(([message]) => message)).toEqual([
+      'Checking for updates…',
+      'Plumo 0.2.0 is ready to install',
+      'Plumo is up to date',
+      "Couldn't check for updates",
+      "Couldn't install the update",
+    ])
+    expect(runtime.toast.mock.calls.every(([, options]) => options.id === 'update-check')).toBe(true)
   })
 })

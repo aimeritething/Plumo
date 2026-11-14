@@ -1,4 +1,4 @@
-import { Copy, WarningCircle } from '@phosphor-icons/react'
+import { ArrowCircleUp, CheckCircle, Copy, WarningCircle } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { copyLocalPath } from '@/platform/url'
 import { notePathFilename } from '@/lib/note-path-identity'
@@ -8,8 +8,8 @@ import type { ImageImportError } from './use-image-drop'
 /**
  * What Plumo says through Sonner: a refused Explorer operation, Copy path
  * landing or failing, a file that could not be opened, Tabs closed because
- * their files went away outside Plumo, and an image that did not become an
- * Attachment. Each says what happened and goes away on its own;
+ * their files went away outside Plumo, an image that did not become an
+ * Attachment, and what Check for Updates… found. Each says what happened and goes away on its own;
  * nothing here is ever answered, which is why a Write failure is a different
  * thing entirely. A toast's id names the event, so the same event again
  * replaces its toast and restarts the clock rather than stacking a copy.
@@ -76,4 +76,33 @@ function imageImportMessage(error: ImageImportError): string {
 export function showImageImportErrorToast(error: ImageImportError): void {
   const message = imageImportMessage(error)
   toast(message, { id: message, icon: warningIcon() })
+}
+
+const UPDATE_CHECK_TOAST_ID = 'update-check'
+
+export type UpdateCheckOutcome = 'checking' | 'up-to-date' | 'ready' | 'failed' | 'install-failed'
+
+/**
+ * Check for Updates… (the Plumo menu, the Command Menu) answering: one toast
+ * that goes from checking to what was found. A background check says nothing;
+ * the Update button is its whole answer. `install-failed` is Restart and
+ * Update not going through, which leaves Plumo running as it was.
+ */
+export function showUpdateCheckToast(outcome: UpdateCheckOutcome, version?: string): void {
+  switch (outcome) {
+    case 'checking':
+      toast('Checking for updates…', { id: UPDATE_CHECK_TOAST_ID, icon: <ArrowCircleUp size={16} aria-hidden="true" /> })
+      return
+    case 'up-to-date':
+      toast('Plumo is up to date', { id: UPDATE_CHECK_TOAST_ID, icon: <CheckCircle size={16} aria-hidden="true" /> })
+      return
+    case 'ready':
+      toast(version ? `Plumo ${version} is ready to install` : 'A new version of Plumo is ready to install', { id: UPDATE_CHECK_TOAST_ID, icon: <ArrowCircleUp size={16} aria-hidden="true" /> })
+      return
+    case 'failed':
+      toast("Couldn't check for updates", { id: UPDATE_CHECK_TOAST_ID, icon: warningIcon() })
+      return
+    case 'install-failed':
+      toast("Couldn't install the update", { id: UPDATE_CHECK_TOAST_ID, icon: warningIcon() })
+  }
 }

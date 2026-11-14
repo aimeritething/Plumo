@@ -80,6 +80,7 @@ export interface MockVaultCommands {
   read_settings: { args?: undefined; result: unknown }
   update_settings: { args: { settings: unknown }; result: void }
   quit_app: { args?: undefined; result: void }
+  install_update: { args?: undefined; result: void }
   create_note_content: { args: { path: string; content: string; vaultPath?: string }; result: void }
   duplicate_vault_file: { args: { path: string; newPath: string; vaultPath?: string }; result: void }
   create_vault_folder: { args: { vaultPath: string; folderName: string; parentPath?: string }; result: string }
@@ -407,6 +408,9 @@ export function createMockVault(seed: MockVaultFile[] = DEFAULT_MOCK_VAULT_FILES
       // The renderer's last step of ⌘Q; in a browser there is nothing to exit,
       // so the call log is the whole effect.
       case 'quit_app':
+        return undefined
+      // Restart and Update's last step, in place of `quit_app`; the call log is the whole effect here too.
+      case 'install_update':
         return undefined
       case 'create_note_content': {
         const path = requireInsideVault(args?.path)

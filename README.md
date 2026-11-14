@@ -9,6 +9,14 @@
 
 A small desktop app for reading and editing Markdown Documents in a Folder on your disk.
 
+## Download
+
+Get the latest `Plumo_<version>_aarch64.dmg` from
+[Releases](https://github.com/aimeritething/Plumo/releases/latest), open it and drag Plumo
+into Applications. Plumo needs an Apple Silicon Mac on macOS 13 or later; there is no Intel
+build. After that Plumo updates itself: when a new version has downloaded, an Update button
+appears beside the sidebar icon. [CHANGELOG.md](CHANGELOG.md) lists what changed.
+
 ## Prerequisites
 
 pnpm 10.33, node >= 22, rust 1.77.2.
@@ -28,8 +36,13 @@ smoke specs. In `src-tauri/`: `cargo build`, `cargo clippy`, `cargo test`.
   [tests/smoke/README.md](tests/smoke/README.md).
 
 CI (`.github/workflows/ci.yml`) runs the type-check, ESLint, Vitest, clippy and `cargo test`
-on macOS for every push to `main` and every pull request. Smoke and the bundle build are run
-by hand.
+on macOS for every push to `main` and every pull request. Smoke is run by hand.
+
+## Releasing
+
+`pnpm release <version>` tags a version, and the pushed tag builds, signs and notarizes it
+into a draft GitHub Release (`.github/workflows/release.yml`). See
+[docs/releasing.md](docs/releasing.md).
 
 ## License
 

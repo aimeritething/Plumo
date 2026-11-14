@@ -39,6 +39,7 @@ export type AppCommandShortcutEventInit = Pick<
 type SimpleHandlerKey =
   | 'onQuit'
   | 'onOpenSettings'
+  | 'onCheckForUpdates'
   | 'onCreateNote'
   | 'onOpenVault'
   | 'onOpenNote'
