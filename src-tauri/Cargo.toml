@@ -1,6 +1,6 @@
 [package]
 name = "plumo"
-version = "0.1.0"
+version = "0.1.0-beta.1"
 description = "A small desktop app for viewing and editing Markdown files"
 authors = ["Plumo contributors"]
 license = "AGPL-3.0-or-later"
