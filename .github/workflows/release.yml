@@ -1,9 +1,9 @@
 name: Release
 
 # A pushed `v*` tag (made by `pnpm release <version>`) builds Plumo for Apple
-# Silicon, signs it with the Developer ID certificate, has Apple notarize it,
-# and opens a draft GitHub Release holding the dmg, the updater's archive with
-# its signature, and `latest.json`. Nothing reaches a user until a person
+# Silicon, signs it with the Developer ID certificate, has Apple notarize the
+# app and the dmg, and opens a draft GitHub Release holding the dmg, the
+# updater's archive with its signature, and `latest.json`. Nothing reaches a user until a person
 # publishes the draft: an installed Plumo reads
 # `releases/latest/download/latest.json`, which only a published release
 # answers. The secrets are written by `scripts/setup-release-credentials.sh`.
@@ -79,6 +79,19 @@ jobs:
           codesign --verify --deep --strict --verbose=2 Plumo.app
           xcrun stapler validate Plumo.app
           spctl --assess --type execute --verbose=2 Plumo.app
+
+      # The Tauri CLI notarizes the app and signs the dmg, but does not submit
+      # the dmg itself. Notarizing and stapling it too means the file a person
+      # downloads carries its own ticket, so it passes Gatekeeper offline.
+      - name: Notarize and staple the dmg
+        env:
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+        run: |
+          dmg="$(ls src-tauri/target/release/bundle/dmg/*.dmg)"
+          xcrun notarytool submit "$dmg" --key "$APPLE_API_KEY_PATH" --key-id "$APPLE_API_KEY" --issuer "$APPLE_API_ISSUER" --wait
+          xcrun stapler staple "$dmg"
+          spctl --assess --type open --context context:primary-signature --verbose=2 "$dmg"
 
       - name: Collect the release assets
         run: |

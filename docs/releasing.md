@@ -15,7 +15,7 @@ scripts/setup-release-credentials.sh
 
 | Secret | What it is |
 | --- | --- |
-| `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD` | The Developer ID Application certificate as a base64 `.p12`, and the password of that file. |
+| `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD` | The Developer ID Application certificate with its private key and Apple's Developer ID G2 intermediate certificate, as a base64 `.p12`, and the password of that file. Without the intermediate, `codesign` cannot build the chain and fails with `errSecInternalComponent`. |
 | `APPLE_SIGNING_IDENTITY` | The certificate's name, `Developer ID Application: … (TEAMID)`. |
 | `APPLE_API_ISSUER`, `APPLE_API_KEY`, `APPLE_API_KEY_P8` | The App Store Connect API key that submits the build for notarization: Issuer ID, Key ID, and the `.p8` file's contents. |
 | `TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | The updater key that signs each Update, and its password. |
