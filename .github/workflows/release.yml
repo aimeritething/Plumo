@@ -1,0 +1,116 @@
+name: Release
+
+# A pushed `v*` tag (made by `pnpm release <version>`) builds Plumo for Apple
+# Silicon, signs it with the Developer ID certificate, has Apple notarize the
+# app and the dmg, and opens a draft GitHub Release holding the dmg, the
+# updater's archive with its signature, and `latest.json`. Nothing reaches a user until a person
+# publishes the draft: an installed Plumo reads
+# `releases/latest/download/latest.json`, which only a published release
+# answers. The secrets are written by `scripts/setup-release-credentials.sh`.
+# See docs/releasing.md.
+on:
+  push:
+    tags:
+      - 'v*'
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build, sign, notarize, draft the release
+    # An Apple Silicon runner: Plumo ships for aarch64 only, built natively.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: The tag matches the version and has its changelog section
+        run: |
+          test "$(uname -m)" = "arm64"
+          node scripts/release.mjs verify "$GITHUB_REF_NAME"
+          echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+
+      - run: pnpm install --frozen-lockfile
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Write the notarization key to a file
+        env:
+          APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+        run: |
+          test -n "$APPLE_API_KEY_P8"
+          umask 077
+          printf '%s\n' "$APPLE_API_KEY_P8" > "$RUNNER_TEMP/AuthKey.p8"
+          echo "APPLE_API_KEY_PATH=$RUNNER_TEMP/AuthKey.p8" >> "$GITHUB_ENV"
+
+      # The Tauri CLI imports the certificate into a temporary keychain, signs
+      # the app, submits it to Apple with the API key and staples the ticket.
+      # `createUpdaterArtifacts` is set here rather than in tauri.conf.json so
+      # a local `pnpm tauri build` needs no updater key.
+      - name: Build, sign and notarize
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: pnpm tauri build --config '{"bundle":{"createUpdaterArtifacts":true}}'
+
+      - name: Gatekeeper accepts the app
+        working-directory: src-tauri/target/release/bundle/macos
+        run: |
+          codesign --verify --deep --strict --verbose=2 Plumo.app
+          xcrun stapler validate Plumo.app
+          spctl --assess --type execute --verbose=2 Plumo.app
+
+      # The Tauri CLI notarizes the app and signs the dmg, but does not submit
+      # the dmg itself. Notarizing and stapling it too means the file a person
+      # downloads carries its own ticket, so it passes Gatekeeper offline.
+      - name: Notarize and staple the dmg
+        env:
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+        run: |
+          dmg="$(ls src-tauri/target/release/bundle/dmg/*.dmg)"
+          xcrun notarytool submit "$dmg" --key "$APPLE_API_KEY_PATH" --key-id "$APPLE_API_KEY" --issuer "$APPLE_API_ISSUER" --wait
+          xcrun stapler staple "$dmg"
+          spctl --assess --type open --context context:primary-signature --verbose=2 "$dmg"
+
+      - name: Collect the release assets
+        run: |
+          bundle=src-tauri/target/release/bundle
+          mkdir release-assets
+          cp "$bundle"/dmg/*.dmg "release-assets/Plumo_${VERSION}_aarch64.dmg"
+          cp "$bundle/macos/Plumo.app.tar.gz" "release-assets/Plumo_${VERSION}_aarch64.app.tar.gz"
+          cp "$bundle/macos/Plumo.app.tar.gz.sig" "release-assets/Plumo_${VERSION}_aarch64.app.tar.gz.sig"
+          node scripts/release.mjs manifest "$VERSION" "$bundle/macos/Plumo.app.tar.gz.sig" > release-assets/latest.json
+          node scripts/release.mjs notes "$VERSION" > release-notes.md
+          ls -l release-assets
+
+      - name: Draft the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --draft \
+            --verify-tag \
+            --title "Plumo $VERSION" \
+            --notes-file release-notes.md \
+            release-assets/*

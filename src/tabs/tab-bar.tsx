@@ -34,7 +34,8 @@ export interface TabBarProps {
  * Document's nothing; two Tabs with the same name each add their parent
  * folder's name, dimmed. With the sidebar collapsed the editor reaches the
  * window's left edge, so this row starts 120px in: the traffic lights and the
- * sidebar icon sit over that room, and the first Tab follows. The inset slides
+ * sidebar icon sit over that room, and the first Tab follows; while an Update
+ * is ready its button sits there too and the row starts 188px in. The inset slides
  * with the sidebar, so the first Tab rides the sidebar's edge. Too many Tabs
  * to fit shrink to 96px each, then the Tabs alone scroll sideways, with no
  * scrollbar drawn, fading out over an edge with more Tabs past it; the "+"
@@ -50,7 +51,7 @@ export const TabBar = memo(function TabBar({ tabs, activeTabPath, onActivate, on
 
   return (
     <div
-      className="sidebar-slide flex h-13 flex-none items-center gap-1 overflow-hidden pr-4 pl-3 select-none data-collapsed:pl-30"
+      className="sidebar-slide flex h-13 flex-none items-center gap-1 overflow-hidden pr-4 pl-3 select-none data-collapsed:pl-30 in-data-update-ready:data-collapsed:pl-47"
       data-testid="tab-bar"
       data-collapsed={sidebarCollapsed || undefined}
       data-tauri-drag-region

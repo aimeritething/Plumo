@@ -148,3 +148,11 @@ _Avoid_: Preferences, options, config
 **Primary color**:
 The one color that marks what the user can act on or what has focus: the main buttons, the focus ring, links and the text selection. Selected rows and the selected Tab stay gray. Blue unless the user picks another in Settings.
 _Avoid_: Accent color, brand color, theme color, highlight color
+
+**Update**:
+A newer version of Plumo that has been downloaded and is ready to install. Plumo looks for one shortly after launch and once a day after that, and downloads it without saying anything; a development build never looks. Check for Updates… in the app menu and the Command Menu looks now and always says what it found.
+_Avoid_: Upgrade, new release, patch
+
+**Update button**:
+The button to the right of the sidebar icon, shown only while an Update is ready. It opens a popover with the Update's version and notes; Restart and Update there writes every pending edit as Quit does, installs the Update and reopens Plumo with its Session. A Write failure stops it, and the Update waits.
+_Avoid_: Update badge, update banner, upgrade button

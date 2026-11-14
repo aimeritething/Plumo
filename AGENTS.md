@@ -17,10 +17,12 @@ views, Autosave, Write failure, toasts. Utility classes only; no CSS file.
 imports `folder/`, never the reverse.
 - `shell/` — sidebar, theme, shortcuts, menu events. `app-command-manifest.json` is also
 read by `src-tauri/src/menu.rs`.
+- `update/` — the Update: the background check, the Update button, the notes it shows.
 
 - `platform/` — `tauri.ts` and `mock/`, the in-memory Folder fixture that stands in for
 Rust outside Tauri (so `pnpm dev` and the smoke specs run without it).
-- `src-tauri/` — the Rust side: commands, the Folder watcher, the Session file, the menu.
+- `src-tauri/` — the Rust side: commands, the Folder watcher, the Session file, the menu,
+the updater.
 
 Unit tests sit beside the code as `*.test.ts(x)`; helpers are `*.test-utils.ts(x)`; a test
 with no source file of its own lives in the directory it guards. `tests/smoke/` holds the
@@ -37,3 +39,7 @@ mock fixture.
 
 Before calling work done, run what CI runs: `pnpm tsc`, `pnpm lint`, `pnpm test`, and in
 `src-tauri/` `cargo clippy --all-targets` and `cargo test`.
+
+A version is cut with `pnpm release <version>` after its section is in `CHANGELOG.md`;
+`docs/releasing.md` has the steps. Add a line to `CHANGELOG.md` for a change a user can
+notice.

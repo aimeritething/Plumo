@@ -28,6 +28,8 @@ export interface AppCommandHandlers {
   onQuit?: () => void
   /** Settings (Plumo menu, ⌘,, the Folder switcher): opens the Settings dialog; while it is open, nothing. */
   onOpenSettings?: () => void
+  /** Check for Updates… (Plumo menu, the Command Menu): looks for a newer Plumo now and says what it found. */
+  onCheckForUpdates?: () => void
   onCreateNote: () => void
   onOpenVault?: () => void
   onOpenNote?: () => void
@@ -76,6 +78,7 @@ type SimpleHandlerKey = keyof Pick<
   AppCommandHandlers,
   | 'onQuit'
   | 'onOpenSettings'
+  | 'onCheckForUpdates'
   | 'onCreateNote'
   | 'onOpenVault'
   | 'onOpenNote'
@@ -117,6 +120,7 @@ type SimpleHandlerExecutor = (handlers: AppCommandHandlers) => void
 const SIMPLE_HANDLER_EXECUTORS: readonly [SimpleHandlerKey, SimpleHandlerExecutor][] = [
   ['onQuit', (handlers) => handlers.onQuit?.()],
   ['onOpenSettings', (handlers) => handlers.onOpenSettings?.()],
+  ['onCheckForUpdates', (handlers) => handlers.onCheckForUpdates?.()],
   ['onCreateNote', (handlers) => handlers.onCreateNote()],
   ['onOpenVault', (handlers) => handlers.onOpenVault?.()],
   ['onOpenNote', (handlers) => handlers.onOpenNote?.()],

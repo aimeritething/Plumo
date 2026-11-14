@@ -4,6 +4,7 @@ pub mod menu;
 pub mod open_files;
 pub mod session;
 pub mod settings;
+pub mod updater;
 pub mod vault;
 pub mod vault_watcher;
 
@@ -22,6 +23,8 @@ fn setup_plugins(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>>
 
     app.handle().plugin(tauri_plugin_dialog::init())?;
     app.handle().plugin(tauri_plugin_opener::init())?;
+    app.handle()
+        .plugin(tauri_plugin_updater::Builder::new().build())?;
     setup_macos_webview_shortcut_prevention(app)?;
     Ok(())
 }
@@ -148,8 +151,10 @@ fn handle_run_event(app: &AppHandle, event: RunEvent) {
             api.prevent_exit();
         }
         // ⌘Q ends in the renderer's `quit_app`, which is `app.exit()` and
-        // reaches here as `ExitRequested { code: Some(0) }`; a termination
-        // from outside the app (Dock, shutdown) arrives as `Exit` alone.
+        // reaches here as `ExitRequested { code: Some(0) }`; installing an
+        // Update ends in a restart, which arrives the same way with the
+        // restart code; a termination from outside the app (Dock, shutdown)
+        // arrives as `Exit` alone.
         RunEvent::ExitRequested { .. } | RunEvent::Exit => session::flush_now(app),
         RunEvent::Reopen {
             has_visible_windows: false,
@@ -168,6 +173,7 @@ pub fn run() {
         // Before `run()`, so the buffer exists when a launch by document
         // delivers `Opened` ahead of `Ready`.
         .manage(open_files::PendingOpen::default())
+        .manage(updater::UpdateState::default())
         .invoke_handler(tauri::generate_handler![
             commands::list_files,
             commands::read_session,
@@ -198,6 +204,8 @@ pub fn run() {
             commands::update_menu_state,
             commands::quit_app,
             open_files::take_pending_open,
+            updater::check_for_update,
+            updater::install_update,
         ])
         .on_window_event(handle_window_event)
         .setup(setup_app)

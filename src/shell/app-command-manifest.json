@@ -13,6 +13,11 @@
         "requiresManualNativeAcceleratorQa": true
       }
     },
+    "appCheckForUpdates": {
+      "id": "app-check-for-updates",
+      "route": { "kind": "handler", "handler": "onCheckForUpdates" },
+      "menuOwned": true
+    },
     "appSettings": {
       "id": "app-settings",
       "route": { "kind": "handler", "handler": "onOpenSettings" },
@@ -470,6 +475,7 @@
     }
   ],
   "appMenu": [
+    { "kind": "command", "command": "appCheckForUpdates", "label": "Check for Updates…" },
     { "kind": "command", "command": "appSettings", "label": "Settings" },
     { "kind": "separator" },
     { "kind": "command", "command": "appQuit", "label": { "macos": "Quit Plumo", "default": "Quit" } }
