@@ -60,7 +60,7 @@ export function openTab(state: NoteTabsState, tab: Tab): NoteTabsState {
 }
 
 /**
- * Put a Document Tab in Rich or Raw mode (⌘\, the segmented control).
+ * Put a Document Tab in Rich or Raw mode (⌘\, the Source mode button).
  * Rich is refused while the Frontmatter is invalid; an
  * Image Tab and a path that is not open are left alone.
  */

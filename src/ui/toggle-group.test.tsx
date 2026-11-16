@@ -7,7 +7,7 @@ describe('ToggleGroupItem', () => {
   it('keeps its chosen state under a tooltip, whose open / closed state is its own', async () => {
     render(
       <TooltipProvider>
-        <ToggleGroup variant="segmented" value={['a']} aria-label="Choice">
+        <ToggleGroup value={['a']} aria-label="Choice">
           <SimpleTooltip label="A">
             <ToggleGroupItem value="a" aria-label="A" />
           </SimpleTooltip>

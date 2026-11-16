@@ -21,7 +21,7 @@ An image pasted or dropped into a Document, stored in an `attachments/` director
 _Avoid_: Asset, upload
 
 **Frontmatter**:
-The YAML block at the top of a Document. Preserved byte-for-byte across saves; visible and editable only in Raw mode.
+The YAML block at the top of a Document. Preserved byte-for-byte across saves; visible and editable only in Source mode.
 
 **Image file**:
 A file in the Folder whose extension is one of apng, avif, bmp, gif, ico, jpeg, jpg, png, svg, tif, tiff, webp. Plumo shows it and never edits it. An Attachment is an Image file that a Document links to; an Image file need not be an Attachment.
@@ -41,12 +41,13 @@ _Avoid_: Engine, core, editor internals
 The WYSIWYG editing surface (BlockNote). It is also how a Document is "viewed"; there is no separate read-only preview.
 _Avoid_: Preview, WYSIWYG mode, rendered mode
 
-**Raw mode**:
+**Source mode**:
 The plain-Markdown editing surface (CodeMirror). Shows the exact bytes that are on disk, including Frontmatter.
-_Avoid_: Source mode, code mode, plain mode
+_Avoid_: Raw mode, code mode, plain mode
+_In code_: `raw`, the word the code uses. Code says raw; people and UI say Source.
 
 **Block**:
-One unit of a Document's body in Rich mode (a paragraph, heading, list item, table, image, …), together with the Blocks nested under it. Raw mode has no Blocks, only lines.
+One unit of a Document's body in Rich mode (a paragraph, heading, list item, table, image, …), together with the Blocks nested under it. Source mode has no Blocks, only lines.
 _Avoid_: Node, element, paragraph (when you mean any kind of Block)
 
 **Section**:
@@ -54,7 +55,7 @@ A heading Block and every Block after it up to the next heading of the same or a
 _Avoid_: Chapter, group
 
 **Outline**:
-The list of a Document's headings shown at the left of Rich mode, used to jump to a Section. Every non-empty heading Block is in it, nested or not, indented by its level; the Document's title, a first-level heading that is its first Block, is not. A Document with fewer than two such headings has no Outline. Raw mode and an Image file's Tab have none.
+The list of a Document's headings shown at the left of Rich mode, used to jump to a Section. Every non-empty heading Block is in it, nested or not, indented by its level; the Document's title, a first-level heading that is its first Block, is not. A Document with fewer than two such headings has no Outline. Source mode and an Image file's Tab have none.
 _Avoid_: Table of contents, TOC, minimap, navigator
 
 **Table handle**:
@@ -120,7 +121,7 @@ The sidebar section above the Explorer that lists the Documents and Image files 
 _Avoid_: Favorites, bookmarks, starred
 
 **Tab**:
-One entry in the tab bar above the editor; one Tab per open Document or Image file. Clicking a Document or an Image file in the Explorer always opens a real Tab (there are no preview tabs). When two open Tabs share a file name, each also shows its parent folder's name. An Image file's Tab shows the picture, fitted to the space beside the sidebar; it has no Rich or Raw mode.
+One entry in the tab bar above the editor; one Tab per open Document or Image file. Clicking a Document or an Image file in the Explorer always opens a real Tab (there are no preview tabs). When two open Tabs share a file name, each also shows its parent folder's name. An Image file's Tab shows the picture, fitted to the space beside the sidebar; it has no Rich or Source mode.
 
 **Command Menu**:
 The Cmd+K palette that lists Plumo's commands and, as you type, fuzzy-matches commands, Document names, and Image file names. Every command in the native menu bar appears here and nothing else does.
@@ -139,7 +140,7 @@ The control at the bottom of the sidebar that names the current Folder. Choosing
 _Avoid_: Footer, workspace switcher, folder picker
 
 **Session**:
-The state Plumo restores on launch: the Folder, the open Tabs (with each Document's Rich or Raw mode), the active Tab, sidebar state (its width, and which sections are collapsed), and window geometry. It also keeps, for each Folder, its Pinned list and the Tabs that were open when the Folder was last shown, so a Folder opened again gets its pins and its Tabs back; a Tab belongs to the Folder that was open when it was opened, wherever its file lives. It also keeps the Recent Folders. Stored in the app's own config directory, never in the Folder.
+The state Plumo restores on launch: the Folder, the open Tabs (with each Document's Rich or Source mode), the active Tab, sidebar state (its width, and which sections are collapsed), and window geometry. It also keeps, for each Folder, its Pinned list and the Tabs that were open when the Folder was last shown, so a Folder opened again gets its pins and its Tabs back; a Tab belongs to the Folder that was open when it was opened, wherever its file lives. It also keeps the Recent Folders. Stored in the app's own config directory, never in the Folder.
 
 **Settings**:
 What the user chooses about how Plumo looks and behaves, the same whichever Folder is open; for now the theme and the Primary color. Opened with Settings (⌘,) from the app menu, the Command Menu or the Folder switcher, so it is reachable with no Folder open. Kept apart from the Session, in the app's own config directory, so starting the Session over keeps them.

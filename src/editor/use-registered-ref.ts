@@ -2,7 +2,7 @@ import { useEffect, type MutableRefObject } from 'react'
 
 /**
  * Hand a value up through a ref App holds, for as long as the surface that
- * owns it is mounted: Toggle Rich/Raw, Find, Undo and Redo reach the editor
+ * owns it is mounted: Toggle Source Mode, Find, Undo and Redo reach the editor
  * this way. The ref is cleared on the way out only when it still holds this
  * value, so another surface's registration is left alone.
  */

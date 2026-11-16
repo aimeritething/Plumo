@@ -140,7 +140,7 @@ test('the "…" menu hands the Document to Finder and to its default app, its Fi
 
   // Find leaves the focus in the find bar it opened, not on "…", in either mode.
   for (const mode of ['rich', 'raw'] as const) {
-    if (mode === 'raw') await page.getByTestId('tab-mode-raw').click()
+    if (mode === 'raw') await page.getByTestId('tab-mode').click()
     await page.getByRole('button', { name: 'More', exact: true }).click()
     await page.getByRole('menuitem', { name: /^Find/ }).click()
     // The menu hands focus back as it finishes closing, after the find bar took it.

@@ -19,7 +19,7 @@ import { notePathFilename } from '@/lib/note-path-identity'
 
 /** The enable state of the manifest's menu groups, as the App knows it. */
 export interface CommandMenuState {
-  /** A Document is the active Tab: Save, Toggle Rich/Raw and Find. */
+  /** A Document is the active Tab: Save, Toggle Source Mode and Find. */
   hasDocument: boolean
   /** A Folder is open: New Document, Quick Open and Close Folder. */
   hasFolder: boolean

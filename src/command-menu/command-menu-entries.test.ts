@@ -14,7 +14,7 @@ describe('commandMenuCommandEntries', () => {
       'New Document', 'Open Folder…', 'Open Document…', 'Close Folder', 'Quick Open', 'Save',
       'Duplicate', 'Pin/Unpin', 'Reveal in Finder', 'Open in Default App', 'Close Tab',
       'Undo', 'Redo', 'Paste without Formatting', 'Duplicate Block', 'Find', 'Copy Path',
-      'Toggle Sidebar', 'Toggle Rich/Raw', 'Appearance: System', 'Appearance: Dark', 'Appearance: Light',
+      'Toggle Sidebar', 'Toggle Source Mode', 'Appearance: System', 'Appearance: Dark', 'Appearance: Light',
       'Previous Tab', 'Next Tab',
       'Check for Updates…', 'Settings',
       // The platform label: `Quit Plumo` on macOS, `Quit` elsewhere (jsdom is elsewhere).

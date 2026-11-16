@@ -166,7 +166,7 @@ describe('useMenuEvents', () => {
       expect(runtime.invoke).toHaveBeenLastCalledWith('update_menu_state', { state: { hasActiveNote: true, hasVault: false, hasTab: false, canPin: false, hasRichNote: false } })
       expect(runtime.invoke).toHaveBeenCalledTimes(2)
 
-      // Save, Toggle Rich/Raw and Find in Document go back to disabled over an
+      // Save, Toggle Source Mode and Find in Document go back to disabled over an
       // Image Tab, which the App reports by having no active Document.
       rerender({ activeDocumentPath: null })
       await flushMicrotasks()

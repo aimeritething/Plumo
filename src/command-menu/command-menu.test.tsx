@@ -6,7 +6,7 @@ import type { CommandMenuEntry } from './command-menu-matcher'
 const ENTRIES: CommandMenuEntry[] = [
   { kind: 'command', id: 'file-save', name: 'Save', detail: 'File', shortcut: '⌘S', enabled: false },
   { kind: 'command', id: 'view-toggle-sidebar', name: 'Toggle Sidebar', detail: 'View', shortcut: '⌘[' },
-  { kind: 'command', id: 'edit-toggle-raw-editor', name: 'Toggle Rich/Raw', detail: 'View', shortcut: '⌘\\' },
+  { kind: 'command', id: 'edit-toggle-raw-editor', name: 'Toggle Source Mode', detail: 'View', shortcut: '⌘\\' },
   { kind: 'document', id: '/Notes/Projects/Plumo.md', name: 'Plumo.md', detail: 'Notes › Projects' },
   { kind: 'document', id: '/Notes/Welcome.md', name: 'Welcome.md', detail: 'Notes' },
   { kind: 'image', id: '/Notes/Attachments/lake.png', name: 'lake.png', detail: 'Notes › Attachments' },
@@ -40,7 +40,7 @@ describe('CommandMenu', () => {
     renderMenu()
     expect(screen.getByTestId('command-menu')).toHaveAttribute('data-mode', 'commands')
     await waitFor(() => expect(input()).toHaveFocus())
-    expect(rowNames()).toEqual(['Save', 'Toggle Sidebar', 'Toggle Rich/Raw'])
+    expect(rowNames()).toEqual(['Save', 'Toggle Sidebar', 'Toggle Source Mode'])
     expect(screen.getByTestId('command-menu-footer')).toHaveTextContent('↵ open · ⌘↵ open in Raw · esc close')
   })
 
@@ -70,7 +70,7 @@ describe('CommandMenu', () => {
   it('typing matches commands and files together and emphasises the matched substring', () => {
     renderMenu()
     fireEvent.change(input(), { target: { value: 'tog' } })
-    expect(rowNames()).toEqual(['Toggle Sidebar', 'Toggle Rich/Raw'])
+    expect(rowNames()).toEqual(['Toggle Sidebar', 'Toggle Source Mode'])
     expect(within(rows()[0]).getByTestId('command-menu-row-name').querySelector('mark')).toHaveTextContent('Tog')
 
     fireEvent.change(input(), { target: { value: 'plumo' } })
@@ -96,11 +96,11 @@ describe('CommandMenu', () => {
     const { props } = renderMenu()
     expect(activeRow()).toHaveTextContent('Toggle Sidebar')
     fireEvent.keyDown(input(), { key: 'ArrowDown' })
-    expect(activeRow()).toHaveTextContent('Toggle Rich/Raw')
+    expect(activeRow()).toHaveTextContent('Toggle Source Mode')
     fireEvent.keyDown(input(), { key: 'ArrowDown' })
     expect(activeRow()).toHaveTextContent('Toggle Sidebar')
     fireEvent.keyDown(input(), { key: 'ArrowUp' })
-    expect(activeRow()).toHaveTextContent('Toggle Rich/Raw')
+    expect(activeRow()).toHaveTextContent('Toggle Source Mode')
 
     fireEvent.keyDown(input(), { key: 'Enter' })
     expect(props.onRunCommand).toHaveBeenCalledWith('edit-toggle-raw-editor')

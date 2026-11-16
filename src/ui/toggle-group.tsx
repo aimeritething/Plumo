@@ -1,8 +1,8 @@
 "use client"
 
-// shadcn's ToggleGroup, with Plumo's three single-choice looks beside shadcn's
-// default and outline: `segmented` is the Rich | Raw pill track, `card` the
-// Theme setting's pictures and `swatch` the Primary color's dots. A look is
+// shadcn's ToggleGroup, with Plumo's two single-choice looks beside shadcn's
+// default and outline: `card` is the Theme setting's pictures and `swatch`
+// the Primary color's dots. A look is
 // set on the group and its items take it from the context, as shadcn's
 // variant and size are. Base UI's composite gives the group one tab stop and
 // moves the focus with the arrows, wrapping; Space or Enter chooses. A group
@@ -24,7 +24,6 @@ const toggleGroupVariants = cva(
       variant: {
         default: "",
         outline: "",
-        segmented: "h-6.5 flex-none gap-0.5 rounded-full bg-muted p-0.5",
         card: "w-full gap-4 max-[760px]:gap-3",
         swatch: "flex-wrap gap-3",
       },
@@ -32,16 +31,12 @@ const toggleGroupVariants = cva(
   }
 )
 
-// Each look's item. A segment is an icon on the track, the current one a
-// raised pill; one that cannot be chosen fades but keeps the pointer, for its
-// tooltip. A card is a picture over its name, the current name in the
+// Each look's item. A card is a picture over its name, the current name in the
 // foreground. A swatch is a dot. Card and swatch draw their picture with
 // `ToggleGroupItemPreview`.
 const toggleGroupItemLookVariants = cva("", {
   variants: {
     variant: {
-      segmented:
-        "grid h-5.5 w-7 place-items-center rounded-full text-muted-foreground transition-colors duration-150 ease-out outline-none focus-visible:focus-ring aria-pressed:bg-popover aria-pressed:text-foreground aria-pressed:shadow-xs aria-disabled:text-subtle-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
       card: "group/toggle-group-item flex min-w-0 flex-1 cursor-default flex-col gap-2 text-left text-xs text-muted-foreground outline-none aria-pressed:font-medium aria-pressed:text-foreground",
       swatch:
         "group/toggle-group-item relative size-6 flex-none cursor-default rounded-full outline-none",
@@ -76,7 +71,7 @@ type ToggleGroupLook = Exclude<ToggleGroupVariant, "default" | "outline">
 const isLook = (
   variant: ToggleGroupVariant | null | undefined
 ): variant is ToggleGroupLook =>
-  variant === "segmented" || variant === "card" || variant === "swatch"
+  variant === "card" || variant === "swatch"
 
 const ToggleGroupContext = React.createContext<
   Omit<VariantProps<typeof toggleVariants>, "variant"> & {

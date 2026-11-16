@@ -29,7 +29,7 @@ export function isImageFilePath(path: string): boolean {
 
 /**
  * Which of the two kinds of Tab is active, the one question the shell and the
- * editor both ask: the shell to leave Save, Toggle Rich/Raw and Find in
+ * editor both ask: the shell to leave Save, Toggle Source Mode and Find in
  * Document disabled over a picture, the editor to tell the kernel there is no
  * Document under it.
  */

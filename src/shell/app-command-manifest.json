@@ -453,7 +453,7 @@
       "items": [
         { "kind": "command", "command": "viewCommandPalette", "label": "Command Menu" },
         { "kind": "command", "command": "viewToggleSidebar", "label": "Toggle Sidebar" },
-        { "kind": "command", "command": "editToggleRawEditor", "label": "Toggle Rich/Raw" },
+        { "kind": "command", "command": "editToggleRawEditor", "label": "Toggle Source Mode" },
         { "kind": "separator" },
         {
           "kind": "submenu",

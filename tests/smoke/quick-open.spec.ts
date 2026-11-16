@@ -50,7 +50,7 @@ test('Quick Open finds a Document by name, shows files only, and ↵ opens it', 
 
   await expect(palette(page)).toHaveCount(0)
   await expect(page.locator('.bn-editor h1')).toHaveText('Plumo')
-  await expect(page.getByRole('button', { name: 'Rich', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByRole('button', { name: 'Source mode', exact: true })).toHaveAttribute('aria-pressed', 'false')
   expect(errors.pageErrors).toEqual([])
   expect(errors.consoleErrors).toEqual([])
 })
@@ -87,7 +87,7 @@ test('⌘K opens the palette at its geometry, lists every command with its short
   // The two Toggle commands lead; a scattered match (Pas\*t\*e with\*o\*ut Formattin\*g\*) may trail them.
   await page.keyboard.type('tog')
   await expect(rowNames(page).nth(0)).toHaveText('Toggle Sidebar')
-  await expect(rowNames(page).nth(1)).toHaveText('Toggle Rich/Raw')
+  await expect(rowNames(page).nth(1)).toHaveText('Toggle Source Mode')
 
   await retype(page, 'lake')
   await expect(rows(page)).toHaveCount(1)
@@ -110,7 +110,7 @@ test('⌘↵ opens a Document in Raw, and plainly opens an Image file', async ({
   await page.keyboard.press('Meta+Enter')
 
   await expect(page.getByTestId('raw-editor-codemirror')).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Raw', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByRole('button', { name: 'Source mode', exact: true })).toHaveAttribute('aria-pressed', 'true')
   await expect(page.locator('.bn-editor')).toHaveCount(0)
   // The palette stays mounted through its exit animation; ⌘P before it has gone would reopen it with "plumo" still typed.
   await expect(palette(page)).toHaveCount(0)

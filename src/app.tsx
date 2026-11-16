@@ -142,7 +142,7 @@ export default function App() {
   const flushPendingEditorContentRef = useRef<((path: string) => void) | null>(null)
   const flushPendingRawContentRef = useRef<((path: string) => void) | null>(null)
   const hasPendingEditorContentRef = useRef<((path: string) => boolean) | null>(null)
-  // Toggle Rich/Raw lives in the editor, which registers it here.
+  // Toggle Source Mode lives in the editor, which registers it here.
   const rawToggleRef = useRef<(() => void) | null>(null)
   // Find in the current Document lives there too, on whichever surface is showing.
   const findRef = useRef<(() => void) | null>(null)
@@ -156,7 +156,7 @@ export default function App() {
     flushPendingRawContentRef.current?.(path)
   }, [])
   const vaultPath = activeTabPath ? documentRoot(activeTabPath, folder) : undefined
-  // Save, Toggle Rich/Raw and Find in Document follow the active Document;
+  // Save, Toggle Source Mode and Find in Document follow the active Document;
   // an Image Tab leaves all three disabled. Its row in the
   // Folder listing is its byte size and the version its picture is fetched at.
   const { documentPath: activeDocumentPath, imagePath: activeImagePath } = activeTabPaths(activeTabPath)
@@ -468,7 +468,7 @@ export default function App() {
     settleAndRecord().catch(noop)
   }, [activeDocumentPath, settleAndRecord])
 
-  // Toggle Rich/Raw (⌘\, View menu) is disabled with no Document open, like
+  // Toggle Source Mode (⌘\, View menu) is disabled with no Document open, like
   // Save: an undefined handler is how the dispatcher reads disabled, and the
   // native menu follows through update_menu_state.
   const onToggleRawEditor = useCallback(() => rawToggleRef.current?.(), [])

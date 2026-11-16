@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { Code, DotsThree, LinkSimple, TextAa, type Icon } from '@phosphor-icons/react'
+import { Code, DotsThree, LinkSimple } from '@phosphor-icons/react'
 import { APP_COMMAND_DEFINITIONS, APP_COMMAND_IDS, type AppCommandId } from '@/shell/app-command-catalog'
 import type { EditorMode } from '@/types'
 import {
@@ -12,7 +12,7 @@ import {
 } from '@/ui/dropdown-menu'
 import { Button } from '@/ui/button'
 import { SimpleTooltip } from '@/ui/tooltip'
-import { ToggleGroup, ToggleGroupItem } from '@/ui/toggle-group'
+import { Toggle } from '@/ui/toggle'
 
 /** A shortcut as the manifest writes it (`⌘\\`): Plumo v0.1 is a macOS app, like the sidebar toggle's `⌘[`. */
 const shortcutOf = (id: AppCommandId) => APP_COMMAND_DEFINITIONS[id].shortcut?.display
@@ -20,16 +20,14 @@ const TOGGLE_SHORTCUT = shortcutOf(APP_COMMAND_IDS.editToggleRawEditor)
 const COPY_PATH_SHORTCUT = shortcutOf(APP_COMMAND_IDS.editCopyPath)
 const FIND_SHORTCUT = shortcutOf(APP_COMMAND_IDS.editFindInNote)
 const CLOSE_TAB_SHORTCUT = shortcutOf(APP_COMMAND_IDS.fileCloseTab)
-const MODE_LABELS: Record<EditorMode, string> = { rich: 'Rich', raw: 'Raw' }
-const MODE_ICONS: Record<EditorMode, Icon> = { rich: TextAa, raw: Code }
-const MODES: readonly EditorMode[] = ['rich', 'raw']
+const SOURCE_MODE_LABEL = 'Source mode'
 
 /** A Document Tab's mode, as the tab bar shows and switches it. */
 export interface TabMode {
   value: EditorMode
-  /** Asked for the other segment. */
+  /** Asked for the other mode. */
   onChange: (mode: EditorMode) => void
-  /** The tooltip that replaces the shortcut on the Rich segment while it is unavailable, or null when Rich can be used. */
+  /** The tooltip that replaces the name and the shortcut while Rich mode is unavailable, or null when Rich can be used. */
   richDisabledReason: string | null
 }
 
@@ -57,14 +55,14 @@ interface DocumentTabActionsProps {
 
 /**
  * A Document Tab's controls at the tab bar's right end: Copy path, the
- * `Rich | Raw` control and "…". A landed write shows nothing here, and neither
- * does Frontmatter: Raw mode is where it is seen.
+ * Source mode button and "…". A landed write shows nothing here, and neither
+ * does Frontmatter: Source mode is where it is seen.
  */
 export function DocumentTabActions({ mode, onCopyPath, menu }: DocumentTabActionsProps) {
   return (
     <div className="flex items-center gap-2" data-testid="document-tab-actions">
       {onCopyPath && <CopyPathButton onCopyPath={onCopyPath} />}
-      <ModeControl mode={mode} />
+      <SourceModeButton mode={mode} />
       <DocumentMenu menu={menu} />
     </div>
   )
@@ -109,42 +107,35 @@ function CopyPathButton({ onCopyPath }: { onCopyPath: () => void }) {
 }
 
 /**
- * `Rich | Raw`: the segmented toggle group, two icon segments (Aa for Rich,
- * </> for Raw), each with a tooltip naming the mode and the shortcut as a
- * chip. Invalid Frontmatter leaves the Rich segment in place but unavailable,
- * faded, its tooltip saying why. It is marked with aria-disabled rather than
- * the disabled attribute so it still takes the pointer and the focus and can
- * show that tooltip; choosing it is refused here instead. A click on the
- * current segment, which a single toggle group reads as clearing the choice,
- * is refused too: a Tab is always in one mode.
+ * The Source mode button: one `</>` icon button that is on while the Tab is in
+ * Source mode (`raw` in code) and bare, like its neighbours, in Rich mode. Its
+ * tooltip names the mode and the shortcut as a chip, the same in both states:
+ * the fill says which mode the Tab is in. Invalid Frontmatter holds the Tab in
+ * Source mode: the button stays on but faded, its tooltip saying why, and a
+ * press is refused. It is marked with aria-disabled rather than the disabled
+ * attribute so it still takes the pointer and the focus and can show that
+ * tooltip.
  */
-function ModeControl({ mode }: { mode: TabMode }) {
-  const choose = (next: string | undefined) => {
-    const segment = MODES.find((candidate) => candidate === next)
-    if (segment === undefined) return
-    if (segment === 'rich' && mode.richDisabledReason !== null) return
-    mode.onChange(segment)
-  }
+function SourceModeButton({ mode }: { mode: TabMode }) {
+  const inSourceMode = mode.value === 'raw'
+  const lockedReason = inSourceMode ? mode.richDisabledReason : null
 
   return (
-    <ToggleGroup variant="segmented" value={[mode.value]} onValueChange={(value) => choose(value[0])} aria-label="Editor mode" data-testid="tab-mode">
-      {MODES.map((segment) => {
-        const disabledReason = segment === 'rich' ? mode.richDisabledReason : null
-        const SegmentIcon = MODE_ICONS[segment]
-        return (
-          <SimpleTooltip key={segment} label={disabledReason ?? MODE_LABELS[segment]} shortcut={disabledReason === null ? TOGGLE_SHORTCUT : undefined} side="bottom">
-            <ToggleGroupItem
-              value={segment}
-              aria-label={MODE_LABELS[segment]}
-              aria-disabled={disabledReason !== null || undefined}
-              data-testid={`tab-mode-${segment}`}
-            >
-              <SegmentIcon aria-hidden="true" />
-            </ToggleGroupItem>
-          </SimpleTooltip>
-        )
-      })}
-    </ToggleGroup>
+    <SimpleTooltip label={lockedReason ?? SOURCE_MODE_LABEL} shortcut={lockedReason === null ? TOGGLE_SHORTCUT : undefined} side="bottom">
+      <Toggle
+        variant="icon"
+        size="icon-xs"
+        pressed={inSourceMode}
+        onPressedChange={(pressed) => {
+          if (lockedReason === null) mode.onChange(pressed ? 'raw' : 'rich')
+        }}
+        aria-label={SOURCE_MODE_LABEL}
+        aria-disabled={lockedReason !== null || undefined}
+        data-testid="tab-mode"
+      >
+        <Code aria-hidden="true" />
+      </Toggle>
+    </SimpleTooltip>
   )
 }
 

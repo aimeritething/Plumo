@@ -52,19 +52,19 @@ const richCaretBlock = (page: Page) => page.evaluate(() => {
   const element = node instanceof Element ? node : node?.parentElement
   return element?.closest('.bn-block-content')?.textContent ?? null
 })
-const richSegment = (page: Page) => page.getByRole('button', { name: 'Rich', exact: true })
-const rawSegment = (page: Page) => page.getByRole('button', { name: 'Raw', exact: true })
+/** The tab bar's Source mode button: on in Source mode, off in Rich mode. */
+const sourceModeButton = (page: Page) => page.getByRole('button', { name: 'Source mode', exact: true })
 
-test('⌘\\ and the segmented control switch modes, the Markdown shows in Raw, and the content comes back intact', async ({ page }) => {
+test('⌘\\ and the Source mode button switch modes, the Markdown shows in Raw, and the content comes back intact', async ({ page }) => {
   const errors = watchForErrors(page)
   await openWelcome(page)
   await typeAtEnd(page, ' Typed in Rich.')
-  await expect(richSegment(page)).toHaveAttribute('aria-pressed', 'true')
+  await expect(sourceModeButton(page)).toHaveAttribute('aria-pressed', 'false')
 
   await page.keyboard.press('Meta+Backslash')
 
   await expect(rawEditor(page)).toBeVisible()
-  await expect(rawSegment(page)).toHaveAttribute('aria-pressed', 'true')
+  await expect(sourceModeButton(page)).toHaveAttribute('aria-pressed', 'true')
   await expect.poll(() => rawText(page)).toContain('# Welcome')
   expect(await rawText(page)).toContain('Typed in Rich.')
   await expect(page.locator('.bn-editor')).toHaveCount(0)
@@ -77,11 +77,11 @@ test('⌘\\ and the segmented control switch modes, the Markdown shows in Raw, a
   // Move the caret to the heading line, then go back to Rich: it lands in the heading block.
   await page.locator('.cm-content').click()
   await page.keyboard.press('Meta+Home')
-  await richSegment(page).click()
+  await sourceModeButton(page).click()
 
   await expect(page.locator('.bn-editor h1')).toHaveText('Welcome')
   await expect(page.locator('.bn-editor')).toContainText('Typed in Rich.')
-  await expect(richSegment(page)).toHaveAttribute('aria-pressed', 'true')
+  await expect(sourceModeButton(page)).toHaveAttribute('aria-pressed', 'false')
   await expect(rawEditor(page)).toHaveCount(0)
   await expect.poll(() => richCaretBlock(page)).toBe('Welcome')
   expect(errors.pageErrors).toEqual([])
@@ -120,10 +120,10 @@ test('a cursor in a table cell is a cursor on that row in Raw, typing there repl
 test('the control carries a tooltip naming the shortcut as a mono chip', async ({ page }) => {
   await openWelcome(page)
 
-  await rawSegment(page).hover()
+  await sourceModeButton(page).hover()
 
   const tip = page.getByRole('tooltip')
-  await expect(tip).toHaveText('Raw ⌘\\')
+  await expect(tip).toHaveText('Source mode ⌘\\')
   await expect(tip.locator('kbd')).toHaveText('⌘\\')
   await expect(tip.locator('kbd')).toHaveCSS('font-family', /^ui-monospace,/)
 })
@@ -156,11 +156,11 @@ test('two Tabs keep different modes at once, and a relaunch restores each Tab\'s
 
   await openDocumentThroughDialog(page, PLUMO_PATH)
   await expect(page.locator('.bn-editor h1')).toHaveText('Plumo')
-  await expect(richSegment(page)).toHaveAttribute('aria-pressed', 'true')
+  await expect(sourceModeButton(page)).toHaveAttribute('aria-pressed', 'false')
 
   await page.keyboard.press('Meta+1')
   await expect(rawEditor(page)).toBeVisible()
-  await expect(rawSegment(page)).toHaveAttribute('aria-pressed', 'true')
+  await expect(sourceModeButton(page)).toHaveAttribute('aria-pressed', 'true')
   await expect.poll(() => storedSession(page)).toMatchObject({
     openEditors: [{ path: WELCOME_PATH, mode: 'raw' }, { path: PLUMO_PATH, mode: 'rich' }],
     activePath: WELCOME_PATH,
@@ -173,7 +173,7 @@ test('two Tabs keep different modes at once, and a relaunch restores each Tab\'s
   await expect.poll(() => rawText(page)).toContain('# Welcome')
   await page.keyboard.press('Meta+2')
   await expect(page.locator('.bn-editor h1')).toHaveText('Plumo')
-  await expect(richSegment(page)).toHaveAttribute('aria-pressed', 'true')
+  await expect(sourceModeButton(page)).toHaveAttribute('aria-pressed', 'false')
   expect(errors.pageErrors).toEqual([])
   expect(errors.consoleErrors).toEqual([])
 })
@@ -194,7 +194,7 @@ test('a Document with Frontmatter renders none of it in Rich and keeps the bytes
   expect(saved.slice(0, PLUMO_FRONTMATTER.length)).toBe(PLUMO_FRONTMATTER)
   expect(saved.slice(PLUMO_FRONTMATTER.length)).toMatch(/^# Plumo\n\nA small desktop app for Markdown files\./)
 
-  await rawSegment(page).click()
+  await sourceModeButton(page).click()
 
   await expect(rawEditor(page)).toBeVisible()
   await expect.poll(() => rawText(page)).toMatch(/^---\ntitle: Plumo\n---\n/)
@@ -202,16 +202,16 @@ test('a Document with Frontmatter renders none of it in Rich and keeps the bytes
   expect(errors.consoleErrors).toEqual([])
 })
 
-test('invalid Frontmatter opens in Raw with Rich disabled and its reason as the tooltip; fixing it re-enables Rich', async ({ page }) => {
+test('invalid Frontmatter opens in Raw with the Source mode button held on and its reason as the tooltip; fixing it frees the button', async ({ page }) => {
   const errors = watchForErrors(page)
   await page.goto('/')
   await page.evaluate(([path, content]) => window.__plumoMockVault?.writeNote(path, content), [BROKEN_PATH, BROKEN_CONTENT])
   await openDocumentThroughDialog(page, BROKEN_PATH)
 
   await expect(rawEditor(page)).toBeVisible()
-  await expect(rawSegment(page)).toHaveAttribute('aria-pressed', 'true')
-  await expect(richSegment(page)).toBeDisabled()
-  await richSegment(page).hover()
+  await expect(sourceModeButton(page)).toHaveAttribute('aria-pressed', 'true')
+  await expect(sourceModeButton(page)).toHaveAttribute('aria-disabled', 'true')
+  await sourceModeButton(page).hover()
   await expect(page.getByRole('tooltip')).toHaveText('Fix the frontmatter to use Rich mode')
   await page.keyboard.press('Meta+Backslash')
   await expect(rawEditor(page)).toBeVisible()
@@ -227,15 +227,15 @@ test('invalid Frontmatter opens in Raw with Rich disabled and its reason as the 
   await page.keyboard.press('Meta+s')
   await expect.poll(() => savedContent(page, BROKEN_PATH)).toMatch(/^---\ntitle: Fixed\n---\n/)
 
-  await expect(richSegment(page)).toBeEnabled()
-  await expect(rawSegment(page)).toHaveAttribute('aria-pressed', 'true')
-  await richSegment(page).click()
+  await expect(sourceModeButton(page)).not.toHaveAttribute('aria-disabled', 'true')
+  await expect(sourceModeButton(page)).toHaveAttribute('aria-pressed', 'true')
+  await sourceModeButton(page).click()
   await expect(page.locator('.bn-editor h1')).toHaveText('Broken')
   expect(errors.pageErrors).toEqual([])
   expect(errors.consoleErrors).toEqual([])
 })
 
-test('Toggle Rich/Raw does nothing with no Document open', async ({ page }) => {
+test('Toggle Source Mode does nothing with no Document open', async ({ page }) => {
   const errors = watchForErrors(page)
   await page.goto('/')
   await expect(page.getByTestId('editor-empty-state')).toBeVisible()

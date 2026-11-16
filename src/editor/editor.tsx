@@ -117,7 +117,7 @@ export interface EditorProps {
   flushPendingEditorContentRef?: FlushPendingContentRef
   /** Registers the same for the Raw editor's keystrokes. */
   flushPendingRawContentRef?: FlushPendingContentRef
-  /** Toggle Rich/Raw (⌘\, View menu): the editor registers the switch here, since only it can map the caret. */
+  /** Toggle Source Mode (⌘\, View menu): the editor registers the switch here, since only it can map the caret. */
   rawToggleRef?: MutableRefObject<(() => void) | null>
   /** Find in the current Document (⌘F, Edit menu): the editor registers the request here and opens the bar of whichever surface is showing. */
   findRef?: MutableRefObject<(() => void) | null>

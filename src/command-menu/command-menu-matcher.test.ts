@@ -15,7 +15,7 @@ const COMMANDS = [
   command('file-new-note', 'New Document', { shortcut: '⌘N' }),
   command('file-save', 'Save', { shortcut: '⌘S' }),
   command('view-toggle-sidebar', 'Toggle Sidebar', { shortcut: '⌘[' }),
-  command('edit-toggle-raw-editor', 'Toggle Rich/Raw', { shortcut: '⌘\\' }),
+  command('edit-toggle-raw-editor', 'Toggle Source Mode', { shortcut: '⌘\\' }),
 ]
 const FILES = [
   document('/Notes/Welcome.md'),
@@ -64,12 +64,12 @@ describe('fuzzyMatch', () => {
 
 describe('matchCommandMenu', () => {
   it('lists every command, in order, and no file while the ⌘K query is empty', () => {
-    expect(names(ENTRIES, '', 'commands')).toEqual(['New Document', 'Save', 'Toggle Sidebar', 'Toggle Rich/Raw'])
-    expect(names(ENTRIES, '   ', 'commands')).toEqual(['New Document', 'Save', 'Toggle Sidebar', 'Toggle Rich/Raw'])
+    expect(names(ENTRIES, '', 'commands')).toEqual(['New Document', 'Save', 'Toggle Sidebar', 'Toggle Source Mode'])
+    expect(names(ENTRIES, '   ', 'commands')).toEqual(['New Document', 'Save', 'Toggle Sidebar', 'Toggle Source Mode'])
   })
 
   it('matches commands, Document names and Image file names together once the user types', () => {
-    expect(names(ENTRIES, 'tog', 'commands')).toEqual(['Toggle Sidebar', 'Toggle Rich/Raw'])
+    expect(names(ENTRIES, 'tog', 'commands')).toEqual(['Toggle Sidebar', 'Toggle Source Mode'])
     expect(names(ENTRIES, 'plumo', 'commands')).toEqual(['Plumo.md'])
     expect(names(ENTRIES, 'lake', 'commands')).toEqual(['lake.png'])
     // `sa` is a prefix of Save and a scattered match in Sidebar: both show, the prefix first.
@@ -100,8 +100,8 @@ describe('matchCommandMenu', () => {
   })
 
   it('carries the highlight ranges on each match', () => {
-    const [match] = matchCommandMenu(ENTRIES, 'rich', 'commands')
-    expect(match.entry.name).toBe('Toggle Rich/Raw')
-    expect(match.ranges).toEqual([[7, 11]])
+    const [match] = matchCommandMenu(ENTRIES, 'source', 'commands')
+    expect(match.entry.name).toBe('Toggle Source Mode')
+    expect(match.ranges).toEqual([[7, 13]])
   })
 })

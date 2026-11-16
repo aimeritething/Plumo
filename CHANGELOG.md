@@ -5,6 +5,12 @@ section, newest first, with its changes under Added, Improved and Fixed. The sec
 version is also its release notes on GitHub and what the Update popover shows, so every
 line says something a user can notice. `docs/releasing.md` says how a version is cut.
 
+## Unreleased
+
+### Improved
+
+- The tab bar's two-part Rich / Raw switch is now one `</>` button that is lit while the Document shows its Markdown source. Raw mode is now called Source mode, and the View menu's command is Toggle Source Mode. The shortcut is still ⌘\.
+
 ## 0.1.0
 
 The first release of Plumo, for Apple Silicon Macs on macOS 13 or later. Nothing has changed since 0.1.0-beta.1.
