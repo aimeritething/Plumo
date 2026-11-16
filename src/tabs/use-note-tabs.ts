@@ -173,6 +173,8 @@ export function useNoteTabs(folder?: string | null, folderLists: (path: string) 
 
   const closeTab = useCallback((path: string) => setState((prev) => tabsState.closeTab(prev, path)), [])
   const activateTab = useCallback((path: string) => setState((prev) => tabsState.activateTab(prev, path)), [])
+  /** A Tab dragged along the tab bar to a new place in the order. */
+  const moveTab = useCallback((path: string, index: number) => setState((prev) => tabsState.moveTab(prev, path, index)), [])
   const activateTabAt = useCallback((index: number) => setState((prev) => tabsState.activateTabAt(prev, index)), [])
   const activateAdjacentTab = useCallback(
     (direction: 1 | -1) => setState((prev) => tabsState.activateAdjacentTab(prev, direction)),
@@ -208,6 +210,7 @@ export function useNoteTabs(folder?: string | null, folderLists: (path: string) 
     reloadTab,
     retargetTabs,
     activateTab,
+    moveTab,
     activateTabAt,
     activateAdjacentTab,
     setTabMode,

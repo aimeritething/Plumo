@@ -1,9 +1,10 @@
-import { memo, useEffect, useMemo, useRef, type ReactNode, type RefObject } from 'react'
+import { memo, useEffect, useMemo, useRef, type PointerEvent, type ReactNode, type RefObject } from 'react'
 import { Image, Plus } from '@phosphor-icons/react'
 import type { Tab } from '@/types'
 import { isImageFilePath } from './image-file'
 import { tabParentHints } from './tab-labels'
 import { CloseAffordance } from './close-affordance'
+import { useTabReorder } from './use-tab-reorder'
 import { APP_COMMAND_DEFINITIONS, APP_COMMAND_IDS } from '@/shell/app-command-catalog'
 import { Button } from '@/ui/button'
 import { DocumentTab, DocumentTabList } from '@/ui/document-tabs'
@@ -17,6 +18,8 @@ export interface TabBarProps {
   activeTabPath: string | null
   onActivate: (path: string) => void
   onClose: (path: string) => void
+  /** A Tab dragged along the row and let go at `index` in the order. Without it the Tabs cannot be moved. */
+  onReorder?: (path: string, index: number) => void
   /** The "+" after the last Tab: New Document, the same as ⌘N. Without it (no Folder open) there is no "+". */
   onNewDocument?: () => void
   /** The active Tab's own controls, at the row's right end. */
@@ -36,17 +39,20 @@ export interface TabBarProps {
  * window's left edge, so this row starts 120px in: the traffic lights and the
  * sidebar icon sit over that room, and the first Tab follows; while an Update
  * is ready its button sits there too and the row starts 188px in. The inset slides
- * with the sidebar, so the first Tab rides the sidebar's edge. Too many Tabs
- * to fit shrink to 96px each, then the Tabs alone scroll sideways, with no
- * scrollbar drawn, fading out over an edge with more Tabs past it; the "+"
- * and the controls stay put, and whichever Tab becomes active is scrolled
- * into view.
+ * with the sidebar, so the first Tab rides the sidebar's edge. Every Tab is
+ * the same width, 180px while they fit; too many to fit narrow together to
+ * 96px each, then the Tabs alone scroll sideways, with no scrollbar drawn,
+ * fading out over an edge with more Tabs past it; the "+" and the controls
+ * stay put, and whichever Tab becomes active is scrolled into view. A Tab
+ * dragged sideways is carried along the row to a new place in the order (see
+ * useTabReorder).
  */
-export const TabBar = memo(function TabBar({ tabs, activeTabPath, onActivate, onClose, onNewDocument, actions, sidebarCollapsed = false }: TabBarProps) {
+export const TabBar = memo(function TabBar({ tabs, activeTabPath, onActivate, onClose, onReorder, onNewDocument, actions, sidebarCollapsed = false }: TabBarProps) {
   const hints = useMemo(() => tabParentHints(tabs.map((tab) => tab.entry.path)), [tabs])
   const stripRef = useRef<HTMLDivElement>(null)
   useActiveTabInView(stripRef, activeTabPath)
   useWheelScrollsSideways(stripRef, tabs.length > 0)
+  const pickUp = useTabReorder(stripRef, { onActivate, onReorder })
   if (tabs.length === 0) return null
 
   return (
@@ -66,6 +72,7 @@ export const TabBar = memo(function TabBar({ tabs, activeTabPath, onActivate, on
             active={entry.path === activeTabPath}
             onActivate={onActivate}
             onClose={onClose}
+            onPickUp={pickUp}
           />
         ))}
       </DocumentTabList>
@@ -133,16 +140,19 @@ interface TabPillProps {
   active: boolean
   onActivate: (path: string) => void
   onClose: (path: string) => void
+  /** The primary button going down on the Tab: the start of a click, or of carrying it along the row. */
+  onPickUp: (event: PointerEvent<HTMLElement>, path: string) => void
 }
 
 /**
- * One tab, ui/document-tabs' Tab. Its × appears only under the pointer, after
- * the name, and the Tab grows by its width, so it never covers the name or
- * the parent folder that tells two same-name Tabs apart. However many Tabs
- * are open it keeps 96px, enough for a name to stay recognisable, cut short
- * with an ellipsis. A middle-click closes it, as the × does.
+ * One tab, ui/document-tabs' Tab. Its × is laid out only under the pointer,
+ * at the Tab's right end, and takes its room from the name: at rest the name
+ * has the whole Tab, and the Tab never changes width. The × never covers the
+ * name or the parent folder that tells two same-name Tabs apart. However many Tabs are open it
+ * keeps 96px, enough for a name to stay recognisable, cut short with an
+ * ellipsis. A middle-click closes it, as the × does.
  */
-function TabPill({ path, filename, parentHint, active, onActivate, onClose }: TabPillProps) {
+function TabPill({ path, filename, parentHint, active, onActivate, onClose, onPickUp }: TabPillProps) {
   const isImage = isImageFilePath(path)
   return (
     <DocumentTab
@@ -150,6 +160,7 @@ function TabPill({ path, filename, parentHint, active, onActivate, onClose }: Ta
       aria-label={parentHint ? `${filename}, ${parentHint}` : filename}
       data-testid={`tab:${path}`}
       onSelect={() => onActivate(path)}
+      onPointerDown={(event) => onPickUp(event, path)}
       // A middle-click closes the Tab through the same close as its ×. Both
       // halves are prevented, so the press starts no autoscroll and the click
       // pastes nothing.

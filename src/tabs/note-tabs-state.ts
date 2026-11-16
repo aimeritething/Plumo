@@ -94,6 +94,17 @@ export function activateTab(state: NoteTabsState, path: string): NoteTabsState {
   return { ...state, activeTabPath: path }
 }
 
+/** Move a Tab to `index` in the order (a drag along the tab bar). The active Tab stays the active one. */
+export function moveTab(state: NoteTabsState, path: string, index: number): NoteTabsState {
+  const from = indexOfPath(state.tabs, path)
+  const to = Math.max(0, Math.min(index, state.tabs.length - 1))
+  if (from === -1 || from === to) return state
+  const tabs = state.tabs.slice()
+  const [moved] = tabs.splice(from, 1)
+  tabs.splice(to, 0, moved)
+  return { ...state, tabs }
+}
+
 /** Jump to the Tab at `index` (0-based); out of range is a no-op. */
 export function activateTabAt(state: NoteTabsState, index: number): NoteTabsState {
   const target = state.tabs[index]

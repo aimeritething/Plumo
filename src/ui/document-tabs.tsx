@@ -15,55 +15,88 @@ import { cn } from "@/lib/cn"
  * with no scrollbar drawn, so the Tabs fade out over an edge where more of
  * them lie past it (`scroll-fade-x` in index.css), and a Tab scrolled into
  * view stops clear of the fade.
+ *
+ * The selected Tab's fill is one element of the strip's, not each Tab's own:
+ * it lies under the selected Tab and slides from the Tab that was selected to
+ * the one that now is. It only slides for a change of selection; when the
+ * Tabs change size or order it is simply where the selected Tab is. While a
+ * Tab is carried along the strip (`data-reordering`) it is out of sight, and
+ * the carried Tab wears the fill itself.
  */
-function DocumentTabList({ className, ref, ...props }: ComponentProps<"div">) {
-  const stripRef = useOverflowEdges(ref)
+function DocumentTabList({ className, ref, children, ...props }: ComponentProps<"div">) {
+  const stripRef = useStripMeasures(ref)
   return (
     <div
       ref={stripRef}
       data-slot="document-tab-list"
       role="tablist"
       className={cn(
-        "scroll-fade-x flex min-w-0 flex-initial items-center gap-1 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+        "scroll-fade-x relative flex min-w-0 flex-initial items-center gap-1 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
         className
       )}
       {...props}
-    />
+    >
+      <div
+        data-slot="document-tab-fill"
+        role="presentation"
+        hidden
+        className="pointer-events-none absolute inset-y-0 left-0 rounded-md bg-selected duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] in-data-reordering:invisible"
+      />
+      {children}
+    </div>
   )
 }
 
 /**
- * How far the strip can still scroll towards either end, written on it as
- * `--scroll-fade-x-start` and `--scroll-fade-x-end` for its fade, as Base UI's
- * ScrollArea writes its own. Measured again when the strip scrolls, when it or
- * a Tab changes size (a Tab grows by its × under the pointer), and when a Tab
- * opens or closes. `ref` still gets the strip.
+ * The strip's two measures. How far it can still scroll towards either end,
+ * written on it as `--scroll-fade-x-start` and `--scroll-fade-x-end` for its
+ * fade, as Base UI's ScrollArea writes its own; and where the selected Tab
+ * is, written on the fill as its offset and width. Both are measured again
+ * when the strip or a Tab changes size and when a Tab opens, closes or moves,
+ * the fade when the strip scrolls too, and the fill when another Tab is
+ * selected, the one time it slides there. `ref` still gets the strip.
  */
-function useOverflowEdges(ref: Ref<HTMLDivElement> | undefined) {
+function useStripMeasures(ref: Ref<HTMLDivElement> | undefined) {
   return useCallback(
     (strip: HTMLDivElement | null) => {
       setRef(ref, strip)
       if (!strip) return
-      const measure = () => {
+      const measureEdges = () => {
         const end = strip.scrollWidth - strip.clientWidth - strip.scrollLeft
         strip.style.setProperty("--scroll-fade-x-start", `${Math.max(0, strip.scrollLeft)}px`)
         strip.style.setProperty("--scroll-fade-x-end", `${Math.max(0, end)}px`)
+      }
+      const placeFill = (slide: boolean) => {
+        const fill = strip.querySelector<HTMLElement>(':scope > [data-slot="document-tab-fill"]')
+        if (!fill) return
+        const selected = strip.querySelector<HTMLElement>(':scope > [role="tab"][aria-selected="true"]')
+        // Nothing to slide from when it was not showing.
+        fill.style.transitionProperty = slide && !fill.hidden ? "transform, width" : "none"
+        fill.hidden = !selected
+        if (!selected) return
+        fill.style.transform = `translateX(${selected.offsetLeft}px)`
+        fill.style.width = `${selected.offsetWidth}px`
+      }
+      const measure = () => {
+        measureEdges()
+        placeFill(false)
       }
       const resize = new ResizeObserver(measure)
       const observeSizes = () => {
         resize.observe(strip)
         for (const tab of strip.children) resize.observe(tab)
       }
-      const tabs = new MutationObserver(() => {
+      const tabs = new MutationObserver((changes) => {
         observeSizes()
-        measure()
+        measureEdges()
+        placeFill(changes.some((change) => change.type === "attributes"))
       })
       observeSizes()
-      tabs.observe(strip, { childList: true })
-      strip.addEventListener("scroll", measure, { passive: true })
+      tabs.observe(strip, { childList: true, subtree: true, attributeFilter: ["aria-selected"] })
+      strip.addEventListener("scroll", measureEdges, { passive: true })
       measure()
       return () => {
-        strip.removeEventListener("scroll", measure)
+        strip.removeEventListener("scroll", measureEdges)
         tabs.disconnect()
         resize.disconnect()
         setRef(ref, null)
@@ -78,12 +111,18 @@ function setRef<T>(ref: Ref<T> | undefined, value: T | null) {
   else if (ref) ref.current = value
 }
 
-// One Tab: 30px, 6px radius, 12px in from either side, at least 96px and at
-// most 220px wide. Muted at rest; the hover fill and the foreground colour
-// under the pointer; the selected one told apart by its fill alone; the 1px
-// focus ring. A `group`, so what it holds (the ×) can show on its hover.
+// One Tab: 30px, 6px radius, 12px in from either side, and 6px from the right
+// under the pointer, where its × then stands. Every Tab is the same width, whatever its name: 180px
+// while they fit, all of them narrower together when they do not, down to
+// 96px. So the × always comes up in the same place and the row never
+// rearranges itself under the pointer. Muted at rest, with the hover fill under the
+// pointer; the selected one in the foreground colour, over the strip's fill
+// (see DocumentTabList); the 1px focus ring. A `group`, so what it holds (the
+// ×) can show on its hover. While one Tab is carried along the strip
+// (`data-reordering`) the others glide out of its way, and the carried one
+// (`data-dragging`) is drawn over them with the selected fill.
 const documentTabVariants = cva(
-  "group flex h-7.5 max-w-55 min-w-24 flex-initial cursor-default items-center gap-1.5 rounded-md px-3 text-sm whitespace-nowrap text-muted-foreground outline-none hover:bg-accent hover:text-foreground aria-selected:bg-selected aria-selected:text-foreground focus-visible:focus-ring"
+  "group relative flex h-7.5 w-45 min-w-24 shrink cursor-default items-center gap-1.5 rounded-md px-3 text-sm hover:pr-1.5 whitespace-nowrap text-muted-foreground outline-none not-aria-selected:hover:bg-accent aria-selected:text-foreground focus-visible:focus-ring in-data-reordering:transition-transform in-data-reordering:duration-200 in-data-reordering:ease-[cubic-bezier(0.32,0.72,0,1)] data-dragging:z-10 data-dragging:bg-selected data-dragging:text-foreground"
 )
 
 /** A Tab. `onSelect` runs on a click, and on Enter or Space while it has the focus. */

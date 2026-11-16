@@ -9,6 +9,7 @@ import {
   applyModeRule,
   closeTab,
   EMPTY_NOTE_TABS,
+  moveTab,
   openTab,
   retargetTabs,
   setTabMode,
@@ -94,6 +95,28 @@ describe('positional navigation', () => {
   it('does nothing with no Tabs open', () => {
     expect(activateAdjacentTab(EMPTY_NOTE_TABS, 1)).toBe(EMPTY_NOTE_TABS)
     expect(activateTabAt(EMPTY_NOTE_TABS, 0)).toBe(EMPTY_NOTE_TABS)
+  })
+})
+
+describe('moveTab', () => {
+  it('moves a Tab to a new place in the order, either way, and leaves the active Tab active', () => {
+    const state = threeOpen()
+
+    expect(paths(moveTab(state, '/n/a.md', 2))).toEqual(['/n/b.md', '/n/c.md', '/n/a.md'])
+    expect(paths(moveTab(state, '/n/c.md', 0))).toEqual(['/n/c.md', '/n/a.md', '/n/b.md'])
+    expect(moveTab(state, '/n/a.md', 1).activeTabPath).toBe('/n/c.md')
+  })
+
+  it('stops at either end of the order', () => {
+    expect(paths(moveTab(threeOpen(), '/n/a.md', 9))).toEqual(['/n/b.md', '/n/c.md', '/n/a.md'])
+    expect(paths(moveTab(threeOpen(), '/n/c.md', -4))).toEqual(['/n/c.md', '/n/a.md', '/n/b.md'])
+  })
+
+  it('returns the same state for a Tab let go where it was, or a path that is not open', () => {
+    const state = threeOpen()
+
+    expect(moveTab(state, '/n/b.md', 1)).toBe(state)
+    expect(moveTab(state, '/n/missing.md', 0)).toBe(state)
   })
 })
 
