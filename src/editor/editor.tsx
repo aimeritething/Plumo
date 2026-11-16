@@ -130,6 +130,8 @@ export interface EditorProps {
   /** The tab bar's clicks. */
   onActivateTab: (path: string) => void
   onCloseTab: (path: string) => void
+  /** A Tab dragged along the tab bar to `index` in the order. */
+  onReorderTab?: (path: string, index: number) => void
   /** The tab bar's "+": New Document, ⌘N. Left out with no Folder open, which leaves no "+". */
   onNewDocument?: () => void
   /** The active Tab's File-menu commands, which the tab bar's "…" and an Image Tab's Open ↗ run too. */
@@ -466,6 +468,7 @@ export const Editor = memo(function Editor(props: EditorProps) {
         activeTabPath={activeTabPath}
         onActivate={onActivateTab}
         onClose={onCloseTab}
+        onReorder={props.onReorderTab}
         onNewDocument={props.onNewDocument}
         actions={actions}
         sidebarCollapsed={sidebarCollapsed}

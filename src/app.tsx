@@ -107,6 +107,7 @@ export default function App() {
     closeAllTabs,
     reloadTab,
     activateTab,
+    moveTab,
     activateTabAt,
     activateAdjacentTab,
     retargetTabs,
@@ -685,6 +686,7 @@ export default function App() {
         onSetTabMode={setTabMode}
         onActivateTab={tabCommands.activateTabSettled}
         onCloseTab={tabCommands.closeTabSettled}
+        onReorderTab={moveTab}
         onNewDocument={hasFolder ? createDocumentFromShell : undefined}
         tabCommands={tabFileCommands}
         writeFailure={writeFailures.failureFor(activeTabPath)}

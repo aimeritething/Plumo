@@ -121,7 +121,7 @@ The sidebar section above the Explorer that lists the Documents and Image files 
 _Avoid_: Favorites, bookmarks, starred
 
 **Tab**:
-One entry in the tab bar above the editor; one Tab per open Document or Image file. Clicking a Document or an Image file in the Explorer always opens a real Tab (there are no preview tabs). When two open Tabs share a file name, each also shows its parent folder's name. An Image file's Tab shows the picture, fitted to the space beside the sidebar; it has no Rich or Source mode.
+One entry in the tab bar above the editor; one Tab per open Document or Image file. Clicking a Document or an Image file in the Explorer always opens a real Tab (there are no preview tabs). When two open Tabs share a file name, each also shows its parent folder's name. Every Tab is the same width whatever its name, and a Tab dragged along the tab bar moves to a new place in the order, which the Session keeps. An Image file's Tab shows the picture, fitted to the space beside the sidebar; it has no Rich or Source mode.
 
 **Command Menu**:
 The Cmd+K palette that lists Plumo's commands and, as you type, fuzzy-matches commands, Document names, and Image file names. Every command in the native menu bar appears here and nothing else does.

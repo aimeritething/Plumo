@@ -7,8 +7,14 @@ line says something a user can notice. `docs/releasing.md` says how a version is
 
 ## Unreleased
 
+### Added
+
+- Drag a Tab along the tab bar to move it; the other Tabs make way as it passes, and the order is kept the next time Plumo opens. Escape puts it back.
+
 ### Improved
 
+- Tabs are all the same width, so the row no longer shifts under the pointer: a Tab's × comes up at the right end in place of the end of the name instead of widening the Tab, and it takes a click anywhere around it.
+- The selected Tab's gray slides from the Tab you left to the one you picked, and a Tab under the pointer keeps its muted name, so it no longer looks like the selected one.
 - The tab bar's two-part Rich / Raw switch is now one `</>` button that is lit while the Document shows its Markdown source. Raw mode is now called Source mode, and the View menu's command is Toggle Source Mode. The shortcut is still ⌘\.
 
 ## 0.1.0
