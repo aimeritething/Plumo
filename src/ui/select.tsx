@@ -20,7 +20,8 @@ function SelectValue({ ...props }: SelectPrimitive.Value.Props) {
 
 // `ghost` is a trigger that sits quietly in what it labels (a code block's
 // language): no edge and no fill at rest, muted, the hover fill and the
-// foreground colour under the pointer.
+// foreground colour under the pointer. `filled` is a trigger at the end of a
+// settings row: no edge, the quiet fill at rest and a step above it on hover.
 const selectTriggerVariants = cva(
   "flex w-fit items-center justify-between gap-2 rounded-lg border border-input bg-transparent px-3 py-1 text-sm whitespace-nowrap transition-[color,box-shadow] outline-none focus-visible:focus-ring disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 data-placeholder:text-muted-foreground data-[size=default]:h-7 data-[size=sm]:h-6 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 dark:bg-input/30 dark:hover:bg-input/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground",
   {
@@ -28,6 +29,7 @@ const selectTriggerVariants = cva(
       variant: {
         default: "",
         ghost: "border-transparent bg-transparent text-muted-foreground shadow-none hover:bg-accent hover:text-foreground",
+        filled: "border-transparent bg-secondary hover:bg-secondary-hover dark:bg-secondary dark:hover:bg-secondary-hover",
       },
     },
     defaultVariants: {

@@ -1,15 +1,16 @@
 import { useSidebarInlineRenameInput } from '@/shell/sidebar-hooks'
 import { stripBlockedNameCharacters, type ExplorerRowKind } from '@/folder/explorer-names'
 import { EXPLORER_ROW_ICONS, explorerNameIndent, explorerRowIndent } from './explorer-row'
-import { Input } from '@/ui/input'
+import { NameInput } from '@/ui/input'
 import { SidebarMenuButton } from '@/ui/sidebar'
 
 /**
- * The in-row inline input behind creation and Rename…; it edits the stem
- * only: the extension beside it is dim static text and is never editable, so
- * a Document cannot be renamed out of the tree. `/` never makes it in;
- * everything else the filesystem refuses is reported on commit, as a red
- * hairline ring and one muted line under the row.
+ * The in-row inline input behind creation and Rename…; one frame holds the
+ * whole name where the row shows it, so nothing moves when the rename starts.
+ * It edits the stem only: the extension right after it is muted static text
+ * and is never editable, so a Document cannot be renamed out of the tree. `/`
+ * never makes it in; everything else the filesystem refuses is reported on
+ * commit, as a red frame and one muted line under the row.
  *
  * Enter commits, Escape cancels, and blur commits a changed name — the carried
  * inline-rename hook holds the Enter/blur double-fire guard. A refused Enter
@@ -49,9 +50,11 @@ export function ExplorerNameInput(props: ExplorerNameInputProps) {
     <>
       <SidebarMenuButton render={<div style={{ paddingLeft: explorerRowIndent(depth) }} />}>
         <Icon aria-hidden="true" />
-        <Input
+        {/* Pulled left by the frame's edge and inset, so the name stays where the row had it. */}
+        <NameInput
           ref={inputRef}
-          size="compact"
+          className="-ml-[5px]"
+          suffix={extension}
           data-testid="explorer-rename-input"
           aria-label="Name"
           aria-invalid={error ? true : undefined}
@@ -63,7 +66,6 @@ export function ExplorerNameInput(props: ExplorerNameInputProps) {
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
         />
-        {extension && <span className="flex-none text-subtle-foreground">{extension}</span>}
       </SidebarMenuButton>
       {error && (
         <div

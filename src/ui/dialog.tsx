@@ -44,8 +44,8 @@ function DialogOverlay({
 
 // default is the prompt: centred, on the popover surface. bare is the same
 // centring with no panel at all (a lightbox). panel is the same centring on
-// the popover surface, unpadded, no close button: what it holds lays out its
-// own panes side by side (Settings) and sizes the dialog. palette hangs from
+// the popover surface, unpadded, no close button: what it holds lays itself
+// out (Settings) and sizes the dialog. palette hangs from
 // 24% down, unpadded, no close button; what it holds lays itself out as a
 // column.
 const dialogContentVariants = cva(

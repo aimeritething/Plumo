@@ -280,15 +280,26 @@ describe('the inline rename input', () => {
     created: false,
   }
 
-  it('offers the stem selected, with the extension as static text beside it', () => {
+  it('offers the stem selected, with the extension as static text after it in the same frame', () => {
     renderExplorer(stubActions({ editing }))
 
     const input = screen.getByTestId('explorer-rename-input') as HTMLInputElement
     expect(input.value).toBe('Welcome')
     expect(input.selectionStart).toBe(0)
     expect(input.selectionEnd).toBe('Welcome'.length)
-    expect(screen.getByText('.md')).toBeInTheDocument()
+    expect(screen.getByText('.md').parentElement).toBe(input.closest('[data-slot="name-input"]'))
     expect(screen.queryByDisplayValue('Welcome.md')).toBeNull()
+  })
+
+  it('puts the caret at the end of the stem on a press on the extension', () => {
+    renderExplorer(stubActions({ editing }))
+
+    const input = screen.getByTestId('explorer-rename-input') as HTMLInputElement
+    fireEvent.mouseDown(screen.getByText('.md'))
+
+    expect(input).toHaveFocus()
+    expect(input.selectionStart).toBe('Welcome'.length)
+    expect(input.selectionEnd).toBe('Welcome'.length)
   })
 
   it('drops a slash as it is typed', () => {

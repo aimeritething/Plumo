@@ -409,7 +409,7 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<"li">) {
 }
 
 // Plumo's sidebar row (Pinned, the Explorer, the Recent Folders, the Folder
-// switcher, the Settings sections): 32px, an 8px radius, regular weight, a
+// switcher): 32px, an 8px radius, regular weight, a
 // 16px icon and a name that ellipsises. Hover is `sidebar-accent`, the current
 // item (`isActive`) `sidebar-selected`. A row whose menu is open
 // (`data-popup-open`, from a context menu's or a dropdown's trigger) keeps

@@ -1,5 +1,6 @@
 import { useRef, type CSSProperties } from 'react'
 import { normalizePrimaryColor, PRIMARY_COLOR_PRESETS } from '@/shell/primary-color'
+import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '@/ui/item'
 import { ToggleGroup, ToggleGroupItem, ToggleGroupItemPreview } from '@/ui/toggle-group'
 import { SimpleTooltip } from '@/ui/tooltip'
 
@@ -18,10 +19,11 @@ interface PrimaryColorPickerProps {
 }
 
 /**
- * The Primary color setting (CONTEXT.md): a swatch per preset, in macOS's
- * accent-colour order, and a last one that opens the system colour panel for
- * any other colour. A single toggle group like the Theme setting: one tab
- * stop, the arrows move the focus, Space or a click chooses, and a change
+ * The Primary color setting's row (CONTEXT.md): its name and what it paints
+ * on the left; on the right a swatch per preset, in macOS's accent-colour
+ * order, and a last one that opens the system colour panel for any other
+ * colour, whose hex is written before the swatches while it is the choice. A
+ * single toggle group: one tab stop, the arrows move the focus, Space or a click chooses, and a change
  * applies at once. Custom chooses nothing by itself: Space or a click opens
  * the panel, every time, and the colour picked there is the choice. A click
  * on the chosen preset, which the group reads as clearing the choice, is
@@ -39,52 +41,54 @@ export function PrimaryColorPicker({ color, onChange }: PrimaryColorPickerProps)
   }
 
   return (
-    <div className="flex flex-col gap-3.5">
-      <div className="flex flex-col gap-0.5">
-        <span id="settings-primary-color-label" className="text-sm font-medium text-foreground">Primary color</span>
-        <span className="text-xs text-muted-foreground">Buttons, links, focus and the text selection.</span>
-      </div>
-      <ToggleGroup
-        variant="swatch"
-        value={[checked]}
-        onValueChange={(value) => choose(value[0])}
-        aria-labelledby="settings-primary-color-label"
-        data-testid="settings-primary-color"
-      >
-        {PRIMARY_COLOR_PRESETS.map(({ id, label, hex }) => (
-          <SimpleTooltip key={id} label={label}>
-            <ToggleGroupItem value={id} aria-label={label} data-testid={`settings-primary-color:${id}`}>
-              <ToggleGroupItemPreview style={swatchStyle(hex)} />
+    <Item>
+      <ItemContent>
+        <ItemTitle id="settings-primary-color-label">Primary color</ItemTitle>
+        <ItemDescription>Buttons, links, focus and the text selection.</ItemDescription>
+      </ItemContent>
+      <ItemActions>
+        <ToggleGroup
+          variant="swatch"
+          value={[checked]}
+          onValueChange={(value) => choose(value[0])}
+          aria-labelledby="settings-primary-color-label"
+          data-testid="settings-primary-color"
+        >
+          {checked === CUSTOM && (
+            <span className="font-mono text-xs text-muted-foreground uppercase">{current}</span>
+          )}
+          {PRIMARY_COLOR_PRESETS.map(({ id, label, hex }) => (
+            <SimpleTooltip key={id} label={label}>
+              <ToggleGroupItem value={id} aria-label={label} data-testid={`settings-primary-color:${id}`}>
+                <ToggleGroupItemPreview style={swatchStyle(hex)} />
+              </ToggleGroupItem>
+            </SimpleTooltip>
+          ))}
+          <SimpleTooltip label="Custom">
+            <ToggleGroupItem
+              value={CUSTOM}
+              aria-label="Custom"
+              onClick={() => panel.current?.click()}
+              data-testid="settings-primary-color:custom"
+            >
+              <ToggleGroupItemPreview style={swatchStyle(checked === CUSTOM ? current : COLOUR_WHEEL)} />
             </ToggleGroupItem>
           </SimpleTooltip>
-        ))}
-        <SimpleTooltip label="Custom">
-          <ToggleGroupItem
-            value={CUSTOM}
-            aria-label="Custom"
-            onClick={() => panel.current?.click()}
-            data-testid="settings-primary-color:custom"
-          >
-            <ToggleGroupItemPreview style={swatchStyle(checked === CUSTOM ? current : COLOUR_WHEEL)} />
-          </ToggleGroupItem>
-        </SimpleTooltip>
-        <input
-          ref={panel}
-          type="color"
-          tabIndex={-1}
-          aria-hidden="true"
-          className="sr-only"
-          value={current}
-          onChange={(event) => {
-            const next = normalizePrimaryColor(event.target.value)
-            if (next) onChange(next)
-          }}
-          data-testid="settings-primary-color-panel"
-        />
-        {checked === CUSTOM && (
-          <span className="font-mono text-xs text-muted-foreground uppercase">{current}</span>
-        )}
-      </ToggleGroup>
-    </div>
+          <input
+            ref={panel}
+            type="color"
+            tabIndex={-1}
+            aria-hidden="true"
+            className="sr-only"
+            value={current}
+            onChange={(event) => {
+              const next = normalizePrimaryColor(event.target.value)
+              if (next) onChange(next)
+            }}
+            data-testid="settings-primary-color-panel"
+          />
+        </ToggleGroup>
+      </ItemActions>
+    </Item>
   )
 }
