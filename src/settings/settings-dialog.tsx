@@ -3,9 +3,9 @@ import { Palette, X as XIcon, type IconProps } from '@phosphor-icons/react'
 import type { ThemeMode } from '@/shell/theme-mode'
 import { Button } from '@/ui/button'
 import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/ui/dialog'
+import { ItemGroup, ItemSeparator } from '@/ui/item'
 import { ScrollArea } from '@/ui/scroll-area'
 import { Sidebar, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider } from '@/ui/sidebar'
-import { SimpleTooltip } from '@/ui/tooltip'
 import { PrimaryColorPicker } from './primary-color-picker'
 import { ThemePicker } from './theme-picker'
 
@@ -26,10 +26,13 @@ interface SettingsDialogProps {
 
 /**
  * The Settings dialog (CONTEXT.md, Settings): the sections down the left, the
- * chosen one's settings on the right under its name. A change applies at
- * once; there is no Save. Esc, the × and a click outside close it. At most
+ * chosen one's settings on the right under its name, a row each in one card:
+ * the setting's name on the left, its control on the right. Its title,
+ * Settings, is the dialog's name, not shown. A change applies at once; there
+ * is no Save. Esc, the × and a click outside close it. At most
  * 840×580 and 32px clear of every window edge: a narrow window narrows the
- * nav and shrinks the theme cards, a short one scrolls the right pane.
+ * nav and puts a row's control under its name, a short one scrolls the right
+ * pane.
  *
  * The nav is a sidebar of its own, as shadcn's sidebar in a dialog is: its
  * own `SidebarProvider` (the dialog is portalled, and its nav is not the
@@ -54,9 +57,10 @@ export function SettingsDialog({ open, onClose, theme, onThemeChange, primaryCol
         data-settings-dialog="true"
       >
         <SidebarProvider className="min-h-0 w-auto flex-none">
-          <Sidebar collapsible="none" className="w-54 border-r-hairline border-sidebar-border px-3 py-5 max-[760px]:w-40">
+          {/* The first row's middle is the header's: 18px + 16px = 68px / 2. */}
+          <Sidebar collapsible="none" className="w-54 border-r-hairline border-sidebar-border px-3 pt-4.5 pb-5 max-[760px]:w-40">
             <nav aria-label="Settings sections" className="flex flex-col">
-              <DialogTitle className="px-2 pt-1 pb-3 text-sm leading-4 font-semibold text-foreground">Settings</DialogTitle>
+              <DialogTitle className="sr-only">Settings</DialogTitle>
               <SidebarMenu>
                 {SETTINGS_SECTIONS.map(({ id, label, icon: Icon }) => (
                   <SidebarMenuItem key={id}>
@@ -78,18 +82,17 @@ export function SettingsDialog({ open, onClose, theme, onThemeChange, primaryCol
         <section aria-labelledby="settings-section-title" className="flex min-w-0 flex-1 flex-col">
           <header className="flex h-17 flex-none items-center justify-between pr-4 pl-10 max-[760px]:pl-6">
             <h2 id="settings-section-title" className="text-lg font-semibold tracking-[-0.01em] text-foreground">{section.label}</h2>
-            <SimpleTooltip label="Close" side="bottom">
-              <DialogClose render={<Button variant="icon" size="icon-xs" aria-label="Close" />}>
-                <XIcon />
-              </DialogClose>
-            </SimpleTooltip>
+            <DialogClose render={<Button variant="icon" size="icon-xs" aria-label="Close" />}>
+              <XIcon />
+            </DialogClose>
           </header>
           <ScrollArea className="min-h-0 flex-1" viewportClassName="px-10 pt-1 pb-10 max-[760px]:px-6">
             {section.id === 'appearance' && (
-              <div className="flex flex-col gap-9">
+              <ItemGroup variant="card">
                 <ThemePicker theme={theme} onChange={onThemeChange} />
+                <ItemSeparator />
                 <PrimaryColorPicker color={primaryColor} onChange={onPrimaryColorChange} />
-              </div>
+              </ItemGroup>
             )}
           </ScrollArea>
         </section>

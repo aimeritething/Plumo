@@ -1,10 +1,6 @@
 "use client"
 
-// shadcn's ToggleGroup, with Plumo's two single-choice looks beside shadcn's
-// default and outline: `card` is the Theme setting's pictures and `swatch`
-// the Primary color's dots. A look is
-// set on the group and its items take it from the context, as shadcn's
-// variant and size are. Base UI's composite gives the group one tab stop and
+// shadcn's ToggleGroup. Base UI's composite gives the group one tab stop and
 // moves the focus with the arrows, wrapping; Space or Enter chooses. A group
 // holds an array of the chosen values, one at most unless it is `multiple`,
 // and an item that is chosen has `aria-pressed`.
@@ -24,40 +20,6 @@ const toggleGroupVariants = cva(
       variant: {
         default: "",
         outline: "",
-        card: "w-full gap-4 max-[760px]:gap-3",
-        swatch: "flex-wrap gap-3",
-      },
-    },
-  }
-)
-
-// Each look's item. A card is a picture over its name, the current name in the
-// foreground. A swatch is a dot. Card and swatch draw their picture with
-// `ToggleGroupItemPreview`.
-const toggleGroupItemLookVariants = cva("", {
-  variants: {
-    variant: {
-      card: "group/toggle-group-item flex min-w-0 flex-1 cursor-default flex-col gap-2 text-left text-xs text-muted-foreground outline-none aria-pressed:font-medium aria-pressed:text-foreground",
-      swatch:
-        "group/toggle-group-item relative size-6 flex-none cursor-default rounded-full outline-none",
-    },
-  },
-})
-
-// The selection ring, one recipe for a card's picture and a swatch's dot: 2px,
-// set 2px off the popover, in `--selection-ring` (the foreground for a card,
-// the swatch's own colour for a swatch). The keyboard focus draws the same
-// ring in the focus colour on an item that is not chosen. It sits on the
-// picture, not the item, so a card's name stays outside it.
-const toggleGroupItemPreviewVariants = cva(
-  "block group-focus-visible/toggle-group-item:ring-2 group-focus-visible/toggle-group-item:ring-ring group-focus-visible/toggle-group-item:ring-offset-2 group-focus-visible/toggle-group-item:ring-offset-popover group-aria-pressed/toggle-group-item:ring-2 group-aria-pressed/toggle-group-item:ring-(--selection-ring) group-aria-pressed/toggle-group-item:ring-offset-2 group-aria-pressed/toggle-group-item:ring-offset-popover",
-  {
-    variants: {
-      variant: {
-        card: "relative w-full overflow-hidden rounded-lg ring-1 ring-border [--selection-ring:var(--foreground)]",
-        // `--swatch` is the dot's paint, a colour or a gradient.
-        swatch:
-          "size-full rounded-full inset-ring inset-ring-black/10 [background:var(--swatch)] [--selection-ring:var(--swatch)]",
       },
     },
   }
@@ -66,12 +28,6 @@ const toggleGroupItemPreviewVariants = cva(
 type ToggleGroupVariant = NonNullable<
   VariantProps<typeof toggleGroupVariants>["variant"]
 >
-type ToggleGroupLook = Exclude<ToggleGroupVariant, "default" | "outline">
-
-const isLook = (
-  variant: ToggleGroupVariant | null | undefined
-): variant is ToggleGroupLook =>
-  variant === "card" || variant === "swatch"
 
 const ToggleGroupContext = React.createContext<
   Omit<VariantProps<typeof toggleVariants>, "variant"> & {
@@ -182,16 +138,12 @@ function ToggleGroupItem({
       data-size={context.size || size}
       data-spacing={context.spacing}
       className={cn(
-        isLook(itemVariant)
-          ? toggleGroupItemLookVariants({ variant: itemVariant })
-          : [
-              toggleVariants({
-                variant: itemVariant,
-                size: context.size || size,
-              }),
-              "w-auto min-w-0 shrink-0 px-3 focus:z-10 focus-visible:z-10",
-              "data-[spacing=0]:rounded-none data-[spacing=0]:shadow-none data-[spacing=0]:first:rounded-l-md data-[spacing=0]:last:rounded-r-md data-[spacing=0]:data-[variant=outline]:border-l-0 data-[spacing=0]:data-[variant=outline]:first:border-l",
-            ],
+        toggleVariants({
+          variant: itemVariant,
+          size: context.size || size,
+        }),
+        "w-auto min-w-0 shrink-0 px-3 focus:z-10 focus-visible:z-10",
+        "data-[spacing=0]:rounded-none data-[spacing=0]:shadow-none data-[spacing=0]:first:rounded-l-md data-[spacing=0]:last:rounded-r-md data-[spacing=0]:data-[variant=outline]:border-l-0 data-[spacing=0]:data-[variant=outline]:first:border-l",
         className
       )}
       {...props}
@@ -201,25 +153,4 @@ function ToggleGroupItem({
   )
 }
 
-// The picture inside a `card` or `swatch` item, which wears the selection
-// ring. shadcn's ToggleGroup has no picture items; this is Plumo's.
-function ToggleGroupItemPreview({
-  className,
-  ...props
-}: React.ComponentProps<"span">) {
-  const { variant } = React.useContext(ToggleGroupContext)
-  return (
-    <span
-      data-slot="toggle-group-item-preview"
-      className={cn(
-        toggleGroupItemPreviewVariants({
-          variant: variant === "card" || variant === "swatch" ? variant : null,
-        }),
-        className
-      )}
-      {...props}
-    />
-  )
-}
-
-export { ToggleGroup, ToggleGroupItem, ToggleGroupItemPreview }
+export { ToggleGroup, ToggleGroupItem }

@@ -10,6 +10,7 @@ line says something a user can notice. `docs/releasing.md` says how a version is
 ### Improved
 
 - Naming a new Document or folder, or renaming a file, in the sidebar now edits the name where it stands: one thin frame holds the whole name, with `.md` right after what you type instead of outside the box, and nothing shifts when the rename starts.
+- Settings shows each setting as a row in one card, its control on the right. The theme and the Primary color are chosen from lists, and a Custom color can be typed as a hex value or picked from the macOS color panel.
 
 ## 0.1.1
 
