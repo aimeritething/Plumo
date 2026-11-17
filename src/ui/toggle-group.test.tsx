@@ -32,7 +32,7 @@ describe('ToggleGroup', () => {
     return (
       <>
         <button type="button">Before</button>
-        <ToggleGroup variant="swatch" value={value} aria-label="Theme">
+        <ToggleGroup variant="card" value={value} aria-label="Theme">
           <ToggleGroupItem value="system" aria-label="System" />
           <ToggleGroupItem value="light" aria-label="Light" />
           <ToggleGroupItem value="dark" aria-label="Dark" />

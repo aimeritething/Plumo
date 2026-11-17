@@ -1,13 +1,19 @@
-import { useRef } from 'react'
-import { X as XIcon } from '@phosphor-icons/react'
+import { useRef, useState, type ComponentType } from 'react'
+import { Palette, X as XIcon, type IconProps } from '@phosphor-icons/react'
 import type { ThemeMode } from '@/shell/theme-mode'
 import { Button } from '@/ui/button'
 import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/ui/dialog'
-import { ItemGroup, ItemSeparator } from '@/ui/item'
 import { ScrollArea } from '@/ui/scroll-area'
+import { Sidebar, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider } from '@/ui/sidebar'
 import { SimpleTooltip } from '@/ui/tooltip'
 import { PrimaryColorPicker } from './primary-color-picker'
 import { ThemePicker } from './theme-picker'
+
+type SettingsSectionId = 'appearance'
+
+const SETTINGS_SECTIONS: readonly { id: SettingsSectionId; label: string; icon: ComponentType<IconProps> }[] = [
+  { id: 'appearance', label: 'Appearance', icon: Palette },
+]
 
 interface SettingsDialogProps {
   open: boolean
@@ -19,45 +25,74 @@ interface SettingsDialogProps {
 }
 
 /**
- * The Settings dialog (CONTEXT.md, Settings): one column under the title, a
- * section after another, each a muted name over a card whose rows are its
- * settings: the setting's name and a line about it on the left, its control
- * on the right. A change applies at once; there is no Save. Esc, the × and a
- * click outside close it. At most 680px wide and 32px clear of every window
- * edge: it is as tall as what it holds, and a window too short for that
- * scrolls it; a row too narrow for both sides puts the control under the name.
+ * The Settings dialog (CONTEXT.md, Settings): the sections down the left, the
+ * chosen one's settings on the right under its name. A change applies at
+ * once; there is no Save. Esc, the × and a click outside close it. At most
+ * 840×580 and 32px clear of every window edge: a narrow window narrows the
+ * nav and shrinks the theme cards, a short one scrolls the right pane.
+ *
+ * The nav is a sidebar of its own, as shadcn's sidebar in a dialog is: its
+ * own `SidebarProvider` (the dialog is portalled, and its nav is not the
+ * window's sidebar) around a `Sidebar` that does not collapse, so the
+ * section rows are the sidebar's rows.
  */
 export function SettingsDialog({ open, onClose, theme, onThemeChange, primaryColor, onPrimaryColorChange }: SettingsDialogProps) {
+  const [sectionId, setSectionId] = useState<SettingsSectionId>('appearance')
+  const section = SETTINGS_SECTIONS.find(({ id }) => id === sectionId) ?? SETTINGS_SECTIONS[0]
   const contentRef = useRef<HTMLDivElement>(null)
 
   return (
     <Dialog open={open} onOpenChange={(next) => { if (!next) onClose() }}>
       <DialogContent
         variant="panel"
-        className="max-h-[calc(100vh-64px)] w-[min(680px,calc(100vw-64px))] max-w-none flex-col"
+        className="h-[min(580px,calc(100vh-64px))] w-[min(840px,calc(100vw-64px))] max-w-none"
         ref={contentRef}
-        // Focus lands on the dialog itself, not ringed on the close button; Tab goes on from there.
+        // Focus lands on the dialog itself, not ringed on the first nav row; Tab goes on from there.
         initialFocus={contentRef}
         data-testid="settings-dialog"
         // The keyboard's modal rule lets ⌘W and ⌘, through to this dialog alone.
         data-settings-dialog="true"
       >
-        <SimpleTooltip label="Close" side="bottom">
-          <DialogClose render={<Button variant="icon" size="icon-xs" className="absolute top-3 right-3 z-raised" aria-label="Close" />}>
-            <XIcon />
-          </DialogClose>
-        </SimpleTooltip>
-        <ScrollArea className="min-h-0 flex-1" viewportClassName="px-10 pt-10 pb-10 max-[760px]:px-6">
-          <DialogTitle className="text-2xl leading-8 font-semibold tracking-[-0.02em] text-foreground">Settings</DialogTitle>
-          <section aria-labelledby="settings-section-appearance" className="mt-7 flex flex-col gap-2.5">
-            <h2 id="settings-section-appearance" className="px-1 text-sm text-muted-foreground">Appearance</h2>
-            <ItemGroup variant="card">
-              <ThemePicker theme={theme} onChange={onThemeChange} />
-              <ItemSeparator />
-              <PrimaryColorPicker color={primaryColor} onChange={onPrimaryColorChange} />
-            </ItemGroup>
-          </section>
-        </ScrollArea>
+        <SidebarProvider className="min-h-0 w-auto flex-none">
+          <Sidebar collapsible="none" className="w-54 border-r-hairline border-sidebar-border px-3 py-5 max-[760px]:w-40">
+            <nav aria-label="Settings sections" className="flex flex-col">
+              <DialogTitle className="px-2 pt-1 pb-3 text-sm leading-4 font-semibold text-foreground">Settings</DialogTitle>
+              <SidebarMenu>
+                {SETTINGS_SECTIONS.map(({ id, label, icon: Icon }) => (
+                  <SidebarMenuItem key={id}>
+                    <SidebarMenuButton
+                      isActive={id === section.id}
+                      aria-current={id === section.id ? 'page' : undefined}
+                      onClick={() => setSectionId(id)}
+                      data-testid={`settings-section:${id}`}
+                    >
+                      <Icon aria-hidden="true" />
+                      <span>{label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </nav>
+          </Sidebar>
+        </SidebarProvider>
+        <section aria-labelledby="settings-section-title" className="flex min-w-0 flex-1 flex-col">
+          <header className="flex h-17 flex-none items-center justify-between pr-4 pl-10 max-[760px]:pl-6">
+            <h2 id="settings-section-title" className="text-lg font-semibold tracking-[-0.01em] text-foreground">{section.label}</h2>
+            <SimpleTooltip label="Close" side="bottom">
+              <DialogClose render={<Button variant="icon" size="icon-xs" aria-label="Close" />}>
+                <XIcon />
+              </DialogClose>
+            </SimpleTooltip>
+          </header>
+          <ScrollArea className="min-h-0 flex-1" viewportClassName="px-10 pt-1 pb-10 max-[760px]:px-6">
+            {section.id === 'appearance' && (
+              <div className="flex flex-col gap-9">
+                <ThemePicker theme={theme} onChange={onThemeChange} />
+                <PrimaryColorPicker color={primaryColor} onChange={onPrimaryColorChange} />
+              </div>
+            )}
+          </ScrollArea>
+        </section>
       </DialogContent>
     </Dialog>
   )

@@ -10,8 +10,7 @@ const APP_COMMAND_EVENT_NAME = 'plumo:dispatch-command' // src/shell/app-command
 
 const storedSettings = (page: Page) => page.evaluate(() => window.__plumoMockVault?.invoke('read_settings'))
 const settingsDialog = (page: Page) => page.getByTestId('settings-dialog')
-const themeSelect = (page: Page) => page.getByTestId('settings-theme')
-const themeOption = (page: Page, mode: 'system' | 'dark' | 'light') => page.getByTestId(`settings-theme:${mode}`)
+const themeCard = (page: Page, mode: 'system' | 'dark' | 'light') => page.getByTestId(`settings-theme:${mode}`)
 
 async function dispatchCommand(page: Page, id: string) {
   await page.evaluate(
@@ -29,13 +28,12 @@ test('⌘, opens the Settings with no Folder open, and a theme chosen there appl
 
   await expect(settingsDialog(page)).toBeVisible()
   await expect(page.getByRole('dialog', { name: 'Settings' })).toBeVisible()
-  await expect(themeSelect(page)).toContainText('Light')
+  await expect(themeCard(page, 'light')).toHaveAttribute('aria-pressed', 'true')
 
-  await themeSelect(page).click()
-  await themeOption(page, 'dark').click()
+  await themeCard(page, 'dark').click()
 
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
-  await expect(themeSelect(page)).toContainText('Dark')
+  await expect(themeCard(page, 'dark')).toHaveAttribute('aria-pressed', 'true')
   await expect.poll(() => storedSettings(page)).toEqual({ version: 1, theme: 'dark', primaryColor: '#0082fb' })
   expect(await storedSession(page)).not.toHaveProperty('theme')
 
@@ -61,19 +59,19 @@ test('the Folder switcher\'s menu ends with Settings, which opens the dialog', a
   await expect(settingsDialog(page)).toBeVisible()
   await expect(page.getByTestId('folder-switcher-menu')).toHaveCount(0)
   // The menu closing hands focus to the dialog, not back to the switcher's row;
-  // Tab walks the close button, then the theme.
+  // Tab walks the nav, the close button, then the theme.
   await expect(settingsDialog(page)).toBeFocused()
   await page.keyboard.press('Tab')
   await page.keyboard.press('Tab')
-  await expect(themeSelect(page)).toBeFocused()
-  // Space opens the list on the current theme; the arrows move in it, Enter chooses.
+  await page.keyboard.press('Tab')
+  await expect(themeCard(page, 'light')).toBeFocused()
+  // The arrows move the focus; Space chooses.
+  await page.keyboard.press('ArrowLeft')
+  await expect(themeCard(page, 'dark')).toBeFocused()
+  await expect(themeCard(page, 'light')).toHaveAttribute('aria-pressed', 'true')
   await page.keyboard.press('Space')
-  await expect(themeOption(page, 'light')).toBeVisible()
-  await page.keyboard.press('ArrowUp')
-  await expect(themeSelect(page)).toContainText('Light')
-  await page.keyboard.press('Enter')
-  await expect(themeSelect(page)).toContainText('Dark')
-  await expect(themeSelect(page)).toBeFocused()
+  await expect(themeCard(page, 'dark')).toHaveAttribute('aria-pressed', 'true')
+  await expect(themeCard(page, 'dark')).toBeFocused()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
   expect(errors.pageErrors).toEqual([])
   expect(errors.consoleErrors).toEqual([])
@@ -86,7 +84,7 @@ test('View → Appearance and the dialog show the same theme, and ⌘W closes th
   await expect(settingsDialog(page)).toBeVisible()
 
   await dispatchCommand(page, 'view-appearance-system')
-  await expect(themeSelect(page)).toContainText('System')
+  await expect(themeCard(page, 'system')).toHaveAttribute('aria-pressed', 'true')
 
   await dispatchCommand(page, 'app-settings')
   await expect(settingsDialog(page)).toHaveCount(1)

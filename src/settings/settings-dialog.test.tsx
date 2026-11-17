@@ -1,7 +1,6 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { ThemeMode } from '@/shell/theme-mode'
-import { pressItem } from '@/ui/open-layer.test-utils'
 import { TooltipProvider } from '@/ui/tooltip'
 import { SettingsDialog } from './settings-dialog'
 
@@ -11,41 +10,60 @@ function renderDialog(theme: ThemeMode = 'light', primaryColor = '#0082fb') {
   return props
 }
 
-const themeSelect = () => screen.getByRole('combobox', { name: 'Theme' })
+const themeCard = (mode: ThemeMode) => screen.getByTestId(`settings-theme:${mode}`)
 
 describe('SettingsDialog', () => {
-  it('is titled Settings and lists the Appearance section in one column, with no section nav', () => {
+  it('is titled Settings and shows the Appearance section, chosen in the nav', () => {
     renderDialog()
 
     const dialog = screen.getByRole('dialog', { name: 'Settings' })
-    const section = within(dialog).getByRole('region', { name: 'Appearance' })
-    expect(within(section).getAllByRole('listitem')).toHaveLength(2)
-    expect(within(dialog).queryByRole('navigation')).not.toBeInTheDocument()
+    const nav = within(dialog).getByRole('navigation', { name: 'Settings sections' })
+    expect(within(nav).getByRole('button', { name: 'Appearance' })).toHaveAttribute('aria-current', 'page')
+    expect(within(dialog).getByRole('region', { name: 'Appearance' })).toBeInTheDocument()
     expect(within(dialog).queryByRole('tab')).not.toBeInTheDocument()
   })
 
-  it('shows the current theme in a select that offers System, Dark and Light', async () => {
+  it('offers the theme as System, Dark and Light, the current one pressed', () => {
     renderDialog('dark')
 
-    expect(themeSelect()).toHaveTextContent('Dark')
-    fireEvent.click(themeSelect())
-    const options = await screen.findAllByRole('option')
-    expect(options.map((option) => option.textContent)).toEqual(['System', 'Dark', 'Light'])
-    expect(screen.getByRole('option', { name: 'Dark' })).toHaveAttribute('aria-selected', 'true')
+    const group = screen.getByRole('group', { name: 'Theme' })
+    expect(within(group).getAllByRole('button').map((card) => card.textContent)).toEqual(['System', 'Dark', 'Light'])
+    expect(themeCard('dark')).toHaveAttribute('aria-pressed', 'true')
+    expect(themeCard('light')).toHaveAttribute('aria-pressed', 'false')
   })
 
-  it('applies a theme at once when it is chosen', async () => {
+  it('draws each card in its own theme, System in both', () => {
+    renderDialog()
+
+    const themesIn = (mode: ThemeMode) =>
+      Array.from(themeCard(mode).querySelectorAll('[data-theme]'), (window) => window.getAttribute('data-theme'))
+    expect(themesIn('system')).toEqual(['light', 'dark'])
+    expect(themesIn('dark')).toEqual(['dark'])
+    expect(themesIn('light')).toEqual(['light'])
+  })
+
+  it('applies a choice at once on click, and never clears it', () => {
     const props = renderDialog('light')
 
-    fireEvent.click(themeSelect())
-    pressItem(await screen.findByRole('option', { name: 'System' }))
+    fireEvent.click(themeCard('system'))
     expect(props.onThemeChange).toHaveBeenLastCalledWith('system')
+
+    fireEvent.click(themeCard('light'))
     expect(props.onThemeChange).toHaveBeenCalledOnce()
   })
 
-  it('takes the focus itself as it opens', async () => {
-    renderDialog()
+  it('moves the focus between the cards with the arrows, wrapping, without choosing', async () => {
+    const props = renderDialog('light')
+    // The dialog takes the focus as it opens; the card takes it after.
     await waitFor(() => expect(screen.getByRole('dialog')).toHaveFocus())
+
+    act(() => themeCard('light').focus())
+    fireEvent.keyDown(themeCard('light'), { key: 'ArrowRight' })
+    await waitFor(() => expect(themeCard('system')).toHaveFocus())
+    fireEvent.keyDown(themeCard('system'), { key: 'ArrowRight' })
+    await waitFor(() => expect(themeCard('dark')).toHaveFocus())
+
+    expect(props.onThemeChange).not.toHaveBeenCalled()
   })
 
   it('closes on Esc and on its close button', () => {

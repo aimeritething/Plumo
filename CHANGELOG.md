@@ -11,12 +11,6 @@ line says something a user can notice. `docs/releasing.md` says how a version is
 
 - Naming a new Document or folder, or renaming a file, in the sidebar now edits the name where it stands: one thin frame holds the whole name, with `.md` right after what you type instead of outside the box, and nothing shifts when the rename starts.
 
-## Unreleased
-
-### Improved
-
-- Settings is one column: each setting is a row in a card, its name and a line about it on the left and its control on the right. The theme is chosen from a list in place of the three pictures.
-
 ## 0.1.1
 
 ### Added
