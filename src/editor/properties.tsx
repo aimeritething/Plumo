@@ -14,6 +14,14 @@ import {
 } from '@/kernel/markdown/properties'
 import { cn } from '@/lib/cn'
 import { subscribeRichEditorFocusLastProperty } from '@/kernel/blocknote/rich-editor-properties-keys-extension'
+import {
+  PROPERTIES_ATTRIBUTE,
+  PROPERTIES_SELECTOR,
+  PROPERTY_END_LINE_ATTRIBUTE,
+  PROPERTY_KEY_ATTRIBUTE,
+  PROPERTY_LINE_ATTRIBUTE,
+  PROPERTY_VALUE_SELECTOR,
+} from './properties-dom'
 import { useRegisteredRef } from './use-registered-ref'
 import { useRichFrontmatter, type FrontmatterEditor } from './use-rich-frontmatter'
 import { BooleanValue, ListValue, MultilineValue, ReadonlyValue, TextValue } from './property-values'
@@ -39,7 +47,6 @@ type Commit = (next: string | null) => void
 
 const ROW_CLASS = 'group -mx-2 flex items-start gap-3 rounded-md px-2 py-[5px] focus-within:bg-state-hover hover:bg-state-hover'
 const KEY_CLASS = 'w-28 flex-none truncate bg-transparent text-[13px] leading-[22px] text-text-tertiary outline-none aria-invalid:text-chroma-red-text'
-const VALUE_SELECTOR = '[data-property-value]'
 /** The body's top padding, and a left edge level with the body text, which sits 8px in from .bn-editor's padding (.bn-block-content). */
 const PANEL_CLASS = 'flex flex-col pt-(--editor-padding-top) pr-(--editor-padding-horizontal) pl-[calc(var(--editor-padding-horizontal)+var(--spacing)*2)]'
 
@@ -53,7 +60,7 @@ function focusValue(control: HTMLElement, from: 'above' | 'below'): void {
 }
 
 function valueControls(root: HTMLElement | null): HTMLElement[] {
-  return root ? Array.from(root.querySelectorAll<HTMLElement>(VALUE_SELECTOR)) : []
+  return root ? Array.from(root.querySelectorAll<HTMLElement>(PROPERTY_VALUE_SELECTOR)) : []
 }
 
 /** Whether ↑ or ↓ in a multi-line field should leave it: only from its first or last line. */
@@ -130,7 +137,10 @@ function PropertyValueControl({ property, frontmatter, commit, onEditInRaw }: {
 function PropertyRow(props: { property: Property; frontmatter: string; commit: Commit; onEditInRaw?: () => void }) {
   const { property, frontmatter, commit } = props
   return (
-    <div className={ROW_CLASS} data-property-key={property.key} data-property-line={property.line}>
+    <div
+      className={ROW_CLASS}
+      {...{ [PROPERTY_KEY_ATTRIBUTE]: property.key, [PROPERTY_LINE_ATTRIBUTE]: property.line, [PROPERTY_END_LINE_ATTRIBUTE]: property.endLine }}
+    >
       <KeyField property={property} frontmatter={frontmatter} commit={commit} />
       <div className="flex min-w-0 flex-1">
         <PropertyValueControl {...props} />
@@ -164,7 +174,7 @@ function useHoldFocus(ref: RefObject<HTMLInputElement | null>) {
       const active = document.activeElement
       if (!field || active === field) return
       if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) {
-        if (!field.closest('[data-properties]')?.contains(active)) return
+        if (!field.closest(PROPERTIES_SELECTOR)?.contains(active)) return
       }
       field.focus()
     }, delay))
@@ -172,7 +182,7 @@ function useHoldFocus(ref: RefObject<HTMLInputElement | null>) {
   }, [ref])
 }
 
-/** The new-Property row: a key field that writes `key:` when confirmed, or goes away empty. */
+/** The new-Property row: a key field that writes `key:` when confirmed, or goes away empty. A key already there is refused and the field marked, whichever way it is confirmed. */
 function NewPropertyRow({ frontmatter, onDone }: { frontmatter: string; onDone: (key: string | null) => void }) {
   const [draft, setDraft] = useState('')
   const doneRef = useRef(false)
@@ -212,7 +222,7 @@ function NewPropertyRow({ frontmatter, onDone }: { frontmatter: string; onDone: 
         spellCheck={false}
         value={draft}
         onChange={(event) => setDraft(event.target.value)}
-        onBlur={() => done(key === '' || taken ? null : key)}
+        onBlur={finish}
         onKeyDown={handleKeyDown}
       />
     </div>
@@ -247,8 +257,8 @@ export function Properties({ editor, path, tabContent, handleRef, onLeaveDown, o
   // A key just added: its value takes the caret once the row is there.
   useEffect(() => {
     if (focusKey === null) return
-    const row = rootRef.current?.querySelector<HTMLElement>(`[data-property-key="${CSS.escape(focusKey)}"]`)
-    row?.querySelector<HTMLElement>(VALUE_SELECTOR)?.focus()
+    const row = rootRef.current?.querySelector<HTMLElement>(`[${PROPERTY_KEY_ATTRIBUTE}="${CSS.escape(focusKey)}"]`)
+    row?.querySelector<HTMLElement>(PROPERTY_VALUE_SELECTOR)?.focus()
   }, [focusKey, frontmatter])
 
   const finishAdding = useCallback((key: string | null) => {
@@ -263,7 +273,7 @@ export function Properties({ editor, path, tabContent, handleRef, onLeaveDown, o
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return
     const target = event.target as HTMLElement
-    if (!target.matches(VALUE_SELECTOR) || !leavesField(target, event.key)) return
+    if (!target.matches(PROPERTY_VALUE_SELECTOR) || !leavesField(target, event.key)) return
     const controls = valueControls(rootRef.current)
     const index = controls.indexOf(target)
     const next = controls[index + (event.key === 'ArrowUp' ? -1 : 1)]
@@ -281,7 +291,7 @@ export function Properties({ editor, path, tabContent, handleRef, onLeaveDown, o
   return (
     <div
       ref={rootRef}
-      data-properties=""
+      {...{ [PROPERTIES_ATTRIBUTE]: '' }}
       aria-label="Properties"
       role="group"
       className={PANEL_CLASS}

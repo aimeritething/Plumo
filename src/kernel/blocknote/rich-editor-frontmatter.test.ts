@@ -1,9 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
-import { Schema } from '@tiptap/pm/model'
-import { EditorState, type Plugin, type Transaction } from '@tiptap/pm/state'
-import { history, redo, undo } from '@tiptap/pm/history'
+import { redo, undo } from '@tiptap/pm/history'
+import { createEditor } from './rich-editor-frontmatter.test-utils'
 import {
-  createRichEditorFrontmatterExtension,
   resetRichEditorFrontmatter,
   RICH_FRONTMATTER_RESET_META,
   richEditorFrontmatter,
@@ -11,43 +9,6 @@ import {
   setRichEditorFrontmatter,
 } from './rich-editor-frontmatter'
 import { RICH_EDITOR_EXTERNAL_CHANGE_EVENT } from './editor-external-change-events'
-
-const schema = new Schema({
-  nodes: {
-    doc: { content: 'paragraph+' },
-    paragraph: { content: 'text*', toDOM: () => ['p', 0] },
-    text: {},
-  },
-})
-
-function frontmatterPlugin(source: object): Plugin {
-  const extension = createRichEditorFrontmatterExtension()({ editor: source } as never)
-  return extension.prosemirrorPlugins?.[0] as Plugin
-}
-
-/** A view stand-in: enough state and dispatch for the helpers, with the plugin's view hook driven by hand. */
-function createEditor() {
-  const editor = {} as { prosemirrorState: EditorState; prosemirrorView: { state: EditorState; dispatch: (tr: Transaction) => void } }
-  const plugin = frontmatterPlugin(editor)
-  let state = EditorState.create({ schema, plugins: [history(), plugin] })
-  const pluginView = plugin.spec.view?.({ state } as never)
-  const dispatch = (tr: Transaction) => {
-    const previous = state
-    state = state.apply(tr)
-    pluginView?.update?.({ state } as never, previous)
-  }
-  Object.defineProperty(editor, 'prosemirrorState', { get: () => state })
-  editor.prosemirrorView = {
-    get state() { return state },
-    dispatch,
-  }
-  return {
-    editor,
-    state: () => state,
-    run: (command: (state: EditorState, dispatch: (tr: Transaction) => void) => boolean) => command(state, dispatch),
-    typeText: (text: string) => dispatch(state.tr.insertText(text, 1)),
-  }
-}
 
 describe('rich editor Frontmatter', () => {
   it('holds what an edit set, for the path it was set for', () => {

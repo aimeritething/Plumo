@@ -1,13 +1,14 @@
 import { useState, type KeyboardEvent } from 'react'
 import { Check, X } from '@phosphor-icons/react'
 import { cn } from '@/lib/cn'
+import { PROPERTY_VALUE_PROPS } from './properties-dom'
 
 /**
  * The value side of a Property row, one control per kind of value. Each keeps
  * what is being typed as a draft and hands it on only when it is committed
  * (Enter, or the field losing focus); that commit is the one write, and the
  * one Undo step. Escape puts the draft back. Every control that takes the
- * caret carries `data-property-value`, which is how ↑ and ↓ find the next row.
+ * caret carries `PROPERTY_VALUE_PROPS`, which is how ↑ and ↓ find the next row.
  */
 
 const FIELD_CLASS = 'w-full min-w-0 bg-transparent text-[14px] leading-[22px] text-text-document outline-none placeholder:text-text-muted'
@@ -45,7 +46,7 @@ export function TextValue({ value, label, onCommit }: { value: string; label: st
   }
   return (
     <input
-      data-property-value=""
+      {...PROPERTY_VALUE_PROPS}
       aria-label={label}
       className={FIELD_CLASS}
       placeholder="Empty"
@@ -76,8 +77,7 @@ export function MultilineValue({ value, label, onCommit }: { value: string; labe
   }
   return (
     <textarea
-      data-property-value=""
-      data-property-multiline=""
+      {...PROPERTY_VALUE_PROPS}
       aria-label={label}
       className={cn(FIELD_CLASS, 'field-sizing-content resize-none')}
       placeholder="Empty"
@@ -98,7 +98,7 @@ export function BooleanValue({ value, label, onCommit }: { value: boolean; label
       role="checkbox"
       aria-checked={value}
       aria-label={label}
-      data-property-value=""
+      {...PROPERTY_VALUE_PROPS}
       className="flex h-[22px] items-center outline-none"
       onClick={() => onCommit(!value)}
     >
@@ -154,7 +154,7 @@ export function ListValue({ items, label, onCommit }: { items: string[]; label: 
         </span>
       ))}
       <input
-        data-property-value=""
+        {...PROPERTY_VALUE_PROPS}
         aria-label={label}
         className={cn(FIELD_CLASS, 'w-24 flex-1 text-[13px]')}
         placeholder={items.length === 0 ? 'Empty' : ''}
@@ -175,7 +175,7 @@ export function ReadonlyValue({ summary, onEditInRaw }: { summary: string; onEdi
       {onEditInRaw && (
         <button
           type="button"
-          data-property-value=""
+          {...PROPERTY_VALUE_PROPS}
           className="flex-none text-xs leading-[22px] text-text-link outline-none hover:underline focus-visible:underline"
           onClick={onEditInRaw}
         >

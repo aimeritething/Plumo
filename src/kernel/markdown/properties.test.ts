@@ -18,16 +18,26 @@ describe('readProperties', () => {
     expect(readProperties('')).toEqual({ state: 'none' })
   })
 
-  it('reads every top-level key in disk order, with its line in the block', () => {
+  it('reads every top-level key in disk order, with its lines in the block', () => {
     const result = readProperties(fm('title: Everything', '# a note', 'tags: [a, b]', 'date: 2026-09-19'))
     expect(result).toEqual({
       state: 'readable',
       properties: [
-        { key: 'title', value: { kind: 'text', text: 'Everything' }, line: 1 },
-        { key: 'tags', value: { kind: 'list', items: ['a', 'b'] }, line: 3 },
-        { key: 'date', value: { kind: 'text', text: '2026-09-19' }, line: 4 },
+        { key: 'title', value: { kind: 'text', text: 'Everything' }, line: 1, endLine: 1 },
+        { key: 'tags', value: { kind: 'list', items: ['a', 'b'] }, line: 3, endLine: 3 },
+        { key: 'date', value: { kind: 'text', text: '2026-09-19' }, line: 4, endLine: 4 },
       ],
     })
+  })
+
+  it('runs a Property to its last line, a trailing comment included, not to the next Property', () => {
+    const result = readProperties(fm('summary: |', '  one', '  two', '', '# between', 'tags:', '  - a', '  - b   # last', '', 'date: 2026-09-19'))
+    if (result.state !== 'readable') throw new Error(result.state)
+    expect(result.properties.map(({ key, line, endLine }) => [key, line, endLine])).toEqual([
+      ['summary', 1, 3],
+      ['tags', 6, 8],
+      ['date', 10, 10],
+    ])
   })
 
   it('reads an empty block as no Properties', () => {
@@ -80,7 +90,7 @@ describe('readProperties', () => {
 
   it('reads a CRLF block', () => {
     const result = readProperties('---\r\ntitle: A\r\n---\r\n')
-    expect(result).toEqual({ state: 'readable', properties: [{ key: 'title', value: { kind: 'text', text: 'A' }, line: 1 }] })
+    expect(result).toEqual({ state: 'readable', properties: [{ key: 'title', value: { kind: 'text', text: 'A' }, line: 1, endLine: 1 }] })
   })
 })
 
@@ -172,7 +182,7 @@ describe('setPropertyMultiline', () => {
     expect(next).not.toBeNull()
     expect(readProperties(next ?? '')).toEqual({
       state: 'readable',
-      properties: [{ key: 's', value: { kind: 'multiline', text: 'x\n  indented\ny' }, line: 1 }],
+      properties: [{ key: 's', value: { kind: 'multiline', text: 'x\n  indented\ny' }, line: 1, endLine: 4 }],
     })
   })
 

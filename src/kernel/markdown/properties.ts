@@ -38,6 +38,8 @@ export interface Property {
   value: PropertyValue
   /** The Property's first line within the Frontmatter block, 0 being the opening `---`. */
   line: number
+  /** The Property's last line: where its source ends, a trailing comment included. */
+  endLine: number
 }
 
 export type DocumentProperties =
@@ -201,6 +203,7 @@ export function readProperties(frontmatter: Frontmatter): DocumentProperties {
       key: property.key,
       value: valueOf(property.node),
       line: lineOf(block.body, property.keySpan[0]) + 1,
+      endLine: lineOf(block.body, lineEndOf(block.body, Math.max(property.nodeEnd, property.afterColon)) - 1) + 1,
     })),
   }
 }

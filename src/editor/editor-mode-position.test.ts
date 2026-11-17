@@ -3,6 +3,7 @@ import {
   buildCodeMirrorRestoreState,
   captureRawEditorPositionSnapshot,
   captureRichEditorPositionSnapshot,
+  focusPropertyAtLine,
   restoreBlockNoteView,
   restoreCodeMirrorView,
   type BlockNotePositionEditor,
@@ -281,5 +282,44 @@ describe('editorModePosition', () => {
     expect(restored).toBe(true)
     expect(editor.setTextCursorPosition).toHaveBeenCalledWith('tail', 'end')
     expect(editor.focus).toHaveBeenCalled()
+  })
+})
+
+describe('focusPropertyAtLine', () => {
+  // A block of: --- (0) / title (1) / # note (2) / summary: | (3) / two lines (4, 5) / blank (6) / tags (7) / --- (8).
+  function mountProperties() {
+    const root = document.createElement('div')
+    root.innerHTML = [
+      '<div data-property-key="title" data-property-line="1" data-property-end-line="1"><input data-property-value="" aria-label="title"></div>',
+      '<div data-property-key="summary" data-property-line="3" data-property-end-line="5"><textarea data-property-value="" aria-label="summary"></textarea></div>',
+      '<div data-property-key="tags" data-property-line="7" data-property-end-line="7"><input data-property-value="" aria-label="tags"></div>',
+    ].join('')
+    document.body.appendChild(root)
+    return () => root.remove()
+  }
+
+  it('focuses the value of the Property whose lines hold the caret', () => {
+    const unmount = mountProperties()
+    try {
+      expect(focusPropertyAtLine(document, 1)).toBe(true)
+      expect(document.activeElement?.getAttribute('aria-label')).toBe('title')
+      expect(focusPropertyAtLine(document, 5)).toBe(true)
+      expect(document.activeElement?.getAttribute('aria-label')).toBe('summary')
+    } finally {
+      unmount()
+    }
+  })
+
+  it('focuses no Property for a caret on a --- line, or on a comment or blank line between Properties', () => {
+    const unmount = mountProperties()
+    try {
+      for (const line of [0, 2, 6, 8]) {
+        ;(document.activeElement as HTMLElement | null)?.blur()
+        expect(focusPropertyAtLine(document, line), `line ${line}`).toBe(false)
+        expect(document.activeElement).toBe(document.body)
+      }
+    } finally {
+      unmount()
+    }
   })
 })

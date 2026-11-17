@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useRef, useSyncExternalStore } from 'react'
 import type { EditorState } from '@tiptap/pm/state'
 import { splitFrontmatter } from '@/kernel/markdown/wikilinks'
 import {
@@ -23,18 +23,32 @@ export interface FrontmatterEditor {
  * editor, or the Tab's own bytes until there is one. When the Tab's
  * Frontmatter changes to something the editor did not write (a reload, an
  * edit in Raw mode), the editor's copy is dropped and the Tab's bytes win.
+ *
+ * The Tab's bytes follow the editor through Autosave's debounced serialize,
+ * so they can lag behind it by an edit or two: a Tab that shows a Frontmatter
+ * the editor wrote earlier is catching up, not changing, and is left alone.
  */
 export function useRichFrontmatter(editor: FrontmatterEditor, path: string, tabContent: string) {
+  // Every Frontmatter a Property edit (or its Undo, or its Redo) has put into the editor since the Tab's bytes last won.
+  const writtenRef = useRef(new Set<string>())
   const subscribe = useCallback((onChange: () => void) => {
-    editor._tiptapEditor.on('transaction', onChange)
-    return () => { editor._tiptapEditor.off('transaction', onChange) }
-  }, [editor])
+    const record = () => {
+      const text = richFrontmatterFromState(editor.prosemirrorState, path)
+      if (text === null) writtenRef.current.clear()
+      else writtenRef.current.add(text)
+      onChange()
+    }
+    editor._tiptapEditor.on('transaction', record)
+    return () => { editor._tiptapEditor.off('transaction', record) }
+  }, [editor, path])
   const rich = useSyncExternalStore(subscribe, () => richFrontmatterFromState(editor.prosemirrorState, path))
   const [tabFrontmatter] = splitFrontmatter(tabContent)
 
   useEffect(() => {
     const current = richFrontmatterFromState(editor.prosemirrorState, path)
-    if (current !== null && current !== tabFrontmatter) resetRichEditorFrontmatter(editor)
+    if (current === null || current === tabFrontmatter || writtenRef.current.has(tabFrontmatter)) return
+    writtenRef.current.clear()
+    resetRichEditorFrontmatter(editor)
   }, [editor, path, tabFrontmatter])
 
   const frontmatter = rich ?? tabFrontmatter
