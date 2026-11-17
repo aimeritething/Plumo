@@ -20,7 +20,10 @@ function SelectValue({ ...props }: SelectPrimitive.Value.Props) {
 
 // `ghost` is a trigger that sits quietly in what it labels (a code block's
 // language): no edge and no fill at rest, muted, the hover fill and the
-// foreground colour under the pointer.
+// foreground colour under the pointer. `pill` is a trigger in a row of a
+// hairlined card (the Settings dialog): a hairline edge in the card's own
+// colour, fully rounded, no fill of its own in either theme, the hover fill
+// under the pointer.
 const selectTriggerVariants = cva(
   "flex w-fit items-center justify-between gap-2 rounded-lg border border-input bg-transparent px-3 py-1 text-sm whitespace-nowrap transition-[color,box-shadow] outline-none focus-visible:focus-ring disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 data-placeholder:text-muted-foreground data-[size=default]:h-7 data-[size=sm]:h-6 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 dark:bg-input/30 dark:hover:bg-input/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground",
   {
@@ -28,6 +31,7 @@ const selectTriggerVariants = cva(
       variant: {
         default: "",
         ghost: "border-transparent bg-transparent text-muted-foreground shadow-none hover:bg-accent hover:text-foreground",
+        pill: "rounded-full border-hairline border-border bg-transparent hover:bg-accent dark:bg-transparent dark:hover:bg-accent",
       },
     },
     defaultVariants: {
@@ -146,7 +150,7 @@ function SelectItem({
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "relative flex h-8 w-full cursor-default items-center gap-2 rounded-lg pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+        "relative flex h-8 w-full cursor-default items-center gap-2 rounded-lg pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground",
         className
       )}
       {...props}
@@ -159,7 +163,9 @@ function SelectItem({
           <CheckIcon className="size-4" />
         </SelectPrimitive.ItemIndicator>
       </span>
-      <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+      {/* Base UI's item text is a div; it lays out what it holds as one row, as
+          the trigger's value does (a Primary color's dot and its name). */}
+      <SelectPrimitive.ItemText className="flex min-w-0 flex-1 items-center gap-2 whitespace-nowrap">{children}</SelectPrimitive.ItemText>
     </SelectPrimitive.Item>
   )
 }

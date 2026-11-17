@@ -5,6 +5,7 @@ import { contrastRatio, parseHex, type Rgb } from './color-math'
 import {
   DEFAULT_PRIMARY_COLOR,
   normalizePrimaryColor,
+  parseTypedHex,
   PRIMARY_COLOR_PRESETS,
   primaryColorStyleSheet,
   primaryScale,
@@ -29,6 +30,20 @@ describe('normalizePrimaryColor', () => {
     expect(normalizePrimaryColor('#fff')).toBeNull()
     expect(normalizePrimaryColor('blue')).toBeNull()
     expect(normalizePrimaryColor(42)).toBeNull()
+  })
+})
+
+describe('parseTypedHex', () => {
+  it('takes six hex digits, the # optional, as a lower-case #rrggbb', () => {
+    expect(parseTypedHex('#3A83F7')).toBe('#3a83f7')
+    expect(parseTypedHex('3a83f7')).toBe('#3a83f7')
+    expect(parseTypedHex(' #3a83f7 ')).toBe('#3a83f7')
+  })
+
+  it('takes nothing else', () => {
+    for (const value of ['', '#', '#3a8', '3a83f', '#3a83f7a', '#gg0000', '##3a83f7']) {
+      expect(parseTypedHex(value)).toBeNull()
+    }
   })
 })
 

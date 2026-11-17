@@ -17,7 +17,7 @@ import { alphaOver, contrastRatio, oklchToRgb, parseHex, rgbToOklch, toHex, type
 
 export interface PrimaryColorPreset { id: string; label: string; hex: string }
 
-/** The swatches Settings offers, in the order macOS lists its accent colours. */
+/** The presets Settings offers, in the order macOS lists its accent colours. */
 export const PRIMARY_COLOR_PRESETS: readonly PrimaryColorPreset[] = [
   { id: 'blue', label: 'Blue', hex: '#0082fb' },
   { id: 'purple', label: 'Purple', hex: '#8e4ec6' },
@@ -35,6 +35,14 @@ export const DEFAULT_PRIMARY_COLOR = PRIMARY_COLOR_PRESETS[0].hex
 export function normalizePrimaryColor(value: unknown): string | null {
   if (typeof value !== 'string') return null
   return parseHex(value) ? value.trim().toLowerCase() : null
+}
+
+const TYPED_HEX = /^#?([0-9a-f]{6})$/i
+
+/** The colour a hex typed in Settings means: six hex digits, the `#` optional, as `#rrggbb`; null for anything else. */
+export function parseTypedHex(value: string): string | null {
+  const match = TYPED_HEX.exec(value.trim())
+  return match ? `#${match[1].toLowerCase()}` : null
 }
 
 export type ScaleTheme = 'light' | 'dark'
