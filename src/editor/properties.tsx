@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type MutableRefObject, type RefObject } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type FocusEvent, type KeyboardEvent, type MutableRefObject, type RefObject } from 'react'
 import { Plus, X } from '@phosphor-icons/react'
 import {
   addProperty,
@@ -39,14 +39,14 @@ interface PropertiesProps {
   handleRef?: MutableRefObject<PropertiesHandle | null>
   /** ↓ from the last row: the caret goes to the start of the body. */
   onLeaveDown: () => void
-  /** A value Properties cannot edit sends the user to Raw mode. */
+  /** A value Properties cannot edit sends the user to Source mode. */
   onEditInRaw?: () => void
 }
 
 type Commit = (next: string | null) => void
 
-const ROW_CLASS = 'group -mx-2 flex items-start gap-3 rounded-md px-2 py-[5px] focus-within:bg-state-hover hover:bg-state-hover'
-const KEY_CLASS = 'w-28 flex-none truncate bg-transparent text-[13px] leading-[22px] text-text-tertiary outline-none aria-invalid:text-chroma-red-text'
+const ROW_CLASS = 'group -mx-2 flex items-start gap-3 rounded-md px-2 py-[5px] focus-within:bg-accent hover:bg-accent'
+const KEY_CLASS = 'w-28 flex-none truncate bg-transparent text-[13px] leading-[22px] text-muted-foreground outline-none aria-invalid:text-red-text'
 /** The body's top padding, and a left edge level with the body text, which sits 8px in from .bn-editor's padding (.bn-block-content). */
 const PANEL_CLASS = 'flex flex-col pt-(--editor-padding-top) pr-(--editor-padding-horizontal) pl-[calc(var(--editor-padding-horizontal)+var(--spacing)*2)]'
 
@@ -149,7 +149,7 @@ function PropertyRow(props: { property: Property; frontmatter: string; commit: C
         type="button"
         aria-label={`Remove ${property.key}`}
         tabIndex={-1}
-        className="flex size-[22px] flex-none items-center justify-center rounded-sm text-text-tertiary opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 hover:bg-control-tertiary-hover"
+        className="flex size-[22px] flex-none items-center justify-center rounded-sm text-muted-foreground opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 hover:bg-secondary-hover"
         onMouseDown={(event) => event.preventDefault()}
         onClick={() => commit(removeProperty(frontmatter, property.key))}
       >
@@ -200,6 +200,11 @@ function NewPropertyRow({ frontmatter, onDone }: { frontmatter: string; onDone: 
     if (taken) return
     done(key === '' ? null : key)
   }
+  // The Command Menu, still open when Add Property opens the row, takes the focus straight back: that is not the user leaving the row.
+  const handleBlur = (event: FocusEvent<HTMLInputElement>) => {
+    if (key === '' && event.relatedTarget instanceof Element && event.relatedTarget.closest('[role="dialog"]')) return
+    finish()
+  }
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter' || (event.key === 'Tab' && !event.shiftKey && key !== '')) {
       event.preventDefault()
@@ -222,7 +227,7 @@ function NewPropertyRow({ frontmatter, onDone }: { frontmatter: string; onDone: 
         spellCheck={false}
         value={draft}
         onChange={(event) => setDraft(event.target.value)}
-        onBlur={finish}
+        onBlur={handleBlur}
         onKeyDown={handleKeyDown}
       />
     </div>
@@ -301,10 +306,10 @@ export function Properties({ editor, path, tabContent, handleRef, onLeaveDown, o
       }}
     >
       {parsed.state === 'unreadable' ? (
-        <div className="-mx-2 flex items-center gap-2.5 px-2 py-[5px] text-[13px] leading-[22px] text-text-tertiary">
+        <div className="-mx-2 flex items-center gap-2.5 px-2 py-[5px] text-[13px] leading-[22px] text-muted-foreground">
           <span>The Frontmatter can’t be read.</span>
           {onEditInRaw && (
-            <button type="button" className="text-xs text-text-link hover:underline" onClick={onEditInRaw}>Fix it in Raw</button>
+            <button type="button" className="text-xs text-link hover:underline" onClick={onEditInRaw}>Fix it in Source</button>
           )}
         </div>
       ) : (
@@ -317,7 +322,7 @@ export function Properties({ editor, path, tabContent, handleRef, onLeaveDown, o
       ) : parsed.state === 'readable' && (
         <button
           type="button"
-          className={cn(ROW_CLASS, 'w-fit items-center gap-1.5 text-[13px] leading-[22px] text-text-muted hover:text-text-tertiary')}
+          className={cn(ROW_CLASS, 'w-fit items-center gap-1.5 text-[13px] leading-[22px] text-subtle-foreground hover:text-muted-foreground')}
           onClick={() => setAdding(true)}
         >
           <Plus size={12} />

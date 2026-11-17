@@ -405,7 +405,7 @@ export function focusedPropertyLine(documentObject: Document): number | null {
   return row && Number.isInteger(line) ? line : null
 }
 
-/** Raw mode's caret for a Property that had the focus in Rich mode: the end of the Property's first line. */
+/** Source mode's caret for a Property that had the focus in Rich mode: the end of the Property's first line. */
 export function propertyCodeMirrorRestoreState(content: string, line: number): CodeMirrorRestoreState {
   const offset = getLineEndOffset({ text: content, lineIndex: line })
   return { anchor: offset, head: offset }

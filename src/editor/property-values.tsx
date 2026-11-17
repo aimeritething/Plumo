@@ -11,7 +11,7 @@ import { PROPERTY_VALUE_PROPS } from './properties-dom'
  * caret carries `PROPERTY_VALUE_PROPS`, which is how ↑ and ↓ find the next row.
  */
 
-const FIELD_CLASS = 'w-full min-w-0 bg-transparent text-[14px] leading-[22px] text-text-document outline-none placeholder:text-text-muted'
+const FIELD_CLASS = 'w-full min-w-0 bg-transparent text-[14px] leading-[22px] text-document-foreground outline-none placeholder:text-subtle-foreground'
 
 /** A draft of `value`, dropped once committed or abandoned so the next value shows through. */
 function useDraft(value: string) {
@@ -105,7 +105,7 @@ export function BooleanValue({ value, label, onCommit }: { value: boolean; label
       <span
         className={cn(
           'flex size-3.5 items-center justify-center rounded-[3px] ring-1 ring-inset',
-          value ? 'bg-accent-base ring-accent-base text-text-inverse' : 'bg-surface-card ring-text-muted',
+          value ? 'bg-primary ring-primary text-primary-foreground' : 'bg-background ring-subtle-foreground',
         )}
       >
         {value && <Check size={10} weight="bold" />}
@@ -139,14 +139,14 @@ export function ListValue({ items, label, onCommit }: { items: string[]; label: 
       {items.map((item, index) => (
         <span
           key={`${index}:${item}`}
-          className="group/chip flex h-[22px] items-center gap-0.5 rounded-[5px] bg-surface-shade px-2 hover:pr-1 text-[13px] leading-[22px] text-text-document"
+          className="group/chip flex h-[22px] items-center gap-0.5 rounded-[5px] bg-muted px-2 hover:pr-1 text-[13px] leading-[22px] text-document-foreground"
         >
           {item}
           <button
             type="button"
             aria-label={`Remove ${item}`}
             tabIndex={-1}
-            className="hidden size-4 items-center justify-center rounded-sm text-text-muted group-hover/chip:flex hover:text-text-secondary"
+            className="hidden size-4 items-center justify-center rounded-sm text-subtle-foreground group-hover/chip:flex hover:text-muted-foreground"
             onClick={() => onCommit(items.filter((_, other) => other !== index))}
           >
             <X size={10} weight="bold" />
@@ -171,15 +171,15 @@ export function ListValue({ items, label, onCommit }: { items: string[]; label: 
 export function ReadonlyValue({ summary, onEditInRaw }: { summary: string; onEditInRaw?: () => void }) {
   return (
     <div className="flex min-w-0 flex-1 items-center gap-2.5">
-      <span className="truncate text-[14px] leading-[22px] text-text-tertiary">{summary}</span>
+      <span className="truncate text-[14px] leading-[22px] text-muted-foreground">{summary}</span>
       {onEditInRaw && (
         <button
           type="button"
           {...PROPERTY_VALUE_PROPS}
-          className="flex-none text-xs leading-[22px] text-text-link outline-none hover:underline focus-visible:underline"
+          className="flex-none text-xs leading-[22px] text-link outline-none hover:underline focus-visible:underline"
           onClick={onEditInRaw}
         >
-          Edit in Raw
+          Edit in Source
         </button>
       )}
     </div>

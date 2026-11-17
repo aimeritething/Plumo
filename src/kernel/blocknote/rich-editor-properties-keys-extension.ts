@@ -8,7 +8,7 @@ import {
 
 /**
  * ↑ on the body's first line goes up into Properties, the way it would go up
- * a line in Raw mode. The Kernel does not know Properties: it asks over a
+ * a line in Source mode. The Kernel does not know Properties: it asks over a
  * window event, cancelled by whoever took the caret.
  */
 export const RICH_EDITOR_FOCUS_LAST_PROPERTY_EVENT = 'plumo:rich-editor-focus-last-property'

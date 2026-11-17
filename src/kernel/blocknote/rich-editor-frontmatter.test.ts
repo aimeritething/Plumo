@@ -58,7 +58,7 @@ describe('rich editor Frontmatter', () => {
   })
 
   it('drops what it held on a reset or a content swap, off the Undo history', () => {
-    const { editor, state, run } = createEditor()
+    const { editor, state } = createEditor()
     setRichEditorFrontmatter(editor, '/a.md', 'v1', 'v2')
     resetRichEditorFrontmatter(editor)
     expect(richFrontmatterFromState(state(), '/a.md')).toBeNull()
@@ -66,8 +66,31 @@ describe('rich editor Frontmatter', () => {
     setRichEditorFrontmatter(editor, '/a.md', 'v1', 'v3')
     editor.prosemirrorView.dispatch(state().tr.insertText('swap', 1).setMeta('addToHistory', false).setMeta(RICH_FRONTMATTER_RESET_META, true))
     expect(richFrontmatterFromState(state(), '/a.md')).toBeNull()
+  })
+
+  it('leaves an edit from before a reset undone as nothing: the Tab\'s bytes are newer than the block it holds', () => {
+    const { editor, state, run } = createEditor()
+    const heard = vi.fn()
+    setRichEditorFrontmatter(editor, '/a.md', 'v1', 'v2')
+    resetRichEditorFrontmatter(editor)
+    window.addEventListener(RICH_EDITOR_EXTERNAL_CHANGE_EVENT, heard)
     run(undo)
-    expect(richFrontmatterFromState(state(), '/a.md')).toBe('v1')
+    expect(richFrontmatterFromState(state(), '/a.md')).toBeNull()
+    run(redo)
+    expect(richFrontmatterFromState(state(), '/a.md')).toBeNull()
+    window.removeEventListener(RICH_EDITOR_EXTERNAL_CHANGE_EVENT, heard)
+    expect(heard).not.toHaveBeenCalled()
+  })
+
+  it('undoes an edit made after a reset as before', () => {
+    const { editor, state, run } = createEditor()
+    setRichEditorFrontmatter(editor, '/a.md', 'v1', 'v2')
+    resetRichEditorFrontmatter(editor)
+    setRichEditorFrontmatter(editor, '/a.md', 'v5', 'v6')
+    run(undo)
+    expect(richFrontmatterFromState(state(), '/a.md')).toBe('v5')
+    run(undo)
+    expect(richFrontmatterFromState(state(), '/a.md')).toBe('v5')
   })
 
   it('does nothing for an edit that changes nothing', () => {

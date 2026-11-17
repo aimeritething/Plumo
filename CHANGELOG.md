@@ -7,6 +7,10 @@ line says something a user can notice. `docs/releasing.md` says how a version is
 
 ## Unreleased
 
+### Added
+
+- Rich mode shows a Document's Frontmatter as Properties above the body, one row per key: text, a checkbox for `true`/`false`, chips for a list, a multi-line field for a `|` block. Editing one rewrites only that Property's lines, and Undo takes it back like any other edit. Edit ▸ Add Property adds one, creating the Frontmatter if there is none.
+
 ### Improved
 
 - Naming a new Document or folder, or renaming a file, in the sidebar now edits the name where it stands: one thin frame holds the whole name, with `.md` right after what you type instead of outside the box, and nothing shifts when the rename starts.

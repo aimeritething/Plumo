@@ -115,12 +115,12 @@ test('↑ from the first line of the body goes into Properties, ↓ from the las
   await page.locator('.bn-editor h1').click()
   await page.keyboard.press('Home')
   await page.keyboard.press('ArrowUp')
-  // The last Property that takes the caret: author's Edit in Raw.
-  await expect(properties(page).getByRole('button', { name: 'Edit in Raw' })).toBeFocused()
+  // The last Property that takes the caret: author's Edit in Source.
+  await expect(properties(page).getByRole('button', { name: 'Edit in Source' })).toBeFocused()
   await page.keyboard.press('ArrowUp')
   await expect(value(page, 'summary')).toBeFocused()
   await page.keyboard.press('ArrowDown')
-  await expect(properties(page).getByRole('button', { name: 'Edit in Raw' })).toBeFocused()
+  await expect(properties(page).getByRole('button', { name: 'Edit in Source' })).toBeFocused()
   await page.keyboard.press('ArrowDown')
   await page.keyboard.type('X')
   await expect(page.locator('.bn-editor h1')).toHaveText('XEverything')
@@ -141,17 +141,17 @@ test('a Document with no Frontmatter shows no Properties', async ({ page }) => {
   await expect(properties(page)).toHaveCount(0)
 })
 
-test('Raw mode shows a Property edit, and an edit made in Raw shows in Rich', async ({ page }) => {
+test('Source mode shows a Property edit, and an edit made there shows in Rich', async ({ page }) => {
   await openProps(page)
   await value(page, 'date').fill('2026-10-01')
   await value(page, 'date').press('Enter')
-  await page.getByRole('radio', { name: 'Raw' }).click()
+  await page.getByRole('button', { name: 'Source mode', exact: true }).click()
   const raw = page.getByTestId('raw-editor-codemirror')
   await expect(raw).toContainText('date: 2026-10-01')
   await raw.getByText('date: 2026-10-01').click()
   await page.keyboard.press('End')
   await page.keyboard.type('X')
-  await page.getByRole('radio', { name: 'Rich' }).click()
+  await page.getByRole('button', { name: 'Source mode', exact: true }).click()
   await expect(value(page, 'date')).toHaveValue('2026-10-01X')
   await expect.poll(() => saved(page)).toContain('date: 2026-10-01X\n')
 })

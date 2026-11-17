@@ -13,8 +13,15 @@ import { dispatchRichEditorExternalChange } from './editor-external-change-event
  *
  * The plugin keeps the Frontmatter the last such step set, with the path of
  * the Document it was set for. A content swap (another Tab, a reload, the way
- * back from Raw) resets it, and until the next Property edit the Tab's own
+ * back from Source mode) resets it, and until the next Property edit the Tab's own
  * bytes are the Frontmatter, which is why a reader passes those in.
+ *
+ * A step holds the whole block before and after its edit, and no mapping ever
+ * drops it, so it outlives a reset in the Undo history while the body's steps
+ * do not. Undone then, it would put back a block older than the Tab's bytes
+ * and take with it whatever changed them (an edit in Source mode, a reload
+ * from disk). So every reset starts a new generation, and a step from an
+ * earlier one does nothing.
  */
 
 interface RichFrontmatter {
@@ -22,8 +29,14 @@ interface RichFrontmatter {
   text: string
 }
 
+interface PluginState {
+  held: RichFrontmatter | null
+  /** Counts the resets: a step applies only in the generation it was made in. */
+  generation: number
+}
+
 const STEP_ID = 'plumoFrontmatter'
-const pluginKey = new PluginKey<RichFrontmatter | null>('rich-editor-frontmatter')
+const pluginKey = new PluginKey<PluginState>('rich-editor-frontmatter')
 /** Set on a transaction that swaps the editor's content: what it held no longer describes the Document shown. */
 export const RICH_FRONTMATTER_RESET_META = 'plumoFrontmatterReset'
 
@@ -31,12 +44,14 @@ class FrontmatterStep extends Step {
   readonly path: string
   readonly before: string
   readonly after: string
+  readonly generation: number
 
-  constructor(path: string, before: string, after: string) {
+  constructor(path: string, before: string, after: string, generation: number) {
     super()
     this.path = path
     this.before = before
     this.after = after
+    this.generation = generation
   }
 
   apply(doc: ProsemirrorNode): StepResult {
@@ -48,7 +63,7 @@ class FrontmatterStep extends Step {
   }
 
   invert(): Step {
-    return new FrontmatterStep(this.path, this.after, this.before)
+    return new FrontmatterStep(this.path, this.after, this.before, this.generation)
   }
 
   map(): Step {
@@ -56,11 +71,11 @@ class FrontmatterStep extends Step {
   }
 
   toJSON() {
-    return { stepType: STEP_ID, path: this.path, before: this.before, after: this.after }
+    return { stepType: STEP_ID, path: this.path, before: this.before, after: this.after, generation: this.generation }
   }
 
-  static fromJSON(_schema: Schema, json: { path: string; before: string; after: string }): FrontmatterStep {
-    return new FrontmatterStep(json.path, json.before, json.after)
+  static fromJSON(_schema: Schema, json: { path: string; before: string; after: string; generation: number }): FrontmatterStep {
+    return new FrontmatterStep(json.path, json.before, json.after, json.generation)
   }
 }
 
@@ -70,10 +85,12 @@ try {
   // Already registered by an earlier copy of this module (a hot reload).
 }
 
-function nextState(value: RichFrontmatter | null, tr: Transaction): RichFrontmatter | null {
-  let next = tr.getMeta(RICH_FRONTMATTER_RESET_META) ? null : value
+function nextState(state: PluginState, tr: Transaction): PluginState {
+  let next = tr.getMeta(RICH_FRONTMATTER_RESET_META) ? { held: null, generation: state.generation + 1 } : state
   for (const step of tr.steps) {
-    if (step instanceof FrontmatterStep) next = { path: step.path, text: step.after }
+    if (step instanceof FrontmatterStep && step.generation === next.generation) {
+      next = { held: { path: step.path, text: step.after }, generation: next.generation }
+    }
   }
   return next
 }
@@ -87,16 +104,16 @@ function nextState(value: RichFrontmatter | null, tr: Transaction): RichFrontmat
 export const createRichEditorFrontmatterExtension = createExtension(({ editor }) => ({
   key: 'rich-editor-frontmatter',
   prosemirrorPlugins: [
-    new Plugin<RichFrontmatter | null>({
+    new Plugin<PluginState>({
       key: pluginKey,
       state: {
-        init: () => null,
-        apply: (tr, value) => nextState(value, tr),
+        init: () => ({ held: null, generation: 0 }),
+        apply: (tr, state) => nextState(state, tr),
       },
       view: () => ({
         update: (view, previous) => {
-          const next = pluginKey.getState(view.state)
-          if (next === null || next === pluginKey.getState(previous)) return
+          const next = pluginKey.getState(view.state)?.held ?? null
+          if (next === null || next === pluginKey.getState(previous)?.held) return
           dispatchRichEditorExternalChange(editor)
         },
       }),
@@ -106,8 +123,8 @@ export const createRichEditorFrontmatterExtension = createExtension(({ editor })
 
 /** The Frontmatter a Property edit last set for `path`, or null when the Tab's bytes still say what it is. */
 export function richFrontmatterFromState(state: EditorState, path: string): string | null {
-  const value = pluginKey.getState(state)
-  return value && value.path === path ? value.text : null
+  const held = pluginKey.getState(state)?.held
+  return held && held.path === path ? held.text : null
 }
 
 interface EditorWithState {
@@ -159,6 +176,8 @@ export function setRichEditorFrontmatter(editor: unknown, path: string, before: 
   if (before === after) return
   const view = viewOf(editor)
   if (!view) return
-  view.dispatch(closeHistory(view.state.tr.step(new FrontmatterStep(path, before, after))))
+  const generation = pluginKey.getState(view.state)?.generation
+  if (generation === undefined) return
+  view.dispatch(closeHistory(view.state.tr.step(new FrontmatterStep(path, before, after, generation))))
   view.dispatch(closeHistory(view.state.tr))
 }

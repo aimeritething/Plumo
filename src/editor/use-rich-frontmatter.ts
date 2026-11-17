@@ -22,7 +22,7 @@ export interface FrontmatterEditor {
  * an edit to it goes in. It is the one a Property edit last put into the
  * editor, or the Tab's own bytes until there is one. When the Tab's
  * Frontmatter changes to something the editor did not write (a reload, an
- * edit in Raw mode), the editor's copy is dropped and the Tab's bytes win.
+ * edit in Source mode), the editor's copy is dropped and the Tab's bytes win.
  *
  * The Tab's bytes follow the editor through Autosave's debounced serialize,
  * so they can lag behind it by an edit or two: a Tab that shows a Frontmatter
