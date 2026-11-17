@@ -5,7 +5,7 @@ section, newest first, with its changes under Added, Improved and Fixed. The sec
 version is also its release notes on GitHub and what the Update popover shows, so every
 line says something a user can notice. `docs/releasing.md` says how a version is cut.
 
-## Unreleased
+## 0.1.1
 
 ### Added
 
