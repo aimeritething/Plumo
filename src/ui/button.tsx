@@ -15,6 +15,7 @@ const ICON_BUTTON_STATES =
 // focus ring. default is Linear's primary, secondary its filled secondary,
 // outline the same with a hairline edge, ghost the tertiary button, icon the
 // icon-only one. Icon sizes: icon-2xs (18px, 12px glyph) inline in a row,
+// icon (28px, 16px glyph) in the window's top bar, level with the Tabs,
 // icon-xs (24px, 16px glyph) everywhere else. `placeholder` with the `row`
 // size is Notion's empty slot: a full-width muted row, an icon and what to
 // add, on the hover fill, a step darker on hover or when `data-selected`.
@@ -22,8 +23,8 @@ const ICON_BUTTON_STATES =
 // state (the Table handle's dash and chip, off the button's `group`).
 // `fill` takes its slot's whole box and its cursor: the slot is laid out (and
 // says what a press does, e.g. a resize cursor) by whoever places it. `pill`
-// is a 26px fully rounded text button for a short label in the Tab bar
-// (an Image Tab's Open ↗), usually on `outline`. `surface` is an icon button
+// is a 28px fully rounded text button for a short label in the top bar
+// (an Image Tab's Open ↗, the Update button). `surface` is an icon button
 // standing on its own over the editor (the highlight's colour button), on the
 // popover surface so it reads as one with the menu it opens. `list` with the
 // `list` size is a row in a list of places to go (the Outline's headings):
@@ -59,14 +60,14 @@ const buttonVariants = cva(
         xs: "h-6 gap-1 rounded-sm px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
         sm: "h-8 gap-1.5 rounded-sm px-3 has-[>svg]:px-2.5",
         lg: "h-10 rounded-sm px-6 has-[>svg]:px-4",
-        icon: "size-7 rounded-full",
+        icon: "size-7 rounded-md",
         "icon-2xs": "size-4.5 rounded-sm [&_svg:not([class*='size-'])]:size-3",
         "icon-xs": "size-6 rounded-md",
         "icon-sm": "size-8",
         "icon-lg": "size-10",
         row: "h-11 w-full justify-start gap-2.5 px-3 [&_svg:not([class*='size-'])]:size-5",
         fill: "size-full cursor-[inherit] p-0",
-        pill: "h-6.5 rounded-full px-2.5",
+        pill: "h-7 rounded-full px-2.5",
         list: "h-7 justify-start rounded-md px-2 text-left text-[13px]",
       },
     },

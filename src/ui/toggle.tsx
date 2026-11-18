@@ -5,8 +5,8 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/cn"
 
 // Button's values: 28px, 13px, `rounded-sm`; on (`aria-pressed`) = the
-// selected secondary. `icon` with the `icon-xs` size is Button's icon button
-// that stays on: muted and bare at rest like its neighbours, the selected fill
+// selected secondary. `icon` with the `icon` (28px, the top bar's) or
+// `icon-xs` (24px) size is Button's icon button that stays on: muted and bare at rest like its neighbours, the selected fill
 // and the foreground colour while on. One that cannot be switched
 // (`aria-disabled`) fades but keeps the pointer and the focus, for its tooltip.
 const toggleVariants = cva(
@@ -23,6 +23,7 @@ const toggleVariants = cva(
         default: "h-7 min-w-7 px-2",
         sm: "h-8 min-w-8 px-1.5",
         lg: "h-10 min-w-10 px-2.5",
+        icon: "size-7 rounded-md",
         "icon-xs": "size-6 rounded-md",
       },
     },

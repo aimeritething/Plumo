@@ -60,7 +60,7 @@ interface DocumentTabActionsProps {
  */
 export function DocumentTabActions({ mode, onCopyPath, menu }: DocumentTabActionsProps) {
   return (
-    <div className="flex items-center gap-2" data-testid="document-tab-actions">
+    <div className="flex items-center gap-1" data-testid="document-tab-actions">
       {onCopyPath && <CopyPathButton onCopyPath={onCopyPath} />}
       <SourceModeButton mode={mode} />
       <DocumentMenu menu={menu} />
@@ -83,7 +83,7 @@ interface ImageTabActionsProps {
  */
 export function ImageTabActions({ metadata, onOpenExternal, onCopyPath }: ImageTabActionsProps) {
   return (
-    <div className="flex items-center gap-1.5" data-testid="image-tab-actions">
+    <div className="flex items-center gap-1" data-testid="image-tab-actions">
       {metadata && (
         <span className="cursor-default pr-1.5 font-mono text-2xs tracking-normal whitespace-nowrap text-muted-foreground tabular-nums" data-testid="image-meta">{metadata}</span>
       )}
@@ -99,7 +99,7 @@ export function ImageTabActions({ metadata, onOpenExternal, onCopyPath }: ImageT
 function CopyPathButton({ onCopyPath }: { onCopyPath: () => void }) {
   return (
     <SimpleTooltip label="Copy path" shortcut={COPY_PATH_SHORTCUT} side="bottom">
-      <Button variant="icon" size="icon-xs" aria-label="Copy path" data-testid="tab-copy-path" onClick={onCopyPath}>
+      <Button variant="icon" size="icon" aria-label="Copy path" data-testid="tab-copy-path" onClick={onCopyPath}>
         <LinkSimple aria-hidden="true" />
       </Button>
     </SimpleTooltip>
@@ -124,7 +124,7 @@ function SourceModeButton({ mode }: { mode: TabMode }) {
     <SimpleTooltip label={lockedReason ?? SOURCE_MODE_LABEL} shortcut={lockedReason === null ? TOGGLE_SHORTCUT : undefined} side="bottom">
       <Toggle
         variant="icon"
-        size="icon-xs"
+        size="icon"
         pressed={inSourceMode}
         onPressedChange={(pressed) => {
           if (lockedReason === null) mode.onChange(pressed ? 'raw' : 'rich')
@@ -155,7 +155,7 @@ function DocumentMenu({ menu }: { menu: DocumentMenuActions }) {
       <DropdownMenuTrigger
         render={(
           <SimpleTooltip label="More" side="bottom">
-            <Button variant="icon" size="icon-xs" aria-label="More" data-testid="tab-more">
+            <Button variant="icon" size="icon" aria-label="More" data-testid="tab-more">
               <DotsThree aria-hidden="true" />
             </Button>
           </SimpleTooltip>
