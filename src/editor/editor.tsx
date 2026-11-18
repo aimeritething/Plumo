@@ -49,6 +49,9 @@ import { createRichEditorTransformErrorRecoveryExtension } from '@/kernel/blockn
 import { SingleEditorView } from './single-editor-view'
 import { Outline } from './outline'
 import { ScrollArea } from '@/ui/scroll-area'
+import { Properties, type PropertiesHandle } from './properties'
+import { createRichEditorFrontmatterExtension } from '@/kernel/blocknote/rich-editor-frontmatter'
+import { createRichEditorPropertiesKeysExtension } from '@/kernel/blocknote/rich-editor-properties-keys-extension'
 import { createTodoBlockShortcutExtension } from '@/kernel/blocknote/todo-block-shortcut-extension'
 import { useRawModeWithFlush } from './use-raw-mode-with-flush'
 import { useRawEditorSnapshots } from './use-raw-editor-snapshots'
@@ -125,6 +128,8 @@ export interface EditorProps {
   historyRef?: MutableRefObject<EditorHistory | null>
   /** Duplicate Block (⌘D, the Edit menu, the Command Menu): registered in Rich mode only, Raw mode having no Blocks. */
   duplicateBlockRef?: MutableRefObject<(() => void) | null>
+  /** Add property (the Edit menu, the Command Menu): registered in Rich mode only, where Properties are shown. */
+  addPropertyRef?: MutableRefObject<(() => void) | null>
   /** Puts a Document Tab in Rich or Raw mode; the Tab rules decide whether it takes. */
   onSetTabMode: (path: string, mode: EditorMode) => void
   /** The tab bar's clicks. */
@@ -202,6 +207,8 @@ function useRichEditor(options: { activeTabPath: string | null; vaultPath?: stri
       createRichEditorBlockSelectionExtension(),
       createRichEditorFindExtension(),
       createTableHandleTintExtension(),
+      createRichEditorFrontmatterExtension(),
+      createRichEditorPropertiesKeysExtension(),
     ],
   })
   installRichEditorMarkdownSerializer(editor)
@@ -275,6 +282,7 @@ function useRawModeRuntime(options: {
 function useEditorRuntime(props: EditorProps) {
   const { tabs, vaultPath, onContentChange, onRawContentChange, onSetTabMode, flushPendingEditorContentRef, flushPendingRawContentRef, hasPendingEditorContentRef } = props
   const { documentPath: activeTabPath, imagePath: imageTabPath } = activeTabPaths(props.activeTabPath)
+  const propertiesRef = useRef<PropertiesHandle | null>(null)
   const editor = useRichEditor({ activeTabPath, vaultPath })
   const activeTab = tabs.find((tab) => tab.entry.path === activeTabPath) ?? null
   const flushPendingEditorChangeRef = useRef<(() => boolean) | null>(null)
@@ -306,6 +314,8 @@ function useEditorRuntime(props: EditorProps) {
   useRegisteredRef(rawMode ? undefined : props.historyRef, richHistory)
   const duplicateBlock = useCallback(() => { duplicateSelectedBlocks(editor as unknown as RichEditor) }, [editor])
   useRegisteredRef(rawMode ? undefined : props.duplicateBlockRef, duplicateBlock)
+  const addProperty = useCallback(() => { propertiesRef.current?.add() }, [])
+  useRegisteredRef(rawMode ? undefined : props.addPropertyRef, addProperty)
 
   const rawSnapshots = useRawEditorSnapshots(tabs, activeTabPath, rawMode)
 
@@ -319,7 +329,19 @@ function useEditorRuntime(props: EditorProps) {
     flushPendingRawContentRef,
   })
 
-  return { editor, activeTab, handleEditorChange, imageTabPath, raw, rawSnapshots, find, findRequest, requestFind }
+  return { editor, activeTab, handleEditorChange, imageTabPath, raw, rawSnapshots, find, findRequest, requestFind, propertiesRef }
+}
+
+/** ↓ out of the last Property: the caret goes to the start of the body. */
+function focusBodyStart(editor: ReturnType<typeof useRichEditor>): void {
+  const first = editor.document[0]
+  if (!first) return
+  try {
+    editor.setTextCursorPosition(first, 'start')
+    editor.focus()
+  } catch {
+    // A block with no text to put the caret in: leave the focus where it is.
+  }
 }
 
 /**
@@ -425,7 +447,7 @@ function useImageTab({ path, imageFile, reloads, onOpenExternal, onCopyPath }: {
 }
 
 export const Editor = memo(function Editor(props: EditorProps) {
-  const { editor, activeTab, handleEditorChange, imageTabPath, raw, rawSnapshots, find, findRequest, requestFind } = useEditorRuntime(props)
+  const { editor, activeTab, handleEditorChange, imageTabPath, raw, rawSnapshots, find, findRequest, requestFind, propertiesRef } = useEditorRuntime(props)
   const {
     tabs, activeTabPath, vaultPath, onActivateTab, onCloseTab, writeFailure, onRetryWrite, onDiscardWrite,
     sidebarCollapsed, tabCommands,
@@ -512,8 +534,17 @@ export const Editor = memo(function Editor(props: EditorProps) {
             <div className={RICH_SURFACE_CLASS}>
               <ScrollArea className="min-h-0 flex-1" viewportRef={richScrollAreaRef} viewportClassName={RICH_SCROLL_AREA_CLASS} viewportProps={RICH_SCROLL_AREA_PROPS} fade={false}>
                 <RichEditorFindBar key={activeTab.entry.path} editor={editor} path={activeTab.entry.path} request={findRequest} find={find} />
-                {/* The prose column: the Kernel's .bn-editor centres itself at --editor-max-width, so no padding here. */}
-                <div className="mx-auto flex min-h-0 w-full max-w-(--editor-max-width) flex-1 flex-col">
+                {/* The prose column: the Kernel's .bn-editor centres itself at --editor-max-width, so no padding here. Properties above the body take its top padding. */}
+                <div className="mx-auto flex min-h-0 w-full max-w-(--editor-max-width) flex-1 flex-col [&:has(>[data-properties])_.bn-editor]:pt-6">
+                  <Properties
+                    key={activeTab.entry.path}
+                    editor={editor}
+                    path={activeTab.entry.path}
+                    tabContent={activeTab.content}
+                    handleRef={propertiesRef}
+                    onLeaveDown={() => focusBodyStart(editor)}
+                    onEditInRaw={raw.toggleRaw}
+                  />
                   <SingleEditorView
                     editor={editor}
                     onNavigateWikilink={NO_WIKILINK_NAVIGATION}

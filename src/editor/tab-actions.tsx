@@ -56,7 +56,7 @@ interface DocumentTabActionsProps {
 /**
  * A Document Tab's controls at the tab bar's right end: Copy path, the
  * Source mode button and "…". A landed write shows nothing here, and neither
- * does Frontmatter: Source mode is where it is seen.
+ * does Frontmatter: Properties shows it above the body.
  */
 export function DocumentTabActions({ mode, onCopyPath, menu }: DocumentTabActionsProps) {
   return (
