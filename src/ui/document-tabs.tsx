@@ -111,7 +111,7 @@ function setRef<T>(ref: Ref<T> | undefined, value: T | null) {
   else if (ref) ref.current = value
 }
 
-// One Tab: 30px, 6px radius, 12px in from either side, and 6px from the right
+// One Tab: 28px, the top bar's one height, 6px radius, 12px in from either side, and 6px from the right
 // under the pointer, where its × then stands. Every Tab is the same width, whatever its name: 180px
 // while they fit, all of them narrower together when they do not, down to
 // 96px. So the × always comes up in the same place and the row never
@@ -122,7 +122,7 @@ function setRef<T>(ref: Ref<T> | undefined, value: T | null) {
 // (`data-reordering`) the others glide out of its way, and the carried one
 // (`data-dragging`) is drawn over them with the selected fill.
 const documentTabVariants = cva(
-  "group relative flex h-7.5 w-45 min-w-24 shrink cursor-default items-center gap-1.5 rounded-md px-3 text-sm hover:pr-1.5 whitespace-nowrap text-muted-foreground outline-none not-aria-selected:hover:bg-accent aria-selected:text-foreground focus-visible:focus-ring in-data-reordering:transition-transform in-data-reordering:duration-200 in-data-reordering:ease-[cubic-bezier(0.32,0.72,0,1)] data-dragging:z-10 data-dragging:bg-selected data-dragging:text-foreground"
+  "group relative flex h-7 w-45 min-w-24 shrink cursor-default items-center gap-1.5 rounded-md px-3 text-sm hover:pr-1.5 whitespace-nowrap text-muted-foreground outline-none not-aria-selected:hover:bg-accent aria-selected:text-foreground focus-visible:focus-ring in-data-reordering:transition-transform in-data-reordering:duration-200 in-data-reordering:ease-[cubic-bezier(0.32,0.72,0,1)] data-dragging:z-10 data-dragging:bg-selected data-dragging:text-foreground"
 )
 
 /** A Tab. `onSelect` runs on a click, and on Enter or Space while it has the focus. */

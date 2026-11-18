@@ -16,10 +16,10 @@ interface UpdateButtonProps {
 
 /**
  * The Update button: laid over the window's top-left corner to the right of
- * the sidebar icon (shell/sidebar-toggle), which ends at x 108; the button
- * starts 6px on, at x 114, and is the icon's 24px tall so the two share a
- * centre line with the traffic lights. Like the icon it is one element in
- * both sidebar states. It is drawn only once an Update has been downloaded.
+ * the sidebar icon (shell/sidebar-toggle), which ends at x 117; the button
+ * starts 4px on, at x 121, and is the icon's 28px tall (`pill`, the top
+ * bar's one height) so the two share a centre line with the traffic lights.
+ * Like the icon it is one element in both sidebar states. It is drawn only once an Update has been downloaded.
  * Clicking it opens a popover with the version and its notes; Restart and
  * Update there is what installs.
  */
@@ -32,8 +32,8 @@ export function UpdateButton({ update, open, onOpenChange, onRestart, restarting
       <PopoverTrigger
         render={(
           <Button
-            size="xs"
-            className="absolute top-3.5 left-28.5 z-raised rounded-full px-2.5"
+            size="pill"
+            className="absolute top-3 left-30.25 z-raised"
             data-testid="update-button"
           >
             Update

@@ -57,7 +57,7 @@ export const TabBar = memo(function TabBar({ tabs, activeTabPath, onActivate, on
 
   return (
     <div
-      className="sidebar-slide flex h-13 flex-none items-center gap-1 overflow-hidden pr-4 pl-3 select-none data-collapsed:pl-30 in-data-update-ready:data-collapsed:pl-47"
+      className="sidebar-slide flex h-13 flex-none items-center gap-1 overflow-hidden pr-4 pl-3 select-none data-collapsed:pl-32 in-data-update-ready:data-collapsed:pl-49"
       data-testid="tab-bar"
       data-collapsed={sidebarCollapsed || undefined}
       data-tauri-drag-region
@@ -114,14 +114,13 @@ function useWheelScrollsSideways(stripRef: RefObject<HTMLDivElement | null>, mou
   }, [mounted, stripRef])
 }
 
-/** "+": a 24px icon button, 2px further from the last Tab than the Tabs are from each other. */
+/** "+": a 28px icon button, the Tabs' height, 4px from the last Tab as the Tabs are from each other. */
 function NewDocumentButton({ onNewDocument }: { onNewDocument: () => void }) {
   return (
     <SimpleTooltip label="New Document" side="bottom" shortcut={NEW_DOCUMENT_SHORTCUT}>
       <Button
         variant="icon"
-        size="icon-xs"
-        className="ml-0.5"
+        size="icon"
         aria-label="New Document"
         data-testid="tab-bar-new-document"
         onClick={onNewDocument}

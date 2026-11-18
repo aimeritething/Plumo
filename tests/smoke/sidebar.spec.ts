@@ -48,10 +48,10 @@ test('⌘[ toggles; collapsed, the editor is flush and the sidebar icon follows 
   await expect(show).toBeVisible()
   const showBox = (await show.boundingBox())!
   const tabBox = (await page.getByRole('tab', { name: 'Welcome.md' }).boundingBox())!
-  // The icon sits at x 84 in both states, centred on the 52px row; the first Tab follows at 120.
-  expect(showBox.x).toBe(84)
-  expect(showBox.y).toBe(14)
-  expect(tabBox.x).toBe(120)
+  // The icon's 28px box sits at x 89 in both states, centred on the 52px row; the first Tab follows at 128.
+  expect(showBox.x).toBe(89)
+  expect(showBox.y).toBe(12)
+  expect(tabBox.x).toBe(128)
   await expect(tabBar).toHaveCSS('height', '52px')
   expect((await tabBar.boundingBox())!.y).toBe(0)
 

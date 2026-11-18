@@ -24,11 +24,11 @@ test('the Update button appears beside the sidebar icon once an Update is ready,
   await expect(updateButton(page)).toBeVisible()
 
   // A lone Document opens with the sidebar collapsed: the button sits over the
-  // tab bar's inset, 6px after the sidebar icon and on its centre line.
+  // tab bar's inset, 4px after the sidebar icon and on its centre line.
   await expect(page.getByTestId('sidebar')).toHaveCount(0)
   const toggle = (await page.getByTestId('sidebar-toggle').boundingBox())!
   const button = (await updateButton(page).boundingBox())!
-  expect(button.x).toBe(toggle.x + toggle.width + 6)
+  expect(button.x).toBe(toggle.x + toggle.width + 4)
   expect(button.y + button.height / 2).toBe(toggle.y + toggle.height / 2)
   // The first Tab moves on to make room, once the inset has slid.
   await expect.poll(async () => (await page.getByRole('tab').first().boundingBox())!.x).toBeGreaterThanOrEqual(button.x + button.width + 8)
